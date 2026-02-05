@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Casa Lupita{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1>Dashboard</h1>
+        <p class="lead">Bienvenido al sistema de logística.</p>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Placeholder cards for future modules -->
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Envíos</h5>
+                <p class="card-text">Gestionar envíos y realizar seguimiento.</p>
+                <a href="#" class="btn btn-outline-primary disabled">Ir a Envíos</a>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Inventario</h5>
+                <p class="card-text">Control de stock y productos.</p>
+                 <a href="#" class="btn btn-outline-primary disabled">Ir a Inventario</a>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Usuarios</h5>
+                <p class="card-text">Administración de personal.</p>
+                 <a href="#" class="btn btn-outline-primary disabled">Administrar</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

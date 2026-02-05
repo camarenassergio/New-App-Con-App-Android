@@ -1,0 +1,12 @@
+Django>=5.0,<6.0
+PyMySQL>=1.1.0
+djangorestframework
+django-cors-headers
+
+django-crispy-forms
+crispy-bootstrap5
+
+# Security & Environment
+python-dotenv
+bandit
+safety

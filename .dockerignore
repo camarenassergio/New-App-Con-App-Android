@@ -1,0 +1,31 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media
+
+# Secrets (CRITICAL)
+.env
+.env.*
+*.pem
+*.key
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml

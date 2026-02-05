@@ -1,0 +1,28 @@
+:root {
+  --construrama-orange: #f37021;
+  --construrama-blue: #0033a0;
+}
+
+.text-primary-custom {
+  color: var(--construrama-blue) !important;
+}
+
+.text-secondary-custom {
+  color: var(--construrama-orange) !important;
+}
+
+.btn-primary-custom {
+  background-color: var(--construrama-orange);
+  border-color: var(--construrama-orange);
+  color: white;
+}
+
+.btn-primary-custom:hover {
+  background-color: #d95e16;
+  border-color: #d95e16;
+  color: white;
+}
+
+.bg-primary-custom {
+  background-color: var(--construrama-blue) !important;
+}
