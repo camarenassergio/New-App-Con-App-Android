@@ -10,3 +10,8 @@ crispy-bootstrap5
 python-dotenv
 bandit
 safety
+
+# Business Logic & DB
+python-dateutil
+mysqlclient
+Pillow

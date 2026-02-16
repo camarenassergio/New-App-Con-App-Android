@@ -23,4 +23,12 @@ urlpatterns = [
     path('accounts/', include('users.urls')),
     path('dashboard/', include('dashboard.urls')),
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
+    # TODO: remove after testing/dev
+    path('403/', TemplateView.as_view(template_name='403.html'), name='error_403'),
 ]
+
+from django.conf import settings
+from django.conf.urls.static import static
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Bitácora de Viajes{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <div class="table-header">
+        <h3>Historial de Rutas</h3>
+        <!-- Filters -->
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Fecha</th>
+                <th>Unidad</th>
+                <th>Operador</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for viaje in viajes %}
+            <tr>
+                <td><strong>#{{ viaje.n_viaje }}</strong></td>
+                <td>{{ viaje.fecha|date:"d M Y" }}</td>
+                <td>{{ viaje.unidad.nUnidad }}</td>
+                <td>{{ viaje.operador.nombre }}</td>
+                <td>{{ viaje.get_tipo_viaje_display }}</td>
+                <td>
+                    {% if viaje.estado_actual == 'ESPERA' %}
+                        <span class="badge badge-warning">{{ viaje.get_estado_actual_display }}</span>
+                    {% elif viaje.estado_actual == 'TRANSITO' %}
+                        <span class="badge badge-success">{{ viaje.get_estado_actual_display }}</span>
+                    {% else %}
+                        <span class="badge badge-default">{{ viaje.get_estado_actual_display }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 20px;">Sin viajes registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

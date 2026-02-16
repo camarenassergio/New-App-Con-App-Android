@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Administración de Usuarios{% endblock %}
+
+{% block content %}
+    <div class="table-container">
+    <div class="table-header">
+        <h3>Usuarios del Sistema</h3>
+        <a href="{% url 'dashboard:usuario_create' %}" class="btn-primary" style="text-decoration: none;">
+            <i class="fas fa-plus"></i> Nuevo Usuario
+        </a>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Nombre Completo</th>
+                <th>Rol / Puesto</th>
+                <th>Último Acceso</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in usuarios %}
+            <tr>
+                <td style="display: flex; align-items: center; gap: 10px;">
+                    <div class="avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">{{ user.username|first|upper }}</div>
+                    <span style="font-weight: 500;">{{ user.username }}</span>
+                </td>
+                <td>
+                    {{ user.personal.nombre_completo|default:"-" }}
+                </td>
+                <td>
+                    {% if user.is_superuser %}
+                        <span class="badge bg-danger">Super Admin</span>
+                    {% elif user.personal %}
+                        {% if user.personal.puesto == 'ADMIN' %}
+                            <span class="badge bg-primary">Administrador</span>
+                        {% elif user.personal.puesto == 'CHOFER' %}
+                            <span class="badge bg-warning text-dark">Chofer</span>
+                        {% elif user.personal.puesto == 'LOGISTICA' %}
+                             <span class="badge bg-info text-dark">Logística</span>
+                        {% else %}
+                             <span class="badge bg-secondary">{{ user.personal.get_puesto_display }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-secondary">Sin Perfil</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.last_login|default:"Nunca" }}</td>
+                <td>
+                    {% if user.is_active %}
+                        <span style="color: var(--success);"><i class="fas fa-check-circle"></i> Activo</span>
+                    {% else %}
+                        <span style="color: var(--text-muted);"><i class="fas fa-ban"></i> Inactivo</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

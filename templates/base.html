@@ -1,64 +1,279 @@
-<!doctype html>
 {% load static %}
-<html lang="en">
+<!doctype html>
+<html lang="es">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Logistica Casa Lupita{% endblock %}</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Casa Lupita Admin{% endblock %}</title>
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- Icons -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
     <!-- Custom CSS -->
-    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary-custom mb-4">
-      <div class="container">
-        <a class="navbar-brand" href="{% url 'home' %}">Casa Lupita</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarCollapse">
-          <ul class="navbar-nav me-auto">
-             {% if user.is_authenticated %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
-            </li>
-            {% endif %}
-          </ul>
-          <ul class="navbar-nav ms-auto">
-             {% if user.is_authenticated %}
-                <li class="nav-item">
-                    <span class="navbar-text me-3">Hola, {{ user.username }}</span>
-                </li>
-                 <li class="nav-item">
-                     <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
-                     </form>
-                </li>
-             {% else %}
-                <li class="nav-item">
-                  <a class="nav-link" href="{% url 'login' %}">Login</a>
-                </li>
-             {% endif %}
-          </ul>
-        </div>
+    <!-- Sidebar -->
+    {% block sidebar %}
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <i class="fas fa-truck-moving"></i>
+        <span>CASA LUPITA</span>
       </div>
-    </nav>
 
-    <div class="container">
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }}">
-            {{ message }}
+      <ul class="nav-links" style="display: flex; flex-direction: column; height: 100%;">
+        
+        <!-- Dashboard: Hide for CHOFER -->
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+        <li class="nav-item">
+          <a
+            href="{% url 'dashboard:home' %}"
+            class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
+          >
+            <i class="fas fa-chart-line nav-icon"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a
+            href="{% url 'dashboard:unidades_list' %}"
+            class="nav-link {% if 'unidades' in request.path %}active{% endif %}"
+          >
+            <i class="fas fa-truck nav-icon"></i>
+            <span>Unidades</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a
+            href="{% url 'dashboard:operadores_list' %}"
+            class="nav-link {% if 'operadores' in request.path %}active{% endif %}"
+          >
+            <i class="fas fa-id-card nav-icon"></i>
+            <span>Operadores</span>
+          </a>
+        </li>
+        {% endif %}
+
+        <!-- Visible for ALL (including CHOFER) -->
+        <li class="nav-item">
+          <a
+            href="{% url 'dashboard:viajes_list' %}"
+            class="nav-link {% if 'viajes' in request.path %}active{% endif %}"
+          >
+            <i class="fas fa-map-marked-alt nav-icon"></i>
+            <span>Rutas y Viajes</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="{% url 'dashboard:combustible_general' %}" class="nav-link {% if 'combustible' in request.path %}active{% endif %}">
+            <i class="fas fa-gas-pump nav-icon"></i>
+            <span>Combustible</span>
+          </a>
+        </li>
+        <!-- Control de Gastos Dropdown -->
+        <li class="nav-item">
+          <a
+            class="nav-link collapsed"
+            data-bs-toggle="collapse"
+            href="#gastosSubmenu"
+            role="button"
+            aria-expanded="{% if 'combustible' in request.path or 'gastos' in request.path %}true{% else %}false{% endif %}"
+            aria-controls="gastosSubmenu"
+            style="display: flex; justify-content: space-between; align-items: center;"
+          >
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-file-invoice-dollar nav-icon"></i>
+                <span>Control de Gastos</span>
+            </div>
+            <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.7;"></i>
+          </a>
+          <div class="collapse {% if 'combustible' in request.path or 'gastos' in request.path %}show{% endif %}" id="gastosSubmenu">
+            <ul class="nav flex-column" style="padding-left: 20px; background: rgba(0,0,0,0.05);">
+              <li class="nav-item">
+                <a href="{% url 'dashboard:gastos_list' %}" class="nav-link {% if request.resolver_match.url_name == 'gastos_list' %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
+                  <i class="fas fa-list-ul nav-icon" style="font-size: 0.9rem;"></i>
+                  <span>Historial de Gastos</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'dashboard:gastos_create' %}" class="nav-link {% if request.resolver_match.url_name == 'gastos_create' %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
+                  <i class="fas fa-plus-circle nav-icon" style="font-size: 0.9rem;"></i>
+                  <span>Registrar Gasto</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'dashboard:combustible_general' %}" class="nav-link {% if 'combustible' in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
+                  <i class="fas fa-gas-pump nav-icon" style="font-size: 0.9rem;"></i>
+                  <span>Combustible</span>
+                </a>
+              </li>
+            </ul>
           </div>
-        {% endfor %}
-      {% endif %}
+        </li>
+        <!-- Admin/Users: Hide for CHOFER -->
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+        <li class="nav-item">
+          <a
+            href="{% url 'dashboard:usuarios_list' %}"
+            class="nav-link {% if 'usuarios' in request.path %}active{% endif %}"
+          >
+            <i class="fas fa-users-cog nav-icon"></i>
+            <span>Usuarios / Admin</span>
+          </a>
+        </li>
+        {% endif %}
 
-      {% block content %}
-      {% endblock %}
-    </div>
+        <!-- Spacer to push Logout to bottom -->
+        <li style="flex-grow: 1;"></li>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <li class="nav-item" style="margin-bottom: 20px;">
+             <!-- Logout Form (POST required for security) -->
+            <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="nav-link" style="background: none; border: none; width: 100%; cursor: pointer; text-align: left; color: rgba(255,255,255,0.8);">
+                    <i class="fas fa-sign-out-alt nav-icon"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </form>
+        </li>
+      </ul>
+    </aside>
+    {% endblock %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div style="display: flex; align-items: center;">
+            <button id="menu-toggle" class="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="page-title">
+              {% block page_title %}Resumen General{% endblock %}
+            </h1>
+        </div>
+
+        <div class="user-profile">
+          <!-- Environment Badge (DEV/QA) from Context Processor or View -->
+          {% if ENVIRONMENT == 'DEV' %}
+          <span class="env-badge env-dev">DEV</span> <!-- Shortened for mobile -->
+          {% else %}
+          <span class="env-badge env-qa">QA</span>
+          {% endif %}
+
+          <span>{{ request.user.username }}</span>
+          <div class="avatar">{{ request.user.username|first|upper }}</div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="content-wrapper">{% block content %} {% endblock %}</div>
+    </main>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    
+    <!-- Sidebar Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            // Create overlay for clicking outside to close
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.background = 'rgba(0,0,0,0.5)';
+            overlay.style.zIndex = '999';
+            overlay.style.display = 'none'; // Hidden by default
+            document.body.appendChild(overlay);
+
+            // Toggle function
+            function toggleSidebar() {
+                sidebar.classList.toggle('open');
+                
+                if (sidebar.classList.contains('open')) {
+                   // Mobile: Show overlay
+                   if (window.innerWidth <= 768) {
+                       overlay.style.display = 'block';
+                   }
+                } else {
+                   overlay.style.display = 'none';
+                }
+            }
+
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+            }
+            
+            // Close when clicking overlay
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                overlay.style.display = 'none';
+            });
+            
+            // Add close button inside sidebar for convenience
+            const sidebarHeader = document.querySelector('.sidebar-header');
+            if (sidebarHeader && !document.getElementById('sidebar-close-btn')) {
+                const closeBtn = document.createElement('button');
+                closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                closeBtn.className = 'close-sidebar-btn';
+                closeBtn.id = 'sidebar-close-btn';
+                closeBtn.style.marginLeft = 'auto'; // Push to right
+                
+                closeBtn.addEventListener('click', toggleSidebar);
+                sidebarHeader.appendChild(closeBtn);
+            }
+        });
+    </script>
+    <!-- Auto-Logout Script -->
+    <script>
+        (function() {
+            // Tiempo en milisegundos (30 segundos para prueba)
+            const INACTIVITY_LIMIT = 60 * 10000; 
+            let timeout;
+
+            function resetTimer() {
+                clearTimeout(timeout);
+                timeout = setTimeout(logout, INACTIVITY_LIMIT);
+            }
+
+            function logout() {
+                // Redirigir al logout o login directamente
+                // Dado que logout requiere POST en Django por seguridad, 
+                // podemos enviar un formulario oculto o redirigir si se permite GET en logout (no recomendado)
+                // O mejor, redirigir a una vista que maneje el cierre o simplemente al login y dejar que la cookie expire.
+                // Como configuramos SESSION_COOKIE_AGE, la cookie ya habrá expirado en el servidor.
+                // Forzamos la recarga para que el servidor detecte la cookie caducada.
+                window.location.href = "{% url 'login' %}"; 
+            }
+
+            // Eventos que reinician el timer
+            window.onload = resetTimer;
+            document.onmousemove = resetTimer;
+            document.onkeypress = resetTimer;
+            document.ontouchstart = resetTimer; // Para móviles
+            document.onclick = resetTimer;      // Clics
+        })();
+    </script>
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

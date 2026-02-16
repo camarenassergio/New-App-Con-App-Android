@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block page_title %}Control de Combustible - {{ unidad.nUnidad }}{% endblock %}
+
+{% block content %}
+
+<div class="header-actions">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <i class="fas fa-truck" style="font-size: 2rem; color: var(--primary-color);"></i>
+        <div>
+            <h1 style="margin: 0;">{{ unidad.nUnidad }} - {{ unidad.marca }} {{ unidad.submarca }}</h1>
+            <p class="text-muted" style="margin: 0;">PLACAS: {{ unidad.placas }} | MODELO: {{ unidad.modelo_anio }}</p>
+        </div>
+    </div>
+    
+    <div style="text-align: right;">
+        <a href="{% url 'dashboard:combustible_general' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+        <a href="{% url 'dashboard:combustible_create' %}?unidad={{ unidad.pk }}" class="btn-primary">
+            <i class="fas fa-plus"></i> Nueva Carga
+        </a>
+    </div>
+</div>
+
+<!-- Resumen -->
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
+    <div class="stat-card">
+        <span class="stat-label">Cargas (Mes)</span>
+        <span class="stat-value">{{ totales_mes_actual.cargas }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Litros (Mes)</span>
+        <span class="stat-value">{{ totales_mes_actual.litros|floatformat:2|intcomma }} L</span>
+    </div>
+    <div class="stat-card orange">
+        <span class="stat-label">Gasto (Mes)</span>
+        <span class="stat-value">${{ totales_mes_actual.costo|floatformat:2|intcomma }}</span>
+    </div>
+    <div class="stat-card info">
+        <span class="stat-label">Km Actual</span>
+        <span class="stat-value">{{ unidad.kilometraje_actual|intcomma }}</span>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h3>Historial de Cargas</h3>
+    </div>
+    
+    <table class="data-table">
+        <thead>
+            <tr style="background-color: #ff6b00; color: white;"> <!-- Orange header per user image -->
+                <th># Carga</th>
+                <th>Fecha</th>
+                <th>Chofer</th>
+                <th class="text-right">Kilometraje</th>
+                <th class="text-right">Km Entre Cargas</th>
+                <th class="text-right">Litros</th>
+                <th class="text-right">Rendimiento (Km/L)</th>
+                <th class="text-right">Precio x Litro</th>
+                <th class="text-right">Total</th>
+                <th class="text-right">Propina</th>
+                <th class="text-center">Evidencia</th>
+                <th class="text-center">Obs.</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for carga in historial_cargas %}
+            <tr>
+                <td>{{ carga.numero }}</td>
+                <td>{{ carga.fecha|date:"d/m/Y" }}</td>
+                <td>{{ carga.chofer }}</td>
+                <td class="text-right">{{ carga.kilometraje|intcomma }}</td>
+                <td class="text-right">{{ carga.km_entre_cargas|intcomma }}</td>
+                <td class="text-right">{{ carga.litros|floatformat:2 }}</td>
+                <td class="text-right">
+                    {% if carga.rendimiento > 0 %}
+                        {{ carga.rendimiento|floatformat:2 }}
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td class="text-right">${{ carga.precio_litro|floatformat:2 }}</td>
+                <td class="text-right font-bold">${{ carga.total|floatformat:2|intcomma }}</td>
+                <td class="text-right">${{ carga.propina|floatformat:2 }}</td>
+                <td class="text-center">
+                    <div style="display: flex; gap: 8px; justify-content: center;">
+                        {% if carga.evidencia_antes %}
+                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#evidenciaModal" 
+                                data-bs-image="{{ carga.evidencia_antes.url }}" 
+                                data-bs-title="Evidencia Antes - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga #{{ carga.numero }})">
+                            <i class="fas fa-camera" style="color: var(--primary-orange);"></i>
+                        </button>
+                        {% endif %}
+                        {% if carga.evidencia_despues %}
+                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#evidenciaModal" 
+                                data-bs-image="{{ carga.evidencia_despues.url }}" 
+                                data-bs-title="Evidencia Después - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga #{{ carga.numero }})">
+                            <i class="fas fa-check-circle text-success"></i>
+                        </button>
+                        {% endif %}
+                        {% if not carga.evidencia_antes and not carga.evidencia_despues %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td class="text-center">
+                    {% if carga.observaciones %}
+                    <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#observacionesModal" 
+                            data-bs-observaciones="{{ carga.observaciones }}"
+                            data-bs-title="Observaciones - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga #{{ carga.numero }})">
+                        <i class="fas fa-comment-dots text-info"></i>
+                    </button>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    {% if carga.puede_editar %}
+                        <a href="{% url 'dashboard:combustible_edit' carga.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                            <i class="fas fa-pencil-alt"></i>
+                        </a>
+                    {% else %}
+                        <span class="text-muted" title="Periodo de edición cerrado"><i class="fas fa-lock"></i></span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            <tr style="background-color: #f0f0f0; font-weight: bold;">
+                <td colspan="5" class="text-right">TOTALES HISTÓRICOS</td>
+                <td class="text-right">{{ totales_historicos.litros|floatformat:2|intcomma }}</td>
+                <td class="text-right">-</td> <!-- Promedio Rendimiento could go here -->
+                <td class="text-right">-</td>
+                <td class="text-right">${{ totales_historicos.costo|floatformat:2|intcomma }}</td>
+                <td class="text-right">${{ totales_historicos.propina|floatformat:2|intcomma }}</td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <!-- Paginación -->
+    {% if historial_cargas.paginator.num_pages > 1 %}
+    <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd;">
+        <div>
+            Página {{ historial_cargas.number }} de {{ historial_cargas.paginator.num_pages }}
+        </div>
+        <div>
+            {% if historial_cargas.has_previous %}
+                <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; Primera</a>
+                <a href="?page={{ historial_cargas.previous_page_number }}" class="btn btn-sm btn-outline-secondary">Anterior</a>
+            {% endif %}
+            
+            {% if historial_cargas.has_next %}
+                <a href="?page={{ historial_cargas.next_page_number }}" class="btn btn-sm btn-outline-secondary">Siguiente</a>
+                <a href="?page={{ historial_cargas.paginator.num_pages }}" class="btn btn-sm btn-outline-secondary">Última &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .text-right { text-align: right; }
+    .font-bold { font-weight: bold; }
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    /* Estilo para que el header de la tabla sea naranja como la imagen */
+    .data-table thead tr th {
+        background-color: #e65100; /* Darker orange */
+        color: white;
+    }
+</style>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Modales fuera del loop -->
+<!-- Modal Observaciones -->
+<div class="modal fade" id="observacionesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Observaciones</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="modalObservacionesContent" style="white-space: pre-wrap;"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Evidencia -->
+<div class="modal fade" id="evidenciaModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Evidencia Fotográfica</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-0">
+        <img id="modalEvidenciaImage" src="" class="img-fluid" alt="Evidencia" style="max-height: 80vh;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejo Modal Observaciones
+    var observacionesModal = document.getElementById('observacionesModal');
+    if (observacionesModal) {
+        observacionesModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var observaciones = button.getAttribute('data-bs-observaciones');
+            var title = button.getAttribute('data-bs-title');
+            var modalBodyInput = observacionesModal.querySelector('#modalObservacionesContent');
+            var modalTitle = observacionesModal.querySelector('.modal-title');
+            
+            modalBodyInput.textContent = observaciones;
+            if(title) modalTitle.textContent = title;
+        });
+    }
+
+    // Manejo Modal Evidencia
+    var evidenciaModal = document.getElementById('evidenciaModal');
+    if (evidenciaModal) {
+        evidenciaModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var imageUrl = button.getAttribute('data-bs-image');
+            var title = button.getAttribute('data-bs-title');
+            var modalImage = evidenciaModal.querySelector('#modalEvidenciaImage');
+            var modalTitle = evidenciaModal.querySelector('.modal-title');
+            
+            modalImage.src = imageUrl;
+            if(title) modalTitle.textContent = title;
+        });
+    }
+});
+</script>
+{% endblock %}

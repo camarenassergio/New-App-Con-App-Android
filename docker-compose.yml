@@ -1,34 +1,72 @@
 version: "3.8"
 
 services:
-  db:
+  # --- DEV ENVIRONMENT (Port 8000, DB lupita_dev) ---
+  db-dev:
     image: mysql:8.0
-    env_file:
-      - .env
+    container_name: lupita_db_dev
+    env_file: .env
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_DATABASE: lupita_dev
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "127.0.0.1:3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data_dev:/var/lib/mysql
     security_opt:
       - no-new-privileges=false
+    restart: always
 
-  web:
+  web-dev:
     build: .
+    container_name: lupita_web_dev
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - db-dev
+    environment:
+      - DB_HOST=db-dev
+      - DB_NAME=lupita_dev
+      - ENVIRONMENT=DEV
+    env_file: .env
     restart: always
-    env_file:
-      - .env
+
+  # --- QA ENVIRONMENT (Port 10000, DB lupita_qa) ---
+  db-qa:
+    image: mysql:8.0
+    container_name: lupita_db_qa
+    env_file: .env
+    environment:
+      MYSQL_DATABASE: lupita_qa
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data_qa:/var/lib/mysql
+    security_opt:
+      - no-new-privileges=false
+    restart: always
+
+  web-qa:
+    build: .
+    container_name: lupita_web_qa
+    command: python manage.py runserver 0.0.0.0:10000
+    volumes:
+      - .:/app
+    ports:
+      - "10000:10000"
+    depends_on:
+      - db-qa
+    environment:
+      - DB_HOST=db-qa
+      - DB_NAME=lupita_qa
+      - ENVIRONMENT=QA
+    env_file: .env
+    restart: always
 
 volumes:
-  mysql_data:
+  mysql_data_dev:
+  mysql_data_qa:

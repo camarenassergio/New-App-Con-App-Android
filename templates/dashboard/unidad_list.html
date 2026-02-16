@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Gestión de Unidades{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+    <a href="{% url 'dashboard:unidad_create' %}" class="btn-primary">
+        <i class="fas fa-plus"></i> Nueva Unidad
+    </a>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h3>Flotilla Registrada</h3>
+        <!-- Search bar could go here -->
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Unidad</th>
+                <th>Marca/Submarca</th>
+                <th>Placas</th>
+                <th>Modelo</th>
+                <th>Estatus</th>
+                <th>Semáforo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for unidad in unidades %}
+            <tr>
+                <td style="font-weight: bold; color: var(--primary-blue);">{{ unidad.nUnidad }}</td>
+                <td>{{ unidad.marca }} {{ unidad.submarca }}</td>
+                <td><span style="font-family: monospace; background: #eee; padding: 2px 6px; border-radius: 4px;">{{ unidad.placas }}</span></td>
+                <td>{{ unidad.modelo_anio }}</td>
+                <td>
+                    {% if unidad.en_servicio %}
+                        <span class="badge badge-success">Activa</span>
+                    {% else %}
+                        <span class="badge badge-danger">Baja Temporal</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- Alert Logic Preview -->
+                    {% if unidad.alerta_circulacion == '✅ CIRCULA' %}
+                        <span class="badge badge-success">Circula</span>
+                    {% else %}
+                        <span class="badge badge-danger" title="{{ unidad.alerta_circulacion }}">No Circula</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'dashboard:unidad_update' unidad.pk %}" style="color: var(--primary-blue); margin-right: 10px;" title="Editar"><i class="fas fa-edit"></i></a>
+                    <a href="{% url 'dashboard:unidad_detail' unidad.pk %}" style="color: var(--text-muted);" title="Ver Detalle"><i class="fas fa-eye"></i></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 30px;">
+                    No hay unidades registradas.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

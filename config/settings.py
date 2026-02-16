@@ -28,7 +28,35 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Environment Context (DEV vs QA)
+ENVIRONMENT = os.environ.get('ENVIRONMENT', 'DEV')
+SESSION_COOKIE_NAME = f"sessionid_{ENVIRONMENT.lower()}"
+CSRF_COOKIE_NAME = f"csrftoken_{ENVIRONMENT.lower()}"
+
+if ENVIRONMENT == 'DEV':
+    SESSION_COOKIE_AGE = 3600  # 60 minutes
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+else:
+    # --- PRODUCTION SECURITY ---
+    # Only force SSL if we are strictly in PROD (to avoid breaking local QA without certs)
+    IS_PROD = (ENVIRONMENT == 'PROD')
+    
+    SESSION_COOKIE_SECURE = IS_PROD
+    CSRF_COOKIE_SECURE = IS_PROD
+    SECURE_SSL_REDIRECT = IS_PROD
+    
+    if IS_PROD:
+        SECURE_HSTS_SECONDS = 31536000
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_PRELOAD = True
+    
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+
+CORS_ALLOW_ALL_ORIGINS = (ENVIRONMENT == 'DEV') # Only in DEV
 
 
 # Application definition
@@ -40,6 +68,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     # Third party
     'rest_framework',
     'corsheaders',
@@ -64,6 +93,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom Rate Limiter for DoS protection
+    'config.middleware.SimpleRateLimitMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -78,6 +109,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'config.context_processors.environment_context',
             ],
         },
     },
@@ -141,8 +173,12 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Auth
 AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
-LOGOUT_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'dashboard:home'
+LOGOUT_REDIRECT_URL = 'login'

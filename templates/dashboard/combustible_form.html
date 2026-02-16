@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}
+    {% if object %}Editar Registro{% else %}Nuevo Registro de Combustible{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm" style="border-radius: 12px; border: none;">
+            <div class="card-header bg-white" style="border-bottom: 1px solid #f0f0f0; padding: 20px;">
+                <h5 class="mb-0" style="color: var(--primary-blue); font-weight: 700;">
+                    <i class="fas fa-gas-pump" style="margin-right: 10px; color: var(--primary-orange);"></i>
+                    Carga de Combustible
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                
+                <!-- Driver Info (Read Only) -->
+                <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                    <div class="avatar" style="width: 35px; height: 35px; font-size: 0.9rem; margin-right: 12px;">
+                        {{ request.user.username|first|upper }}
+                    </div>
+                    <div>
+                        {% if request.user.is_superuser or request.user.personal.puesto == 'ADMIN' %}
+                             <small class="d-block text-muted">Administrador Responsable</small>
+                             <span class="badge bg-primary">ADMINISTRADOR</span>
+                        {% elif request.user.personal.puesto == 'CHOFER' %}
+                             <small class="d-block text-muted">Chofer Responsable</small>
+                             <span class="badge bg-warning text-dark">CHOFER</span>
+                        {% elif request.user.personal.puesto == 'LOGISTICA' %}
+                             <small class="d-block text-muted">Logística</small>
+                             <span class="badge bg-info text-dark">LOGÍSTICA</span>
+                        {% else %}
+                             <small class="d-block text-muted">Usuario Responsable</small>
+                        {% endif %}
+                        <strong class="d-block mt-1">{{ request.user.username }}</strong>
+                    </div>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        {{ form.unidad|as_crispy_field }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            {{ form.nivel_inicial|as_crispy_field }}
+                        </div>
+                        <div class="col-6">
+                            {{ form.tipo_combustible|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            {{ form.kilometraje_actual|as_crispy_field }}
+                        </div>
+                        <div class="col-6">
+                            {{ form.litros|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            {{ form.precio_litro|as_crispy_field }}
+                        </div>
+                        <div class="col-6">
+                            {{ form.propina|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            {{ form.total|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            {{ form.observaciones|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            {{ form.evidencia_antes|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.evidencia_despues|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4 gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">
+                            <i class="fas fa-save me-2"></i> Registrar Carga
+                        </button>
+                        <a href="{% url 'dashboard:home' %}" class="btn btn-light text-muted">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const litrosInput = document.getElementById('id_litros');
+        const precioInput = document.getElementById('id_precio_litro');
+        const propinaInput = document.getElementById('id_propina');
+        const totalInput = document.getElementById('id_total');
+        const kilometrajeInput = document.getElementById('id_kilometraje');
+
+        // Function to allow only numbers and one decimal point
+        function restrictInput(event) {
+            // Remove any character that is not a digit or a dot
+            this.value = this.value.replace(/[^0-9.]/g, '');
+            
+            // Allow only one dot
+            if ((this.value.match(/\./g) || []).length > 1) {
+                this.value = this.value.slice(0, -1);
+            }
+        }
+        
+        // Integer only for mileage
+        function restrictIntInput(event) {
+             this.value = this.value.replace(/[^0-9]/g, '');
+        }
+
+        function calcularTotal() {
+            const litros = parseFloat(litrosInput.value) || 0;
+            const precio = parseFloat(precioInput.value) || 0;
+            const propina = parseFloat(propinaInput.value) || 0;
+            
+            // Cálculo: (Litros * Precio) + Propina
+            const total = (litros * precio) + propina;
+            
+            // Asignar al campo Total con 2 decimales
+            totalInput.value = total.toFixed(2);
+        }
+
+        if(litrosInput && precioInput && propinaInput && totalInput) {
+            // Apply restrictions
+            litrosInput.addEventListener('input', restrictInput);
+            precioInput.addEventListener('input', restrictInput);
+            propinaInput.addEventListener('input', restrictInput);
+            
+            if(kilometrajeInput) {
+                kilometrajeInput.addEventListener('input', restrictIntInput);
+            }
+
+            // Listen for calculation
+            litrosInput.addEventListener('input', calcularTotal);
+            precioInput.addEventListener('input', calcularTotal);
+            propinaInput.addEventListener('input', calcularTotal);
+            
+            // Make total read-only to ensure calculation integrity
+            totalInput.readOnly = true; 
+        }
+    });
+</script>
+{% endblock %}

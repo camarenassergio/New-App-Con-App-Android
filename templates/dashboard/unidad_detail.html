@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ unidad.nUnidad }} - Detalle{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card orange">
+        <span class="stat-label">Placas</span>
+        <span class="stat-value">{{ unidad.placas }}</span>
+    </div>
+    <div class="stat-card info">
+        <span class="stat-label">Marca / Modelo</span>
+        <span class="stat-value">{{ unidad.marca }} {{ unidad.submarca }}</span>
+        <span class="stat-meta">{{ unidad.modelo_anio }}</span>
+    </div>
+    <div class="stat-card {% if unidad.en_servicio %}success{% else %}danger{% endif %}">
+        <span class="stat-label">Estado</span>
+        <span class="stat-value">{% if unidad.en_servicio %}Activa{% else %}Baja{% endif %}</span>
+    </div>
+</div>
+
+<div class="row" style="display: flex; gap: 24px; flex-wrap: wrap;">
+    <!-- Technical Details -->
+    <div class="card shadow-sm" style="flex: 1; min-width: 300px; background: white; padding: 24px; border-radius: 12px;">
+        <h3 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Ficha Técnica</h3>
+        <p style="color: var(--text-muted); margin-bottom: 15px; font-weight: 500;">{{ unidad.descripcion_vehiculo }}</p>
+        <table style="width: 100%;">
+            <tr><td style="padding: 8px 0; color: #666;">No. Unidad:</td><td style="font-weight: bold;">{{ unidad.nUnidad }}</td></tr>
+            <tr><td style="padding: 8px 0; color: #666;">Marca/Submarca:</td><td style="font-weight: bold;">{{ unidad.marca }} - {{ unidad.submarca }}</td></tr>
+            <tr><td style="padding: 8px 0; color: #666;">Modelo:</td><td style="font-weight: bold;">{{ unidad.modelo_anio }}</td></tr>
+            <tr><td style="padding: 8px 0; color: #666;">No. Serie:</td><td style="font-weight: bold;">{{ unidad.no_serie|default:"-" }}</td></tr>
+            <tr><td style="padding: 8px 0; color: #666;">No. Motor:</td><td style="font-weight: bold;">{{ unidad.no_motor|default:"-" }}</td></tr>
+            <tr><td style="padding: 8px 0; color: #666;">Capacidad:</td><td style="font-weight: bold;">{{ unidad.capacidad_kg }} kg</td></tr>    
+            <tr><td style="padding: 8px 0; color: #666;">Kilometraje:</td><td style="font-weight: bold;">{{ unidad.kilometraje_actual }} km</td></tr>
+            <tr><td style="padding: 8px 0; color: #666;">Tipo:</td><td style="font-weight: bold;">{{ unidad.get_tipo_display }}</td></tr>
+        </table>
+    </div>
+
+    <!-- Legal & Docs -->
+    <div class="card shadow-sm" style="flex: 1; min-width: 300px; background: white; padding: 24px; border-radius: 12px;">
+        <h3 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Documentación Legal</h3>
+        <table style="width: 100%;">
+            <tr><td style="padding: 8px 0; color: #666;">Tarjeta Circulación:</td><td style="font-weight: bold;">{{ unidad.tarjeta_circulacion|default:"-" }}</td></tr>
+            <tr><td style="padding: 8px 0; color: #666;">Permiso STC:</td><td style="font-weight: bold;">{{ unidad.tipo_permiso_stc|default:"-" }}</td></tr>
+            <tr>
+                <td style="padding: 8px 0; color: #666;">Vencimiento de Placa:</td>
+                <td>
+                    <span style="font-weight: bold;">{{ unidad.vencimiento_placa|date:"d/m/Y"|default:"-" }}</span>
+                    {% if unidad.alerta_placa == 'VENCIDA' %}
+                        <span class="badge bg-danger text-white">VENCIDA</span>
+                    {% elif unidad.alerta_placa == 'POR VENCER' %}
+                        <span class="badge bg-warning text-dark">POR VENCER</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr><td style="padding: 8px 0; color: #666;">Holograma:</td><td style="font-weight: bold;">{{ unidad.holograma }}</td></tr>
+            
+            <!-- Tenencia Status -->
+            <tr>
+                <td style="padding: 8px 0; color: #666;">Última Tenencia:</td>
+                <td>
+                    <span style="font-weight: bold;">{{ unidad.ultimo_pago_tenencia|date:"d/m/Y"|default:"PENDIENTE" }}</span>
+                    {% if unidad.alerta_tenencia == 'VENCIDA' %}
+                        <span class="badge badge-danger">VENCIDA</span>
+                    {% elif unidad.alerta_tenencia == 'POR VENCER' %}
+                        <span class="badge badge-warning">POR VENCER</span>
+                    {% endif %}
+                </td>
+            </tr>
+
+            <!-- Verification Status -->
+            <tr>
+                <td style="padding: 8px 0; color: #666;">Última Verificación:</td>
+                <td>
+                    <span style="font-weight: bold;">Vence: {{ unidad.vencimiento_verificacion|date:"d/m/Y"|default:"-" }}</span>
+                    {% if unidad.alerta_verificacion == 'VENCIDA' %}
+                        <span class="badge badge-danger">VENCIDA</span>
+                    {% elif unidad.alerta_verificacion == 'POR VENCER' %}
+                        <span class="badge badge-warning">POR VENCER</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Insurance -->
+    <div class="card shadow-sm" style="flex: 1; min-width: 300px; background: white; padding: 24px; border-radius: 12px; margin-top: 24px; width: 100%;">
+        <h3 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Seguro</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div>
+                <span style="color: #666; display: block; font-size: 0.9rem;">Aseguradora</span>
+                <span style="font-weight: bold; font-size: 1.1rem;">{{ unidad.nombre_aseguradora|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="color: #666; display: block; font-size: 0.9rem;">Póliza</span>
+                <span style="font-weight: bold; font-size: 1.1rem;">{{ unidad.poliza_seguro|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="color: #666; display: block; font-size: 0.9rem;">Cobertura</span>
+                <span style="font-weight: bold;">{{ unidad.tipo_cobertura_seguro|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="color: #666; display: block; font-size: 0.9rem;">Vencimiento</span>
+                <span style="font-weight: bold; {% if unidad.vencimiento_poliza and unidad.vencimiento_poliza < today %}color: red;{% endif %}">
+                    {{ unidad.vencimiento_poliza|date:"d/m/Y"|default:"-" }}
+                </span>
+                <div style="margin-top: 4px;">
+                    {% if unidad.alerta_seguro == 'VENCIDA' %}
+                        <span class="badge bg-danger text-white">VENCIDA</span>
+                    {% elif unidad.alerta_seguro == 'POR VENCER' %}
+                        <span class="badge bg-warning text-dark">POR VENCER</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 24px;">
+    <a href="{% url 'dashboard:unidad_update' unidad.pk %}" class="btn-primary">Editar Unidad</a>
+    <a href="{% url 'dashboard:unidades_list' %}" style="margin-left: 16px; color: #666; text-decoration: none;">Volver al listado</a>
+</div>
+{% endblock %}

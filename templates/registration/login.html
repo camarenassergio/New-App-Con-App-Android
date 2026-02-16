@@ -3,21 +3,123 @@
 
 {% block title %}Login - Casa Lupita{% endblock %}
 
+{% block sidebar %}
+<!-- Sidebar removed for Login -->
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm mt-5">
-            <div class="card-body">
-                <h3 class="card-title text-center mb-4">Iniciar Sesión</h3>
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <div class="d-grid gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary">Ingresar</button>
-                    </div>
-                </form>
-            </div>
+<style>
+    /* Override base styles for Login Page */
+    .sidebar { display: none; }
+    .top-header { display: none; }
+    
+    .main-content {
+        margin-left: 0 !important;
+        background-color: var(--primary-blue);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .content-wrapper {
+        width: 100%;
+        max-width: 500px; /* Limit width for a nice rectangular card */
+        padding: 0 !important;
+        margin: 0 auto;
+    }
+</style>
+
+<div class="card shadow-lg" style="border: none; border-radius: 12px; width: 100%;">
+    <div class="card-body p-5">
+        {% load static %}
+        {% if ENVIRONMENT == 'DEV' %}
+        <div class="text-center mb-3">
+            <img src="{% static 'img/Logo.jpg' %}" alt="Casa Lupita Logo" class="img-fluid" style="max-height: 120px;">
         </div>
+        {% endif %}
+
+        <style>
+            .fleet-wrapper {
+                overflow: hidden;
+                width: 100%;
+                margin: 20px 0;
+                position: relative;
+                mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+                -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            }
+            .fleet-track {
+                display: flex;
+                align-items: baseline;
+                width: 200%; /* 2 Groups */
+                animation: carruselFleet 12s linear infinite; /* Slower for better effect */
+            }
+            .fleet-group {
+                display: flex;
+                align-items: baseline;
+                justify-content: center; /* Center icons in their segment */
+                width: 50%; /* Each group takes 100% of the viewport */
+                gap: 15px;
+            }
+            .fleet-icon {
+                color: var(--primary-orange);
+            }
+            
+            @keyframes carruselFleet {
+                0% { transform: translateX(-50%); } /* Start showing Group 2 (Right Half) */
+                100% { transform: translateX(0%); } /* Move Right to show Group 1 (Left Half) */
+            }
+
+            /* Sizes representing fleet hierarchy */
+            .pickup-1t { font-size: 1.5rem; }   /* Smallest */
+            .pickup-3t { font-size: 2.2rem; }   /* Medium (Using Pickup Icon) */
+            .truck-5t { font-size: 3.5rem; }    /* Largest */
+        </style>
+
+        {% if ENVIRONMENT == 'DEV' %}
+            <div class="fleet-wrapper">
+                <div class="fleet-track">
+                     <!-- Logical Order: [Group 1] [Group 2] 
+                          Animation: slide from showing G2 to showing G1 (Rightward) -->
+                    
+                    <!-- Group 1 ( Enters from Left ) -->
+                    <div class="fleet-group">
+                        <i class="fas fa-truck-pickup fleet-icon pickup-1t" title="Pickup 1.5 Ton"></i>
+                        <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
+                        <i class="fas fa-truck-moving fleet-icon truck-5t" title="Camión 5 Ton"></i>
+                        <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
+                    </div>
+
+                    <!-- Group 2 ( Starts Visible ) -->
+                    <div class="fleet-group">
+                        <i class="fas fa-truck-pickup fleet-icon pickup-1t" title="Pickup 1.5 Ton"></i>
+                        <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
+                        <i class="fas fa-truck-moving fleet-icon truck-5t" title="Camión 5 Ton"></i>
+                        <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mb-4">
+                <p class="text-muted mt-2" style="font-size: 1.1rem;">Sistema de Gestión Logística</p>
+            </div>
+        {% else %}
+            <!-- Original Single Icon for QA/PROD -->
+            <div class="text-center mb-4">
+                <i class="fas fa-truck-moving" style="font-size: 3rem; color: var(--primary-orange);"></i>
+                <p class="text-muted mt-3" style="font-size: 1.1rem;">Sistema de Gestión Logística</p>
+            </div>
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none; font-weight: bold;">INGRESAR AL SISTEMA</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
+

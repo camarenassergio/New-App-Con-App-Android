@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Dashboard General{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="stats-grid">
+    <div class="stat-card orange">
+        <span class="stat-label">Unidades Totales</span>
+        <span class="stat-value">{{ total_unidades }}</span>
+        <span class="stat-meta">Flotilla registrada</span>
+    </div>
+    
+    <div class="stat-card success">
+        <span class="stat-label">Disponibles</span>
+        <span class="stat-value">{{ unidades_disponibles }}</span>
+        <span class="stat-meta">Listas para viaje</span>
+    </div>
+
+    <div class="stat-card info">
+        <span class="stat-label">En Ruta</span>
+        <span class="stat-value">{{ unidades_ruta }}</span>
+        <span class="stat-meta">Entregas / Operación</span>
+    </div>
+
+    <div class="stat-card danger"> <!-- Using danger color for Taller/Warning -->
+        <span class="stat-label">En Taller</span>
+        <span class="stat-value">{{ unidades_taller }}</span>
+        <span class="stat-meta">Mantenimiento Activo</span>
+    </div>
+    
+    <!-- Configurable Alerts -->
+    {% for alerta in alertas %}
+    <div class="stat-card danger">
+        <span class="stat-label">ALERTA</span>
+        <span class="stat-value" style="font-size:1.2rem; margin-top:10px;">{{ alerta.mensaje }}</span>
+    </div>
+    {% endfor %}
+</div>
+
+
+<!-- Graphs Section -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+    <!-- Gasto Mensual -->
+    <div class="table-container" style="flex: 2;">
+        <div class="table-header">
+            <h3>Tendencia de Gasto (6 Meses)</h3>
+        </div>
+        <div style="padding: 15px; height: 300px;">
+            <canvas id="gastoChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Top Consumo (Donut) -->
+    <div class="table-container" style="flex: 1;">
+        <div class="table-header">
+            <h3>Top Consumo (Mes Actual)</h3>
+        </div>
+        <div style="padding: 15px; height: 300px; display: flex; justify-content: center;">
+            <canvas id="consumoChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Rendimiento (Horizontal Bar) -->
+<div class="table-container">
+    <div class="table-header">
+        <h3>Rendimiento Promedio Estimado (Km/Lt) - Año en Curso</h3>
+    </div>
+    <div style="padding: 15px; height: 400px;">
+        <canvas id="rendimientoChart"></canvas>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Common Options
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#666';
+
+    // 1. Gasto Chart
+    const ctxGasto = document.getElementById('gastoChart').getContext('2d');
+    new Chart(ctxGasto, {
+        type: 'line',
+        data: {
+            labels: JSON.parse('{{ chart_gasto_labels|escapejs }}'),
+            datasets: [{
+                label: 'Gasto Total ($)',
+                data: JSON.parse('{{ chart_gasto_data|escapejs }}'),
+                borderColor: '#e65100', // Orange primary
+                backgroundColor: 'rgba(230, 81, 0, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. Consumo Chart
+    const ctxConsumo = document.getElementById('consumoChart').getContext('2d');
+    new Chart(ctxConsumo, {
+        type: 'doughnut',
+        data: {
+            labels: JSON.parse('{{ chart_consumo_labels|escapejs }}'),
+            datasets: [{
+                data: JSON.parse('{{ chart_consumo_data|escapejs }}'),
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // 3. Rendimiento Chart
+    const ctxRend = document.getElementById('rendimientoChart').getContext('2d');
+    const colorsRend = JSON.parse('{{ chart_rendimiento_colors|escapejs }}');
+    
+    new Chart(ctxRend, {
+        type: 'bar',
+        data: {
+            labels: JSON.parse('{{ chart_rendimiento_labels|escapejs }}'),
+            datasets: [{
+                label: 'Km/Lt Promedio',
+                data: JSON.parse('{{ chart_rendimiento_data|escapejs }}'),
+                backgroundColor: colorsRend,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Horizontal bar
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { 
+                    beginAtZero: true, 
+                    title: { display: true, text: 'Kilómetros por Litro' }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

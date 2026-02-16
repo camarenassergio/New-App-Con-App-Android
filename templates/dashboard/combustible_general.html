@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block page_title %}Control de Combustible - General{% endblock %}
+
+{% block content %}
+
+<div class="header-actions">
+    <div>
+        <h1>Reporte Mensual de Combustible</h1>
+        <p class="text-muted">Desglose de consumo y costos por unidad</p>
+    </div>
+    <a href="{% url 'dashboard:combustible_create' %}" class="btn-primary">
+        <i class="fas fa-gas-pump"></i> Registrar Carga
+    </a>
+</div>
+
+<div class="filters-container" style="margin-bottom: 20px;">    
+    <!-- Filtros de Fecha Avanzados -->
+    <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: flex-end; gap: 20px;">
+        <form method="get" style="display: flex; align-items: flex-end; gap: 20px; width: 100%;">
+            
+            <!-- Grupo Inicio -->
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-weight: 500; font-size: 0.9em; color: #555;">Desde</label>
+                <div style="display: flex; gap: 5px;">
+                    <select name="mes_inicio" class="form-select" style="min-width: 110px;">
+                        {% for m in meses_range %}
+                        <option value="{{ m }}" {% if filtros.mes_inicio == m %}selected{% endif %}>
+                            {% if m == 1 %}ENERO{% elif m == 2 %}FEBRERO{% elif m == 3 %}MARZO{% elif m == 4 %}ABRIL{% elif m == 5 %}MAYO{% elif m == 6 %}JUNIO{% elif m == 7 %}JULIO{% elif m == 8 %}AGOSTO{% elif m == 9 %}SEPTIEMBRE{% elif m == 10 %}OCTUBRE{% elif m == 11 %}NOVIEMBRE{% elif m == 12 %}DICIEMBRE{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <select name="anio_inicio" class="form-select" style="min-width: 90px;">
+                        {% for yy in anios_disponibles %}
+                        <option value="{{ yy }}" {% if filtros.anio_inicio == yy %}selected{% endif %}>{{ yy }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Separator -->
+            <div style="padding-bottom: 8px; color: #aaa;">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+            
+            <!-- Grupo Fin -->
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-weight: 500; font-size: 0.9em; color: #555;">Hasta</label>
+                <div style="display: flex; gap: 5px;">
+                    <select name="mes_fin" class="form-select" style="min-width: 110px;">
+                        {% for m in meses_range %}
+                        <option value="{{ m }}" {% if filtros.mes_fin == m %}selected{% endif %}>
+                           {% if m == 1 %}ENERO{% elif m == 2 %}FEBRERO{% elif m == 3 %}MARZO{% elif m == 4 %}ABRIL{% elif m == 5 %}MAYO{% elif m == 6 %}JUNIO{% elif m == 7 %}JULIO{% elif m == 8 %}AGOSTO{% elif m == 9 %}SEPTIEMBRE{% elif m == 10 %}OCTUBRE{% elif m == 11 %}NOVIEMBRE{% elif m == 12 %}DICIEMBRE{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <select name="anio_fin" class="form-select" style="min-width: 90px;">
+                        {% for yy in anios_disponibles %}
+                        <option value="{{ yy }}" {% if filtros.anio_fin == yy %}selected{% endif %}>{{ yy }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="height: 38px;">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+            
+            <a href="?" class="btn btn-outline-secondary" style="height: 38px;" title="Resetear Filtros">
+                <i class="fas fa-undo"></i>
+            </a>
+            
+        </form>
+    </div>
+</div>
+
+{% for mes_data in reporte_mensual %}
+<div class="table-container" style="margin-bottom: 30px;">
+    <div class="table-header">
+        <h3>{{ mes_data.mes_nombre }}</h3>
+        <span class="badge" style="background: #eee; color: #333;">Total Mes: ${{ mes_data.totales.total_global|floatformat:2|intcomma }}</span>
+    </div>
+    
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Unidad</th>
+                <th>Placas</th>
+                <th>Km Recorridos</th>
+                <th class="text-right">Litros</th>
+                <th class="text-right">Costo Combustible</th>
+                <th class="text-right">% Consumo</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fila in mes_data.filas %}
+            <tr>
+                <td>
+                    <a href="{% url 'dashboard:combustible_unidad_detail' fila.unidad.pk %}" style="font-weight: bold; color: var(--primary-color);">
+                        {{ fila.unidad.nombre_corto|default:fila.unidad.nUnidad }} - {{ fila.unidad.marca }}
+                    </a>
+                </td>
+                <td>{{ fila.unidad.placas }}</td>
+                <td>{{ fila.km_recorridos|intcomma }} km</td>
+                
+                <td class="text-right">{{ fila.litros|floatformat:2 }} L</td>
+                <td class="text-right font-bold">${{ fila.costo_combustible|floatformat:2|intcomma }}</td>
+                <td class="text-right">{{ fila.pct_consumo|floatformat:1 }}%</td>
+                <td class="text-right font-bold">${{ fila.total|floatformat:2|intcomma }}</td>
+            </tr>
+            {% endfor %}
+            <!-- Fila de Totales del Mes -->
+            <tr style="background-color: #f9f9f9; font-weight: bold; border-top: 2px solid #ddd;">
+                <td colspan="2" class="text-right">TOTALES</td>
+                <td>{{ mes_data.totales.km|intcomma }} km</td>
+                <td class="text-right">{{ mes_data.totales.litros|floatformat:2|intcomma }} L</td>
+                <td class="text-right">${{ mes_data.totales.combustible|floatformat:2|intcomma }}</td>
+                <td class="text-right">100%</td>
+                <td class="text-right">${{ mes_data.totales.total_global|floatformat:2|intcomma }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% empty %}
+<div class="empty-state">
+    <i class="fas fa-gas-pump"></i>
+    <h3>No hay registros de combustible</h3>
+    <p>Comienza registrando las cargas de tus unidades.</p>
+    <a href="{% url 'dashboard:combustible_create' %}" class="btn-primary">Registrar Primera Carga</a>
+</div>
+{% endfor %}
+
+<style>
+    .text-right { text-align: right; }
+    .font-bold { font-weight: bold; }
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+</style>
+
+{% endblock %}

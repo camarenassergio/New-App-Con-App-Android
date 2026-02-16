@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Directorio de Operadores{% endblock %}
+
+{% block content %}
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+    {% for op in operadores %}
+    <div class="stat-card" style="border-left: 4px solid {% if op.activo %}var(--success){% else %}var(--text-muted){% endif %};">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div>
+                <h3 style="margin-bottom: 5px;">{{ op.nombre }}</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;"> <i class="fas fa-phone"></i> {{ op.telefono }}</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem;"> <i class="fas fa-id-card"></i> {{ op.licencia }}</p>
+            </div>
+            <div class="avatar" style="background: #eee; color: #555;">
+                <i class="fas fa-user-tie"></i>
+            </div>
+        </div>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Vence: {{ op.vigencia_licencia|date:"d/m/Y" }}</span>
+            <a href="#" style="color: var(--primary-orange);">Ver Detalles</a>
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+        No hay operadores registrados.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

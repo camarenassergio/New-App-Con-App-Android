@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Acceso Denegado - Casa Lupita{% endblock %}
+
+{% block sidebar %}
+<!-- No Sidebar for 403 Page -->
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Force full width since sidebar is removed */
+    .main-content {
+        margin-left: 0 !important;
+    }
+    /* Hide menu toggle since there is no sidebar */
+    .menu-toggle {
+        display: none !important;
+    }
+</style>
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-8 text-center">
+        <!-- Error Icon -->
+        <div class="mb-4">
+            <i class="fas fa-user-lock" style="font-size: 5rem; color: var(--danger);"></i>
+        </div>
+        
+        <!-- Error Message -->
+        <h1 class="display-4 fw-bold mb-3" style="color: var(--primary-blue);">Acceso Restringido</h1>
+        <p class="lead text-muted mb-4">
+            Lo sentimos, no tienes los permisos necesarios para acceder a esta sección del sistema.
+        </p>
+        
+        <!-- Contextual Help -->
+        <div class="alert alert-warning d-inline-block text-start mb-5" role="alert" style="max-width: 600px;">
+            <div class="d-flex">
+                <div class="me-3">
+                    <i class="fas fa-info-circle fa-2x"></i>
+                </div>
+                <div>
+                    <h5 class="alert-heading">¿Crees que es un error?</h5>
+                    <p class="mb-0">
+                        Si necesitas acceso a este módulo, por favor contacta al administrador del sistema o al departamento de Logística para revisar tus permisos.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg px-4">
+                <i class="fas fa-arrow-left me-2"></i> Regresar
+            </a>
+            
+            {% if request.user.personal.puesto == 'CHOFER' %}
+                <a href="{% url 'dashboard:viajes_list' %}" class="btn btn-primary btn-lg px-4" style="background-color: var(--primary-orange); border: none;">
+                    <i class="fas fa-map-marked-alt me-2"></i> Ir a Mis Viajes
+                </a>
+            {% else %}
+                <a href="{% url 'dashboard:home' %}" class="btn btn-primary btn-lg px-4" style="background-color: var(--primary-orange); border: none;">
+                    <i class="fas fa-home me-2"></i> Ir al Inicio
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
