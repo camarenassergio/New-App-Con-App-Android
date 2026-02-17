@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -78,6 +79,7 @@ INSTALLED_APPS = [
     # Local
     'users.apps.UsersConfig',
     'dashboard.apps.DashboardConfig',
+    'storages',
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -86,6 +88,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -122,14 +125,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'logistica_db'),
-        'USER': os.environ.get('DB_USER', 'user'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'password'),
-        'HOST': os.environ.get('DB_HOST', 'db'),
-        'PORT': '3306',
-    }
+    'default': dj_database_url.config(
+        default=f"mysql://{os.environ.get('DB_USER', 'user')}:{os.environ.get('DB_PASSWORD', 'password')}@{os.environ.get('DB_HOST', 'db')}:3306/{os.environ.get('DB_NAME', 'logistica_db')}",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
@@ -167,7 +167,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+
+# CSRF Trusted Origins (For Railway)
+CSRF_TRUSTED_ORIGINS = ['https://*.railway.app']
+if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ.get('RAILWAY_PUBLIC_DOMAIN')}")
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/6.0/howto/static-files/
+
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
@@ -182,3 +192,30 @@ AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard:home'
 LOGOUT_REDIRECT_URL = 'login'
+
+# ==========================================
+# CONFIGURACIÓN DE ARCHIVOS (CLOUDFLARE R2)
+# ==========================================
+
+# 1. Leer las credenciales desde las variables de entorno
+AWS_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
+AWS_S3_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL')
+
+# 2. Configuraciones de seguridad y comportamiento
+AWS_S3_FILE_OVERWRITE = False # Si suben dos fotos con el mismo nombre, le agrega un sufijo para no borrar la vieja
+AWS_DEFAULT_ACL = None # Usa los permisos por defecto del bucket
+AWS_S3_VERIFY = True # Verifica el certificado SSL
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+
+# 3. ¡La Magia! Le decimos a Django que ya no guarde los 'media' en el disco duro
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
