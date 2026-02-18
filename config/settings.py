@@ -218,4 +218,7 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
+# Reemplaza 'tu-url-de-cloudflare' con la que te dio al activar el Public Development URL
+AWS_S3_CUSTOM_DOMAIN = 'tu-url-de-cloudflare.r2.dev' 
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_QUERYSTRING_AUTH = False  # Para que las URLs sean directas y no fallen por tiempo
