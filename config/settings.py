@@ -219,6 +219,6 @@ STORAGES = {
     },
 }
 # Reemplaza 'tu-url-de-cloudflare' con la que te dio al activar el Public Development URL
-AWS_S3_CUSTOM_DOMAIN = 'https://pub-15b9737ab21543ef8e242c2794bf77d2.r2.dev' 
+AWS_S3_CUSTOM_DOMAIN = 'pub-15b9737ab21543ef8e242c2794bf77d2.r2.dev' 
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_QUERYSTRING_AUTH = False  # Para que las URLs sean directas y no fallen por tiempo
