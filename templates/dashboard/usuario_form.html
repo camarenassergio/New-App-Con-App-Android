@@ -18,6 +18,15 @@
                     {% csrf_token %}
                     {{ form|crispy }}
                     
+                    <style>
+                        /* Hide default Django help text for passwords to avoid redundancy with checklist */
+                        #div_id_password1 .form-text, 
+                        #div_id_password1 .help-block,
+                        ul.help-block { 
+                            display: none !important; 
+                        }
+                    </style>
+                    
                     <!-- Password Strength Checklist -->
                     <div id="password-strength-container" class="mt-3 p-3 bg-light rounded d-none">
                         <small class="text-muted fw-bold">Seguridad de la contraseña:</small>
@@ -25,12 +34,14 @@
                             <li id="rule-length" class="text-muted"><i class="fas fa-circle me-2"></i>Mínimo 8 caracteres</li>
                             <li id="rule-upper" class="text-muted"><i class="fas fa-circle me-2"></i>Al menos una mayúscula</li>
                             <li id="rule-number" class="text-muted"><i class="fas fa-circle me-2"></i>Al menos un número</li>
-                            <!-- <li id="rule-special" class="text-muted"><i class="fas fa-circle me-2"></i>Al menos un carácter especial</li> -->
+                            <li id="rule-match" class="text-muted"><i class="fas fa-circle me-2"></i>Las contraseñas coinciden</li>
+                            <li id="rule-personal" class="text-muted"><i class="fas fa-circle me-2"></i>No similar a información personal</li>
+                            <li id="rule-sequence" class="text-muted"><i class="fas fa-circle me-2"></i>Sin secuencias numéricas (Ej. 1234)</li>
                         </ul>
                     </div>
 
                     <div class="d-grid mt-4 gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">
+                        <button type="submit" id="btnSubmitUser" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;" disabled>
                             <i class="fas fa-save me-2"></i> Crear Usuario
                         </button>
                         <a href="{% url 'dashboard:usuarios_list' %}" class="btn btn-light text-muted">Cancelar</a>
@@ -43,43 +54,145 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Find the first password input (usually the main one in UserCreationForm)
-        const passwordInput = document.querySelector("input[type='password']");
+        // Find ALL password inputs
+        const passwordInputs = document.querySelectorAll("input[type='password']");
+        const pass1 = passwordInputs[0]; // Main password
+        const pass2 = passwordInputs[1]; // Confirmation password
+        const btnSubmit = document.getElementById('btnSubmitUser');
+
+        // Personal Info Inputs
+        const inputUsername = document.getElementById('id_username');
+        const inputNombre = document.getElementById('id_nombre');
+        const inputPaterno = document.getElementById('id_apellido_paterno');
+        const inputMaterno = document.getElementById('id_apellido_materno');
+
         const container = document.getElementById('password-strength-container');
         
-        if (passwordInput) {
+        if (pass1) {
             const rules = {
                 length: { req: /.{8,}/, el: document.getElementById('rule-length') },
                 upper: { req: /[A-Z]/, el: document.getElementById('rule-upper') },
                 number: { req: /[0-9]/, el: document.getElementById('rule-number') },
-                // special: { req: /[^A-Za-z0-9]/, el: document.getElementById('rule-special') }
             };
+            
+            const matchRuleEl = document.getElementById('rule-match');
+            const personalRuleEl = document.getElementById('rule-personal');
+            const sequenceRuleEl = document.getElementById('rule-sequence');
 
-            passwordInput.addEventListener('focus', () => {
-                container.classList.remove('d-none');
-            });
+            function updateRuleStatus(element, isValid) {
+                 const icon = element.querySelector('i');
+                 if (isValid) {
+                    element.classList.remove('text-muted', 'text-danger');
+                    element.classList.add('text-success', 'fw-bold');
+                    element.dataset.valid = "true";
+                    icon.className = 'fas fa-check-circle me-2';
+                } else {
+                    element.classList.remove('text-success', 'fw-bold');
+                    element.classList.add('text-muted');
+                    element.dataset.valid = "false";
+                    icon.className = 'fas fa-circle me-2';
+                }
+            }
 
-            passwordInput.addEventListener('input', function() {
-                const val = passwordInput.value;
+            function hasNumericalSequence(str) {
+                // Find all digit sequences
+                const numbers = str.match(/\d+/g);
+                if (!numbers) return false;
                 
-                for (const key in rules) {
-                    const rule = rules[key];
-                    const icon = rule.el.querySelector('i');
-                    
-                    if (rule.req.test(val)) {
-                        rule.el.classList.remove('text-muted', 'text-danger');
-                        rule.el.classList.add('text-success', 'fw-bold');
-                        icon.className = 'fas fa-check-circle me-2';
-                    } else {
-                        rule.el.classList.remove('text-success', 'fw-bold');
-                        rule.el.classList.add('text-muted');
-                        icon.className = 'fas fa-circle me-2';
-                        
-                        // Optional: make it red if it was previously green but now failed (e.g. deletion)
-                        // rule.el.classList.add('text-danger'); 
+                for (let numStr of numbers) {
+                    if (numStr.length > 3) {
+                        // Check if it is sequential (ascending or descending)
+                        for (let i = 0; i < numStr.length - 3; i++) {
+                            const a = parseInt(numStr[i]);
+                            const b = parseInt(numStr[i+1]);
+                            const c = parseInt(numStr[i+2]);
+                            const d = parseInt(numStr[i+3]);
+                            
+                            // Ascending: 1,2,3,4
+                            if (b === a+1 && c === b+1 && d === c+1) return true;
+                            // Descending: 4,3,2,1
+                            if (b === a-1 && c === b-1 && d === c-1) return true;
+                        }
                     }
                 }
+                return false;
+            }
+
+            function validate() {
+                const val1 = pass1.value;
+                const val2 = pass2 ? pass2.value : "";
+                let allValid = true;
+
+                // 1. Check Regex Rules
+                for (const key in rules) {
+                    const rule = rules[key];
+                    const isValid = rule.req.test(val1);
+                    updateRuleStatus(rule.el, isValid);
+                    if (!isValid) allValid = false;
+                }
+                
+                // 2. Check Match
+                if (pass2 && matchRuleEl) {
+                    const match = val1 && val2 && (val1 === val2) && (val1.length > 0);
+                    updateRuleStatus(matchRuleEl, match);
+                    if (!match) allValid = false;
+                }
+
+                // 3. Check Personal Info Similarity
+                if (personalRuleEl) {
+                    let isSafe = true;
+                    if (val1.length > 0) {
+                        const lowerPass = val1.toLowerCase();
+                        const forbidden = [];
+                        
+                        if (inputUsername && inputUsername.value) forbidden.push(inputUsername.value.toLowerCase());
+                        if (inputNombre && inputNombre.value) forbidden.push(inputNombre.value.toLowerCase());
+                        if (inputPaterno && inputPaterno.value) forbidden.push(inputPaterno.value.toLowerCase());
+                        if (inputMaterno && inputMaterno.value) forbidden.push(inputMaterno.value.toLowerCase());
+
+                        for (let word of forbidden) {
+                            if (word.length > 2 && lowerPass.includes(word)) {
+                                isSafe = false;
+                                break;
+                            }
+                        }
+                    } else {
+                        isSafe = false; 
+                    }
+                    updateRuleStatus(personalRuleEl, isSafe && val1.length > 0);
+                    if (!(isSafe && val1.length > 0)) allValid = false;
+                }
+
+                // 4. Check Sequential Numbers
+                if (sequenceRuleEl) {
+                    const hasSequence = hasNumericalSequence(val1);
+                    // Valid if it DOES NOT have a sequence AND is not empty
+                    const isValidSequence = !hasSequence && val1.length > 0;
+                    updateRuleStatus(sequenceRuleEl, isValidSequence);
+                    if (!isValidSequence) allValid = false;
+                }
+
+                // Enable/Disable Button
+                if (btnSubmit) {
+                    btnSubmit.disabled = !allValid;
+                }
+            }
+
+            // Listeners
+            pass1.addEventListener('focus', () => container.classList.remove('d-none'));
+            pass1.addEventListener('input', validate);
+            
+            if (pass2) {
+                pass2.addEventListener('focus', () => container.classList.remove('d-none'));
+                pass2.addEventListener('input', validate);
+            }
+            
+            [inputUsername, inputNombre, inputPaterno, inputMaterno].forEach(el => {
+                if(el) el.addEventListener('input', validate);
             });
+            
+            // Initial Validate (to ensure button state correct on load/refresh)
+            validate();
         }
     });
 </script>
