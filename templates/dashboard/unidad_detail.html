@@ -19,97 +19,125 @@
     </div>
 </div>
 
-<div class="row" style="display: flex; gap: 24px; flex-wrap: wrap;">
-    <!-- Technical Details -->
-    <div class="card shadow-sm" style="flex: 1; min-width: 300px; background: white; padding: 24px; border-radius: 12px;">
-        <h3 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Ficha Técnica</h3>
-        <p style="color: var(--text-muted); margin-bottom: 15px; font-weight: 500;">{{ unidad.descripcion_vehiculo }}</p>
-        <table style="width: 100%;">
-            <tr><td style="padding: 8px 0; color: #666;">No. Unidad:</td><td style="font-weight: bold;">{{ unidad.nUnidad }}</td></tr>
-            <tr><td style="padding: 8px 0; color: #666;">Marca/Submarca:</td><td style="font-weight: bold;">{{ unidad.marca }} - {{ unidad.submarca }}</td></tr>
-            <tr><td style="padding: 8px 0; color: #666;">Modelo:</td><td style="font-weight: bold;">{{ unidad.modelo_anio }}</td></tr>
-            <tr><td style="padding: 8px 0; color: #666;">No. Serie:</td><td style="font-weight: bold;">{{ unidad.no_serie|default:"-" }}</td></tr>
-            <tr><td style="padding: 8px 0; color: #666;">No. Motor:</td><td style="font-weight: bold;">{{ unidad.no_motor|default:"-" }}</td></tr>
-            <tr><td style="padding: 8px 0; color: #666;">Capacidad:</td><td style="font-weight: bold;">{{ unidad.capacidad_kg }} kg</td></tr>    
-            <tr><td style="padding: 8px 0; color: #666;">Kilometraje:</td><td style="font-weight: bold;">{{ unidad.kilometraje_actual }} km</td></tr>
-            <tr><td style="padding: 8px 0; color: #666;">Tipo:</td><td style="font-weight: bold;">{{ unidad.get_tipo_display }}</td></tr>
-        </table>
+<div class="row g-4">
+    <!-- Ficha Técnica -->
+    <div class="col-12 col-lg-4 d-flex">
+        <div class="card shadow-sm w-100 border-0">
+            <div class="card-body p-4 d-flex flex-column">
+                <h3 class="card-title mb-3 pb-2 border-bottom" style="font-size: 1.25rem; color: var(--primary-color);">Ficha Técnica</h3>
+                <p class="text-muted fw-bold mb-3">{{ unidad.descripcion_vehiculo }}</p>
+                
+                <div class="table-responsive flex-grow-1">
+                    <table class="table table-borderless mb-0 align-middle">
+                        <tbody>
+                            <tr><td class="text-muted py-1">No. Unidad:</td><td class="fw-bold py-1 text-dark">{{ unidad.nUnidad }}</td></tr>
+                            <tr><td class="text-muted py-1">Marca:</td><td class="fw-bold py-1 text-dark">{{ unidad.marca }}</td></tr>
+                            <tr><td class="text-muted py-1">Submarca:</td><td class="fw-bold py-1 text-dark">{{ unidad.submarca }}</td></tr>
+                            <tr><td class="text-muted py-1">Modelo:</td><td class="fw-bold py-1 text-dark">{{ unidad.modelo_anio }}</td></tr>
+                            <tr><td class="text-muted py-1">Serie:</td><td class="fw-bold py-1 text-dark text-break">{{ unidad.no_serie|default:"-" }}</td></tr>
+                            <tr><td class="text-muted py-1">Motor:</td><td class="fw-bold py-1 text-dark text-break">{{ unidad.no_motor|default:"-" }}</td></tr>
+                            <tr><td class="text-muted py-1">Capacidad:</td><td class="fw-bold py-1 text-dark">{{ unidad.capacidad_kg }} kg</td></tr>    
+                            <tr><td class="text-muted py-1">Km:</td><td class="fw-bold py-1 text-dark">{{ unidad.kilometraje_actual }} km</td></tr>
+                            <tr><td class="text-muted py-1">Tipo:</td><td class="fw-bold py-1 text-dark">{{ unidad.get_tipo_display }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Legal & Docs -->
-    <div class="card shadow-sm" style="flex: 1; min-width: 300px; background: white; padding: 24px; border-radius: 12px;">
-        <h3 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Documentación Legal</h3>
-        <table style="width: 100%;">
-            <tr><td style="padding: 8px 0; color: #666;">Tarjeta Circulación:</td><td style="font-weight: bold;">{{ unidad.tarjeta_circulacion|default:"-" }}</td></tr>
-            <tr><td style="padding: 8px 0; color: #666;">Permiso STC:</td><td style="font-weight: bold;">{{ unidad.tipo_permiso_stc|default:"-" }}</td></tr>
-            <tr>
-                <td style="padding: 8px 0; color: #666;">Vencimiento de Placa:</td>
-                <td>
-                    <span style="font-weight: bold;">{{ unidad.vencimiento_placa|date:"d/m/Y"|default:"-" }}</span>
-                    {% if unidad.alerta_placa == 'VENCIDA' %}
-                        <span class="badge bg-danger text-white">VENCIDA</span>
-                    {% elif unidad.alerta_placa == 'POR VENCER' %}
-                        <span class="badge bg-warning text-dark">POR VENCER</span>
-                    {% endif %}
-                </td>
-            </tr>
-            <tr><td style="padding: 8px 0; color: #666;">Holograma:</td><td style="font-weight: bold;">{{ unidad.holograma }}</td></tr>
-            
-            <!-- Tenencia Status -->
-            <tr>
-                <td style="padding: 8px 0; color: #666;">Última Tenencia:</td>
-                <td>
-                    <span style="font-weight: bold;">{{ unidad.ultimo_pago_tenencia|date:"d/m/Y"|default:"PENDIENTE" }}</span>
-                    {% if unidad.alerta_tenencia == 'VENCIDA' %}
-                        <span class="badge badge-danger">VENCIDA</span>
-                    {% elif unidad.alerta_tenencia == 'POR VENCER' %}
-                        <span class="badge badge-warning">POR VENCER</span>
-                    {% endif %}
-                </td>
-            </tr>
+    <!-- Documentación Legal -->
+    <div class="col-12 col-lg-4 d-flex">
+        <div class="card shadow-sm w-100 border-0">
+            <div class="card-body p-4 d-flex flex-column">
+                <h3 class="card-title mb-3 pb-2 border-bottom" style="font-size: 1.25rem; color: var(--primary-color);">Documentación Legal</h3>
+                <div class="table-responsive flex-grow-1">
+                    <table class="table table-borderless mb-0 align-middle">
+                        <tbody>
+                            <tr><td class="text-muted py-1">Circulación:</td><td class="fw-bold py-1 text-dark">{{ unidad.tarjeta_circulacion|default:"-" }}</td></tr>
+                            <tr><td class="text-muted py-1">Permiso STC:</td><td class="fw-bold py-1 text-dark">{{ unidad.tipo_permiso_stc|default:"-" }}</td></tr>
+                            
+                            <tr>
+                                <td class="text-muted py-1 align-top">Placas:</td>
+                                <td class="py-1">
+                                    <div class="fw-bold text-dark">{{ unidad.vencimiento_placa|date:"d/m/Y"|default:"-" }}</div>
+                                    {% if unidad.alerta_placa == 'VENCIDA' %}
+                                        <div class="mt-1"><span class="badge bg-danger text-white">VENCIDA</span></div>
+                                    {% elif unidad.alerta_placa == 'POR VENCER' %}
+                                        <div class="mt-1"><span class="badge bg-warning text-dark">POR VENCER</span></div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr><td class="text-muted py-1">Holograma:</td><td class="fw-bold py-1 text-dark">{{ unidad.holograma }}</td></tr>
+                            
+                            <tr>
+                                <td class="text-muted py-1 align-top">Tenencia:</td>
+                                <td class="py-1">
+                                    <div class="fw-bold text-dark">{{ unidad.ultimo_pago_tenencia|date:"d/m/Y"|default:"PENDIENTE" }}</div>
+                                    {% if unidad.alerta_tenencia == 'VENCIDA' %}
+                                        <div class="mt-1"><span class="badge bg-danger text-white">VENCIDA</span></div>
+                                    {% elif unidad.alerta_tenencia == 'POR VENCER' %}
+                                        <div class="mt-1"><span class="badge bg-warning text-dark">POR VENCER</span></div>
+                                    {% endif %}
+                                </td>
+                            </tr>
 
-            <!-- Verification Status -->
-            <tr>
-                <td style="padding: 8px 0; color: #666;">Última Verificación:</td>
-                <td>
-                    <span style="font-weight: bold;">Vence: {{ unidad.vencimiento_verificacion|date:"d/m/Y"|default:"-" }}</span>
-                    {% if unidad.alerta_verificacion == 'VENCIDA' %}
-                        <span class="badge badge-danger">VENCIDA</span>
-                    {% elif unidad.alerta_verificacion == 'POR VENCER' %}
-                        <span class="badge badge-warning">POR VENCER</span>
-                    {% endif %}
-                </td>
-            </tr>
-        </table>
+                            <tr>
+                                <td class="text-muted py-1 align-top">Verificación:</td>
+                                <td class="py-1">
+                                    <div class="fw-bold text-dark">{{ unidad.vencimiento_verificacion|date:"d/m/Y"|default:"-" }}</div>
+                                    {% if unidad.alerta_verificacion == 'VENCIDA' %}
+                                        <div class="mt-1"><span class="badge bg-danger text-white">VENCIDA</span></div>
+                                    {% elif unidad.alerta_verificacion == 'POR VENCER' %}
+                                        <div class="mt-1"><span class="badge bg-warning text-dark">POR VENCER</span></div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
     
-    <!-- Insurance -->
-    <div class="card shadow-sm" style="flex: 1; min-width: 300px; background: white; padding: 24px; border-radius: 12px; margin-top: 24px; width: 100%;">
-        <h3 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Seguro</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-            <div>
-                <span style="color: #666; display: block; font-size: 0.9rem;">Aseguradora</span>
-                <span style="font-weight: bold; font-size: 1.1rem;">{{ unidad.nombre_aseguradora|default:"-" }}</span>
-            </div>
-            <div>
-                <span style="color: #666; display: block; font-size: 0.9rem;">Póliza</span>
-                <span style="font-weight: bold; font-size: 1.1rem;">{{ unidad.poliza_seguro|default:"-" }}</span>
-            </div>
-            <div>
-                <span style="color: #666; display: block; font-size: 0.9rem;">Cobertura</span>
-                <span style="font-weight: bold;">{{ unidad.tipo_cobertura_seguro|default:"-" }}</span>
-            </div>
-            <div>
-                <span style="color: #666; display: block; font-size: 0.9rem;">Vencimiento</span>
-                <span style="font-weight: bold; {% if unidad.vencimiento_poliza and unidad.vencimiento_poliza < today %}color: red;{% endif %}">
-                    {{ unidad.vencimiento_poliza|date:"d/m/Y"|default:"-" }}
-                </span>
-                <div style="margin-top: 4px;">
-                    {% if unidad.alerta_seguro == 'VENCIDA' %}
-                        <span class="badge bg-danger text-white">VENCIDA</span>
-                    {% elif unidad.alerta_seguro == 'POR VENCER' %}
-                        <span class="badge bg-warning text-dark">POR VENCER</span>
-                    {% endif %}
+    <!-- Seguro -->
+    <div class="col-12 col-lg-4 d-flex">
+        <div class="card shadow-sm w-100 border-0">
+            <div class="card-body p-4 d-flex flex-column">
+                <h3 class="card-title mb-3 pb-2 border-bottom" style="font-size: 1.25rem; color: var(--primary-color);">Seguro</h3>
+                
+                <div class="flex-grow-1">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Aseguradora</small>
+                        <div class="fw-bold fs-5 text-dark">{{ unidad.nombre_aseguradora|default:"-" }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Titular Póliza</small>
+                        <div class="fw-bold text-dark">{{ unidad.titular_poliza|default:"-" }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Póliza</small>
+                        <div class="fw-bold text-dark">{{ unidad.poliza_seguro|default:"-" }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Cobertura</small>
+                        <div class="fw-bold text-dark">{{ unidad.tipo_cobertura_seguro|default:"-" }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Vencimiento</small>
+                        <div class="fw-bold {% if unidad.vencimiento_poliza and unidad.vencimiento_poliza < today %}text-danger{% else %}text-dark{% endif %}">
+                            {{ unidad.vencimiento_poliza|date:"d/m/Y"|default:"-" }}
+                        </div>
+                        {% if unidad.alerta_seguro == 'VENCIDA' %}
+                            <div class="mt-1"><span class="badge bg-danger text-white">VENCIDA</span></div>
+                        {% elif unidad.alerta_seguro == 'POR VENCER' %}
+                            <div class="mt-1"><span class="badge bg-warning text-dark">POR VENCER</span></div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

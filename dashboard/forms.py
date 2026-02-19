@@ -7,39 +7,116 @@ User = get_user_model()
 
 class PersonalCreationForm(UserCreationForm):
     # Campos adicionales de Personal
-    nombre_completo = forms.CharField(max_length=150, label="Nombre Completo")
+    nombre = forms.CharField(max_length=100, label="Nombre(s)")
+    apellido_paterno = forms.CharField(max_length=100, label="Apellido Paterno")
+    apellido_materno = forms.CharField(max_length=100, label="Apellido Materno", required=False)
     puesto = forms.ChoiceField(choices=Personal.PUESTO_CHOICES, label="Puesto / Rol")
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = UserCreationForm.Meta.fields + ('nombre_completo', 'puesto',)
+        fields = UserCreationForm.Meta.fields + ('nombre', 'apellido_paterno', 'apellido_materno', 'puesto',)
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.save()
+        # Populate User fields for better compatibility
+        user.first_name = self.cleaned_data['nombre']
+        user.last_name = f"{self.cleaned_data['apellido_paterno']} {self.cleaned_data.get('apellido_materno', '')}".strip()
         
-        # Crear perfil Personal
-        Personal.objects.create(
-            usuario=user,
-            nombre_completo=self.cleaned_data['nombre_completo'],
-            puesto=self.cleaned_data['puesto']
-        )
+        if commit:
+            user.save()
+            # Crear perfil Personal
+            Personal.objects.create(
+                usuario=user,
+                nombre=self.cleaned_data['nombre'],
+                apellido_paterno=self.cleaned_data['apellido_paterno'],
+                apellido_materno=self.cleaned_data.get('apellido_materno', ''),
+                puesto=self.cleaned_data['puesto']
+            )
         return user
 
 class UnidadForm(forms.ModelForm):
+    supervisor_auth = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=False,
+        label="Auth Supervisor"
+    )
+
     class Meta:
         model = Unidad
-        fields = ['nombre_corto', 'placas', 'descripcion_vehiculo', 'no_serie', 'no_motor', 
-                  'tarjeta_circulacion', 'vencimiento_placa', 'tipo_permiso_stc',
-                  'nombre_aseguradora', 'tipo_cobertura_seguro', 'poliza_seguro', 'vencimiento_poliza',
-                  'marca', 'submarca', 'modelo_anio', 'tipo', 'capacidad_kg', 'capacidad_tanque']
+        fields = [
+            'nombre_corto',             # 1. Nombre Interno
+            'descripcion_vehiculo',     # 2. Descripción
+            'placas',                   # 3. Placas
+            'no_serie',                 # 4. No. Serie
+            'no_motor',                 # 5. No. Motor
+            'marca',                    # 6. Marca
+            'submarca',                 # 7. Submarca
+            'modelo_anio',              # 8. Modelo
+            'tipo',                     # 9. Tipo
+            'tipo_combustible_unidad',  # (Extra) Combustible (Requerido por lógica)
+            'capacidad_kg',             # 10. Capacidad
+            'capacidad_tanque',         # (Extra) Capacidad Tanque
+            'tarjeta_circulacion',      # 11. Tarjeta de Circulación
+            'vencimiento_placa',        # 12. Vencimiento Placa
+            'poliza_seguro',            # 13. Número de Póliza
+            'titular_poliza',           # 14. Titular de la Póliza
+            'nombre_aseguradora',       # 15. Aseguradora
+            'tipo_cobertura_seguro',    # 16. Cobertura
+            'vencimiento_poliza',       # 17. Vencimiento Póliza
+            'fecha_adquisicion',        # 18. Fecha Adquisición
+            'kilometraje_actual',       # 19. Km Actual
+            'supervisor_auth',          # (Extra) Autorización
+            'ultimo_pago_tenencia',     # 20. Último pago Tenencia
+            'vencimiento_verificacion', # 21. Vencimiento Verificación
+            'tipo_permiso_stc',         # 22. Permiso STC
+            'observaciones',            # 23. Observaciones
+        ]
         widgets = {
             'fecha_adquisicion': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'vencimiento_placa': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'vencimiento_poliza': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'ultimo_pago_tenencia': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'vencimiento_verificacion': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'observaciones': forms.Textarea(attrs={'rows': 3}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo = cleaned_data.get('tipo')
+        tipo_combustible = cleaned_data.get('tipo_combustible_unidad')
+
+        # 1. Validación de Combustible
+        if tipo == 'CAMION' and tipo_combustible != 'DIESEL':
+            self.add_error('tipo_combustible_unidad', "Los Camiones solo pueden usar DIESEL.")
+
+        # 2. Validación de Cambio de Kilometraje (Requiere Auth Supervisor)
+        # Solo aplica en edición (si self.instance.pk existe)
+        if self.instance.pk:
+            new_km = cleaned_data.get('kilometraje_actual')
+            old_km = self.instance.kilometraje_actual
+            
+            # Si hubo cambio en el kilometraje
+            if new_km is not None and old_km is not None and new_km != old_km:
+                supervisor_pwd = cleaned_data.get('supervisor_auth')
+                
+                if not supervisor_pwd:
+                    self.add_error('supervisor_auth', "Se requiere autorización de supervisor para modificar el kilometraje.")
+                else:
+                    # Validar contraseña contra cualquier superusuario
+                    from django.contrib.auth import get_user_model
+                    User = get_user_model()
+                    superusers = User.objects.filter(is_superuser=True)
+                    
+                    auth_success = False
+                    for su in superusers:
+                        if su.check_password(supervisor_pwd):
+                            auth_success = True
+                            break
+                    
+                    if not auth_success:
+                        self.add_error('supervisor_auth', "Contraseña de supervisor incorrecta. Cambio no autorizado.")
+        
+        return cleaned_data
 
 class RegistroCombustibleForm(forms.ModelForm):
     # Field to estimate initial fuel level to validate overflow

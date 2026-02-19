@@ -29,7 +29,7 @@
                     <span style="font-weight: 500;">{{ user.username }}</span>
                 </td>
                 <td>
-                    {{ user.personal.nombre_completo|default:"-" }}
+                    {{ user.personal.nombre }} {{ user.personal.apellido_paterno }} {{ user.personal.apellido_materno|default:"" }}
                 </td>
                 <td>
                     {% if user.is_superuser %}

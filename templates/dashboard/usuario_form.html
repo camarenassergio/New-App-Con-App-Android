@@ -18,6 +18,17 @@
                     {% csrf_token %}
                     {{ form|crispy }}
                     
+                    <!-- Password Strength Checklist -->
+                    <div id="password-strength-container" class="mt-3 p-3 bg-light rounded d-none">
+                        <small class="text-muted fw-bold">Seguridad de la contraseña:</small>
+                        <ul class="list-unstyled mt-2 mb-0 small">
+                            <li id="rule-length" class="text-muted"><i class="fas fa-circle me-2"></i>Mínimo 8 caracteres</li>
+                            <li id="rule-upper" class="text-muted"><i class="fas fa-circle me-2"></i>Al menos una mayúscula</li>
+                            <li id="rule-number" class="text-muted"><i class="fas fa-circle me-2"></i>Al menos un número</li>
+                            <!-- <li id="rule-special" class="text-muted"><i class="fas fa-circle me-2"></i>Al menos un carácter especial</li> -->
+                        </ul>
+                    </div>
+
                     <div class="d-grid mt-4 gap-2">
                         <button type="submit" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">
                             <i class="fas fa-save me-2"></i> Crear Usuario
@@ -29,4 +40,47 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Find the first password input (usually the main one in UserCreationForm)
+        const passwordInput = document.querySelector("input[type='password']");
+        const container = document.getElementById('password-strength-container');
+        
+        if (passwordInput) {
+            const rules = {
+                length: { req: /.{8,}/, el: document.getElementById('rule-length') },
+                upper: { req: /[A-Z]/, el: document.getElementById('rule-upper') },
+                number: { req: /[0-9]/, el: document.getElementById('rule-number') },
+                // special: { req: /[^A-Za-z0-9]/, el: document.getElementById('rule-special') }
+            };
+
+            passwordInput.addEventListener('focus', () => {
+                container.classList.remove('d-none');
+            });
+
+            passwordInput.addEventListener('input', function() {
+                const val = passwordInput.value;
+                
+                for (const key in rules) {
+                    const rule = rules[key];
+                    const icon = rule.el.querySelector('i');
+                    
+                    if (rule.req.test(val)) {
+                        rule.el.classList.remove('text-muted', 'text-danger');
+                        rule.el.classList.add('text-success', 'fw-bold');
+                        icon.className = 'fas fa-check-circle me-2';
+                    } else {
+                        rule.el.classList.remove('text-success', 'fw-bold');
+                        rule.el.classList.add('text-muted');
+                        icon.className = 'fas fa-circle me-2';
+                        
+                        // Optional: make it red if it was previously green but now failed (e.g. deletion)
+                        // rule.el.classList.add('text-danger'); 
+                    }
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

@@ -19,7 +19,7 @@ class Unidad(models.Model):
 
     # Identificadores
     nUnidad = models.CharField(max_length=20, unique=True, verbose_name="No. Unidad (U#)", editable=False)
-    nombre_corto = models.CharField(max_length=50, verbose_name="Nombre Corto", null=True, blank=True, help_text="Identificador rápido para modales y listas (ej. 'La Perrona')")
+    nombre_corto = models.CharField(max_length=50, verbose_name="Nombre Interno", null=True, blank=True, help_text="Identificador rápido para modales y listas (ej. 'Rojita')")
     placas = models.CharField(max_length=15, unique=True, verbose_name="Placas")
     
     # Descripción & Detalles
@@ -27,23 +27,12 @@ class Unidad(models.Model):
     no_serie = models.CharField(max_length=50, verbose_name="No. de Serie", unique=True, null=True, blank=True)
     no_motor = models.CharField(max_length=50, verbose_name="No. de Motor", null=True, blank=True)
     
-    # Legal & Documentación
-    tarjeta_circulacion = models.CharField(max_length=50, verbose_name="Tarjeta de Circulación", null=True, blank=True)
-    vencimiento_placa = models.DateField(verbose_name="Vencimiento de Placa", null=True, blank=True)
-    tipo_permiso_stc = models.CharField(max_length=100, verbose_name="Tipo de Permiso STC", null=True, blank=True)
-    
-    # Seguro
-    nombre_aseguradora = models.CharField(max_length=100, verbose_name="Aseguradora", null=True, blank=True)
-    tipo_cobertura_seguro = models.CharField(max_length=100, verbose_name="Tipo de Cobertura", null=True, blank=True)
-    poliza_seguro = models.CharField(max_length=50, verbose_name="Número de Póliza", null=True, blank=True)
-    vencimiento_poliza = models.DateField(verbose_name="Vencimiento de Póliza", null=True, blank=True)
-
     # --- CAMPOS NORMALIZADOS ---
     marca = models.CharField(max_length=50, verbose_name="Marca")
     submarca = models.CharField(max_length=50, verbose_name="Submarca")
     modelo_anio = models.PositiveIntegerField(verbose_name="Modelo (Año)")
     
-    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='CAMION')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='CAMIONETA')
     capacidad_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Capacidad (kg)")
     capacidad_tanque = models.PositiveIntegerField(default=100, verbose_name="Capacidad Tanque (Litros)")
     
@@ -54,9 +43,22 @@ class Unidad(models.Model):
     tipo_combustible_unidad = models.CharField(
         max_length=10, 
         choices=COMBUSTIBLE_UNIDAD_CHOICES, 
-        default='DIESEL',
+        default='GASOLINA',
         verbose_name="Tipo de Motor"
     )
+    # Legal & Documentación
+    tarjeta_circulacion = models.CharField(max_length=50, verbose_name="Tarjeta de Circulación", null=True, blank=True)
+    vencimiento_placa = models.DateField(verbose_name="Vencimiento de Placa", null=True, blank=True)
+    tipo_permiso_stc = models.CharField(max_length=100, verbose_name="Permiso STC", default="N/A", null=True, blank=True)
+    
+    # Seguro
+    nombre_aseguradora = models.CharField(max_length=100, verbose_name="Aseguradora", null=True, blank=True)
+    tipo_cobertura_seguro = models.CharField(max_length=100, verbose_name="Tipo de Cobertura", null=True, blank=True)
+    poliza_seguro = models.CharField(max_length=50, verbose_name="Número de Póliza", null=True, blank=True)
+    titular_poliza = models.CharField(max_length=150, verbose_name="Titular de la Póliza", null=True, blank=True)
+    vencimiento_poliza = models.DateField(verbose_name="Vencimiento de Póliza", null=True, blank=True)
+
+    
 
     en_servicio = models.BooleanField(default=True , verbose_name="¿En servicio?")
     fecha_adquisicion = models.DateField(verbose_name="Fecha Adquisición", null=True, blank=True)
@@ -346,10 +348,13 @@ class Personal(models.Model):
     
     usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     puesto = models.CharField(max_length=20, choices=PUESTO_CHOICES)
-    nombre_completo = models.CharField(max_length=150)
+    
+    nombre = models.CharField(max_length=100, verbose_name="Nombre(s)")
+    apellido_paterno = models.CharField(max_length=100, verbose_name="Apellido Paterno")
+    apellido_materno = models.CharField(max_length=100, verbose_name="Apellido Materno", null=True, blank=True)
 
     def __str__(self):
-        return f"{self.nombre_completo} ({self.puesto})"
+        return f"{self.nombre} {self.apellido_paterno} ({self.puesto})"
     class Meta:
         verbose_name = "Personal"
         verbose_name_plural = "Personal" 

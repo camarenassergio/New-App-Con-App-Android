@@ -33,9 +33,9 @@ ALLOWED_HOSTS = ['*']
 ENVIRONMENT = os.environ.get('ENVIRONMENT', 'DEV')
 SESSION_COOKIE_NAME = f"sessionid_{ENVIRONMENT.lower()}"
 CSRF_COOKIE_NAME = f"csrftoken_{ENVIRONMENT.lower()}"
+SESSION_COOKIE_AGE = 5400  # 90 minutes
 
 if ENVIRONMENT == 'DEV':
-    SESSION_COOKIE_AGE = 3600  # 60 minutes
     SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 else:
     # --- PRODUCTION SECURITY ---
@@ -204,21 +204,31 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
 AWS_S3_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL')
 
 # 2. Configuraciones de seguridad y comportamiento
-AWS_S3_FILE_OVERWRITE = False # Si suben dos fotos con el mismo nombre, le agrega un sufijo para no borrar la vieja
-AWS_DEFAULT_ACL = None # Usa los permisos por defecto del bucket
-AWS_S3_VERIFY = True # Verifica el certificado SSL
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+AWS_S3_VERIFY = True
 AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_REGION_NAME = 'us-east-1'  # Región genérica para Cloudflare R2
+AWS_S3_ADDRESSING_STYLE = 'path'    # Obligatorio para R2 (Endpoint/Bucket)
 
 # 3. ¡La Magia! Le decimos a Django que ya no guarde los 'media' en el disco duro
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "endpoint_url": os.environ.get('R2_ENDPOINT_URL'),
+            "addressing_style": "path",
+            "region_name": "us-east-1",
+        },
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-# Reemplaza 'tu-url-de-cloudflare' con la que te dio al activar el Public Development URL
-AWS_S3_CUSTOM_DOMAIN = 'pub-9fe9d92af3a64b46a252b8123c833556.r2.dev' 
-AWS_S3_SIGNATURE_VERSION = 's3v4'
-AWS_QUERYSTRING_AUTH = False  # Para que las URLs sean directas y no fallen por tiempo
+
+# Configuración de URLs Públicas (R2)
+# Si tenemos un dominio personalizado (R2 Public), lo usamos para generar los links
+if os.environ.get('R2_PUBLIC_DOMAIN'):
+    AWS_S3_CUSTOM_DOMAIN = os.environ.get('R2_PUBLIC_DOMAIN')
+
+AWS_QUERYSTRING_AUTH = False

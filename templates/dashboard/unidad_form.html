@@ -10,14 +10,172 @@
         <p style="color: var(--text-muted);">Ingrese la información normalizada (Año a 4 dígitos, Marca, Submarca).</p>
     </div>
 
-    <form method="post">
+    <form method="post" id="unidadForm">
         {% csrf_token %}
         {{ form|crispy }}
         
         <div style="margin-top: 32px; display: flex; gap: 16px;">
-            <button type="submit" class="btn-primary">Guardar Unidad</button>
+            <button type="button" id="btnGuardar" class="btn btn-primary">Guardar Unidad</button>
             <a href="{% url 'dashboard:unidades_list' %}" style="padding: 10px 20px; color: var(--text-muted); text-decoration: none;">Cancelar</a>
         </div>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoSelect = document.getElementById('id_tipo');
+        const combustibleSelect = document.getElementById('id_tipo_combustible_unidad');
+        
+        function updateFuelOptions() {
+            const tipo = tipoSelect.value;
+            // Get options
+            const dieselOption = combustibleSelect.querySelector("option[value='DIESEL']");
+            const magnaOption = combustibleSelect.querySelector("option[value='MAGNA']");
+            const premiumOption = combustibleSelect.querySelector("option[value='PREMIUM']");
+            
+            if (tipo === 'CAMION') {
+                // Select Diesel
+                combustibleSelect.value = 'DIESEL';
+                // Disable others
+                if (magnaOption) magnaOption.disabled = true;
+                if (premiumOption) premiumOption.disabled = true;
+                if (dieselOption) dieselOption.disabled = false;
+            } else if (tipo === 'CAMIONETA') {
+                // Enable all
+                if (magnaOption) magnaOption.disabled = false;
+                if (premiumOption) premiumOption.disabled = false;
+                if (dieselOption) dieselOption.disabled = false;
+            }
+        }
+        
+        // Listen for change
+        if (tipoSelect && combustibleSelect) {
+            tipoSelect.addEventListener('change', function() {
+                const tipo = tipoSelect.value;
+                if (tipo === 'CAMIONETA') {
+                    // When explicitly switching TO Camioneta, set default to Premium
+                    combustibleSelect.value = 'PREMIUM';
+                }
+                updateFuelOptions();
+            });
+            // Initial run
+            updateFuelOptions();
+        }
+
+        // --- SUPERVISOR MODAL LOGIC FOR KILOMETRAJE ---
+        const form = document.getElementById('unidadForm'); // Use explicit ID
+        const kmInput = document.getElementById('id_kilometraje_actual');
+        const authInputHidden = document.getElementById('id_supervisor_auth');
+        const modalElement = document.getElementById('supervisorModal');
+        const modalAuthInput = document.getElementById('modalAuthInput');
+        const btnGuardar = document.getElementById('btnGuardar');
+        const confirmBtn = document.getElementById('confirmAuthBtn');
+        
+        let supervisorModal = null;
+        if (modalElement && typeof bootstrap !== 'undefined') {
+             supervisorModal = new bootstrap.Modal(modalElement);
+        }
+
+        // Capture initial value on load
+        let initialKm = kmInput ? String(kmInput.value).trim() : null;
+        console.log("Initial KM:", initialKm);
+
+        if (kmInput && form && btnGuardar) {
+            
+            btnGuardar.addEventListener('click', function(e) {
+                // 1. HTML5 Validation first
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const currentKm = String(kmInput.value).trim();
+                console.log("Click Guardar. Current KM:", currentKm, "Initial KM:", initialKm);
+
+                // 2. Check if KM changed
+                if (initialKm !== null && currentKm !== initialKm) {
+                    // Check if auth is already filled (retry)
+                    if (authInputHidden.value) {
+                         form.submit();
+                         return;
+                    }
+                    
+                    // Show Modal
+                    console.log("KM Change detected! Showing modal.");
+                    if (supervisorModal) {
+                        modalAuthInput.value = ''; // Clear previous attempts
+                        supervisorModal.show();
+                        
+                        modalElement.addEventListener('shown.bs.modal', function () {
+                            modalAuthInput.focus();
+                        }, {once: true});
+                    } else {
+                        alert("Error: Modal de supervisor no cargado. Contacte soporte.");
+                    }
+                } else {
+                    // No change in KM, submit directly
+                    console.log("No KM change, submitting...");
+                    form.submit();
+                }
+            });
+
+            // Modal Confirm Button
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', function() {
+                    const pass = modalAuthInput.value.trim();
+                    if (pass) {
+                        authInputHidden.value = pass;
+                        if (supervisorModal) supervisorModal.hide();
+                        
+                        // Submit form after small delay
+                        setTimeout(() => {
+                            console.log("Submitting with Auth...");
+                            form.submit();
+                        }, 200);
+                    } else {
+                        alert("Debe ingresar la contraseña del supervisor.");
+                        modalAuthInput.focus();
+                    }
+                });
+            }
+            
+            // Allow Enter key in modal input
+            if (modalAuthInput) {
+                modalAuthInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); 
+                        confirmBtn.click();
+                    }
+                });
+            }
+        }
+    });
+</script>
+
+<!-- Supervisor Auth Modal -->
+<div class="modal fade" id="supervisorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title fw-bold">⚠️ Autorización Requerida</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">Se ha detectado un cambio en el <strong>Kilometraje</strong> de la unidad.</p>
+        <p class="mb-3 text-muted small">Esta acción requiere autorización de un Supervisor.</p>
+        
+        <div class="mb-3">
+            <label for="modalAuthInput" class="form-label fw-bold">Contraseña de Supervisor:</label>
+            <input type="password" class="form-control form-control-lg text-center" id="modalAuthInput" placeholder="******" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="confirmAuthBtn">Autorizar Cambio</button>
+      </div>
+    </div>
+  </div>
+</div>
+    });
+</script>
 {% endblock %}
