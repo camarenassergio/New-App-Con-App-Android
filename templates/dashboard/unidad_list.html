@@ -44,31 +44,31 @@
           </small>
         </td>
         <td>{{ unidad.modelo_anio }}</td>
-        <td style="text-align: center;">
+        <td style="vertical-align: middle;">
           <form method="post" action="{% url 'dashboard:unidad_toggle' unidad.pk %}" style="margin: 0;">
             {% csrf_token %}
             {% if unidad.en_servicio %}
-            <button type="submit" class="badge badge-success" style="border: none; cursor: pointer;" title="Unidad en servicio. Clic para dar de baja temporal">
+            <button type="submit" class="badge badge-success" style="border: none; cursor: pointer; padding: 6px 10px;" title="Unidad en servicio. Clic para dar de baja temporal">
               <i class="fas fa-toggle-on"></i> Activa
             </button>
             {% else %}
-            <button type="submit" class="badge badge-danger" style="border: none; cursor: pointer;" title="Unidad en taller/fuera de servicio. Clic para reactivar">
+            <button type="submit" class="badge badge-danger" style="border: none; cursor: pointer; padding: 6px 10px;" title="Unidad en taller/fuera de servicio. Clic para reactivar">
               <i class="fas fa-toggle-off"></i> Inactiva
             </button>
             {% endif %}
           </form>
         </td>
-        <td>
+        <td style="vertical-align: middle;">
           <!-- Alert Logic Preview -->
           {% if '✅' in unidad.alerta_circulacion %}
           <span
-            class="badge badge-success"
+            class="badge badge-success" style="padding: 6px 10px;"
             title="{{ unidad.alerta_circulacion }}"
             >Circula</span
           >
           {% else %}
           <span
-            class="badge badge-danger"
+            class="badge badge-danger" style="padding: 6px 10px;"
             title="{{ unidad.alerta_circulacion }}"
             >No Circula</span
           >
