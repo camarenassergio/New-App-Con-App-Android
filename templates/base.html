@@ -165,11 +165,15 @@
         </div>
 
         <div class="user-profile">
-          <!-- Environment Badge (DEV/QA) from Context Processor or View -->
-          {% if ENVIRONMENT == 'DEV' %}
-          <span class="env-badge env-dev">DEV</span> <!-- Shortened for mobile -->
+          <!-- Indicador de Contingencia Ambiental (Hoy No Circula) -->
+          {% if estado_contingencia == 'NORMAL' %}
+            <span class="env-badge" style="background-color: #d1fae5; color: #065f46;" title="{{ mensaje_contingencia|default:'Condiciones Normales' }}">🟢 NORMAL</span>
+          {% elif estado_contingencia == 'FASE_1' %}
+            <span class="env-badge" style="background-color: #fef3c7; color: #92400e;" title="{{ mensaje_contingencia }}">🟡 FASE 1</span>
+          {% elif estado_contingencia == 'FASE_2' %}
+            <span class="env-badge" style="background-color: #fee2e2; color: #991b1b;" title="{{ mensaje_contingencia }}">🔴 FASE 2</span>
           {% else %}
-          <span class="env-badge env-qa">QA</span>
+            <span class="env-badge env-dev">DEV</span>
           {% endif %}
 
           <span>{{ request.user.username }}</span>

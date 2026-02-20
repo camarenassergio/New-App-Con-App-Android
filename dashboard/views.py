@@ -529,12 +529,17 @@ class CombustibleUnidadDetailView(LoginRequiredMixin, NonChoferRequiredMixin, De
             
             # Check edit permission per row
             puede_editar = False
-            if is_admin:
-                if reg.fecha.year == today.year and reg.fecha.month == today.month:
-                    puede_editar = True
-                elif reg.fecha.year == last_day_prev_month.year and reg.fecha.month == last_day_prev_month.month:
-                    if today.day < 17:
-                        puede_editar = True
+            es_reciente = False
+            
+            # Logic for "Recency" (Current Month or Prev Month < 17th)
+            if reg.fecha.year == today.year and reg.fecha.month == today.month:
+                es_reciente = True
+            elif reg.fecha.year == last_day_prev_month.year and reg.fecha.month == last_day_prev_month.month:
+                if today.day < 17:
+                    es_reciente = True
+
+            if is_admin and es_reciente:
+                puede_editar = True
 
             tabla_registros.append({
                 'id': reg.id,
@@ -551,7 +556,8 @@ class CombustibleUnidadDetailView(LoginRequiredMixin, NonChoferRequiredMixin, De
                 'observaciones': reg.observaciones,
                 'evidencia_antes': reg.evidencia_antes,
                 'evidencia_despues': reg.evidencia_despues,
-                'puede_editar': puede_editar
+                'puede_editar': puede_editar,
+                'es_reciente': es_reciente
             })
             
             # Acumular Histórico
@@ -630,3 +636,67 @@ class GastoUnidadCreateView(LoginRequiredMixin, NonChoferRequiredMixin, CreateVi
         response = super().form_valid(form)
         # Podríamos agregar mensajes flash aquí
         return response
+
+from .forms import CombustibleDeleteForm
+from django.views.generic import FormView
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+
+class CombustibleDeleteView(LoginRequiredMixin, FormView):
+    template_name = "dashboard/combustible_delete.html" # No se usa realmente si es modal, pero FormView lo pide
+    form_class = CombustibleDeleteForm
+
+    def get_success_url(self):
+        # Redirigir al detalle de la unidad
+        return reverse_lazy('dashboard:combustible_unidad_detail', kwargs={'pk': self.unidad_id})
+
+    def form_valid(self, form):
+        # 1. Obtener objeto y validar existencia
+        pk = self.kwargs.get('pk')
+        registro = get_object_or_404(RegistroCombustible, pk=pk)
+        self.unidad_id = registro.unidad.id
+        unidad = registro.unidad
+        
+        # Validar si la contraseña corresponde a ALGÚN administrador (Superusuario o puesto='ADMIN')
+        # Esto permite que un Chofer solicite a un Admin que ingrese su contraseña para borrar.
+        
+        password = form.cleaned_data['admin_password']
+        
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        # Obtener todos los candidatos a admin
+        superusers = User.objects.filter(is_superuser=True)
+        staff_admins = User.objects.filter(personal__puesto='ADMIN')
+        
+        potential_admins = set(list(superusers) + list(staff_admins))
+        
+        auth_success = False
+        for admin in potential_admins:
+            if admin.check_password(password):
+                auth_success = True
+                break
+        
+        if not auth_success:
+            form.add_error('admin_password', "Contraseña de administrador incorrecta.")
+            return self.form_invalid(form)
+            
+        # 3. Aplicar Corrección de Kilometraje
+        nuevo_km = form.cleaned_data['nuevo_kilometraje']
+        # Validar lógica básica? El usuario pidió explícitamente MODIFICAR ese valor. Confiamos en el admin.
+        unidad.kilometraje_actual = nuevo_km
+        unidad.save()
+        
+        # 4. Eliminar Registro
+        registro.delete()
+        
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # Si es un modal, el manejo de errores es tricky. 
+        # Idealmente devolveríamos JSON si fuera ajax, pero haremos un redirect con error messages o renderizar una página de error.
+        # Por simplicidad en MVP: Renderizar una página de confirmación/error completa si falla.
+        # Ojo: El usuario pidió Modal. Si el form es inválido, el modal se cierra y no pasa nada o recarga la página.
+        # Para hacerlo robusto sin JS complejo: 
+        # Esta vista puede renderizar una template 'borrar_confirmacion.html' si hay error.
+        return self.render_to_response(self.get_context_data(form=form, object=get_object_or_404(RegistroCombustible, pk=self.kwargs.get('pk'))))

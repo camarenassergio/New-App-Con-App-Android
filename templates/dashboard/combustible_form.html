@@ -46,6 +46,17 @@
                         {{ form.unidad|as_crispy_field }}
                     </div>
 
+                    <!-- Evidencia Antes (Reubicado por solicitud) -->
+                    <div class="mb-4 p-3 rounded" style="background-color: #e3f2fd; border: 1px solid #90caf9;">
+                         <label class="form-label fw-bold text-primary mb-2">
+                            <i class="fas fa-camera me-1"></i> Evidencia ANTES de cargar
+                         </label>
+                         <div class="file-input-wrapper-antes">
+                            {{ form.evidencia_antes|as_crispy_field }}
+                         </div>
+                         <small class="text-muted">Tomar foto del tablero.</small>
+                    </div>
+
                     <div class="row">
                         <div class="col-6">
                             {{ form.nivel_inicial|as_crispy_field }}
@@ -85,14 +96,53 @@
                         </div>
                     </div>
 
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            {{ form.evidencia_antes|as_crispy_field }}
-                        </div>
-                        <div class="col-md-6">
+                    <!-- Evidencia Después -->
+                    <div class="mb-4 mt-3 p-3 rounded" style="background-color: #e8f5e9; border: 1px solid #a5d6a7;">
+                        <label class="form-label fw-bold text-success mb-2">
+                             <i class="fas fa-check-circle me-1"></i> Evidencia DESPUÉS de cargar
+                        </label>
+                        <div class="file-input-wrapper-despues">
                             {{ form.evidencia_despues|as_crispy_field }}
                         </div>
+                        <small class="text-muted">Tomar foto del ticket y tablero con nuevo nivel.</small>
                     </div>
+
+                    <style>
+                        /* Custom Styling for File Inputs to make buttons colored */
+                        
+                        /* Antes - Blue */
+                        .file-input-wrapper-antes input[type=file]::file-selector-button {
+                            background-color: #0d6efd !important;
+                            color: white !important;
+                            border: none !important;
+                            padding: 8px 12px;
+                            border-radius: 4px;
+                            margin-right: 10px;
+                            transition: all 0.2s;
+                        }
+                        .file-input-wrapper-antes input[type=file]:hover::file-selector-button {
+                            background-color: #0b5ed7 !important;
+                        }
+
+                        /* Despues - Green */
+                        .file-input-wrapper-despues input[type=file]::file-selector-button {
+                            background-color: #198754 !important;
+                            color: white !important;
+                            border: none !important;
+                            padding: 8px 12px;
+                            border-radius: 4px;
+                            margin-right: 10px;
+                            transition: all 0.2s;
+                        }
+                        .file-input-wrapper-despues input[type=file]:hover::file-selector-button {
+                            background-color: #157347 !important;
+                        }
+                        
+                        /* Hide default crispy label inside wrapper since we added custom header */
+                        .file-input-wrapper-antes label, .file-input-wrapper-despues label {
+                            display: none; 
+                        }
+                    </style>
 
                     <div class="d-grid mt-4 gap-2">
                         <button type="submit" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">

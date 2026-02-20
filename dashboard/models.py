@@ -122,34 +122,57 @@ class Unidad(models.Model):
         dia_semana = hoy.weekday() # 0=Lunes, 5=Sábado
         digito = self.ultimo_digito
         
-        # 0. EXENCIÓN PERMANENTE (Hologramas 0 y 00 circulan diario)
-        # Salvo fase de contingencia extrema que se maneja abajo, por defecto circulan.
-        if self.holograma in ['0', '00']:
-            # Podríamos agregar lógica de Fase 2 de contingencia aquí si fuera necesario
-            pass 
-        
-        # 1. REVISAR CONTINGENCIA (Botón Global)
-        config = ConfiguracionLogistica.objects.first()
-        if config and config.estado_contingencia != 'NORMAL':
-            if self.holograma in ['1', '2']:
-                return "🚨 NO CIRCULA (CONTINGENCIA ACTIVA)"
-            # En FASE 2 a veces paran pares/nones de 0/00, pero por ahora asumimos solo 1 y 2.
-
-        # Si es 0 o 00 y no cayó en restricción de contingencia arriba, CIRCULA.
-        if self.holograma in ['0', '00']:
-            return "✅ CIRCULA"
-
-        # 2. RESTRICCIÓN SEMANAL (Lunes a Viernes) (Para Hologramas 1 y 2)
         restricciones = {
             'Lunes': [5, 6], 'Martes': [7, 8], 'Miércoles': [3, 4],
             'Jueves': [1, 2], 'Viernes': [9, 0]
         }
         dias_nombres = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
         dia_actual = dias_nombres[dia_semana]
+        
+        # ¿Es su día de descanso habitual?
+        es_dia_descanso = False
+        if dia_semana < 5:
+            es_dia_descanso = (digito in restricciones.get(dia_actual, []))
 
-        if dia_semana < 5: # Lunes a Viernes
-            if digito in restricciones.get(dia_actual, []):
-                return f"🚨 NO CIRCULA ({dia_actual})"
+        # 1. REVISAR CONTINGENCIA (Botón Global)
+        config = ConfiguracionLogistica.objects.first()
+        if config and config.estado_contingencia in ['FASE_1', 'FASE_2']:
+            
+            # REGLA DE ORO FASE 1/2: NINGÚN holograma circula si cae en su día de color
+            if es_dia_descanso:
+                return f"🚨 NO CIRCULA (Doble Hoy No Circula: Aplica para {dia_actual})"
+                
+            # Si pasaron su filtro de color, revisamos reglas adicionales:
+            
+            # 0 y 00 se salvan si no fue su día
+            if self.holograma in ['0', '00']:
+                 return "✅ CIRCULA (Exento 0/00)"
+            
+            # Holograma 2: NUNCA circula en Contingencia
+            if self.holograma == '2':
+                return "🚨 NO CIRCULA (Contingencia Fase 1/2)"
+                
+            # Holograma 1: Depende de la Paridad dictada por SEDEMA
+            if self.holograma == '1' and config.estado_contingencia == 'FASE_1':
+                es_par = (digito % 2 == 0)
+                if config.restringir_h1 == 'PAR' and es_par:
+                    return "🚨 NO CIRCULA (Contingencia: Placas Pares)"
+                if config.restringir_h1 == 'NON' and not es_par:
+                    return "🚨 NO CIRCULA (Contingencia: Placas Nones)"
+            
+            # Fase 2 Extrema
+            if self.holograma == '1' and config.estado_contingencia == 'FASE_2':
+                return "🚨 NO CIRCULA (Contingencia Fase 2)"
+
+        # 2. SIN CONTINGENCIA ACTIVA (O pasaron filtro en días de fin de semana)
+        
+        # Holograma 0 y 00 circulan diario normalmente
+        if self.holograma in ['0', '00']:
+            return "✅ CIRCULA (Exento)"
+
+        # Resto (Holograma 1 y 2) en Semana Ordinaria
+        if es_dia_descanso:
+            return f"🚨 NO CIRCULA ({dia_actual})"
 
         # 3. RESTRICCIÓN SÁBADOS
         if dia_semana == 5:
@@ -405,6 +428,33 @@ class RegistroCombustible(models.Model):
         verbose_name_plural = "Registros de Combustible"
         ordering = ['-fecha']
 
+    def save(self, *args, **kwargs):
+        from .utils import compress_image
+        from django.core.files.uploadedfile import UploadedFile
+
+        # Comprimir Evidencia Antes
+        if self.evidencia_antes:
+            try:
+                # Solo comprimir si es un archivo subido (no uno ya guardado)
+                if isinstance(self.evidencia_antes.file, UploadedFile):
+                    compressed = compress_image(self.evidencia_antes)
+                    if compressed:
+                        self.evidencia_antes = compressed
+            except Exception:
+                pass # Si falla, guardar original
+
+        # Comprimir Evidencia Después
+        if self.evidencia_despues:
+            try:
+                if isinstance(self.evidencia_despues.file, UploadedFile):
+                    compressed = compress_image(self.evidencia_despues)
+                    if compressed:
+                        self.evidencia_despues = compressed
+            except Exception:
+                pass
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.unidad} - {self.total} ({self.fecha})"
 
@@ -426,8 +476,15 @@ class CheckListDiario(models.Model):
 class ConfiguracionLogistica(models.Model):
     ESTADOS_CONTINGENCIA = [
         ('NORMAL', '🟢 Normal - Sin Restricciones'),
+        ('PREVENTIVA', '⚪ Preventiva - Alerta '),
         ('FASE_1', '🟡 Fase 1 - Restricción 20% Vehículos'),
         ('FASE_2', '🔴 Fase 2 - Restricción 50% Vehículos'),
+    ]
+
+    PARIDAD_CHOICES = [
+        ('PAR', 'Pares Restringidos'),
+        ('NON', 'Nones Restringidos'),
+        ('NA', 'No Aplica')
     ]
 
     estado_contingencia = models.CharField(
@@ -435,6 +492,13 @@ class ConfiguracionLogistica(models.Model):
         choices=ESTADOS_CONTINGENCIA, 
         default='NORMAL',
         verbose_name="Estado de Contingencia Ambiental"
+    )
+    
+    restringir_h1 = models.CharField(
+        max_length=3,
+        choices=PARIDAD_CHOICES,
+        default='NA',
+        verbose_name="Paridad Restringida (Holograma 1)"
     )
     
     mensaje_alerta = models.TextField(
@@ -566,6 +630,22 @@ class GastoUnidad(models.Model):
         return fecha_verificacion + relativedelta(months=6)
 
     def save(self, *args, **kwargs):
+        # 1. Compresión de Evidencia (Solo si es imagen)
+        if self.evidencia:
+            try:
+                name = self.evidencia.name.lower() if self.evidencia.name else ''
+                if name.endswith(('.jpg', '.jpeg', '.png', '.webp', '.bmp')):
+                    from .utils import compress_image
+                    from django.core.files.uploadedfile import UploadedFile
+                    
+                    # Verificar si es un archivo nuevo subido
+                    if isinstance(self.evidencia.file, UploadedFile):
+                        compressed = compress_image(self.evidencia)
+                        if compressed:
+                            self.evidencia = compressed
+            except Exception:
+                pass # Si falla o no es imagen soportada, continuar sin cambios
+
         super().save(*args, **kwargs)
         
         unidad = self.unidad

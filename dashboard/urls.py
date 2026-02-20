@@ -15,6 +15,7 @@ urlpatterns = [
     path('combustible/nuevo/', views.CombustibleCreateView.as_view(), name='combustible_create'),
     path('combustible/unidad/<int:pk>/', views.CombustibleUnidadDetailView.as_view(), name='combustible_unidad_detail'),
     path('combustible/editar/<int:pk>/', views.CombustibleUpdateView.as_view(), name='combustible_edit'),
+    path('combustible/eliminar/<int:pk>/', views.CombustibleDeleteView.as_view(), name='combustible_delete'),
     
     # --- GESTIÓN DE GASTOS ---
     path('gastos/', views.GastoUnidadListView.as_view(), name='gastos_list'),

@@ -235,3 +235,14 @@ class GastoUnidadForm(forms.ModelForm):
                  self.add_error('vigencia_permiso', 'Debes indicar la nueva fecha de vigencia.')
 
         return cleaned_data
+
+class CombustibleDeleteForm(forms.Form):
+    admin_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña de Administrador'}),
+        label="Contraseña de Administrador"
+    )
+    nuevo_kilometraje = forms.IntegerField(
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Kilometraje Actual Real (Corrección)",
+        help_text="Ajusta el kilometraje de la unidad para corregir inconsistencias."
+    )

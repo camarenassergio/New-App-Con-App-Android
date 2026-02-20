@@ -118,14 +118,30 @@
                     -
                     {% endif %}
                 </td>
+                </td>
                 <td class="text-center">
-                    {% if carga.puede_editar %}
-                        <a href="{% url 'dashboard:combustible_edit' carga.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
-                            <i class="fas fa-pencil-alt"></i>
-                        </a>
-                    {% else %}
-                        <span class="text-muted" title="Periodo de edición cerrado"><i class="fas fa-lock"></i></span>
-                    {% endif %}
+                    <div style="display: flex; gap: 5px; justify-content: center;">
+                        {% if carga.puede_editar %}
+                            <a href="{% url 'dashboard:combustible_edit' carga.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                        {% endif %}
+                        
+                        {% if carga.es_reciente %}
+                             <button type="button" class="btn btn-sm btn-outline-danger" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#deleteModal" 
+                                    data-bs-action="{% url 'dashboard:combustible_delete' carga.id %}"
+                                    data-bs-carga="#{{ carga.numero }} ({{ carga.fecha|date:'d/m/Y' }})"
+                                    title="Eliminar Registro">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        {% endif %}
+                        
+                        {% if not carga.puede_editar and not carga.es_reciente %}
+                            <span class="text-muted" title="Periodo de edición cerrado"><i class="fas fa-lock"></i></span>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% endfor %}
@@ -217,6 +233,42 @@
   </div>
 </div>
 
+<!-- Modal Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">Eliminar Registro de Combustible</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" id="deleteForm" action="">
+          {% csrf_token %}
+          <div class="modal-body">
+            <p>¿Estás seguro de que deseas eliminar la carga <strong id="deleteCargaLabel"></strong>?</p>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> Esta acción es irreversible.
+            </div>
+            
+            <div class="mb-3">
+                <label for="id_admin_password" class="form-label">Contraseña de Administrador (Confirmación)</label>
+                <input type="password" name="admin_password" class="form-control" id="id_admin_password" required placeholder="Contraseña de Admin">
+            </div>
+
+            <div class="mb-3">
+                <label for="id_nuevo_kilometraje" class="form-label">Kilometraje Actual Real (Corrección)</label>
+                <input type="number" name="nuevo_kilometraje" class="form-control" id="id_nuevo_kilometraje" required value="{{ unidad.kilometraje_actual }}">
+                <div class="form-text">Ajusta el kilometraje de la unidad para corregir inconsistencias tras eliminar este registro.</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger">Eliminar Definitivamente</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Manejo Modal Observaciones
@@ -246,6 +298,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             modalImage.src = imageUrl;
             if(title) modalTitle.textContent = title;
+        });
+    }
+
+    // Manejo Modal Eliminar
+    var deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var actionUrl = button.getAttribute('data-bs-action');
+            var cargaLabel = button.getAttribute('data-bs-carga');
+            
+            var form = deleteModal.querySelector('#deleteForm');
+            var label = deleteModal.querySelector('#deleteCargaLabel');
+            
+            form.action = actionUrl;
+            label.textContent = cargaLabel;
         });
     }
 });
