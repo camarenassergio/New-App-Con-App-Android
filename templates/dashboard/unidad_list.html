@@ -48,11 +48,11 @@
           <form method="post" action="{% url 'dashboard:unidad_toggle' unidad.pk %}" style="margin: 0;">
             {% csrf_token %}
             {% if unidad.en_servicio %}
-            <button type="submit" class="badge badge-success" style="border: none; cursor: pointer; padding: 6px 10px;" title="Unidad en servicio. Clic para dar de baja temporal">
+            <button type="submit" class="badge badge-success" style="border: none; cursor: pointer; padding: 6px 10px;" title="Unidad en servicio. Clic para dar de baja temporal" onclick="return confirm('Aviso: Estás a punto de MENDAR A TALLER / DAR DE BAJA TEMPORAL la unidad {{ unidad.nombre_corto|default:unidad.nUnidad }}.\n\nPara confirmar esta acción, da clic en Aceptar.');">
               <i class="fas fa-toggle-on"></i> Activa
             </button>
             {% else %}
-            <button type="submit" class="badge badge-danger" style="border: none; cursor: pointer; padding: 6px 10px;" title="Unidad en taller/fuera de servicio. Clic para reactivar">
+            <button type="submit" class="badge badge-danger" style="border: none; cursor: pointer; padding: 6px 10px;" title="Unidad en taller/fuera de servicio. Clic para reactivar" onclick="return confirm('Aviso: Estás a punto de REACTIVAR la unidad {{ unidad.nombre_corto|default:unidad.nUnidad }} para que vuelva a estar en servicio.\n\nPara confirmar esta acción, da clic en Aceptar.');">
               <i class="fas fa-toggle-off"></i> Inactiva
             </button>
             {% endif %}
