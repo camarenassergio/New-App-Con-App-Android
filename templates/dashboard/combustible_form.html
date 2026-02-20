@@ -231,18 +231,7 @@
         const precioInput = document.getElementById('id_precio_litro');
         const propinaInput = document.getElementById('id_propina');
         const totalInput = document.getElementById('id_total');
-        const kilometrajeInput = document.getElementById('id_kilometraje');
-
-        function restrictInput(event) {
-            this.value = this.value.replace(/[^0-9.]/g, '');
-            if ((this.value.match(/\./g) || []).length > 1) {
-                this.value = this.value.slice(0, -1);
-            }
-        }
-        
-        function restrictIntInput(event) {
-             this.value = this.value.replace(/[^0-9]/g, '');
-        }
+        const kilometrajeInput = document.getElementById('id_kilometraje_actual'); // Asegurarnos del ID correcto
 
         function calcularTotal() {
             const litros = parseFloat(litrosInput.value) || 0;
@@ -254,14 +243,6 @@
         }
 
         if(litrosInput && precioInput && propinaInput && totalInput) {
-            litrosInput.addEventListener('input', restrictInput);
-            precioInput.addEventListener('input', restrictInput);
-            propinaInput.addEventListener('input', restrictInput);
-            
-            if(kilometrajeInput) {
-                kilometrajeInput.addEventListener('input', restrictIntInput);
-            }
-
             litrosInput.addEventListener('input', calcularTotal);
             precioInput.addEventListener('input', calcularTotal);
             propinaInput.addEventListener('input', calcularTotal);
