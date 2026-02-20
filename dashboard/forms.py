@@ -151,6 +151,13 @@ class RegistroCombustibleForm(forms.ModelForm):
              'evidencia_despues': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
     
+    def __init__(self, *args, **kwargs):
+        super(RegistroCombustibleForm, self).__init__(*args, **kwargs)
+        # Hacer obligatoria la evidencia fotográfica solo cuando se está creando un nuevo registro
+        if not self.instance.pk:
+            self.fields['evidencia_antes'].required = True
+            self.fields['evidencia_despues'].required = True
+    
     def clean(self):
         cleaned_data = super().clean()
         unidad = cleaned_data.get('unidad')
