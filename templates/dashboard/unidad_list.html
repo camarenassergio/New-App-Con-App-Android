@@ -35,13 +35,11 @@
         </td>
         <td>{{ unidad.marca }} {{ unidad.submarca }}</td>
         <td>
-          <span
-            style="font-family: monospace; background: #eee; padding: 2px 6px; border-radius: 4px; border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: {{ unidad.color_engomado_hex }};"
-          >
+          <span style="display: inline-block; font-family: monospace; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; border: 1px solid #e0e0e0; border-left: 5px solid {{ unidad.color_engomado_hex }}; font-weight: bold; letter-spacing: 0.5px;">
             {{ unidad.placas }}
           </span>
           <br />
-          <small style="color: #666; font-size: 0.85em">
+          <small style="color: #666; font-size: 0.85em; margin-top: 4px; display: inline-block;">
             Holo: <strong>{{ unidad.holograma }}</strong> | {{ unidad.color_engomado }}
           </small>
         </td>
