@@ -160,24 +160,86 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- LOGICA RESTRICCION TIPO DE MOTOR ---
+        const motorTypeMap = {
+            {% for u in form.fields.unidad.queryset %}
+            "{{ u.id }}": "{{ u.tipo_combustible_unidad }}"{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
+
+        const unidadSelect = document.getElementById('id_unidad');
+        const combustibleSelect = document.getElementById('id_tipo_combustible');
+
+        function updateFuelOptions() {
+            if (!unidadSelect || !combustibleSelect) return;
+            const unidadId = unidadSelect.value;
+            const motorType = motorTypeMap[unidadId] || '';
+            
+            const magnaOption = combustibleSelect.querySelector("option[value='MAGNA']");
+            const premiumOption = combustibleSelect.querySelector("option[value='PREMIUM']");
+            const dieselOption = combustibleSelect.querySelector("option[value='DIESEL']");
+            
+            if (motorType === 'GASOLINA') {
+                if(dieselOption) {
+                    dieselOption.disabled = true;
+                    // Ocultarlo visualmente en navegadores modernos (opcional)
+                    dieselOption.style.display = 'none'; 
+                }
+                if(magnaOption) {
+                    magnaOption.disabled = false;
+                    magnaOption.style.display = '';
+                }
+                if(premiumOption) {
+                    premiumOption.disabled = false;
+                    premiumOption.style.display = '';
+                }
+                
+                // Si estaba seleccionado Diesel, cambiar a Magna por defecto
+                if(combustibleSelect.value === 'DIESEL' || !combustibleSelect.value) {
+                    combustibleSelect.value = 'MAGNA'; 
+                }
+            } else if (motorType === 'DIESEL') {
+                if(magnaOption) {
+                    magnaOption.disabled = true;
+                    magnaOption.style.display = 'none';
+                }
+                if(premiumOption) {
+                    premiumOption.disabled = true;
+                    premiumOption.style.display = 'none';
+                }
+                if(dieselOption) {
+                    dieselOption.disabled = false;
+                    dieselOption.style.display = '';
+                }
+                
+                // Forzar la selección al único valor posible
+                combustibleSelect.value = 'DIESEL';
+            } else {
+                 if(dieselOption) { dieselOption.disabled = false; dieselOption.style.display = ''; }
+                 if(magnaOption) { magnaOption.disabled = false; magnaOption.style.display = ''; }
+                 if(premiumOption) { premiumOption.disabled = false; premiumOption.style.display = ''; }
+            }
+        }
+
+        if(unidadSelect && combustibleSelect) {
+            unidadSelect.addEventListener('change', updateFuelOptions);
+            updateFuelOptions(); // run on initial load
+        }
+
+        // --- CALCULADORA DE COSTOS ---
         const litrosInput = document.getElementById('id_litros');
         const precioInput = document.getElementById('id_precio_litro');
         const propinaInput = document.getElementById('id_propina');
         const totalInput = document.getElementById('id_total');
         const kilometrajeInput = document.getElementById('id_kilometraje');
 
-        // Function to allow only numbers and one decimal point
         function restrictInput(event) {
-            // Remove any character that is not a digit or a dot
             this.value = this.value.replace(/[^0-9.]/g, '');
-            
-            // Allow only one dot
             if ((this.value.match(/\./g) || []).length > 1) {
                 this.value = this.value.slice(0, -1);
             }
         }
         
-        // Integer only for mileage
         function restrictIntInput(event) {
              this.value = this.value.replace(/[^0-9]/g, '');
         }
@@ -187,15 +249,11 @@
             const precio = parseFloat(precioInput.value) || 0;
             const propina = parseFloat(propinaInput.value) || 0;
             
-            // Cálculo: (Litros * Precio) + Propina
             const total = (litros * precio) + propina;
-            
-            // Asignar al campo Total con 2 decimales
             totalInput.value = total.toFixed(2);
         }
 
         if(litrosInput && precioInput && propinaInput && totalInput) {
-            // Apply restrictions
             litrosInput.addEventListener('input', restrictInput);
             precioInput.addEventListener('input', restrictInput);
             propinaInput.addEventListener('input', restrictInput);
@@ -204,12 +262,10 @@
                 kilometrajeInput.addEventListener('input', restrictIntInput);
             }
 
-            // Listen for calculation
             litrosInput.addEventListener('input', calcularTotal);
             precioInput.addEventListener('input', calcularTotal);
             propinaInput.addEventListener('input', calcularTotal);
             
-            // Make total read-only to ensure calculation integrity
             totalInput.readOnly = true; 
         }
     });
