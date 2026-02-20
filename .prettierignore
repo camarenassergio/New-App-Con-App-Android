@@ -1,0 +1,2 @@
+# Disable Prettier for Django HTML templates to avoid breaking template tags
+**/*.html
