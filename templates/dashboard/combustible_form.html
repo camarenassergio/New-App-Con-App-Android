@@ -145,7 +145,7 @@
                     </style>
 
                     <div class="d-grid mt-4 gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">
+                        <button type="submit" id="submitBtn" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">
                             <i class="fas fa-save me-2"></i> Registrar Carga
                         </button>
                         <a href="{% url 'dashboard:home' %}" class="btn btn-light text-muted">Cancelar</a>
@@ -248,6 +248,25 @@
             propinaInput.addEventListener('input', calcularTotal);
             
             totalInput.readOnly = true; 
+        }
+
+        // --- PREVENIR DOUBLE SUBMIT ---
+        const formObj = document.querySelector('form');
+        const submitBtn = document.getElementById('submitBtn');
+        if (formObj && submitBtn) {
+            formObj.addEventListener('submit', function(e) {
+                // Dejar que el HTML5 valide primero si faltan fotos o campos requeridos
+                if (formObj.checkValidity()) {
+                    if (submitBtn.dataset.submitted === 'true') {
+                        e.preventDefault(); // Si ya se apretó, bloquear
+                        return;
+                    }
+                    submitBtn.dataset.submitted = 'true';
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Subiendo evidencias...';
+                    submitBtn.style.opacity = '0.7';
+                    submitBtn.style.pointerEvents = 'none'; // Evitar clics nativos sin deshabilitar form
+                }
+            });
         }
     });
 </script>
