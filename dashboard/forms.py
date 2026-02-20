@@ -54,6 +54,7 @@ class UnidadForm(forms.ModelForm):
             'modelo_anio',              # 8. Modelo
             'tipo',                     # 9. Tipo
             'tipo_combustible_unidad',  # (Extra) Combustible (Requerido por lógica)
+            'en_servicio',              # (Activa / Baja Temporal)
             'capacidad_kg',             # 10. Capacidad
             'capacidad_tanque',         # (Extra) Capacidad Tanque
             'tarjeta_circulacion',      # 11. Tarjeta de Circulación

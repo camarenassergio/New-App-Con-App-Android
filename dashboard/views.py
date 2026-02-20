@@ -169,6 +169,16 @@ class UnidadDetailView(LoginRequiredMixin, NonChoferRequiredMixin, DetailView):
     template_name = "dashboard/unidad_detail.html"
     context_object_name = "unidad"
 
+from django.views import View
+
+class UnidadToggleEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        unidad = get_object_or_404(Unidad, pk=pk)
+        # Hacemos toggle del booleano
+        unidad.en_servicio = not unidad.en_servicio
+        unidad.save()
+        return redirect('dashboard:unidades_list')
+
 class OperadorListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
 
     model = Operador

@@ -44,12 +44,19 @@
           </small>
         </td>
         <td>{{ unidad.modelo_anio }}</td>
-        <td>
-          {% if unidad.en_servicio %}
-          <span class="badge badge-success">Activa</span>
-          {% else %}
-          <span class="badge badge-danger">Baja Temporal</span>
-          {% endif %}
+        <td style="text-align: center;">
+          <form method="post" action="{% url 'dashboard:unidad_toggle' unidad.pk %}" style="margin: 0;">
+            {% csrf_token %}
+            {% if unidad.en_servicio %}
+            <button type="submit" class="badge badge-success" style="border: none; cursor: pointer;" title="Unidad en servicio. Clic para dar de baja temporal">
+              <i class="fas fa-toggle-on"></i> Activa
+            </button>
+            {% else %}
+            <button type="submit" class="badge badge-danger" style="border: none; cursor: pointer;" title="Unidad en taller/fuera de servicio. Clic para reactivar">
+              <i class="fas fa-toggle-off"></i> Inactiva
+            </button>
+            {% endif %}
+          </form>
         </td>
         <td>
           <!-- Alert Logic Preview -->

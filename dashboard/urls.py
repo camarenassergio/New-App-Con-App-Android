@@ -9,6 +9,7 @@ urlpatterns = [
     path('unidades/nueva/', views.UnidadCreateView.as_view(), name='unidad_create'),
     path('unidades/<int:pk>/', views.UnidadDetailView.as_view(), name='unidad_detail'),
     path('unidades/<int:pk>/editar/', views.UnidadUpdateView.as_view(), name='unidad_update'),
+    path('unidades/<int:pk>/toggle/', views.UnidadToggleEstadoView.as_view(), name='unidad_toggle'),
     path('operadores/', views.OperadorListView.as_view(), name='operadores_list'),
     path('viajes/', views.ViajeListView.as_view(), name='viajes_list'),
     path('combustible/', views.CombustibleGeneralView.as_view(), name='combustible_general'),
