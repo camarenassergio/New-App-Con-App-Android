@@ -702,6 +702,46 @@ class CombustibleDeleteView(LoginRequiredMixin, FormView):
         
         return super().form_valid(form)
 
+# --- VISTAS DE PERFIL DE USUARIO ---
+from django.contrib.auth.views import PasswordChangeView
+from django.urls import reverse_lazy
+from django.contrib import messages
+from .forms import UsuarioPerfilForm
+from .models import Personal
+
+class UsuarioPerfilView(LoginRequiredMixin, UpdateView):
+    model = Personal
+    form_class = UsuarioPerfilForm
+    template_name = "dashboard/usuario_perfil.html"
+    success_url = reverse_lazy('dashboard:usuario_perfil')
+
+    def get_object(self, queryset=None):
+        # Obtain the Personal instance for the currently logged-in user
+        if hasattr(self.request.user, 'personal'):
+            return self.request.user.personal
+        else:
+            # Create a default Personal object if it doesn't exist
+            # This is a fallback for superusers or old users
+            personal_obj = Personal.objects.create(
+                usuario=self.request.user,
+                nombre=self.request.user.first_name or self.request.user.username,
+                apellido_paterno=self.request.user.last_name or '',
+                puesto='ADMIN' if self.request.user.is_superuser else 'RUTAS'
+            )
+            return personal_obj
+
+    def form_valid(self, form):
+        messages.success(self.request, "Perfil actualizado correctamente.")
+        return super().form_valid(form)
+
+class UsuarioPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
+    template_name = "dashboard/usuario_cambiar_password.html"
+    success_url = reverse_lazy('dashboard:home')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Tu contraseña ha sido cambiada exitosamente.")
+        return super().form_valid(form)
+
     def form_invalid(self, form):
         # Si es un modal, el manejo de errores es tricky. 
         # Idealmente devolveríamos JSON si fuera ajax, pero haremos un redirect con error messages o renderizar una página de error.

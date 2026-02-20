@@ -254,3 +254,11 @@ class CombustibleDeleteForm(forms.Form):
         label="Kilometraje Actual Real (Corrección)",
         help_text="Ajusta el kilometraje de la unidad para corregir inconsistencias."
     )
+
+class UsuarioPerfilForm(forms.ModelForm):
+    class Meta:
+        model = Personal
+        fields = ['foto']
+        widgets = {
+            'foto': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+        }

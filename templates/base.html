@@ -164,7 +164,7 @@
             </h1>
         </div>
 
-        <div class="user-profile">
+        <div class="user-profile dropdown" style="display: flex; align-items: center; gap: 15px;">
           <!-- Indicador de Contingencia Ambiental (Hoy No Circula) -->
           {% if estado_contingencia == 'NORMAL' %}
             <span class="env-badge" style="background-color: #d1fae5; color: #065f46;" title="{{ mensaje_contingencia|default:'Condiciones Normales' }}">🟢 NORMAL</span>
@@ -176,8 +176,28 @@
             <span class="env-badge env-dev">DEV</span>
           {% endif %}
 
-          <span>{{ request.user.username }}</span>
-          <div class="avatar">{{ request.user.username|first|upper }}</div>
+          <div class="user-menu-toggle d-flex align-items-center" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer; gap: 10px; margin-left: 10px;">
+              <span style="font-weight: 500;">{{ request.user.username }}</span>
+              {% if request.user.personal and request.user.personal.foto %}
+                  <img src="{{ request.user.personal.foto.url }}" alt="Profile" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
+              {% else %}
+                  <div class="avatar d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; border-radius: 50%; background-color: var(--primary-blue); color: white; font-weight: bold; margin: 0;">{{ request.user.username|first|upper }}</div>
+              {% endif %}
+              <i class="fas fa-chevron-down text-muted ms-1" style="font-size: 0.8rem;"></i>
+          </div>
+          
+          <ul class="dropdown-menu dropdown-menu-end shadow" style="border: none; border-radius: 8px; margin-top: 10px;">
+            <li><h6 class="dropdown-header">Hola, {{ request.user.personal.nombre|default:request.user.username }}</h6></li>
+            <li><a class="dropdown-item py-2" href="{% url 'dashboard:usuario_perfil' %}"><i class="fas fa-user-circle me-2" style="color: var(--primary-blue);"></i> Mi Perfil</a></li>
+            <li><a class="dropdown-item py-2" href="{% url 'dashboard:usuario_cambiar_password' %}"><i class="fas fa-key me-2 text-warning"></i> Cambiar Contraseña</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item py-2 text-danger"><i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión</button>
+                </form>
+            </li>
+          </ul>
         </div>
       </header>
 

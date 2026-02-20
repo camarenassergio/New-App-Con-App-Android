@@ -386,6 +386,7 @@ class Personal(models.Model):
     nombre = models.CharField(max_length=100, verbose_name="Nombre(s)")
     apellido_paterno = models.CharField(max_length=100, verbose_name="Apellido Paterno")
     apellido_materno = models.CharField(max_length=100, verbose_name="Apellido Materno", null=True, blank=True)
+    foto = models.ImageField(upload_to='perfiles/', null=True, blank=True, verbose_name="Foto de Perfil")
 
     def __str__(self):
         return f"{self.nombre} {self.apellido_paterno} ({self.puesto})"
