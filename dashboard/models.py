@@ -101,6 +101,17 @@ class Unidad(models.Model):
         return "Desconocido"
     
     @property
+    def color_engomado_hex(self):
+        colores = {
+            "Amarillo": "#f1c40f",
+            "Rosa": "#e84393",
+            "Rojo": "#e74c3c",
+            "Verde": "#2ecc71",
+            "Azul": "#3498db"
+        }
+        return colores.get(self.color_engomado, "#ccc")
+        
+    @property
     def dia_no_circula(self):
         """Calcula el día de restricción semanal"""
         color = self.color_engomado
