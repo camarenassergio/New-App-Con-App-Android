@@ -4,6 +4,9 @@
 {% block page_title %}Mi Perfil{% endblock %}
 
 {% block content %}
+<!-- Cropper CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" integrity="sha512-cyzxRvewl+FOKTtp/4a0WnZ8GqQx0M1bC1D211I/56mEMhW6+rX+TCRq2lY2L0h+BqV+W1V1y3i1I11z1Y==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
@@ -16,9 +19,10 @@
                 <div class="card-body p-4 bg-white" style="border-radius: 0 0 12px 12px;">
                     <div class="text-center mb-4">
                         {% if request.user.personal and request.user.personal.foto %}
-                            <img src="{{ request.user.personal.foto.url }}" alt="Profile Photo" class="img-fluid rounded-circle shadow-sm" style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #f8f9fa;">
+                            <img id="profile_preview" src="{{ request.user.personal.foto.url }}" alt="Profile Photo" class="img-fluid rounded-circle shadow-sm" style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #f8f9fa;">
                         {% else %}
-                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white shadow-sm" style="width: 150px; height: 150px; font-size: 64px; border: 4px solid #f8f9fa;">
+                            <img id="profile_preview" src="" alt="Profile Photo" class="img-fluid rounded-circle shadow-sm" style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #f8f9fa; display: none;">
+                            <div id="avatar_placeholder" class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white shadow-sm" style="width: 150px; height: 150px; font-size: 64px; border: 4px solid #f8f9fa;">
                                 {{ request.user.username|first|upper }}
                             </div>
                         {% endif %}
@@ -29,7 +33,7 @@
                     <hr>
 
                     <h5 class="mb-3" style="color: var(--primary-blue); font-weight:600;">Actualizar Foto de Perfil</h5>
-                    <form method="post" enctype="multipart/form-data">
+                    <form method="post" enctype="multipart/form-data" id="perfil_form">
                         {% csrf_token %}
                         {{ form|crispy }}
                         
@@ -45,4 +49,137 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Cropper -->
+<div class="modal fade" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title" id="cropModalLabel"><i class="fas fa-crop-alt me-2"></i> Ajustar Foto de Perfil</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center bg-light">
+        <div class="img-container" style="max-height: 400px; display: flex; justify-content: center; overflow: hidden; background: #e9ecef;">
+            <img id="image_to_crop" src="" alt="Picture" style="max-width: 100%;">
+        </div>
+        <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">
+            <i class="fas fa-info-circle"></i> Arrastra la imagen y ajusta el cuadro para centrar tu rostro. El recorte final será circular.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="crop_button" style="background-color: var(--primary-blue); border: none;">
+            <i class="fas fa-check me-1"></i> Aplicar Recorte
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cropper JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js" integrity="sha512-6lplKUSl86rUVprDIjiW8DuALkMczG80Zj0j5SroI1k15I6eQx6n0y3N19KoflGohGZ4b7wW+m+vX2oU7B4mRw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<style>
+/* Estilos para forzar el marco circular visual en Cropper.js */
+.cropper-view-box,
+.cropper-face {
+  border-radius: 50%;
+}
+.cropper-view-box {
+    outline: 2px solid #fff;
+    outline-color: rgba(255, 255, 255, 0.75);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var fotoInput = document.getElementById('foto_input');
+    var base64Input = document.getElementById('id_foto_base64');
+    var imageToCrop = document.getElementById('image_to_crop');
+    var cropModalElement = document.getElementById('cropModal');
+    var cropModal = new bootstrap.Modal(cropModalElement);
+    var cropButton = document.getElementById('crop_button');
+    var profilePreview = document.getElementById('profile_preview');
+    var avatarPlaceholder = document.getElementById('avatar_placeholder');
+    var cropper;
+
+    // Cuando el usuario selecciona una imagen
+    if (fotoInput) {
+        fotoInput.addEventListener('change', function (e) {
+            var files = e.target.files;
+            if (files && files.length > 0) {
+                var file = files[0];
+                var reader = new FileReader();
+
+                reader.onload = function (event) {
+                    imageToCrop.src = event.target.result;
+                    cropModal.show();
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Inicializar Cropper cuando el modal esté completamente visible
+    cropModalElement.addEventListener('shown.bs.modal', function () {
+        cropper = new Cropper(imageToCrop, {
+            aspectRatio: 1, // Relación de aspecto 1:1 para un círculo perfecto
+            viewMode: 1, // Restringe la caja de recorte para que no se salga de la imagen
+            dragMode: 'move', // Mover la imagen en lugar de crear nuevas cajas de recorte
+            autoCropArea: 0.8,
+            restore: false,
+            guides: false,
+            center: false,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+        });
+    });
+
+    // Destruir Cropper cuando se cierre el modal para limpiar la memoria
+    cropModalElement.addEventListener('hidden.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        // Limpiamos el input si cerró el modal sin recortar para evitar subidas accidentales completas
+        // a menos que ya tengamos un base64 guardado
+        if (!base64Input.value) {
+           fotoInput.value = '';
+        }
+    });
+
+    // Cuando hace click en Aplicar Recorte
+    cropButton.addEventListener('click', function () {
+        if (!cropper) return;
+
+        // Extraer el pedacito de la imagen recortada
+        var canvas = cropper.getCroppedCanvas({
+            width: 300,
+            height: 300,
+        });
+
+        // Convertir el canvas a string en base64 (JPEG a 80% de calidad para no pesar mucho)
+        var croppedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Guardar la data en el input oculto que recogerá Django
+        if (base64Input) {
+            base64Input.value = croppedDataUrl;
+        }
+
+        // Actualizar la previsualización instatánea para que el usuario se vea
+        if (profilePreview) {
+            profilePreview.src = croppedDataUrl;
+            profilePreview.style.display = 'inline-block';
+            if (avatarPlaceholder) {
+                avatarPlaceholder.style.display = 'none';
+            }
+        }
+
+        cropModal.hide();
+    });
+});
+</script>
 {% endblock %}

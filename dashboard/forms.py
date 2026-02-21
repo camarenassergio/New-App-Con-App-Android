@@ -255,10 +255,25 @@ class CombustibleDeleteForm(forms.Form):
         help_text="Ajusta el kilometraje de la unidad para corregir inconsistencias."
     )
 
+import base64
+from django.core.files.base import ContentFile
+
 class UsuarioPerfilForm(forms.ModelForm):
+    foto_base64 = forms.CharField(widget=forms.HiddenInput(), required=False)
+
     class Meta:
         model = Personal
         fields = ['foto']
         widgets = {
-            'foto': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+            'foto': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*', 'id': 'foto_input'})
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        foto_base64 = cleaned_data.get('foto_base64')
+        if foto_base64 and ';base64,' in foto_base64:
+            format, imgstr = foto_base64.split(';base64,') 
+            ext = format.split('/')[-1]
+            data = ContentFile(base64.b64decode(imgstr), name=f"perfil_{self.instance.usuario.username}.{ext}")
+            cleaned_data['foto'] = data
+        return cleaned_data
