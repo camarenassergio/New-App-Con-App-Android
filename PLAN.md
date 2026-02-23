@@ -19,6 +19,7 @@
 | Antigravity | Auditoría de Seguridad y Hardening | Verificado [AUTO-HEALED] |
 | Antigravity | Implementación Fase 2 (Auth/Dash) | Verificado [Environment Fixed] |
 | Antigravity | Plan de Contingencia (SEDEMA Scraping) | Verificado y Pulido |
+| Antigravity | UX/UI File Uploads (Perfil & Combustible) | Verificado y Pulido |
 
 ## Reglas del Proyecto
 -   **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).

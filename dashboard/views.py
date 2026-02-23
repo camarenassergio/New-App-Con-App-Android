@@ -713,7 +713,7 @@ class UsuarioPerfilView(LoginRequiredMixin, UpdateView):
     model = Personal
     form_class = UsuarioPerfilForm
     template_name = "dashboard/usuario_perfil.html"
-    success_url = reverse_lazy('dashboard:usuario_perfil')
+    success_url = reverse_lazy('dashboard:home')
 
     def get_object(self, queryset=None):
         # Obtain the Personal instance for the currently logged-in user

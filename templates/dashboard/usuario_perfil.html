@@ -5,7 +5,7 @@
 
 {% block content %}
 <!-- Cropper CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" integrity="sha512-cyzxRvewl+FOKTtp/4a0WnZ8GqQx0M1bC1D211I/56mEMhW6+rX+TCRq2lY2L0h+BqV+W1V1y3i1I11z1Y==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" referrerpolicy="no-referrer" />
 
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
@@ -35,13 +35,45 @@
                     <h5 class="mb-3" style="color: var(--primary-blue); font-weight:600;">Actualizar Foto de Perfil</h5>
                     <form method="post" enctype="multipart/form-data" id="perfil_form">
                         {% csrf_token %}
-                        {{ form|crispy }}
+                        
+                        <!-- Contenedor oculto: renderizamos el form nativo pero no mostramos su UI fea -->
+                        <div class="d-none">
+                            {{ form|crispy }}
+                        </div>
+
+                        <!-- Botones Premium Mobile-First para Selección -->
+                        <div class="row g-3 mb-4 mt-2 px-2">
+                            <div class="col-6">
+                                <button type="button" id="btn_camera" class="btn btn-outline-primary w-100 h-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center" style="border-radius: 16px; border-width: 2px;">
+                                    <i class="fas fa-camera mb-2" style="font-size: 2rem;"></i>
+                                    <span class="fw-bold" style="font-size: 0.9rem;">Cámara</span>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" id="btn_gallery" class="btn btn-outline-secondary w-100 h-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center" style="border-radius: 16px; border-width: 2px;">
+                                    <i class="fas fa-images mb-2" style="font-size: 2rem;"></i>
+                                    <span class="fw-bold" style="font-size: 0.9rem;">Galería</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="progress_container" class="mt-3 d-none">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-primary fw-bold">Subiendo foto...</small>
+                                <small id="progress_text" class="text-muted">0%</small>
+                            </div>
+                            <div class="progress" style="height: 10px; border-radius: 10px;">
+                                <div id="progress_bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                                     role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">
+                            <button type="submit" id="submit_btn" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">
                                 <i class="fas fa-save me-2"></i> Guardar Cambios
                             </button>
-                            <a href="{% url 'dashboard:home' %}" class="btn btn-light text-muted">Cancelar</a>
+                            <a href="{% url 'dashboard:home' %}" class="btn btn-light text-muted" id="cancel_btn">Cancelar</a>
                         </div>
                     </form>
                 </div>
@@ -51,25 +83,28 @@
 </div>
 
 <!-- Modal para Cropper -->
-<div class="modal fade" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true" data-bs-backdrop="static">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title" id="cropModalLabel"><i class="fas fa-crop-alt me-2"></i> Ajustar Foto de Perfil</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">Arrastra para ajustar</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body text-center bg-light">
-        <div class="img-container" style="max-height: 400px; display: flex; justify-content: center; overflow: hidden; background: #e9ecef;">
-            <img id="image_to_crop" src="" alt="Picture" style="max-width: 100%;">
+      <div class="modal-body p-4">
+        <div class="img-container mb-4" style="height: 350px; background: #f0f2f5; border-radius: 8px; overflow: hidden;">
+            <img id="image_to_crop" src="" style="max-width: 100%;">
         </div>
-        <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">
-            <i class="fas fa-info-circle"></i> Arrastra la imagen y ajusta el cuadro para centrar tu rostro. El recorte final será circular.
-        </p>
+        
+        <div class="d-flex align-items-center justify-content-center px-3">
+            <i class="fas fa-image me-3 text-muted" style="font-size: 0.8rem;"></i>
+            <input type="range" class="form-range" id="zoomRange" min="0" max="1" step="0.01" value="0">
+            <i class="fas fa-image ms-3 text-muted" style="font-size: 1.2rem;"></i>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="crop_button" style="background-color: var(--primary-blue); border: none;">
-            <i class="fas fa-check me-1"></i> Aplicar Recorte
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-link text-decoration-none text-muted fw-bold" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary px-4 shadow-sm" id="crop_button" style="border-radius: 20px; background-color: #1a73e8; border: none;">
+            Aceptar
         </button>
       </div>
     </div>
@@ -77,66 +112,190 @@
 </div>
 
 <!-- Cropper JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js" integrity="sha512-6lplKUSl86rUVprDIjiW8DuALkMczG80Zj0j5SroI1k15I6eQx6n0y3N19KoflGohGZ4b7wW+m+vX2oU7B4mRw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js" referrerpolicy="no-referrer"></script>
 
 <style>
-/* Estilos para forzar el marco circular visual en Cropper.js */
+/* Máscara circular perfecta */
 .cropper-view-box,
 .cropper-face {
-  border-radius: 50%;
+    border-radius: 50%;
+    outline: none !important;
 }
+
+/* Oscurecer el área fuera del círculo (estilo Google) */
+.cropper-modal {
+    opacity: 0.7;
+    background-color: #000;
+}
+
+/* Quitar líneas de guía y bordes innecesarios */
+.cropper-line, .cropper-point {
+    display: none !important;
+}
+
 .cropper-view-box {
-    outline: 2px solid #fff;
-    outline-color: rgba(255, 255, 255, 0.75);
+    outline: 2px solid #fff !important;
+}
+
+/* Estilo del slider */
+#zoomRange {
+    max-width: 300px;
+}
+/* Ensure the image container works with cropper */
+.img-container {
+    width: 100%;
+    margin: 0 auto;
+    height: 350px; /* Es crítico tener una altura definida para que drag funcione bien */
+    background-color: #f8f9fa;
+}
+.img-container img {
+  display: block;
+  max-width: 100%;
+}
+/* Mejora en cursor */
+.cropper-drag-box.cropper-move, .cropper-face.cropper-move {
+    cursor: move;
+    cursor: grab;
+}
+.cropper-drag-box.cropper-move:active, .cropper-face.cropper-move:active {
+    cursor: grabbing;
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var fotoInput = document.getElementById('foto_input');
-    var base64Input = document.getElementById('id_foto_base64');
-    var imageToCrop = document.getElementById('image_to_crop');
-    var cropModalElement = document.getElementById('cropModal');
-    var cropModal = new bootstrap.Modal(cropModalElement);
-    var cropButton = document.getElementById('crop_button');
-    var profilePreview = document.getElementById('profile_preview');
-    var avatarPlaceholder = document.getElementById('avatar_placeholder');
-    var cropper;
+    const fotoInput = document.getElementById('foto_input');
+    const base64Input = document.getElementById('id_foto_base64');
+    const imageToCrop = document.getElementById('image_to_crop');
+    const cropModalElement = document.getElementById('cropModal');
+    const cropModal = new bootstrap.Modal(cropModalElement);
+    const cropButton = document.getElementById('crop_button');
+    const profilePreview = document.getElementById('profile_preview');
+    const avatarPlaceholder = document.getElementById('avatar_placeholder');
+    const zoomRange = document.getElementById('zoomRange');
+    
+    // UI Botones Premium
+    const btnCamera = document.getElementById('btn_camera');
+    const btnGallery = document.getElementById('btn_gallery');
+    let cropper;
 
-    // Cuando el usuario selecciona una imagen
+    // Flujo Inteligente de Cámara Frontal
+    if (btnCamera && fotoInput) {
+        btnCamera.addEventListener('click', function() {
+            // 'user' fuerza la cámara frontal para selfies
+            fotoInput.setAttribute('capture', 'user');
+            fotoInput.click(); // Disparamos input original
+        });
+    }
+
+    // Flujo Inteligente de Galería
+    if (btnGallery && fotoInput) {
+        btnGallery.addEventListener('click', function() {
+            // Remover 'capture' fuerza abrir el explorador / galería por defecto
+            fotoInput.removeAttribute('capture');
+            fotoInput.click(); // Disparamos input original
+        });
+    }
+
     if (fotoInput) {
         fotoInput.addEventListener('change', function (e) {
-            var files = e.target.files;
+            const files = e.target.files;
             if (files && files.length > 0) {
-                var file = files[0];
-                var reader = new FileReader();
-
+                const reader = new FileReader();
                 reader.onload = function (event) {
                     imageToCrop.src = event.target.result;
                     cropModal.show();
                 };
-
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(files[0]);
             }
         });
     }
 
-    // Inicializar Cropper cuando el modal esté completamente visible
     cropModalElement.addEventListener('shown.bs.modal', function () {
+        if (cropper) cropper.destroy();
+        
         cropper = new Cropper(imageToCrop, {
-            aspectRatio: 1, // Relación de aspecto 1:1 para un círculo perfecto
-            viewMode: 1, // Restringe la caja de recorte para que no se salga de la imagen
-            dragMode: 'move', // Mover la imagen en lugar de crear nuevas cajas de recorte
-            autoCropArea: 0.8,
-            restore: false,
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
             guides: false,
-            center: false,
+            center: true,
             highlight: false,
-            cropBoxMovable: true,
-            cropBoxResizable: true,
+            cropBoxMovable: false,
+            cropBoxResizable: false,
             toggleDragModeOnDblclick: false,
+            responsive: true,
+            // Ajuste para que la imagen ocupe el área del círculo al inicio
+            ready: function () {
+                // Sincronizar slider al inicio
+                zoomRange.value = 0;
+            },
+            zoom: function (e) {
+                // Sincronizar slider cuando se hace zoom con el scroll
+                // El rango de zoom suele ser entre 0.1 y 2 o 3
+                let ratio = e.detail.ratio;
+                // Ajustamos el valor del slider (0 a 1) basándonos en el ratio
+                // Esto es aproximado para que se mueva con el scroll
+                zoomRange.value = (ratio - 0.1) / 2; 
+            }
         });
     });
+
+    // CORRECCIÓN ZOOM: Slider de 0 a 1 mapeado a zoom real
+    if (zoomRange) {
+        zoomRange.addEventListener('input', function() {
+            if (cropper) {
+                // Mapeamos el 0-1 del slider a un zoom de 0.1 a 2.0
+                let zoomValue = parseFloat(this.value);
+                let targetZoom = 0.1 + (zoomValue * 2); 
+                cropper.zoomTo(targetZoom);
+            }
+        });
+    }
+
+    cropButton.addEventListener('click', function () {
+        if (!cropper) return;
+
+        const canvas = cropper.getCroppedCanvas({
+            width: 500, // Un poco más de calidad
+            height: 500,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+
+        const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        
+        if (base64Input) {
+            base64Input.value = croppedDataUrl;
+            console.log("Base64 generado correctamente"); // Para depuración
+        }
+
+        // --- CRÍTICO PARA EL GUARDADO ---
+        // Vaciamos el input de archivo original para que Django 
+        // no intente procesar el archivo sin recortar.
+        if (fotoInput) {
+            fotoInput.value = ""; 
+        }
+
+        if (profilePreview) {
+            profilePreview.src = croppedDataUrl;
+            profilePreview.style.display = 'inline-block';
+            if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+        }
+
+        cropModal.hide();
+    });
+
+    // Control de Zoom con el Slider
+    if (zoomRange) {
+        zoomRange.addEventListener('input', function() {
+            if (cropper) {
+                var zoomValue = parseFloat(this.value); // De 0 a 1
+                // Calculamos un zoom progresivo proporcional al contenedor (hasta +3x de zoom extra)
+                cropper.zoomTo(minZoomRatio * (1 + (zoomValue * 3))); 
+            }
+        });
+    }
 
     // Destruir Cropper cuando se cierre el modal para limpiar la memoria
     cropModalElement.addEventListener('hidden.bs.modal', function () {
@@ -146,39 +305,98 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         // Limpiamos el input si cerró el modal sin recortar para evitar subidas accidentales completas
         // a menos que ya tengamos un base64 guardado
-        if (!base64Input.value) {
+        if (fotoInput && (!base64Input || !base64Input.value)) {
            fotoInput.value = '';
         }
     });
 
     // Cuando hace click en Aplicar Recorte
-    cropButton.addEventListener('click', function () {
-        if (!cropper) return;
+    if (cropButton) {
+        cropButton.addEventListener('click', function () {
+            try {
+                if (!cropper) return;
 
-        // Extraer el pedacito de la imagen recortada
-        var canvas = cropper.getCroppedCanvas({
-            width: 300,
-            height: 300,
-        });
+                // Extraer el pedacito de la imagen recortada
+                var canvas = cropper.getCroppedCanvas({
+                    width: 400,
+                    height: 400,
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high',
+                });
 
-        // Convertir el canvas a string en base64 (JPEG a 80% de calidad para no pesar mucho)
-        var croppedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        
-        // Guardar la data en el input oculto que recogerá Django
-        if (base64Input) {
-            base64Input.value = croppedDataUrl;
-        }
+                if (!canvas) {
+                    console.error("El canvas de recorte regresó nulo.");
+                    return;
+                }
 
-        // Actualizar la previsualización instatánea para que el usuario se vea
-        if (profilePreview) {
-            profilePreview.src = croppedDataUrl;
-            profilePreview.style.display = 'inline-block';
-            if (avatarPlaceholder) {
-                avatarPlaceholder.style.display = 'none';
+                // Convertir el canvas a string en base64 (JPEG a 80% de calidad para no pesar mucho)
+                var croppedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // Guardar la data en el input oculto que recogerá Django
+                if (base64Input) {
+                    base64Input.value = croppedDataUrl;
+                }
+
+                // Actualizar la previsualización instatánea para que el usuario se vea
+                if (profilePreview) {
+                    profilePreview.src = croppedDataUrl;
+                    profilePreview.style.display = 'inline-block';
+                    if (avatarPlaceholder) {
+                        avatarPlaceholder.style.display = 'none';
+                    }
+                }
+
+                // Esconder Modal de forma segura
+                var modalInstance = bootstrap.Modal.getInstance(cropModalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                } else if (cropModal) {
+                    cropModal.hide();
+                }
+            } catch (err) {
+                console.error("Error aplicando recorte:", err);
+                alert("Hubo un error al recortar. Revisa la consola.");
             }
-        }
+        });
+    }
 
-        cropModal.hide();
+    document.getElementById('perfil_form').addEventListener('submit', function (e) {
+        var submitBtn = document.getElementById('submit_btn');
+        var cancelBtn = document.getElementById('cancel_btn');
+        var progressContainer = document.getElementById('progress_container');
+        var progressBar = document.getElementById('progress_bar');
+        var progressText = document.getElementById('progress_text');
+
+        // 1. Bloquear botones para evitar doble clic
+        if (submitBtn) submitBtn.disabled = true;
+        if (cancelBtn) cancelBtn.classList.add('disabled');
+        
+        // 2. Mostrar la barra de progreso
+        if (progressContainer) progressContainer.classList.remove('d-none');
+
+        // 3. Simular el progreso (Estética de Google)
+        let width = 0;
+        let interval = setInterval(function() {
+            if (width >= 100) {
+                // Al llegar al 100% detenemos la simulación visual
+                clearInterval(interval);
+                if (progressText) {
+                    progressText.innerText = "¡Listo! Procesando...";
+                }
+            } else {
+                width += Math.random() * 20; // Incrementar aleatoriamente
+                if (width > 100) width = 100;
+                
+                let widthPercent = Math.round(width) + '%';
+                if (progressBar) {
+                    progressBar.style.width = widthPercent;
+                    progressBar.setAttribute('aria-valuenow', Math.round(width));
+                }
+                if (progressText && width < 100) {
+                    progressText.innerText = widthPercent;
+                }
+            }
+        }, 120);
     });
 });
 </script>
