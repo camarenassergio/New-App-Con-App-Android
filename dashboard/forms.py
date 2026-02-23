@@ -277,3 +277,34 @@ class UsuarioPerfilForm(forms.ModelForm):
             data = ContentFile(base64.b64decode(imgstr), name=f"perfil_{self.instance.usuario.username}.{ext}")
             cleaned_data['foto'] = data
         return cleaned_data
+
+from .models import OrdenServicio
+
+class OrdenServicioForm(forms.ModelForm):
+    # Campos ocultos para capturar datos de la UI personalizada (botones y signature pad)
+    firma_solicitante_base64 = forms.CharField(widget=forms.HiddenInput(), required=False)
+    firma_autorizante_base64 = forms.CharField(widget=forms.HiddenInput(), required=False)
+    nivel_gasolina = forms.IntegerField(widget=forms.HiddenInput(), required=True)
+    responsable_mantenimiento = forms.CharField(widget=forms.HiddenInput(), required=True)
+
+    class Meta:
+        model = OrdenServicio
+        fields = [
+            'fecha', 'unidad', 'kilometraje', 'nivel_gasolina',
+            'hora_entrada', 'hora_salida', 'descripcion_detallada',
+            'responsable_mantenimiento', 'nombre_responsable_externo',
+            'nombre_solicitante', 'firma_solicitante_base64',
+            'nombre_autorizante', 'firma_autorizante_base64',
+            'comentarios'
+        ]
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'hora_entrada': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'hora_salida': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'descripcion_detallada': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'comentarios': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'nombre_responsable_externo': forms.TextInput(attrs={'class': 'form-control'}),
+            'nombre_solicitante': forms.TextInput(attrs={'class': 'form-control'}),
+            'nombre_autorizante': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+

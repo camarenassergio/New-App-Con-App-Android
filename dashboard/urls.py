@@ -22,6 +22,11 @@ urlpatterns = [
     path('gastos/', views.GastoUnidadListView.as_view(), name='gastos_list'),
     path('gastos/nuevo/', views.GastoUnidadCreateView.as_view(), name='gastos_create'),
     
+    # --- ÓRDENES DE SERVICIO ---
+    path('ordenes-servicio/', views.OrdenServicioListView.as_view(), name='orden_servicio_list'),
+    path('ordenes-servicio/nueva/', views.OrdenServicioCreateView.as_view(), name='orden_servicio_create'),
+    path('ordenes-servicio/<int:pk>/', views.OrdenServicioDetailView.as_view(), name='orden_servicio_detail'),
+    
     path('usuarios/', views.UsuarioListView.as_view(), name='usuarios_list'),
     path('usuarios/nuevo/', views.UsuarioCreateView.as_view(), name='usuario_create'),
     

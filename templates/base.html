@@ -55,6 +55,16 @@
 
         <li class="nav-item">
           <a
+            href="{% url 'dashboard:orden_servicio_list' %}"
+            class="nav-link {% if 'ordenes-servicio' in request.path %}active{% endif %}"
+          >
+            <i class="fas fa-tools nav-icon"></i>
+            <span>Órdenes de Servicio</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a
             href="{% url 'dashboard:operadores_list' %}"
             class="nav-link {% if 'operadores' in request.path %}active{% endif %}"
           >

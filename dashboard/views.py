@@ -797,3 +797,47 @@ class UsuarioPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
         # Para hacerlo robusto sin JS complejo: 
         # Esta vista puede renderizar una template 'borrar_confirmacion.html' si hay error.
         return self.render_to_response(self.get_context_data(form=form, object=get_object_or_404(RegistroCombustible, pk=self.kwargs.get('pk'))))
+
+# --- ÓRDENES DE SERVICIO ---
+from .models import OrdenServicio
+from .forms import OrdenServicioForm
+
+class OrdenServicioListView(LoginRequiredMixin, ListView):
+    model = OrdenServicio
+    template_name = "dashboard/orden_servicio_list.html"
+    context_object_name = "ordenes"
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        unidad_id = self.request.GET.get('unidad')
+        if unidad_id:
+            qs = qs.filter(unidad_id=unidad_id)
+        return qs.select_related('unidad', 'chofer')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['unidades'] = Unidad.objects.all()
+        return context
+
+class OrdenServicioCreateView(LoginRequiredMixin, CreateView):
+    model = OrdenServicio
+    form_class = OrdenServicioForm
+    template_name = "dashboard/orden_servicio_form.html"
+    success_url = reverse_lazy('dashboard:orden_servicio_list')
+
+    def form_valid(self, form):
+        # Asignar usuario logueado como chofer (si aplica, o permitir la selección en la vista)
+        # El modelo tiene chofer, lo asignamos aquí por seguridad
+        form.instance.chofer = self.request.user
+        
+        # Validar y guardar
+        response = super().form_valid(form)
+        messages.success(self.request, "Orden de Servicio registrada correctamente.")
+        return response
+
+class OrdenServicioDetailView(LoginRequiredMixin, DetailView):
+    model = OrdenServicio
+    template_name = "dashboard/orden_servicio_detail.html"
+    context_object_name = "orden"
+

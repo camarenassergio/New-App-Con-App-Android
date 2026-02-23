@@ -695,3 +695,46 @@ class GastoUnidad(models.Model):
             pass
 
         unidad.save()
+
+
+class OrdenServicio(models.Model):
+    NIVEL_GASOLINA_CHOICES = [
+        (25, '25%'),
+        (50, '50%'),
+        (75, '75%'),
+        (100, '100%'),
+    ]
+    RESPONSABLE_CHOICES = [
+        ('INTERNO', 'Interno'),
+        ('EXTERNO', 'Externo'),
+    ]
+    
+    fecha = models.DateField(default=timezone.now, verbose_name="Fecha")
+    chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name="Chofer")
+    unidad = models.ForeignKey('Unidad', on_delete=models.CASCADE, verbose_name="Unidad")
+    kilometraje = models.PositiveIntegerField(verbose_name="Kilometraje")
+    nivel_gasolina = models.IntegerField(choices=NIVEL_GASOLINA_CHOICES, verbose_name="Nivel de Gasolina")
+    
+    hora_entrada = models.TimeField(null=True, blank=True, verbose_name="Hora de Entrada")
+    hora_salida = models.TimeField(null=True, blank=True, verbose_name="Hora de Salida")
+    
+    descripcion_detallada = models.TextField(verbose_name="Descripción detallada del servicio")
+    responsable_mantenimiento = models.CharField(max_length=10, choices=RESPONSABLE_CHOICES, verbose_name="Responsable de mantenimiento")
+    nombre_responsable_externo = models.CharField(max_length=150, null=True, blank=True, verbose_name="Nombre del externo (si aplica)")
+
+    nombre_solicitante = models.CharField(max_length=150, verbose_name="Nombre de solicitante")
+    firma_solicitante_base64 = models.TextField(verbose_name="Firma Solicitante (Base64)", null=True, blank=True)
+    
+    nombre_autorizante = models.CharField(max_length=150, null=True, blank=True, verbose_name="Nombre de autorizante")
+    firma_autorizante_base64 = models.TextField(verbose_name="Firma Autorizante (Base64)", null=True, blank=True)
+    
+    comentarios = models.TextField(null=True, blank=True, verbose_name="Comentarios")
+
+    class Meta:
+        verbose_name = "Orden de Servicio"
+        verbose_name_plural = "Órdenes de Servicio"
+        ordering = ['-fecha', '-id']
+
+    def __str__(self):
+        return f"OS-{self.id} | {self.unidad.nUnidad} - {self.fecha}"
+

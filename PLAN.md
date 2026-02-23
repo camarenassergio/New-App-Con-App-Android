@@ -21,6 +21,7 @@
 | Antigravity | Plan de Contingencia (SEDEMA Scraping) | Verificado y Pulido |
 | Antigravity | UX/UI File Uploads (Perfil & Combustible) | Verificado y Pulido |
 | Antigravity | BI: Gráfica de Gastos Mes Apilada (Dashboard) | Verificado y Pulido |
+| Antigravity | Digitalización: Módulo "Orden de Servicio" (Mantenimiento) | Verificado y Pulido |
 
 ## Reglas del Proyecto
 -   **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).
