@@ -83,29 +83,34 @@
 
     // 1. Gasto Chart
     const ctxGasto = document.getElementById('gastoChart').getContext('2d');
+    const gastoDatasets = JSON.parse('{{ chart_gasto_datasets|escapejs }}');
+    
     new Chart(ctxGasto, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: JSON.parse('{{ chart_gasto_labels|escapejs }}'),
-            datasets: [{
-                label: 'Gasto Total ($)',
-                data: JSON.parse('{{ chart_gasto_data|escapejs }}'),
-                borderColor: '#e65100', // Orange primary
-                backgroundColor: 'rgba(230, 81, 0, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
+            datasets: gastoDatasets
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { 
+                    display: true, 
+                    position: 'bottom',
+                    labels: { boxWidth: 12, font: { size: 11 } }
+                }
             },
             scales: {
-                y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
-                x: { grid: { display: false } }
+                y: { 
+                    beginAtZero: true, 
+                    grid: { color: '#f0f0f0' },
+                    stacked: true
+                },
+                x: { 
+                    grid: { display: false },
+                    stacked: true
+                }
             }
         }
     });

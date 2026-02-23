@@ -65,29 +65,76 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
         from django.db.models import Sum, Count, Max, Min
         today = timezone.now().date()
         
-        # 1. Gasto Mensual (Últimos 6 meses)
-        six_months_ago = today - datetime.timedelta(days=180)
-        # Agrupar por mes
-        gasto_qs = RegistroCombustible.objects.filter(fecha__gte=six_months_ago)\
+        # 1. Gasto Mensual Desglosado (Últimos 6 meses)
+        import dateutil.relativedelta
+        from collections import defaultdict
+        
+        meses_keys = []
+        for i in range(5, -1, -1):
+            m_date = today - dateutil.relativedelta.relativedelta(months=i)
+            m_date = m_date.replace(day=1)
+            meses_keys.append(m_date)
+            
+        six_months_ago = meses_keys[0]
+        
+        combustible_qs = RegistroCombustible.objects.filter(fecha__gte=six_months_ago)\
             .annotate(month=TruncMonth('fecha'))\
             .values('month')\
             .annotate(total_gasto=Sum('total'))\
             .order_by('month')
             
-        labels_gasto = []
-        data_gasto = []
+        otros_gastos_qs = GastoUnidad.objects.filter(fecha__gte=six_months_ago)\
+            .annotate(month=TruncMonth('fecha'))\
+            .values('month', 'tipo')\
+            .annotate(total_gasto=Sum('costo'))\
+            .order_by('month')
+            
+        data_matrix = defaultdict(lambda: defaultdict(float))
         
+        def to_month_key(date_obj):
+            if isinstance(date_obj, datetime.datetime):
+                return date_obj.date().replace(day=1)
+            return date_obj.replace(day=1)
+
+        for item in combustible_qs:
+            m = to_month_key(item['month'])
+            data_matrix[m]['Combustible'] += float(item['total_gasto'] or 0)
+            
+        for item in otros_gastos_qs:
+            m = to_month_key(item['month'])
+            tipo = item['tipo']
+            data_matrix[m][tipo] += float(item['total_gasto'] or 0)
+            
         from .utils import MESES_ES
-        
-        for item in gasto_qs:
-            m = item['month']
-            # Formato: "ENE 2026"
+        labels_gasto = []
+        for m in meses_keys:
             nombre_mes = MESES_ES.get(m.month, '')[:3]
             labels_gasto.append(f"{nombre_mes} {m.year}")
-            data_gasto.append(float(item['total_gasto']))
             
+        tipos_gastos_registrados = set(['Combustible']) # Siempre asegurar que exista aunque en 0
+        for val_dict in data_matrix.values():
+            tipos_gastos_registrados.update(val_dict.keys())
+            
+        color_palette = {
+            'Combustible': '#e65100', 'Verificación': '#28a745', 'Mantenimiento': '#17a2b8',
+            'Seguro': '#6f42c1', 'Multa': '#dc3545', 'Peaje': '#ffc107',
+            'Tenencia': '#fd7e14', 'Permiso': '#20c997', 'Placas': '#6c757d', 'Otro': '#343a40'
+        }
+        
+        datasets = []
+        for tipo in tipos_gastos_registrados:
+            data_arr = [data_matrix[m].get(tipo, 0.0) for m in meses_keys]
+            if sum(data_arr) > 0:
+                color = color_palette.get(tipo, '#007bff')
+                datasets.append({
+                    'label': tipo,
+                    'data': data_arr,
+                    'backgroundColor': color,
+                    'borderRadius': 4
+                })
+                
         context['chart_gasto_labels'] = json.dumps(labels_gasto)
-        context['chart_gasto_data'] = json.dumps(data_gasto)
+        context['chart_gasto_datasets'] = json.dumps(datasets)
         
         # 2. Top Consumo Litros (Mes Actual)
         consumo_mes_qs = RegistroCombustible.objects.filter(fecha__year=today.year, fecha__month=today.month)\
