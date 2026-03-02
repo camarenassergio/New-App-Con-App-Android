@@ -165,6 +165,11 @@
         <div class="os-section-title">
             <i class="fas fa-tools"></i> Detalle de Mantenimiento
         </div>
+        
+        <div class="mb-3">
+            {{ form.tipo_mantenimiento|as_crispy_field }}
+        </div>
+        
         {{ form.descripcion_detallada|as_crispy_field }}
         
         <label class="form-label" style="margin-top: 15px; font-weight: bold;">Responsable de realizar mantenimiento:</label>
@@ -220,7 +225,19 @@
         </div>
     </div>
 
-    <!-- 4. Comentarios Finales -->
+    <!-- 4. Próximos Servicios SDC 3.5.1 -->
+    <div class="os-section" style="border-left-color: #28a745;">
+        <div class="os-section-title" style="color: #28a745;">
+            <i class="fas fa-calendar-check"></i> Programación Próximo Servicio Preventivo (Opcional)
+        </div>
+        <p class="text-muted small mb-3">Establezca cuándo se debe volver a revisar la unidad para cumplir con los lineamientos SDC.</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            {{ form.proximo_servicio_km|as_crispy_field }}
+            {{ form.proximo_servicio_fecha|as_crispy_field }}
+        </div>
+    </div>
+
+    <!-- 5. Comentarios Finales -->
     <div class="os-section">
         {{ form.comentarios|as_crispy_field }}
     </div>

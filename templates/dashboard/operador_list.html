@@ -17,7 +17,14 @@
             </div>
         </div>
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Vence: {{ op.vigencia_licencia|date:"d/m/Y" }}</span>
+            <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
+                <span>Vence: {{ op.vigencia_licencia|date:"d/m/Y" }}</span>
+                {% if op.licencia_vencida %}
+                    <span class="badge bg-danger text-white"><i class="fas fa-exclamation-triangle"></i> LICENCIA VENCIDA</span>
+                {% elif op.licencia_por_vencer %}
+                    <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-circle"></i> POR VENCER</span>
+                {% endif %}
+            </div>
             <a href="#" style="color: var(--primary-orange);">Ver Detalles</a>
         </div>
     </div>

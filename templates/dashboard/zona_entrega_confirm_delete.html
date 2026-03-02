@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Eliminar Zona de Entrega{% endblock %}
+
+{% block content %}
+<div class="form-container" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;">
+
+    <div style="margin-bottom: 24px;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #dc3545; margin-bottom: 15px;"></i>
+        <h3 style="color: #dc3545;">¿Estás seguro de que deseas eliminar esta Zona de Entrega?</h3>
+        <p class="text-muted" style="margin-bottom: 25px;">
+            Estás a punto de eliminar la zona: <strong>"{{ object.nombre }}"</strong>.<br>
+            <small>Los códigos postales asociados ({{ object.codigos_postales|default:"Ninguno" }}) quedarán huérfanos y listos para ser asignados a otra zona.</small>
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 16px; justify-content: center;">
+            <a href="{% url 'dashboard:zona_entrega_list' %}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+            <button type="submit" class="btn btn-danger btn-lg">
+                <i class="fas fa-trash-alt"></i> Sí, Eliminar Zona
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

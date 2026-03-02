@@ -4,9 +4,11 @@
 
 {% block content %}
 <div class="table-container">
-    <div class="table-header">
+    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h3>Historial de Rutas</h3>
-        <!-- Filters -->
+        <a href="{% url 'dashboard:viaje_create' %}" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
+            <i class="fas fa-plus"></i> Asignar Viaje SDC
+        </a>
     </div>
     
     <table>
@@ -16,8 +18,10 @@
                 <th>Fecha</th>
                 <th>Unidad</th>
                 <th>Operador</th>
+                <th>Zona de Entrega</th>
                 <th>Tipo</th>
                 <th>Estado</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -27,6 +31,13 @@
                 <td>{{ viaje.fecha|date:"d M Y" }}</td>
                 <td>{{ viaje.unidad.nUnidad }}</td>
                 <td>{{ viaje.operador.nombre }}</td>
+                <td>
+                    {% if viaje.zona %}
+                        <span class="badge bg-secondary"><i class="fas fa-map-marker-alt"></i> {{ viaje.zona.nombre }}</span>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
                 <td>{{ viaje.get_tipo_viaje_display }}</td>
                 <td>
                     {% if viaje.estado_actual == 'ESPERA' %}
@@ -36,6 +47,22 @@
                     {% else %}
                         <span class="badge badge-default">{{ viaje.get_estado_actual_display }}</span>
                     {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'dashboard:viaje_update' viaje.pk %}" class="btn btn-sm btn-outline-primary" title="Editar Viaje">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% if viaje.tiene_evaluacion %}
+                            <a href="{% url 'dashboard:evaluacion_entrega_update' viaje.evaluacion.pk %}" class="btn btn-sm btn-outline-success" title="Ver / Editar Evaluación">
+                                <i class="fas fa-star"></i>
+                            </a>
+                        {% elif viaje.estado_actual == 'FINALIZADO' or viaje.estado_actual == 'TRANSITO' %}
+                            <a href="{% url 'dashboard:evaluacion_entrega_create' viaje.id %}" class="btn btn-sm btn-warning" title="Evaluar Entrega">
+                                <i class="far fa-star"></i> Evaluar
+                            </a>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% empty %}

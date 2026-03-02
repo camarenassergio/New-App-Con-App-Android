@@ -10,7 +10,7 @@
         <p style="color: var(--text-muted);">Ingrese la información normalizada (Año a 4 dígitos, Marca, Submarca).</p>
     </div>
 
-    <form method="post" id="unidadForm">
+    <form method="post" id="unidadForm" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form|crispy }}
         

@@ -1,0 +1,1737 @@
+Entregas
+Administración
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+1 Contexto
+¿Qué es el sello de la casa?
+El proyecto sello de la casa es un modelo de desarrollo y mejora continua integrado por lineamientos que buscan
+hacer más eficiente la operación de cada tienda, el cual ha dado resultados de manera positiva en la rentabilidad
+de la red Construrama.
+
+Objetivo
+El principal objetivo es que el Construrama cuente con un plan que le permita profesionalizar ordenadamente
+el negocio, para ser más competitivos, tanto en su operación interna como en lo que sus clientes perciben.
+Impactando positivamente algunos factores como lo son:
+• La productividad ya que nos ayuda a agilizar la operación diaria, evitando retrabajos.
+• El personal tendrá sus responsabilidades y actividades de una forma clara y aprenderá de nuevas
+herramientas para desempeñar su trabajo.
+• la satisfacción de los clientes porque el personal de la tienda podrá mejorar el servicio y la calidad a
+través de procesos y practicas más profesionales.
+• Rentabilidad por qué ayuda a una correcta administración de costos y gastos que propician mejores
+márgenes para la tienda
+• Trazabilidad porque te permite tener visión de todos los procesos que interactúan en la operación diaria
+de un Construrama.
+
+Alcance
+El Sello de la Casa llega a cubrir las 4 áreas principales de todo Construrama: Almacén, Ventas, Entregas y
+Administración donde para cada área se tiene una serie de lineamientos que detallan el deber ser de los
+principales componentes de la operación, servicios e imagen.
+
+Historia
+
+Módulos
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+El Sello de la Casa actualmente cuenta con 4 módulos con un total de 298 lineamientos distribuidos de la
+siguiente manera:
+
+Sello de la Casa 2.0
+55
+
+78
+
+35
+101
+Almacén
+
+Ventas
+
+Entregas
+
+Adminsitración
+
+Cada lineamiento está enfocado hacia el control, análisis e integración de tareas específicas de cada área del
+Construrama.
+
+Almacén: Permitirá un mejor control en todo el catálogo de
+productos desde su abasto hasta el cuidado de estos durante
+su almacenamiento.
+Ventas: Ayudará a conocer de una mejor manera los datos de
+las ventas generadas permitiendo un análisis más completo
+que permitirá implementar esfuerzos y estrategias para el
+aumento de las ganancias.
+Entregas: Abordará los principales temas logísticos del área
+de reparto permitiendo optimizar los recursos y hacer más
+eficaz la ejecución de la entrega de pedidos.
+Administración: Se contemplan las herramientas básicas
+para llevar a cabo una correcta administración de todo el
+personal que labora en el Construrama.
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+2 Guía de entrega de evidencias
+Procedimiento
+Documento con los pasos a seguir de una manera secuenciada para obtener
+un resultado o realizar una tarea determinada.
+Debe contener:
+o
+o
+o
+o
+o
+o
+o
+o
+
+o
+o
+
+Logotipo del Construrama
+Nombre del procedimiento
+Nomenclatura del lineamiento
+Fecha de creación / modificación
+Objetivo: lo que se quiere lograr con el procedimiento
+Alcance: dónde inicia y dónde termina el procedimiento
+Responsables: puestos involucrados en el procedimiento
+Actividades detalladas y ordenadas cronológicamente indicando el responsable de cada actividad y
+que incluya si es necesario capturas de pantalla, fotografías, rutas para obtener o registrar la
+información en sistema, etc.
+Diagrama de flujo
+Anexos como formatos, políticas, etc.
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Registro
+Anotaciones de datos o información destinados a facilitar diversas operaciones y
+que pueden consultarse posteriormente.
+Debe contener:
+o
+o
+o
+o
+
+Logo del Construrama
+Nombre del registro
+Los títulos de los datos que se van a capturar
+El orden de la captura de los datos
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Reportes
+Documento que pretende transmitir información sobre una determinada cuestión
+para su análisis. Pueden obtenerse del sistema de información o de alguna otra
+fuente (sistemas externos, contador, Excel, etc.)
+Debe contener:
+o
+o
+o
+o
+
+Logo del Construrama
+Nombre del reporte
+Periodo del cual se toman en cuenta los
+datos presentados
+Gráficas comparativas
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Capturas de pantalla
+Imagen que muestre evidencia de que algún proceso o actividad requerida en un
+lineamiento se lleve de manera digital (sistema de información, portal, página web,
+etc.)
+Se debe considerar:
+o
+o
+o
+
+El título o descripción de cada captura de
+pantalla
+Buena resolución, en donde se pueda ver
+claro un acercamiento
+o Incluir anotaciones para aclarar situaciones
+y/o excepciones cuando sea necesario
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Fotografías
+Imagen con la que se pueda evidenciar de manera visual el cumplimiento de algún
+lineamiento.
+Se debe considerar:
+o
+o
+o
+o
+--
+Evitando cruce de productos, entregas incorrectas, facilita el cálculo de compras y
+resurtido del producto.
+En la revisión se verifica que los productos tengan detallada su descripción,
+especialmente si el sistema ERP utilizando proporciona campos adicionales como:
+unidad de medida, color, nombre del proveedor, presentación. Se verifica que toda
+la información esté completa y llenada correctamente.
+Captura de pantalla
+
+Sub-Módulo
+Contar con un catálogo de productos y proveedores
+Lineamiento
+Catálogo de productos
+El catálogo de productos tiene la información de: familia, subfamilia (opcional),
+código, descripción, costo, precio, unidad de medida, proveedor.
+Registrar todos los productos en el catálogo en el sistema ERP. Se puede identificar
+según la familia (línea) a la que pertenece el producto, e incluso su ubicación o
+número de anaquel del punto de venta. El tener actualizado el costo y precio en
+permite generar reportes de ventas/utilidad de los diversos productos y familias.
+En la revisión se coteja la información que existe en el sistema de información (ERP)
+contra lo que hay en físico. Por lo que hay que asegurar que el catálogo este
+vigente, no se tengan productos físicamente que no estén registrados y dados de
+alta. Especificar o dar de baja productos en el catálogo que son inactivos, o bien, si
+ya no se manejan.
+Captura de pantalla
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Almacén
+Nomenclatura
+1.1.2.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Almacén
+Nomenclatura
+1.1.3.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Contar con un catálogo de productos y proveedores
+Lineamiento
+Procedimiento de alta de productos
+Se cuenta con un procedimiento para el alta de nuevos productos en sistema que
+incluya el responsable, la estructura de creación de códigos, la lista de familias y
+subfamilias, el orden de los elementos que componen la descripción y la forma de
+capturarlo en sistema.
+El contar con un procedimiento definido permite la continuidad del negocio incluso
+si hay personal de nuevo ingreso. El procedimiento de alta de productos detalla
+paso a paso y con captura de pantallas como se procede a dar de alta un producto
+nuevo, saber que código le corresponde y como hacer el alta en sistema.
+El auditor revisa que el documento sea claro, se verifica que los pasos registrados se
+lleven a cabo en el Construrama, y cumpla todos los requisitos según la guía de
+creación de procedimientos.
+Procedimiento
+
+Sub-Módulo
+Contar con un catálogo de productos y proveedores
+Lineamiento
+Catálogo de proveedores
+El catálogo de proveedores tiene la siguiente información: nombre comercial,
+nombre fiscal, dirección comercial, dirección fiscal, nombre del contacto para
+compras, nombre del contacto para pagos, teléfono, correo electrónico.
+La importancia de tener el catálogo de proveedores actualizado y con la información
+completa permite que se facilite la gestión de compras al responsable, en caso de
+ser personal nuevo, permite localizar al proveedor y hacer una orden de compra de
+manera correcta.
+Se revisa que se tenga el catálogo de proveedores con la información actualizada ya
+sea dentro del sistema (ERP) o bien, en un registro de Excel. El auditor validará que
+toda la información esté completa en caso de se requiera contactar a un proveedor
+y que todos los proveedores activos se encuentren en el registro.
+Captura de pantalla
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Almacén
+Nomenclatura
+1.2.1.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+
+--
+políticas de entregas, etc.
+Que el personal interno tenga claras las políticas de servicio ofrecidas al cliente final
+y comunique que hacer de acuerdo con la situación que se presente.
+El auditor interactúa con el personal para escuchar y/o conocer cuáles son las
+políticas de servicio, que se ejemplifiquen algunas situaciones de vivencia diaria con
+los clientes finales.
+Política y fotografía
+
+Sub-Módulo
+Monitoreo de servicio al cliente
+Lineamiento
+Evidencia Política de servicio interna
+Se cuenta con una política de servicio publicada (de acuerdo con el manual de
+imagen Sello de la Casa) a la vista del cliente que incluya horarios, formas de pago,
+garantía de calidad, compromiso de atención y servicio, políticas de devoluciones,
+políticas de entregas, etc.
+Permite tener claro el enfoque y actitud para el cliente interno con quien se
+interactúa a diario. Indica los valores que busca transmitir el negocio Construrama a
+su personal y en dado caso resolver problemas.
+El auditor interactúa con el personal para escuchar y/o conocer cuáles son las
+políticas de servicio interno, que se ejemplifiquen algunas situaciones de vivencia
+diaria con el personal del negocio.
+Política y fotografía
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Ventas
+Nomenclatura
+2.11.2.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Ventas
+Nomenclatura
+2.11.2.2
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Monitoreo de servicio al cliente
+Lineamiento
+Encuesta de evaluación de servicio
+Se tiene un formato de encuesta de Evaluación de Servicio de mostrador física o
+digital que incluya fecha, aspectos a evaluar (imagen del negocio, precios,
+amabilidad en la atención, rapidez en la atención, servicios adicionales, variedad de
+productos u otros), productos no encontrados, medio por el cual conoció al Punto
+de Venta, comentarios generales, etc.
+Permite conocer el servicio brindado a nuestros clientes, además de identificar los
+posibles errores que se presentan durante la atención al cliente, la operación del
+negocio y permite tener una referencia sobre qué productos son de interés para los
+clientes.
+El auditor revisará que se tengan formatos de evaluación contestadas por los
+clientes durante un período de tres meses.
+Evidencia de uso de 3 meses
+
+Sub-Módulo
+Monitoreo de servicio al cliente
+Lineamiento
+Encuesta de evaluación post venta
+Se tiene un formato de encuesta de evaluación post venta de pedidos telefónicos
+que incluya fecha, aspectos a evaluar (Calidad, rapidez, precios, disponibilidad de
+productos, amabilidad en la atención chofer/vendedor, servicios
+adicionales/especiales).
+Permite conocer el servicio brindado a los clientes después de haber realizado una
+venta, además de identificar los posibles errores que se presentan durante la
+atención al cliente, la operación del negocio y permite identificar áreas de
+oportunidad para a mejorar, así como conservar la lealtad de clientes y captar
+nuevos.
+El auditor revisará que se tengan formatos de evaluación contestadas por los
+clientes durante un período de tres meses.
+Evidencia de uso de 3 meses
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Ventas
+Nomenclatura
+2.11.2.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Ventas
+Nomenclatura
+2.11.2.4
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Monitoreo de servicio al cliente
+--
+entregas, etc.)
+Orienta al cliente sobre la ubicación de los productos, los diferentes departamentos
+de la tienda y define las áreas de riesgo para así evitar posibles accidentes.
+El auditor revisara que las diferentes áreas del negocio se encuentren debidamente
+señalizadas y a la vista del cliente.
+Fotografía
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Ventas
+Nomenclatura
+2.13.1.2
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Ventas
+Nomenclatura
+2.13.1.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Ventas
+Nomenclatura
+2.13.1.4
+Descripción
+
+Beneficio
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Imagen del área de venta y personal
+Lineamiento
+Acomodo de productos por familias
+Los productos se encuentran acomodados según la familias y subfamilias de
+productos a la que pertenecen y las áreas o anaqueles se encuentran señalizados
+(Pinturas, Plomería, Ferretería, etc.)
+Permite maximizar la rentabilidad del negocio, la distribución de espacios y la
+satisfacción de los clientes, transmitiendo la imagen y presentación de
+cada producto y de lo que se vende en la tienda de una forma ordenada, creando la
+compra por impulso o venta cruzada (no programada) facilitando el control de las
+mercancías.
+El auditor revisara que los productos se encuentren debidamente acomodados y
+ordenados por familias.
+Fotografía
+
+Sub-Módulo
+Imagen del área de venta y personal
+Lineamiento
+Etiquetado de productos
+El lugar de acomodo de cada producto en exhibición a la vista del cliente está
+etiquetado con nombre, código y precio, los demás productos en almacén interior o
+exterior cuentan con nombre y código.
+Simplifica la ubicación e identificación de cada producto, agiliza la recepción de los
+productos y su acomodo, optimiza el manejo de inventarios y el resurtido de
+mercancías y da orden y claridad a los almacenes.
+El auditor revisara que en los espacios de cada producto se cuente con una etiqueta
+que contenga nombre, código y precio.
+Fotografía
+
+Sub-Módulo
+Imagen del área de venta y personal
+Lineamiento
+Área de venta en buen estado
+El área de venta se encuentra iluminada; las paredes y pisos se encuentran limpios y
+en buen estado; los exhibidores y anaqueles se encuentran limpios, en buen estado,
+homogéneos, de colores Construrama y con los productos frenteados; en el piso de
+venta y área de mostrador se encuentra solamente mercancía para la venta y
+ningún otro objeto de uso interno.
+Simplifica la ubicación e identificación de cada área y producto, crea un ambiente
+de compra atractivo y de confianza para el cliente.
+El auditor revisara que las diferentes áreas de venta se encuentren en buenas
+condiciones, iluminadas, ordenadas, señalizadas y limpias.
+Fotografía
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Ventas
+Nomenclatura
+2.13.1.5
+Descripción
+Beneficio
+
+--
+Módulo Entregas
+Módulo
+Entregas
+Nomenclatura
+3.1.1.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.1.1.2
+Descripción
+Beneficio
+
+Elementos
+verificables en
+auditoría
+
+Entregable
+
+Sub-Módulo
+Realizar toma de pedidos
+Lineamiento
+Mapa de zonas de entrega
+Se cuenta con un mapa digital que incluya las zonas de entrega y que para su
+división considere las restricciones por vialidades, tiempos de traslado, distancia y
+se encuentra al alcance del personal involucrado.
+Permite identificar de manera visual, las zonas y colonias de los pedidos para
+realizar una programación de entrega óptima, reduciendo tiempos y movimientos
+de traslado. Además, se pueden identificar rutas alternas en caso de que alguna
+ruta ordinaria presente calles o avenidas cerradas/bloqueadas.
+Mapa físico o electrónico publicado y zonificado al alcance de todos los puestos
+involucrados como, la persona que toma el pedido, la persona que lo programa y las
+personas que entregan el pedido. Por lo regular, si en el mapa se asigna un color o
+letra para cada zona, en las charolas, legajos o donde se colocan los pedidos podrán
+contener estos mismos colores o letras.
+Fotografía/ captura de pantalla
+
+Sub-Módulo
+Realizar toma de pedidos
+Lineamiento
+Zonas y colonias
+Se tiene un listado de las colonias que abarca cada zona, con el tiempo de traslado y
+distancia, que esté al alcance del personal involucrado.
+Identificar la zona en la que se encuentra la colonia donde se va a realizar la entrega
+para poderla registrar y después pasarla correctamente a programación.
+Estimar el tiempo que tardará la unidad en cada viaje guiándose con el tiempo de
+traslado y distancia establecidos en este listado, independientemente si en cada
+viaje se van a entregar uno o más pedidos, de esta manera, tendrá un mejor control
+en la hora de llegada de las unidades, dando oportunidad a emitir un tiempo
+estimado a los clientes que realicen pedidos mientras las unidades se encuentran en
+ruta.
+El listado de zonas y colonias deberá coincidir con el mapa zonificado, por ejemplo,
+si en este listado hay 5 zonas, éstas deberán estar delimitadas en el mapa y las
+colonias que estén dentro del perímetro de cada zona, deberán estar en el listado
+con tiempo de traslado y distancia tomando como referencia la ubicación del punto
+de venta Construrama.
+Listado
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.1.1.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+
+Entregable
+Módulo
+Entregas
+Nomenclatura
+3.1.2.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+
+Entregable
+
+Sub-Módulo
+Realizar toma de pedidos
+Lineamiento
+Costos de fletes y maniobras
+Se tiene definido el cálculo de costos de fletes por zona y costos de las maniobras de
+descarga adicionales (aunque no se cobren al cliente) y el cobro (si aplica) se
+encuentra integrado en el sistema.
+Definir y conocer los costos que representa el realizar los fletes y maniobras para
+ser considerarlos en cada entrega. Contablemente también es considerado dentro
+de los gastos de operación.
+Cálculo matemático que defina el costo según la zona de entrega (se puede basar en
+las distancias en km y el rendimiento promedio de las unidades), además de
+considerar las horas hombre empleadas en las entregas y maniobras. Una vez
+definidos, si el sistema lo permite en algún campo, deberán ser registrados estos
+costos para que se consideren en las entregas si así lo establece también la “Política
+de entregas” 3.3.1.2
+Excel de cálculo y captura de pantalla
+Sub-Módulo
+Realizar toma de pedidos
+Lineamiento
+Toma de pedido
+Se cuenta con un formato físico y electrónico para la toma de pedido que incluya los
+datos del cliente, de los productos que está solicitando y de la entrega, así como
+maniobras adicionales o urgencias que se requieran, zona de entrega, hora de
+solicitud del pedido y folio.
+Asegura una entrega y control de los productos vendidos con cada uno de los datos
+del cliente y direcciones de entrega si es el caso. Facilita realizar de manera óptima
+la programación de entregas.
+Formato visiblemente lleno en todos sus campos, por lo menos los mencionados en
+la descripción de lineamiento. En la evidencia se podrá verificar que las zonas
+registradas en el formato “toma de pedido” coincidan con las del listado de zonas y
+colonias y/o las del mapa respecto a la(s) colonia(s) en donde se entregó la
+mercancía.
+Evidencia de uso
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.1.2.2
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.1.2.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.2.1.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Realizar toma de pedidos
+Lineamiento
+Agrupación de formatos de pedidos
+Se agrupan los formatos de pedidos (previo a la programación) ya sea por zona,
+hora de solicitud, urgencia, tipo de cliente, día solicitado de entrega, y se colocan en
+charolas, carpetas, separadores, etc.
+Al agrupar los pedidos permite llevar el control físico de estos tickets o formatos,
+evitando se puedan traspapelar, además de facilitar la programación y asignarlas a
+las unidades o rutas correspondientes.
+Charolas, carpetas, separadores en uso, con formatos relacionados con las entregas
+antes de ser programados. El responsable de esta práctica deberá explicar el
+funcionamiento de agrupación de pedidos físicamente.
+Fotografía
+
+Sub-Módulo
+Realizar toma de pedidos
+Lineamiento
+Procedimiento de toma de pedido
+Se cuenta con un procedimiento para la toma de pedidos que incluya responsables,
+uso del formato de toma de pedido, método para que el vendedor pueda informar
+el horario de entrega estimado, cómo se agrupan los pedidos y cómo se almacenan
+antes de entregar al programador.
+Tener documentado de manera específica y detallada, como se realiza la toma de
+pedido, quienes son los responsables y que se hace con los documentos físicos y/o
+electrónicos antes de ser programados, además de estandarizar el procedimiento
+para todas las personas que ejecutan esta práctica.
+Procedimiento físico o electrónico que incluya por lo menos cada uno de los puntos
+descritos en la descripción del lineamiento. La operación en el punto de venta con
+relación a las entregas antes de la programación de pedidos deberá coincidir
+específicamente con lo descrito en este procedimiento.
+Procedimiento
+
+Sub-Módulo
+Programar entrega de pedidos
+Lineamiento
+Pre-acomodo de productos almacén
+Se tiene un espacio delimitado y señalizado en el patio para el pre-acomodo de
+productos de los pedidos que están listos para entregar o despacho rápido de
+polvos (si se cuenta con el espacio)
+Agilizar las entregas mientras las unidades de reparto no están disponibles por
+operación de pedidos anteriores o por pedidos que no se hacen de manera física
+pero que el cliente pretende recoger en un tiempo posterior.
+Espacio delimitado y señalizado en el almacén y que su ubicación no entorpezca la
+operación o presente un riesgo para los operadores. Además, el responsable deberá
+explicar cómo distinguen los pedidos cuando son colocados en esta área o tarimas si
+es el caso.
+Fotografía
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.2.1.2
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+Módulo
+Entregas
+Nomenclatura
+3.2.1.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+Módulo
+Entregas
+Nomenclatura
+3.2.2.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Programar entrega de pedidos
+Lineamiento
+Pre-acomodo de productos ventas
+Se tiene un espacio delimitado y señalado en al área de venta para el pre-acomodo
+de productos de ferretería que están listos para entregar organizados por pedido de
+acuerdo con las entregadas programadas.
+Agilizar las entregas de productos derivados de los pedidos que realizan los clientes
+mientras las unidades de reparto no están disponibles por operación de pedidos
+anteriores o por pedidos que no se hacen de manera física pero que el cliente
+pretende recoger en un tiempo posterior.
+Espacio delimitado y señalizado en el área de ventas y que su ubicación no
+entorpezca la operación o presente un riesgo para los trabajadores. Además, el
+responsable deberá explicar cómo distinguen los pedidos cuando son colocados en
+esta área.
+Fotografía
+Sub-Módulo
+Programar entrega de pedidos
+Lineamiento
+Pre-empaque de productos
+Se tiene un listado con los productos a pre-empacar que indique el producto, la
+cantidad mínima que debe haber en existencia y el contenido/peso. (Por ejemplo 10
+bolsas de 1 kg de clavo de 2”).
+Control óptimo de inventarios en productos que se venden en diferente unidad a
+como se compran. Permite agilizar las ventas de productos que se venden en otra
+unidad de medida, además de dar claridad al responsable de cuales productos de se
+deben pre empacar para tener en stock.
+A través del sistema se pueden verificar las ventas de productos que se han vendido
+en diferentes unidades a la compra, por lo que son sujetos si así de decide, a estar
+en la lista de pre-empaque.
+Listado
+Sub-Módulo
+Programar entrega de pedidos
+Lineamiento
+Programación de entregas
+Se publica la programación de entregas a través de un corcho, pizarrón, pantalla o
+tablero con la agrupación de notas/remisiones/tickets según el horario de entrega
+al alcance del personal de ventas y entregas, que indique horarios, folio de nota,
+unidades de transporte, chofer, zonas, pedidos urgentes o foráneos, etc.
+Dar a conocer a los choferes la programación de manera ordenada, sencilla y
+eficiente para empezar a cargar los productos en orden de acuerdo lo
+correspondiente en cada unidad. Se tiene visibilidad inmediata a través del corcho,
+pizarrón, pantalla o tablero de los pedidos que tienen que ser entregados en
+formatos correspondientes evitando cruce de información con otras áreas.
+Corcho, pizarrón, pantalla o tablero en uso de la programación en curso. Los
+pedidos colocados en cierto momento deberán estar incluidos y coincidir con el
+3.2.2.3 Registro de programación de entregas
+Fotografía
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.2.2.2
+Descripción
+
+Beneficio
+Elementos
+verificables en
+auditoría
+
+Entregable
+Módulo
+Entregas
+Nomenclatura
+3.2.2.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.2.2.4
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Programar entrega de pedidos
+Lineamiento
+Catálogo de unidades
+Se cuenta con un catálogo de unidades de transporte que especifique el número
+económico, tipo de unidad, modelo, chofer asignado y capacidad máxima de carga
+de los vehículos y una tabla de referencia con los pesos de los productos de obra
+negra (por unidad) y conversiones a toneladas.
+Dar a conocer las características de carga de las unidades de reparto, así como datos
+generales a los involucrados de operarlas para el buen manejo de estas.
+El catálogo de unidades deberá coincidir con la flotilla de unidades en operación del
+punto de venta Construrama, deberán coincidir con la evidencia del 3.2.2.3.
+Además, debe incluir la tabla de referencia con los pesos de productos de obra
+negra y se podrá verificar a través de la programación si se han estado sobre
+cargando las unidades.
+Registro
+Sub-Módulo
+Programar entrega de pedidos
+Lineamiento
+Registro de programación de entregas
+El programador de entregas lleva un registro en sistema para cada entrega, que
+incluya los datos del chofer, fecha, vehículo, número de viaje, hora de salida y de
+llegada al Construrama y cliente, número de pedido/factura, zona de entrega,
+kilometraje al inicio/final del día y forma de pago/cobro.
+Tener un control de todas las entregas realizadas en el punto de venta Construrama,
+generar estadísticas de choferes respecto a sus entregas, mejorar tiempos de
+entrega e incluso, una vez analizada la información generar estrategias para
+entregar más pedidos en un periodo de tiempo determinado.
+El registro en sistema deberá contener evidencia de cada uno de los puntos
+mencionados en la descripción y tendrá que coincidir con los pedidos entregados
+(fecha y cantidad de pedidos).
+Registro
+
+Sub-Módulo
+Programar entrega de pedidos
+Lineamiento
+Procedimiento de programación de entregas
+Se cuenta con un procedimiento de programación de entregas que incluya cómo se
+va a definir qué pedidos se entregan juntos, en qué orden, en qué vehículo se
+entregan, a qué chofer se asigna, cómo se aseguran de que se utilice la máxima
+capacidad y cómo publican la programación de entregas.
+Tener documentado de manera específica y detallada como se lleva a cabo la
+programación de entregas y quienes son los responsables para garantizar el
+cumplimiento en tiempo y forma de cada uno de los pedidos con modalidad
+entregado.
+El procedimiento descrito tendrá que coincidir con la operación, se podrá revisar la
+programación en curso y ésta deberá coincidir con todos los aspectos establecidos
+en la descripción del lineamiento.
+Procedimiento
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.3.1.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.3.1.2
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Realizar la entrega de pedidos
+Lineamiento
+Procedimiento de entrega de pedidos
+Se cuenta con un procedimiento de entrega de pedidos que incluya los criterios de
+acomodo de los productos en el vehículo dependiendo de la ruta y condiciones de
+seguridad, protección de los productos, cómo se verifica que la carga coincida con la
+hoja de pedido o factura, monitoreo de cumplimiento de la ruta asignada y
+responsables. Especificar las acciones de cómo proceder ante una entrega urgente o
+pedido foráneo.
+Tener documentado específica y detalladamente la manera de entrega de pedidos,
+así como los responsables para garantizar la correcta entrega de estos y asegurar las
+condiciones de seguridad.
+El procedimiento descrito tendrá que coincidir con la operación, por ejemplo: se
+podrá revisar en la programación de acuerdo con las entregas, la carga de los
+pedidos entregados y ésta deberá coincidir con aspectos descritos en este
+procedimiento como criterios de acomodo, rutas asignadas responsables etc.
+Procedimiento
+
+Sub-Módulo
+Realizar la entrega de pedidos
+Lineamiento
+Evidencia Política de entregas
+Se cuenta con una política de entregas publicada (de acuerdo con el manual de
+imagen Construrama integrada a la política de servicio general 1.11.1.1) que incluya
+los requisitos para entregas gratuitas, zonas donde aplican costos de entrega,
+condiciones de entregas express, costos de maniobras adicionales, compromiso de
+tiempo máximo de entrega, horario de servicio, requisitos para validar entrega por
+parte del cliente.
+Dar a conocer al cliente las características de la oferta de servicio de entrega.
+Da claridad para evitar malentendidos en las condiciones de entrega de pedidos.
+Establecer o no de manera pública servicios especiales y condiciones como entregas
+express.
+Política publicada y difundida con el personal relacionado a las entregas,
+principalmente quien orece directamente el servicio a los clientes.
+Política y fotografía
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.3.2.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+Módulo
+Entregas
+Nomenclatura
+3.3.2.2
+Descripción
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.3.2.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Realizar la entrega de pedidos
+Lineamiento
+Encuestas del servicio de entregas
+Se lleva un formato para aplicar encuestas de Evaluación de Servicio de Entregas
+que incluyan fecha, aspectos a evaluar (puntualidad en la entrega, material
+correcto, material en condiciones adecuadas, amabilidad en la atención),
+comentarios generales, etc.
+Monitorear el servicio de entregas que está brindando el punto de venta
+Construrama a los clientes con la finalidad de mejorar las entregas, logrando
+además la satisfacción de los clientes y haciendo que la experiencia de compra sea
+digna de un negocio profesional.
+Las encuestas físicas tendrán que coincidir en cantidad y respuestas con el registro
+electrónico de las mismas 3.3.2.2 Resultados de encuestas de entregas.
+Evidencia de uso 3 meses
+Sub-Módulo
+Realizar la entrega de pedidos
+Lineamiento
+Resultados de encuestas de entregas
+Se lleva un registro de los resultados de las encuestas de Evaluación de Servicio de
+Entregas con un consolidado mensual, gráficas y acciones a seguir según resultados.
+Facilidad para manipular la información y generar estadística derivada de las
+evaluaciones físicas para tomar decisiones según los resultados. Tener visibilidad
+rápida y clara a través de las gráficas relacionadas con el servicio de entrega.
+El registro electrónico de los resultados deberá coincidir en cantidad y respuestas
+con las evaluaciones físicas 3.3.2.1 Encuestas del servicio de entregas y deberán
+presentarse por lo menos 3 meses consecutivos anteriores al día de la auditoría.
+Registro de 3 meses
+
+Sub-Módulo
+Realizar la entrega de pedidos
+Lineamiento
+Registro de entregas incorrectas
+Se lleva un registro de las entregas incorrectas indicando cuáles fueron identificadas
+a través de las encuestas, cuáles fueron comunicadas verbalmente por el cliente y
+cuáles detectadas internamente por el personal. Que incluya el error (entrega
+tardía, productos incorrectos, mal servicio, etc.), la causa detallada del error,
+personal involucrado, las acciones para evitar su recurrencia, el responsable del
+seguimiento a la implementación de las acciones correctivas y resultados obtenidos.
+Tomar acciones específicas y por cliente de aquellas entregas con inconsistencias.
+Corregir las entregas incorrectas a través de acciones con un seguimiento puntual y
+responsables de monitorear el seguimiento al cumplimiento de esta práctica.
+El registro electrónico deberá coincidir físicamente con los formatos de evaluación
+del servicio de entregas. Se podrá verificar si después de una entrega incorrecta
+reincidieron en un futuro para comprobar que las acciones a seguir para mejorar el
+servicio están siendo efectivas.
+Registro de 3 meses
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.4.1.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.4.1.2
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Gastos de transporte
+Lineamiento
+Control de gastos de transporte
+Se registran mensualmente los gastos de combustible, mantenimiento preventivo,
+mantenimiento correctivo, seguros, impuestos y permisos, llantas, además del
+kilometraje recorrido, el rendimiento del combustible, el número de horas hábiles
+que el vehículo estuvo en mantenimiento y el nivel de disponibilidad de unidades.
+Da visibilidad de manera clara y concisa de cada uno de los gastos e inversiones que
+se hacen con relación a las unidades de reparto. También permite ver la variación
+mes con mes de los gastos totales, y nivel de disponibilidad de las unidades para
+tomar mejores decisiones con relación a las unidades y cuidar la rentabilidad del
+negocio.
+Los gastos registrados mensualmente deberán ser claramente comprobados con
+remisiones, notas, facturas etc. de los proveedores que dan servicio a las mismas,
+así como refacciones, impuestos, seguros, multas etc. En los totales del mes
+deberán incluir si es el caso, los gastos de mantenimiento preventivo y/o correctivo
+sumando los demás gastos generados en ese periodo y deberán coincidir
+exactamente al desglosar cada concepto.
+Registro de 3 meses
+
+Sub-Módulo
+Gastos de transporte
+Lineamiento
+Control de combustible
+Se cuenta con un control de combustible que especifique las cargas de combustible:
+fecha, unidad, litros, monto, kilometraje al cargar para obtener los rendimientos
+entre cada carga.
+Control total del combustible utilizado en las unidades del punto de venta
+Construrama. Puede detectarse en este control cuales de las unidades gastan más
+combustible, incluso si una misma unidad gasta más en ciertos periodos o
+situaciones atípicas. Conocer el rendimiento de cada unidad, si varía en ciertos
+periodos, se podrán tomar acciones oportunamente para mejorarlo o corregirlo que
+van desde la presión de las llantas hasta condiciones de manejo y mantenimiento.
+El registro tendrá que ser comprobado con facturas o tickets de carga de gasolina,
+coincidiendo en fechas, totales y unidades. Deberá incluir el rendimiento mensual
+de cada unidad.
+Registro de 3 meses
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.4.1.3
+Descripción
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.4.1.4
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Gastos de transporte
+Lineamiento
+Control de pólizas y licencias
+Se cuenta con un control de la vigencia de las licencias de manejo de choferes y las
+vigencias de las pólizas de seguro de los vehículos.
+Respecto a las pólizas vigentes protege al personal que opera las unidades y a las
+mismas unidades ante cualquier eventualidad. Contar con seguro ayuda a resolver
+situaciones económicas y judiciales presentadas en alguna eventualidad. Las
+licencias de manejo avalan que el conductor es apto para operar cierto tipo de
+unidades y dan validez al seguro en caso de eventualidad.
+Pólizas de seguro vigente de toda la flotilla de unidades, licencias vigentes y
+correspondientes al tipo de unidad que se maneja (unidades de carga, doble semi
+remolque, vehículos utilitarios etc.)
+Registro
+
+Sub-Módulo
+Gastos de transporte
+Lineamiento
+Expediente de unidades de transporte
+Se cuenta con un expediente de cada unidad de transporte que incluya un listado
+del contenido, así como copia de la tarjeta de circulación, póliza del seguro, copia de
+la licencia de manejar, copia de la factura del vehículo y permisos federales, etc.
+Permite tener actualizada la información de las unidades y de las personas quienes
+las operan, brindando facilidad para cualquier trámite relacionado con ellas.
+Expedientes de todas las unidades que operan en el punto de venta Construrama y
+que los documentos que contenga estén vigentes y/o actualizados.
+Fotografía de cada documento
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.5.1.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.5.1.2
+Descripción
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Programa de mantenimientos preventivos
+Se tiene un formato de programación anual de los mantenimientos preventivos
+basado en la ficha técnica de los vehículos que indique la fecha programada o
+kilometraje aproximado para el siguiente mantenimiento de cada vehículo.
+Especificar si corresponde a un servicio mayor o menor, lo que incluye cada servicio
+y la periodicidad. (Mínimo cada 6 meses o 5,000 Km., lo que ocurra primero)
+Mantener en óptimas condiciones las unidades de reparto del punto de venta
+Construrama para asegurar las entregas de material en tiempo, además de
+salvaguardar la seguridad verificando que las unidades estén funcionando
+correctamente en todo momento.
+Las facturas o remisiones de mantenimiento deberán coincidir en fecha y tipo de
+servicio (mantenimiento preventivo mayor, menor) con el programa. También
+deberá estar relacionado con el 3.5.1.5 Registro de mantenimientos preventivos
+para saber el detalle del servicio y con el 3.5.1.2 Recordatorio de próximo
+mantenimiento en unidades según la periodicidad con la que se hagan.
+Evidencia de uso
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Recordatorio de próximo mantenimiento
+Se tiene un recordatorio en cada vehículo del siguiente mantenimiento preventivo
+que indique la fecha programada o kilometraje aproximado.
+Se tendrá la oportunidad de ver la fecha o kilometraje correspondiente al próximo
+mantenimiento en cada uso, responsabilizando en cierto grado a estas personas
+para prever cualquier atraso en la realización de mantenimientos preventivos.
+Los recordatorios en cada unidad deberán tener relación con el 3.5.1.5 Registro de
+mantenimientos preventivos en cuanto a kilometraje o tiempo transcurrido
+después del último mantenimiento realizado y, por ende, con el programa de
+mantenimientos preventivos.
+Fotografía
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.5.1.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.5.1.4
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Lista de verificación de unidades
+Se cuenta con una lista de verificación que utilizan los choferes cada día antes del
+inicio de la operación que incluya los aspectos a revisar de cada vehículo como nivel
+de combustible, nivel de aceite de motor, nivel de anticongelante/agua, presión de
+llantas y ajuste de birlos, carrocería libre de golpes, luces (altas, bajas, alto, cuartos
+y direccionales), cinturón de seguridad, gato, palanca, cruceta, llanta de refacción,
+triángulo reflectivo, tarjetas de circulación, póliza de seguro, licencia de manejo,
+freno de pie y mano, batería y arranque, limpiaparabrisas, claxon.
+Esta verificación fomenta la seguridad de los operadores y valida los puntos
+principales de seguridad mínimos para operar una unidad diariamente. Identifica el
+estado general de las unidades con la que inician cada día la operación en el punto
+de venta Construrama para utilizarlas de manera óptima o identificar fallas antes de
+salir a ruta.
+Evidencia diaria de por lo menos 3 meses inmediatos anteriores debidamente llena
+y si alguna de las unidades presentó alguna inconsistencia que amerite reparación,
+deberá estar ligada a un 3.5.2.1 Registro de fallas y a un mantenimiento correctivo
+con el debido registro (3.5.2.2 Registro de mantenimientos correctivos) y cuadre de
+gastos (3.4.1.1 Control de gastos de transporte).
+Registro de 3 meses
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Orden de servicio
+Se cuenta con formato de orden de servicio de todos los mantenimientos
+preventivos a realizar que incluya fecha, vehículo, chofer, descripción detallada del
+servicio a realizar, responsable de hacer el servicio (externo o interno), firmas del
+solicitante y quien autoriza.
+Llevar un control y responsable de los servicios que se llevarán a cabo de manera
+preventiva con previa autorización garantizando la óptima utilización de los
+recursos destinados a mantenimiento.
+Las órdenes de servicio autorizadas deberán tener relación lógica con el 3.5.1.1
+Programa de mantenimientos preventivos y con el 3.5.1.1 Programa de
+mantenimientos preventivos en cuanto a fechas y kilometraje de cada unidad.
+Registro de 3 meses
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.5.1.5
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.5.1.6
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Registro de mantenimientos preventivos
+Se cuenta con un registro electrónico de los mantenimientos preventivos que
+incluya el vehículo, la fecha del mantenimiento, el detalle del servicio realizado,
+taller, costo y horas en mantenimiento.
+Control total y detallado de cada servicio realizado a las unidades del punto de
+venta Construrama que permite analizar la información como periodicidad de
+mantenimientos, costos y tiempo, de esta manera se pueden tomar acciones para
+reducir costos y tiempos dando como resultado un aporte positivo e importante a la
+operación y rentabilidad del negocio.
+El registro de mantenimientos preventivos deberá tener relación con los
+mantenimientos realizados y el detalle de cada uno de ellos, así como con el 3.5.1.1
+Programa de mantenimientos preventivos y ya que incluye costos deberá cuadrar
+con el 3.4.1.1 Control de gastos de transporte.
+Registro de 3 meses
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Procedimiento de mantenimientos preventivos
+Se tiene un procedimiento para llevar a cabo los mantenimientos preventivos que
+incluya el uso de una lista de verificación, uso del programa de mantenimiento
+preventivo, responsable de autorizar los mantenimientos, talleres/personal
+autorizados, uso del formato de la orden de servicio, forma de monitoreo de
+avances y registro del mantenimiento.
+Tener documentado de manera específica y detallada como se llevan a cabo los
+mantenimientos preventivos, así como puestos que intervienen en el proceso y
+responsables. Permite comunicar rápidamente de manera clara las reglas,
+condiciones, etc., que se deben seguir paso a paso para mantener las unidades en
+excelentes condiciones, físicas, eléctricas y mecánicas.
+En el proceso deberá contener de manera detallada cada una de las actividades a
+realizar para llevar a cabo los mantenimientos preventivos, por lo que se verificará
+que tenga relación en todos y cada uno de los pasos de mantenimientos ya
+realizados.
+Procedimiento
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.5.2.1
+Descripción
+
+Beneficio
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Registro de fallas
+Se cuenta con un formato de reporte de fallas de todos los mantenimientos
+correctivos registrados que incluya fecha, vehículo, chofer, descripción de la falla,
+acciones a seguir, firma de autorización sobre acciones a seguir.
+Identificar y documentar cada una de las fallas generadas por uso habitual de la
+plantilla vehicular, así como las acciones a seguir para su no recurrencia.
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+El registro deberá de contener como mínimo la descripción mencionada, así como
+evidencia de continuidad de uso de mínimo 3 meses, se deberá de mostrar legible.
+
+Módulo
+Entregas
+Nomenclatura
+3.5.2.2
+Descripción
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Registro de mantenimientos correctivos
+Se cuenta con un registro electrónico de los mantenimientos correctivos que incluya
+el vehículo, la fecha del mantenimiento, el detalle del servicio realizado, taller,
+costo y horas en mantenimiento.
+Llevar control sobre los gastos de mantenimientos correctivos, contar con
+información real que nos permita medir en qué momento es excesivo visualizando
+sus montos generados mensualmente y así poder tomar acciones para reducir dicho
+gasto de manutención vehicular.
+Mostrar el registro de mínimo 3 meses de los gastos generados, así como la
+información mencionada en la descripción, deberá de cuadrar con los registros de
+fallas previamente reportados.
+Registro de 3 meses
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Registro de 3 meses
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.5.2.3
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.5.3.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.5.3.2
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Procedimiento de mantenimientos correctivos
+Se tiene un procedimiento para llevar a cabo los mantenimientos correctivos que
+incluya la utilización del reporte de fallas, responsable de autorizar los
+mantenimientos, talleres/personas autorizadas, forma de monitoreo de avances y
+registro del mantenimiento.
+Describir responsables, actividades y registros de cómo y quienes se involucran al
+realizar un mantenimiento correctivo. ayuda a que el personal involucrado y
+responsable entienda el deber ser del procedimiento.
+Deberá contener: responsables, formatos, registros y actividades descriptivas de
+cómo y quienes se involucran en cada parte del procedimiento.
+Procedimiento
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Registro de control de llantas
+Se cuenta con un registro que indique qué llanta está en cual vehículo y en qué
+posición (incluyendo llanta de refacción). Que especifique la marca comercial,
+tamaño de rin, número de serie/folio/DOT que considere todos los vehículos del
+Punto de Venta y la fecha en la que se instaló y dio de baja cada una.
+Mantener un control de altas y bajas de llantas en cada uno de los vehículos y así
+poder medir el consumo y durabilidad de estas, minimizar el cambio de llantas por
+mal uso o bien que no fueron adquiridas por la empresa.
+El registro deberá de contener la información que se describe, actualizada y verifica
+de cada una de las unidades de la empresa.
+Registro
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Llantas marcadas
+Las llantas se encuentran marcadas con una identificación propia del Construrama
+(diseño, logo o código alfanumérico interno) para identificar que son las del
+Construrama con cautín, marcador para llantas, parche vulcanizado u otro marcaje
+perdurable.
+Garantizar que las llantas adquiridas por la empresa sean las mismas que se han
+registrado para su control, identificar con alguna señalética única que identifique
+que cada una de las llantas que utiliza el vehículo son autorizadas por la empresa.
+Cada llanta marcada deberá de estar en su registro de control de llantas, así como
+deberá ser visible las fotografías que se utilice como evidencia (mostrando la marca
+realizada en cada llanta)
+Fotografía
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Entregas
+Nomenclatura
+3.5.4.1
+Descripción
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Entregas
+Nomenclatura
+3.5.4.2
+Descripción
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Imagen de los vehículos
+Los vehículos de transporte cuentan con el logotipo Construrama, los datos del
+Construrama (nombre comercial y teléfono), se encuentran sin golpes evidentes y
+su imagen es homogénea (de acuerdo con el manual de imagen Construrama).
+Unificar la imagen de los vehículos de la empresa y así mismo publicitar que
+pertenecen a una de las empresas más reconocidas a nivel nacional de la
+construcción, incrementar la demanda de información de servicios, pedidos
+mediante la promoción del número telefónico único de la tienda.
+Se verifica que la Imagen de los vehículos sea homogénea y que se encuentren sin
+golpes evidentes que afecten la imagen de la empresa, así como las evidencias
+fotográficas sean visibles de varias unidades.
+Fotografía
+
+Sub-Módulo
+Contar con un programa de mantenimiento
+Lineamiento
+Programa de limpieza de vehículos
+Se tiene un formato de programación de limpieza de vehículos tanto exterior como
+interior que incluya las actividades, periodicidad, responsable y supervisor.
+Definir actividades y responsables para mantener la limpieza de cada uno de los
+vehículos, dar una imagen profesional ante el cliente.
+El programa de limpieza deberá de estar registrado por el responsable de su uso, así
+como firmado por el supervisor a cargo de dicha actividad,
+Evidencia de uso de 3 meses
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo Administración
+Módulo
+Administración
+Nomenclatura
+4.1.1.1
+Descripción
+
+Beneficio
+Elementos
+verificables en
+auditoria
+Entregable
+
+Módulo
+Administración
+Nomenclatura
+4.1.1.2
+Descripción
+
+Beneficio
+
+Sub-Módulo
+Evaluar resultados operativos y de servicio
+Lineamiento
+Estados de resultados
+Se genera mensualmente un estado de resultados que incluya ventas, costo de
+ventas, utilidad bruta, margen bruto, gastos de operación, gastos administrativos,
+utilidad neta, margen neto y su comparativo con meses y años anteriores.
+Permite visualizar de forma clara la situación financiera del negocio y a analizar los
+resultados obtenidos en un periodo contable determinado.
+Presentar físicamente los últimos 3 meses de estados de resultados que se han
+generado del Construrama a auditar.
+Reporte de 3 meses
+
+Sub-Módulo
+Evaluar resultados operativos y de servicio
+Lineamiento
+Métricas operativas
+Se monitorean mensualmente las métricas operativas de: días de cuentas por
+cobrar, días de cuentas por pagar, rotación de inventarios, días de inventario y
+GMROI.
+Mide el desempeño operativo de la empresa. Relaciona oportunamente ingresos
+generados con gastos incurridos.
+
+Elementos
+verificables en
+auditoria
+Entregable
+
+Se verifica el contenido de información solicitada en descripción que sea acorde a lo
+demostrado, así como el explicativo del mismo.
+
+Módulo
+Administración
+Nomenclatura
+4.1.1.3
+Descripción
+
+Sub-Módulo
+Evaluar resultados operativos y de servicio
+--
+entregas, manejo seguro, mecánica básica, carga y descarga de productos, etc.).
+Tener un control de capacitación para la formación laboral a través de un programa
+anual, organizado con los puntos importantes para su ejecución, incluyendo un
+calendario de programación y de acuerdo con los puestos y necesidades del
+personal.
+Presentar programa anual físico o electrónico, el cual debe estar alineado con el
+listado de capaciones, resultado de las encuestas de necesidades de capacitación.
+Evidencia de uso
+
+Sub-Módulo
+Capacitar al personal
+Lineamiento
+Asistencia a capacitaciones
+Se cuenta con un formato para registrar a los asistentes que incluya fecha, nombre
+el curso, nombre y firma del empleado.
+Contar con un registro de asistencia documentado de las capacitaciones impartidas
+al personal.
+Evidencia de asistencia de al menos 3 capacitaciones impartidas, con los datos
+necesarios de las capacitaciones, asistentes y firmas.
+Evidencia de uso (al menos 3)
+Sub-Módulo
+Capacitar al personal
+Lineamiento
+Evaluación de capacitación
+Se cuenta con un formato para evaluación de la capacitación que incluya fecha,
+nombre del curso, aspectos a evaluar (sobre el tema, instructor y materiales
+utilizados), escala de calificación, comentarios, etc.
+Valorar las capacitaciones al personal a través de evaluaciones que indiquen el nivel
+de apreciación de estas, además de poder generar conclusiones para la planeación y
+mejora de las capacitaciones.
+Fotografías visibles de al menos 3 evaluaciones en uso.
+
+Evidencia de uso (al menos 3)
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+Módulo
+Administración
+Nomenclatura
+4.6.2.1
+Descripción
+Beneficio
+
+Sub-Módulo
+Capacitar al personal
+Lineamiento
+Programas de Universidad Construrama
+Se toman los diplomados de Universidad Construrama vigentes (al menos 2).
+Desarrollar los conocimientos y habilidades del personal a través del modelo
+educativo de Universidad Construrama, brindándoles soporte, herramientas y
+actividades que fomenten el aprendizaje y desarrollo comercial y operativo.
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Fotografía visible de diploma o constancia que certifique que se ha completado con
+éxito el diploma o programa de capacitación.
+
+Módulo
+Administración
+Nomenclatura
+4.6.2.2
+Descripción
+
+Sub-Módulo
+Capacitar al personal
+Lineamiento
+Capacitación Digital
+Se toman webinars, talleres o cursos gratuitos de Universidad Construrama o alguna
+otra plataforma digital.
+Formación y desarrollo del personal, a través de la capacitación continua y práctica,
+brindando conocimientos y herramientas para el eficiente desempeño de los
+colaboradores.
+Fotografías, capturas de pantalla o evidencia de asistencia a los webinars, talleres o
+alguna otra plataforma digital que brinde algún tema de interés en la ejecución de
+funciones y desarrollo laboral del personal.
+Evidencia de asistencia
+
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Módulo
+Administración
+Nomenclatura
+4.7.1.1
+Descripción
+Beneficio
+
+Elementos
+verificables en
+auditoría
+Entregable
+
+Diploma o constancia
+
+--
+servicio de entregas, % cuadre de inventario, ROI, $ cuentas por cobrar, $ gastos de
+transporte, rotación del personal) comparando los resultados del periodo anterior
+al iniciar el proyecto y al finalizar el proyecto.
+Tener un control que permita analizar los resultados y el impacto de la
+implementación Sello de la Casa en el negocio, obteniendo un comparativo claro y
+detallado del antes y después de la implementación del proyecto.
+Reporte de los últimos 3 meses con los indicadores mencionados en la descripción
+del lineamiento, comparativo mensual y conclusiones del estudio.
+Reporte
+
+Copyright ©️ 2024 CEMEX Innovation Holding Ltd., Switzerland. All rights reserved.
+
+

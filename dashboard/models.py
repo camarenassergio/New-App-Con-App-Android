@@ -58,6 +58,12 @@ class Unidad(models.Model):
     titular_poliza = models.CharField(max_length=150, verbose_name="Titular de la Póliza", null=True, blank=True)
     vencimiento_poliza = models.DateField(verbose_name="Vencimiento de Póliza", null=True, blank=True)
 
+    # Expediente Construrama SDC (Documentación Digital)
+    doc_factura = models.FileField(upload_to='unidades/docs/', null=True, blank=True, verbose_name="Copia Factura (PDF/IMG)")
+    doc_tarjeta_circulacion = models.FileField(upload_to='unidades/docs/', null=True, blank=True, verbose_name="Tarjeta Circulación (PDF/IMG)")
+    doc_poliza = models.FileField(upload_to='unidades/docs/', null=True, blank=True, verbose_name="Póliza Seguro (PDF/IMG)")
+    doc_permisos = models.FileField(upload_to='unidades/docs/', null=True, blank=True, verbose_name="Permisos Federales/STC (PDF/IMG)")
+
     
 
     en_servicio = models.BooleanField(default=True , verbose_name="¿En servicio?")
@@ -293,8 +299,62 @@ class Operador(models.Model):
     def __str__(self):
         return self.nombre
 
+    @property
+    def licencia_vencida(self):
+        return self.vigencia_licencia and self.vigencia_licencia < timezone.now().date()
+        
+    @property
+    def licencia_por_vencer(self):
+        if not self.vigencia_licencia: return False
+        days = (self.vigencia_licencia - timezone.now().date()).days
+        return 0 <= days <= 30
+
     class Meta:
         verbose_name_plural = "Operadores"
+
+class ZonaEntrega(models.Model):
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la Zona (Ej. Norte, Sur, Centro)")
+    codigos_postales = models.TextField(verbose_name="Códigos Postales", help_text="Separados por coma", null=True, blank=True)
+    colonias = models.TextField(verbose_name="Colonias que Abarca", help_text="Listado de colonias principales", null=True, blank=True)
+    tiempo_traslado_minutos = models.PositiveIntegerField(verbose_name="Tiempo Medio Traslado (mins)")
+    distancia_km = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Distancia Media (Km) desde Sucursal")
+    tarifa_flete = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Costo Base de Flete ($)", default=0.00)
+    costo_maniobra = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Costo Maniobra Adicional ($)", default=0.00)
+
+    class Meta:
+        verbose_name = "Zona de Entrega"
+        verbose_name_plural = "Zonas de Entrega"
+        ordering = ['nombre']
+
+    def limpiar_codigos(self):
+        """Limpia la cadena de CP, eliminando espacios y duplicados vacíos"""
+        if not self.codigos_postales: return []
+        cps = [cp.strip() for cp in self.codigos_postales.split(',') if cp.strip()]
+        return list(set(cps)) # Asegurar únicos de origen
+
+    def save(self, *args, **kwargs):
+        cps_limpios = self.limpiar_codigos()
+        
+        # Opcional: Desvincular CPs que ya existan en OTRAS zonas
+        if cps_limpios:
+            otras_zonas = ZonaEntrega.objects.exclude(id=self.id)
+            for zona in otras_zonas:
+                cps_ajena = zona.limpiar_codigos()
+                cambio = False
+                for cp in cps_limpios:
+                    if cp in cps_ajena:
+                        cps_ajena.remove(cp)
+                        cambio = True
+                if cambio:
+                    zona.codigos_postales = ", ".join(cps_ajena)
+                    zona.save() # Alerta: Esto podría causar bucles si no se maneja bien, usamos Bulk Update o Simple Save
+
+        self.codigos_postales = ", ".join(cps_limpios)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Zona: {self.nombre} ({self.tiempo_traslado_minutos} min)"
+
 
 class Viaje(models.Model):
     TIPO_VIAJE_CHOICES = [
@@ -316,8 +376,16 @@ class Viaje(models.Model):
     tipo_viaje = models.CharField(max_length=20, choices=TIPO_VIAJE_CHOICES, default='VENTA')
     estado_actual = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='ESPERA')
     
+    # SDC: Zonas y Logística
+    zona = models.ForeignKey(ZonaEntrega, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Zona de Entrega Principal")
+    folio_nota_factura = models.CharField(max_length=100, null=True, blank=True, verbose_name="Folios (Facturas/Notas)")
+    
     hora_salida_cedis = models.TimeField(null=True, blank=True, verbose_name="Salida CMA")
     hora_llegada_cedis = models.TimeField(null=True, blank=True, verbose_name="Regreso CMA")
+    
+    # SDC: Tracking de Kilometraje en el viaje
+    km_salida = models.PositiveIntegerField(null=True, blank=True, verbose_name="Km Salida")
+    km_llegada = models.PositiveIntegerField(null=True, blank=True, verbose_name="Km Llegada")
     
     mercancia_revisada = models.BooleanField(default=False, verbose_name="¿Mercancía Revisada?")
     revisado_por = models.ForeignKey(
@@ -348,8 +416,47 @@ class Viaje(models.Model):
         if viajes_activos.exists():
             raise ValidationError(f"El operador {self.operador} ya tiene un viaje en curso.")
 
+    @property
+    def tiene_evaluacion(self):
+        return hasattr(self, 'evaluacion')
+
     def __str__(self):
         return f"Viaje {self.n_viaje} - {self.unidad} ({self.fecha})"
+
+class EvaluacionEntrega(models.Model):
+    MOTIVO_CHOICES = [
+        ('OK', 'Entregado sin problemas'),
+        ('MERCANCIA_DANADA', 'Mercancía Dañada / Faltante'),
+        ('TIEMPO_ALTO', 'Tardanza en entrega'),
+        ('MALA_ATENCION', 'Mala atención del personal'),
+        ('CLIENTE_AUSENTE', 'Cliente no se encontraba / Local cerrado'),
+        ('OTRO', 'Otro (Especificar en observaciones)'),
+    ]
+
+    viaje = models.OneToOneField(Viaje, on_delete=models.CASCADE, related_name="evaluacion", verbose_name="Viaje Asociado")
+    fecha_evaluacion = models.DateTimeField(auto_now_add=True)
+    
+    # 3.3.2.1 Encuesta y Requerimientos de Calidad
+    cliente_satisfecho = models.BooleanField(default=True, verbose_name="¿Cliente Satisfecho con la Entrega?")
+    motivo_insatisfaccion = models.CharField(max_length=50, choices=MOTIVO_CHOICES, default='OK', verbose_name="Motivo Principal (Si aplica)")
+    
+    # 3.3.2.2 Tiempo de Espera (Eficiencia)
+    tiempo_espera_cliente_minutos = models.PositiveIntegerField(default=0, verbose_name="Tiempo de descarga/espera con cliente (minutos)")
+    
+    # 3.3.2.3 Registro de Errores Operativos e Incidencias en Transporte
+    hubo_incidencia_transporte = models.BooleanField(default=False, verbose_name="¿Hubo incidente de transporte?")
+    desc_incidencia_transporte = models.TextField(blank=True, null=True, verbose_name="Describa falla mecánica o imprevisto en ruta")
+    
+    # Firma / Validacion (Se sustituye con nombre de quien recibe por el momento)
+    nombre_quien_recibe = models.CharField(max_length=150, blank=True, null=True, verbose_name="Nombre de quien recibe la mercancía")
+    comentarios = models.TextField(blank=True, null=True, verbose_name="Comentarios adicionales / Detalle del problema")
+
+    class Meta:
+        verbose_name = "Evaluación de Entrega"
+        verbose_name_plural = "Evaluaciones de Entregas"
+
+    def __str__(self):
+        return f"Evaluación Viaje #{self.viaje.n_viaje} - {'OK' if self.cliente_satisfecho else 'INCIDENCIA'}"
 
 class PedidoRuta(models.Model):
     TIPO_PAGO_CHOICES = [('PAGADO', 'Pagado'), ('POR_COBRAR', 'Por Cobrar')]
@@ -708,6 +815,10 @@ class OrdenServicio(models.Model):
         ('INTERNO', 'Interno'),
         ('EXTERNO', 'Externo'),
     ]
+    TIPO_MANTENIMIENTO_CHOICES = [
+        ('PREVENTIVO', 'Preventivo (Afinación, Cambio de aceite, etc.)'),
+        ('CORRECTIVO', 'Correctivo (Reparación de falla/siniestro)'),
+    ]
     
     fecha = models.DateField(default=timezone.now, verbose_name="Fecha")
     chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name="Chofer")
@@ -718,9 +829,14 @@ class OrdenServicio(models.Model):
     hora_entrada = models.TimeField(null=True, blank=True, verbose_name="Hora de Entrada")
     hora_salida = models.TimeField(null=True, blank=True, verbose_name="Hora de Salida")
     
+    tipo_mantenimiento = models.CharField(max_length=15, choices=TIPO_MANTENIMIENTO_CHOICES, default='CORRECTIVO', verbose_name="Tipo de Mantenimiento")
     descripcion_detallada = models.TextField(verbose_name="Descripción detallada del servicio")
     responsable_mantenimiento = models.CharField(max_length=10, choices=RESPONSABLE_CHOICES, verbose_name="Responsable de mantenimiento")
     nombre_responsable_externo = models.CharField(max_length=150, null=True, blank=True, verbose_name="Nombre del externo (si aplica)")
+
+    # SDC: Tracker Mantenimiento Preventivo (3.5.1.1)
+    proximo_servicio_km = models.PositiveIntegerField(null=True, blank=True, verbose_name="Próximo Servicio Recomendado (Km)")
+    proximo_servicio_fecha = models.DateField(null=True, blank=True, verbose_name="Próximo Servicio Recomendado (Fecha)")
 
     nombre_solicitante = models.CharField(max_length=150, verbose_name="Nombre de solicitante")
     firma_solicitante_base64 = models.TextField(verbose_name="Firma Solicitante (Base64)", null=True, blank=True)
@@ -737,4 +853,67 @@ class OrdenServicio(models.Model):
 
     def __str__(self):
         return f"OS-{self.id} | {self.unidad.nUnidad} - {self.fecha}"
+
+
+class ChecklistUnidad(models.Model):
+    unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE, verbose_name="Unidad")
+    chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name="Chofer")
+    fecha = models.DateField(default=timezone.now, verbose_name="Fecha")
+    hora_registro = models.TimeField(auto_now_add=True, verbose_name="Hora de Registro")
+
+    # Módulo 3.5.1.3 - Aspectos a revisar
+    nivel_combustible = models.IntegerField(choices=[(25, '25%'), (50, '50%'), (75, '75%'), (100, '100%')], verbose_name="Nivel Combustible")
+    
+    # Toggles binarios de verificación (True = OK, False = Requiere atención / No verificado)
+    aceite_motor = models.BooleanField(default=False, verbose_name="Nivel Aceite Motor OK")
+    anticongelante = models.BooleanField(default=False, verbose_name="Nivel Anticongelante/Agua OK")
+    llantas_birlos = models.BooleanField(default=False, verbose_name="Presión Llantas y Ajuste Birlos OK")
+    carroceria_golpes = models.BooleanField(default=False, verbose_name="Carrocería sin golpes evidentes")
+    luces = models.BooleanField(default=False, verbose_name="Luces (altas, bajas, cuartos, dir.) OK")
+    cinturon = models.BooleanField(default=False, verbose_name="Cinturón de seguridad OK")
+    equipo_seguridad = models.BooleanField(default=False, verbose_name="Gato, palanca, cruceta, refacción, triángulo OK")
+    documentacion = models.BooleanField(default=False, verbose_name="Circulación, Póliza, Licencia OK")
+    frenos = models.BooleanField(default=False, verbose_name="Freno pie y mano OK")
+    bateria_arranque = models.BooleanField(default=False, verbose_name="Batería y Arranque OK")
+    limpiaparabrisas = models.BooleanField(default=False, verbose_name="Limpiaparabrisas OK")
+    claxon = models.BooleanField(default=False, verbose_name="Claxon OK")
+
+    observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones / Falla reportada")
+
+    class Meta:
+        verbose_name = "Checklist Diario de Unidad"
+        verbose_name_plural = "Checklists Diarios"
+        ordering = ['-fecha', '-hora_registro']
+
+    def __str__(self):
+        return f"Checklist {self.unidad.nUnidad} - {self.fecha} - {self.chofer.username}"
+
+class InventarioLlanta(models.Model):
+    POSICION_CHOICES = [
+        ('DI1', 'Delantera Izquierda 1'), ('DD1', 'Delantera Derecha 1'),
+        ('TI1', 'Trasera Izquierda 1'), ('TD1', 'Trasera Derecha 1'),
+        ('TI2', 'Trasera Izquierda 2 (Doble)'), ('TD2', 'Trasera Derecha 2 (Doble)'),
+        ('REFACCION', 'Refacción'),
+    ]
+    
+    unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE, related_name="llantas", verbose_name="Unidad Asignada")
+    marca = models.CharField(max_length=50, verbose_name="Marca de Llanta")
+    medida = models.CharField(max_length=50, verbose_name="Medida (Ej. 295/80R22.5)")
+    numero_serie = models.CharField(max_length=100, unique=True, verbose_name="Número de Serie/DOT")
+    posicion = models.CharField(max_length=20, choices=POSICION_CHOICES, verbose_name="Posición en Unidad")
+    
+    # SDC: Profundidad mínima de piso (3.5.3.1)
+    profundidad_piso_mm = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Profundidad de Piso (mm)")
+    fecha_instalacion = models.DateField(default=timezone.now, verbose_name="Fecha Instalación")
+    km_instalacion = models.PositiveIntegerField(verbose_name="Km al Instalar")
+    activa = models.BooleanField(default=True, verbose_name="Instalada Actualmente")
+    observaciones = models.TextField(blank=True, null=True, verbose_name="Condición / Observaciones")
+
+    class Meta:
+        verbose_name = "Inventario de Llanta"
+        verbose_name_plural = "Inventario de Llantas"
+        unique_together = ('unidad', 'posicion', 'activa') # Solo una llanta activa por posición
+
+    def __str__(self):
+        return f"Llanta {self.numero_serie} ({self.posicion}) - {self.unidad.nUnidad}"
 

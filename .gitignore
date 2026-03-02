@@ -45,3 +45,6 @@ ENV/
 .vscode/
 .idea/
 *.swp
+
+# Entorno Stealth
+docker-compose.secret.yml

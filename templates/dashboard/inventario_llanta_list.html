@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}Inventario de Llantas (Gestión SDC){% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Control de Llantas (SDC)</h3>
+        <a href="{% url 'dashboard:inventario_llanta_create' %}" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
+            <i class="fas fa-plus"></i> Registrar Llanta
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div style="padding: 15px;">
+        <form method="GET" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+            <select name="unidad" class="form-select" style="max-width: 300px;">
+                <option value="">Todas las Unidades</option>
+                {% for u in unidades %}
+                <option value="{{ u.id }}" {% if request.GET.unidad == u.id|stringformat:"i" %}selected{% endif %}>
+                    {{ u.nUnidad }} - {{ u.placas }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Unidad</th>
+                    <th>Posición</th>
+                    <th>Llanta (Serie/DOT)</th>
+                    <th>Medida</th>
+                    <th>Prof. Piso (mm)</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for llanta in llantas %}
+                <tr>
+                    <td><strong>{{ llanta.unidad.nUnidad }}</strong></td>
+                    <td>{{ llanta.get_posicion_display }}</td>
+                    <td>
+                        {{ llanta.marca }}<br>
+                        <small class="text-muted">DOT: {{ llanta.numero_serie }}</small>
+                    </td>
+                    <td>{{ llanta.medida }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span>{{ llanta.profundidad_piso_mm }} mm</span>
+                            {% if llanta.profundidad_piso_mm < 3.0 %}
+                                <span class="badge bg-danger" title="Requiere cambio urgente">Crítico</span>
+                            {% elif llanta.profundidad_piso_mm < 5.0 %}
+                                <span class="badge bg-warning text-dark" title="Próxima a cambio">Atención</span>
+                            {% else %}
+                                <span class="badge bg-success">OK</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if llanta.activa %}
+                            <span class="badge bg-success">Activa / Rodando</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactiva / Baja</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'dashboard:inventario_llanta_update' llanta.pk %}" class="btn btn-sm btn-outline-primary" title="Editar / Actualizar Profundidad">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 20px;">No hay registros de llantas. Registre las llantas por unidad para cumplir con SDC.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

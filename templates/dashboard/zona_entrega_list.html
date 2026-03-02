@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}Zonas de Entrega{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Administrar Zonas de Entrega</h3>
+        <div>
+            <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+                <i class="fas fa-file-excel"></i> Importar CSV
+            </button>
+            <a href="{% url 'dashboard:zona_entrega_create' %}" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
+                <i class="fas fa-plus"></i> Nueva Zona
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Códigos Postales</th>
+                    <th>Colonias</th>
+                    <th>Tiempo Mins.</th>
+                    <th>Distancia Km.</th>
+                    <th>Tarifa Flete</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for zona in zonas %}
+                <tr>
+                    <td><strong>{{ zona.nombre }}</strong></td>
+                    <td>
+                        {% if zona.codigos_postales %}
+                            {% for cp in zona.codigos_postales.split %}
+                                <span class="badge bg-info text-dark" style="margin-right: 2px;">{{ cp|cut:"," }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">No asignado</span>
+                        {% endif %}
+                    </td>
+                    <td><small>{{ zona.colonias|truncatechars:50 }}</small></td>
+                    <td>{{ zona.tiempo_traslado_minutos }} min</td>
+                    <td>{{ zona.distancia_km }} km</td>
+                    <td>${{ zona.tarifa_flete }}</td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'dashboard:zona_entrega_update' zona.pk %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'dashboard:zona_entrega_delete' zona.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4">No hay Zonas de Entrega registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Modal for CSV/Excel Import -->
+<div class="modal fade" id="importExcelModal" tabindex="-1" aria-labelledby="importExcelModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{% url 'dashboard:zona_entrega_import' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="importExcelModalLabel"><i class="fas fa-file-import"></i> Importar Zonas desde CSV</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Sube un archivo CSV delimitado por comas con los campos extraídos del Excel. Asegúrate de que existan al menos las siguientes columnas (el orden no importa):</p>
+          <ul>
+            <li><strong>Código Postal</strong> (o CÓDIGO POSTAL)</li>
+            <li><strong>Asentamiento</strong> (o COLONIA)</li>
+            <li><strong>Zona</strong> (ej. NORTE, SUR)</li>
+            <li><strong>Distancia Media</strong></li>
+            <li><strong>Tiempo Medio de Traslado</strong></li>
+            <li><strong>Costo Base</strong></li>
+            <li><strong>Costo Maniobra adicional</strong></li>
+          </ul>
+          <div class="mb-3">
+            <label for="csv_file" class="form-label">Archivo CSV</label>
+            <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Importar Datos</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

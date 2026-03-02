@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}{% if object %}Editar Zona: {{ object.nombre }}{% else %}Nueva Zona de Entrega{% endif %}{% endblock %}
+
+{% block content %}
+<div class="form-container" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+    <div style="margin-bottom: 24px; border-bottom: 1px solid #eee; padding-bottom: 16px;">
+        <h3 style="color: #003366;"><i class="fas fa-map-marked-alt"></i> Detalles de la Zona</h3>
+        <p class="text-muted small">Agregue los Códigos Postales separados por comas para agrupar destinos en automático.</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            {{ form.nombre|as_crispy_field }}
+        </div>
+        
+        <div class="mb-3 p-3 bg-light border rounded">
+            {{ form.codigos_postales|as_crispy_field }}
+            <small class="text-info d-block"><i class="fas fa-info-circle"></i> Al guardar, si un código postal ingresado ya pertenece a otra zona, será removido de aquella y transferido a esta zona actual (Prevalencia única de Códigos Postales).</small>
+        </div>
+        
+        <div class="mb-3">
+            {{ form.colonias|as_crispy_field }}
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                {{ form.tiempo_traslado_minutos|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+                {{ form.distancia_km|as_crispy_field }}
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                {{ form.tarifa_flete|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+                {{ form.costo_maniobra|as_crispy_field }}
+            </div>
+        </div>
+        
+        <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: flex-end;">
+            <a href="{% url 'dashboard:zona_entrega_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
+                <i class="fas fa-save"></i> Guardar Zona
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

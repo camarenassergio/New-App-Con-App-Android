@@ -71,6 +71,10 @@ class UnidadForm(forms.ModelForm):
             'vencimiento_verificacion', # 21. Vencimiento Verificación
             'tipo_permiso_stc',         # 22. Permiso STC
             'observaciones',            # 23. Observaciones
+            'doc_factura',              # Expediente Digital SDC
+            'doc_tarjeta_circulacion',
+            'doc_poliza',
+            'doc_permisos',
         ]
         widgets = {
             'fecha_adquisicion': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
@@ -291,8 +295,9 @@ class OrdenServicioForm(forms.ModelForm):
         model = OrdenServicio
         fields = [
             'fecha', 'unidad', 'kilometraje', 'nivel_gasolina',
-            'hora_entrada', 'hora_salida', 'descripcion_detallada',
+            'hora_entrada', 'hora_salida', 'tipo_mantenimiento', 'descripcion_detallada',
             'responsable_mantenimiento', 'nombre_responsable_externo',
+            'proximo_servicio_km', 'proximo_servicio_fecha',
             'nombre_solicitante', 'firma_solicitante_base64',
             'nombre_autorizante', 'firma_autorizante_base64',
             'comentarios'
@@ -301,10 +306,108 @@ class OrdenServicioForm(forms.ModelForm):
             'fecha': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'hora_entrada': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'hora_salida': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'tipo_mantenimiento': forms.Select(attrs={'class': 'form-select'}),
             'descripcion_detallada': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'comentarios': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'nombre_responsable_externo': forms.TextInput(attrs={'class': 'form-control'}),
+            'proximo_servicio_km': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Km recomendado'}),
+            'proximo_servicio_fecha': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'nombre_solicitante': forms.TextInput(attrs={'class': 'form-control'}),
             'nombre_autorizante': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+from .models import ChecklistUnidad
+
+class ChecklistUnidadForm(forms.ModelForm):
+    # Campo oculto para manejar el UI de botones grandes
+    nivel_combustible = forms.IntegerField(widget=forms.HiddenInput(), required=True)
+
+    class Meta:
+        model = ChecklistUnidad
+        exclude = ['unidad', 'chofer', 'fecha', 'hora_registro']
+        widgets = {
+            'observaciones': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Opcional: Detalles de alguna anomalía...'}),
+            # Los campos booleanos se manejarán manualmente en el template para la UI de switches/botones
+        }
+
+from .models import Viaje
+
+class ViajeForm(forms.ModelForm):
+    class Meta:
+        model = Viaje
+        fields = [
+            'unidad', 'operador', 'tipo_viaje', 'estado_actual',
+            'zona', 'folio_nota_factura', 'km_salida', 'km_llegada',
+            'hora_salida_cedis', 'hora_llegada_cedis'
+        ]
+        widgets = {
+            'unidad': forms.Select(attrs={'class': 'form-select'}),
+            'operador': forms.Select(attrs={'class': 'form-select'}),
+            'tipo_viaje': forms.Select(attrs={'class': 'form-select'}),
+            'estado_actual': forms.Select(attrs={'class': 'form-select'}),
+            'zona': forms.Select(attrs={'class': 'form-select'}),
+            'folio_nota_factura': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. F-1234, V-9876'}),
+            'km_salida': forms.NumberInput(attrs={'class': 'form-control'}),
+            'km_llegada': forms.NumberInput(attrs={'class': 'form-control'}),
+            'hora_salida_cedis': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'hora_llegada_cedis': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        }
+
+from .models import InventarioLlanta
+
+class InventarioLlantaForm(forms.ModelForm):
+    class Meta:
+        model = InventarioLlanta
+        fields = [
+            'unidad', 'posicion', 'marca', 'medida', 'numero_serie', 
+            'profundidad_piso_mm', 'fecha_instalacion', 'km_instalacion',
+            'activa', 'observaciones'
+        ]
+        widgets = {
+            'fecha_instalacion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'observaciones': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
+
+from .models import EvaluacionEntrega
+
+class EvaluacionEntregaForm(forms.ModelForm):
+    class Meta:
+        model = EvaluacionEntrega
+        fields = [
+            'cliente_satisfecho', 'motivo_insatisfaccion', 'tiempo_espera_cliente_minutos',
+            'hubo_incidencia_transporte', 'desc_incidencia_transporte',
+            'nombre_quien_recibe', 'comentarios'
+        ]
+        widgets = {
+            'motivo_insatisfaccion': forms.Select(attrs={'class': 'form-select'}),
+            'tiempo_espera_cliente_minutos': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'desc_incidencia_transporte': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'nombre_quien_recibe': forms.TextInput(attrs={'class': 'form-control'}),
+            'comentarios': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            # Booleans can be rendered directly or styled manually in the template.
+        }
+
+from .models import ZonaEntrega
+
+class ZonaEntregaForm(forms.ModelForm):
+    class Meta:
+        model = ZonaEntrega
+        fields = [
+            'nombre',
+            'codigos_postales',
+            'colonias',
+            'tiempo_traslado_minutos',
+            'distancia_km',
+            'tarifa_flete',
+            'costo_maniobra',
+        ]
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Zona Norte'}),
+            'codigos_postales': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ej. 50000, 50010, 50020 (Separados por coma)'}),
+            'colonias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Lista de colonias representativas'}),
+            'tiempo_traslado_minutos': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'distancia_km': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'min': 0}),
+            'tarifa_flete': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0}),
+            'costo_maniobra': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0}),
         }
 

@@ -77,12 +77,49 @@
         <!-- Visible for ALL (including CHOFER) -->
         <li class="nav-item">
           <a
-            href="{% url 'dashboard:viajes_list' %}"
-            class="nav-link {% if 'viajes' in request.path %}active{% endif %}"
+            href="{% url 'dashboard:checklist_unidad_list' %}"
+            class="nav-link {% if 'checklist' in request.path %}active{% endif %}"
           >
-            <i class="fas fa-map-marked-alt nav-icon"></i>
-            <span>Rutas y Viajes</span>
+            <i class="fas fa-clipboard-check nav-icon"></i>
+            <span>Checklist Diario</span>
           </a>
+        </li>
+
+        <!-- Rutas y Viajes Dropdown -->
+        <li class="nav-item">
+          <a
+            class="nav-link collapsed"
+            data-bs-toggle="collapse"
+            href="#rutasSubmenu"
+            role="button"
+            aria-expanded="{% if 'viajes' in request.path or 'zonas' in request.path %}true{% else %}false{% endif %}"
+            aria-controls="rutasSubmenu"
+            style="display: flex; justify-content: space-between; align-items: center;"
+          >
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-map-marked-alt nav-icon"></i>
+                <span>Rutas y Viajes</span>
+            </div>
+            <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.7;"></i>
+          </a>
+          <div class="collapse {% if 'viajes' in request.path or 'zonas' in request.path %}show{% endif %}" id="rutasSubmenu">
+            <ul class="nav flex-column" style="padding-left: 20px; background: rgba(0,0,0,0.05);">
+              <li class="nav-item">
+                <a href="{% url 'dashboard:viajes_list' %}" class="nav-link {% if 'viajes' in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
+                  <i class="fas fa-route nav-icon" style="font-size: 0.9rem;"></i>
+                  <span>Historial de Viajes</span>
+                </a>
+              </li>
+              {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+              <li class="nav-item">
+                <a href="{% url 'dashboard:zona_entrega_list' %}" class="nav-link {% if 'zonas' in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
+                  <i class="fas fa-map-pin nav-icon" style="font-size: 0.9rem;"></i>
+                  <span>Zonas de Entrega</span>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </div>
         </li>
 
         <li class="nav-item">
@@ -133,6 +170,18 @@
         </li>
         <!-- Admin/Users: Hide for CHOFER -->
         {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+
+
+        <li class="nav-item">
+          <a
+            href="{% url 'dashboard:inventario_llanta_list' %}"
+            class="nav-link {% if 'llantas' in request.path %}active{% endif %}"
+          >
+            <i class="fas fa-life-ring nav-icon"></i>
+            <span>Control de Llantas</span>
+          </a>
+        </li>
+        
         <li class="nav-item">
           <a
             href="{% url 'dashboard:usuarios_list' %}"

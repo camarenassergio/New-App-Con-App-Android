@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DetailView
+from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
@@ -236,6 +236,32 @@ class ViajeListView(LoginRequiredMixin, ListView):
     model = Viaje
     template_name = "dashboard/viaje_list.html"
     context_object_name = "viajes"
+
+from .forms import ViajeForm
+from django.urls import reverse_lazy
+from django.contrib import messages
+
+class ViajeCreateView(LoginRequiredMixin, CreateView):
+    model = Viaje
+    form_class = ViajeForm
+    template_name = "dashboard/viaje_form.html"
+    success_url = reverse_lazy('dashboard:viajes_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Viaje programado correctamente.")
+        return response
+
+class ViajeUpdateView(LoginRequiredMixin, UpdateView):
+    model = Viaje
+    form_class = ViajeForm
+    template_name = "dashboard/viaje_form.html"
+    success_url = reverse_lazy('dashboard:viajes_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Viaje actualizado correctamente.")
+        return response
 
 from .models import Unidad, Operador, Viaje, ConfiguracionLogistica, RegistroCombustible, Personal
 from .forms import UnidadForm, RegistroCombustibleForm, PersonalCreationForm
@@ -840,4 +866,352 @@ class OrdenServicioDetailView(LoginRequiredMixin, DetailView):
     model = OrdenServicio
     template_name = "dashboard/orden_servicio_detail.html"
     context_object_name = "orden"
+
+# --- CHECKLIST DIARIO ---
+from .models import ChecklistUnidad
+from .forms import ChecklistUnidadForm
+from django.utils import timezone
+
+class ChecklistUnidadListView(LoginRequiredMixin, ListView):
+    model = ChecklistUnidad
+    template_name = "dashboard/checklist_unidad_list.html"
+    context_object_name = "checklists"
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        unidad_id = self.request.GET.get('unidad')
+        fecha_str = self.request.GET.get('fecha')
+        
+        if unidad_id:
+            qs = qs.filter(unidad_id=unidad_id)
+        if fecha_str:
+            qs = qs.filter(fecha=fecha_str)
+            
+        return qs.select_related('unidad', 'chofer')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['unidades'] = Unidad.objects.all()
+        # Verificar si el usuario actual (chofer) ya llenó su checklist hoy
+        # Sólo es relevante si es chofer, pero lo mandamos general
+        if hasattr(self.request.user, 'personal') and self.request.user.personal.puesto == 'CHOFER':
+            hoy = timezone.now().date()
+            context['ya_lleno_hoy'] = ChecklistUnidad.objects.filter(chofer=self.request.user, fecha=hoy).exists()
+        return context
+
+class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
+    model = ChecklistUnidad
+    form_class = ChecklistUnidadForm
+    template_name = "dashboard/checklist_unidad_form.html"
+    success_url = reverse_lazy('dashboard:checklist_unidad_list')
+
+    def get_context_data(self, **kwargs):
+         context = super().get_context_data(**kwargs)
+         # Fetch all units so the chofer can decide which one they are driving today
+         # If they only drive one, we could auto-assign, but it's safer to let them pick or pre-select.
+         context['unidades_activas'] = Unidad.objects.filter(en_servicio=True)
+         return context
+
+    def form_valid(self, form):
+        # Asignar chofer, unidad seleccionada y fecha
+        form.instance.chofer = self.request.user
+        form.instance.fecha = timezone.now().date()
+        
+        unidad_id = self.request.POST.get('unidad_id')
+        if not unidad_id:
+            form.add_error(None, "Debes seleccionar una unidad.")
+            return self.form_invalid(form)
+            
+        form.instance.unidad_id = unidad_id
+        
+        # Validar si ya hizo un checklist HOY para ESA unidad (Opcional, pero buena práctica)
+        # SDC pide revisión diaria antes del inicio. Si hace 2 viajes, quizás sólo se requiere 1 al día.
+        if ChecklistUnidad.objects.filter(chofer=self.request.user, unidad_id=unidad_id, fecha=form.instance.fecha).exists():
+            messages.warning(self.request, "Ya registraste un checklist para esta unidad el día de hoy.")
+            # Podemos permitirlo (sobreescribir/duplicar) o bloquearlo. Lo permitimos como registro extra.
+            
+        response = super().form_valid(form)
+        messages.success(self.request, "Checklist diario guardado correctamente. ¡Buen viaje!")
+        return response
+
+# --- INVENTARIO DE LLANTAS ---
+from .models import InventarioLlanta
+from .forms import InventarioLlantaForm
+
+class InventarioLlantaListView(LoginRequiredMixin, ListView):
+    model = InventarioLlanta
+    template_name = "dashboard/inventario_llanta_list.html"
+    context_object_name = "llantas"
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        unidad_id = self.request.GET.get('unidad')
+        if unidad_id:
+            qs = qs.filter(unidad_id=unidad_id)
+        return qs.select_related('unidad')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['unidades'] = Unidad.objects.all()
+        return context
+
+class InventarioLlantaCreateView(LoginRequiredMixin, CreateView):
+    model = InventarioLlanta
+    form_class = InventarioLlantaForm
+    template_name = "dashboard/inventario_llanta_form.html"
+    success_url = reverse_lazy('dashboard:inventario_llanta_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Llanta registrada exitosamente.")
+        return response
+
+class InventarioLlantaUpdateView(LoginRequiredMixin, UpdateView):
+    model = InventarioLlanta
+    form_class = InventarioLlantaForm
+    template_name = "dashboard/inventario_llanta_form.html"
+    success_url = reverse_lazy('dashboard:inventario_llanta_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Registro de llanta actualizado.")
+        return response
+
+# --- EVALUACION DE ENTREGA (SDC 3.3.2) ---
+from .models import EvaluacionEntrega
+from .forms import EvaluacionEntregaForm
+from django.shortcuts import get_object_or_404
+
+class EvaluacionEntregaCreateView(LoginRequiredMixin, CreateView):
+    model = EvaluacionEntrega
+    form_class = EvaluacionEntregaForm
+    template_name = "dashboard/evaluacion_entrega_form.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Check if we have a viaje argument to pre-associate
+        viaje_id = self.kwargs.get('viaje_id')
+        if viaje_id:
+            context['viaje'] = get_object_or_404(Viaje, pk=viaje_id)
+        return context
+
+    def form_valid(self, form):
+        viaje_id = self.kwargs.get('viaje_id')
+        if viaje_id:
+            form.instance.viaje_id = viaje_id
+        
+        response = super().form_valid(form)
+        messages.success(self.request, "Evaluación de entrega registrada correctamente.")
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('dashboard:viajes_list')
+
+
+class EvaluacionEntregaUpdateView(LoginRequiredMixin, UpdateView):
+    model = EvaluacionEntrega
+    form_class = EvaluacionEntregaForm
+    template_name = "dashboard/evaluacion_entrega_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['viaje'] = self.object.viaje
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Evaluación de entrega actualizada.")
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('dashboard:viajes_list')
+
+
+# --- GESTION DE ZONAS DE ENTREGA ---
+from .models import ZonaEntrega
+from .forms import ZonaEntregaForm
+
+class ZonaEntregaListView(LoginRequiredMixin, ListView):
+    model = ZonaEntrega
+    template_name = "dashboard/zona_entrega_list.html"
+    context_object_name = "zonas"
+    ordering = ['nombre']
+
+class ZonaEntregaCreateView(LoginRequiredMixin, CreateView):
+    model = ZonaEntrega
+    form_class = ZonaEntregaForm
+    template_name = "dashboard/zona_entrega_form.html"
+    success_url = reverse_lazy('dashboard:zona_entrega_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Zona de Entrega creada exitosamente.")
+        return response
+
+class ZonaEntregaUpdateView(LoginRequiredMixin, UpdateView):
+    model = ZonaEntrega
+    form_class = ZonaEntregaForm
+    template_name = "dashboard/zona_entrega_form.html"
+    success_url = reverse_lazy('dashboard:zona_entrega_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Zona de Entrega actualizada exitosamente.")
+        return response
+
+class ZonaEntregaDeleteView(LoginRequiredMixin, DeleteView):
+    model = ZonaEntrega
+    template_name = "dashboard/zona_entrega_confirm_delete.html"
+    success_url = reverse_lazy('dashboard:zona_entrega_list')
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, "Zona de Entrega eliminada exitosamente.")
+        return super().delete(request, *args, **kwargs)
+
+import csv
+import io
+from django.views import View
+
+class ZonaEntregaImportView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        csv_file = request.FILES.get('csv_file')
+        
+        if not csv_file:
+            messages.error(request, 'No se seleccionó ningún archivo.')
+            return redirect('dashboard:zona_entrega_list')
+        
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, 'Por favor subir un archivo con extensión .csv.')
+            return redirect('dashboard:zona_entrega_list')
+            
+        try:
+            data_set = csv_file.read().decode('UTF-8', errors='replace')
+            io_string = io.StringIO(data_set)
+            reader = csv.DictReader(io_string)
+            
+            # Limpiamos headers
+            original_headers = reader.fieldnames or []
+            # normalize map
+            h_map = {}
+            for h in original_headers:
+                h_clean = str(h).strip().upper()
+                # Eliminar tildes u otras limpiezas adicionales si fuera necesario
+                h_map[h_clean] = h
+                
+            # Validar columnas requeridas
+            required_groups = {
+                'Zona': ['ZONA'],
+                'Código Postal': ['CÓDIGO POSTAL', 'CODIGO POSTAL', 'CODIGOS POSTALES', 'CP'],
+                'Asentamiento / Colonia': ['ASENTAMIENTO', 'ASENTAMIENTOS', 'COLONIA', 'COLONIAS'],
+                'Distancia Media': ['DISTANCIA MEDIA', 'DISTANCIA', 'DISTANCIA KM'],
+                'Tiempo Medio de Traslado': ['TIEMPO MEDIO DE TRASLADO', 'TIEMPO MEDIO', 'TIEMPO'],
+                'Costo Base': ['COSTO BASE', 'TARIFA FLETE', 'TARIFA'],
+                'Costo Maniobra adicional': ['COSTO MANIOBRA ADICIONAL', 'COSTO MANIOBRA', 'MANIOBRA']
+            }
+            
+            missing_columns = []
+            for label, possibilities in required_groups.items():
+                if not any(p in h_map for p in possibilities):
+                    missing_columns.append(label)
+                    
+            if missing_columns:
+                nombres_faltantes = ", ".join([f"'{m}'" for m in missing_columns])
+                messages.error(
+                    request, 
+                    f"Inconsistencia de datos: Faltan las siguientes columnas en el Excel/CSV o sus encabezados no son reconocidos: {nombres_faltantes}."
+                )
+                return redirect('dashboard:zona_entrega_list')
+            
+            def get_val(row, *possible_keys):
+                for k in possible_keys:
+                    if k in h_map:
+                        return row.get(h_map[k], '').strip()
+                return ''
+            
+            zonas_creadas = 0
+            zonas_actualizadas = 0
+            
+            for row in reader:
+                zona_nombre = get_val(row, 'ZONA')
+                if not zona_nombre:
+                    continue
+                    
+                cp = get_val(row, 'CÓDIGO POSTAL', 'CODIGO POSTAL', 'CODIGOS POSTALES', 'CP')
+                colonia = get_val(row, 'ASENTAMIENTO', 'ASENTAMIENTOS', 'COLONIA', 'COLONIAS')
+                distancia_raw = get_val(row, 'DISTANCIA MEDIA', 'DISTANCIA', 'DISTANCIA KM')
+                tiempo_raw = get_val(row, 'TIEMPO MEDIO DE TRASLADO', 'TIEMPO MEDIO', 'TIEMPO')
+                tarifa_raw = get_val(row, 'COSTO BASE', 'TARIFA FLETE', 'TARIFA')
+                maniobra_raw = get_val(row, 'COSTO MANIOBRA ADICIONAL', 'COSTO MANIOBRA', 'MANIOBRA')
+                
+                def extract_number(val, is_float=True):
+                    import re
+                    match = re.search(r'[\d\.]+', str(val))
+                    if match:
+                        try:
+                            return float(match.group()) if is_float else int(float(match.group()))
+                        except ValueError:
+                            pass
+                    return 0.0 if float else 0
+                    
+                distancia = extract_number(distancia_raw)
+                tiempo = extract_number(tiempo_raw, is_float=False)
+                tarifa = extract_number(tarifa_raw)
+                maniobra = extract_number(maniobra_raw)
+                
+                zona, created = ZonaEntrega.objects.get_or_create(
+                    nombre=zona_nombre,
+                    defaults={
+                        'tiempo_traslado_minutos': tiempo,
+                        'distancia_km': distancia,
+                        'tarifa_flete': tarifa,
+                        'costo_maniobra': maniobra,
+                        'codigos_postales': cp,
+                        'colonias': colonia
+                    }
+                )
+                
+                if created:
+                    zonas_creadas += 1
+                else:
+                    modificado = False
+                    
+                    if distancia > 0 and zona.distancia_km != distancia:
+                        zona.distancia_km = distancia
+                        modificado = True
+                    if tiempo > 0 and zona.tiempo_traslado_minutos != tiempo:
+                        zona.tiempo_traslado_minutos = tiempo
+                        modificado = True
+                    if tarifa > 0 and zona.tarifa_flete != tarifa:
+                        zona.tarifa_flete = tarifa
+                        modificado = True
+                    if maniobra > 0 and zona.costo_maniobra != maniobra:
+                        zona.costo_maniobra = maniobra
+                        modificado = True
+                        
+                    if cp:
+                        current_cps = [c.strip() for c in (zona.codigos_postales or '').split(',') if c.strip()]
+                        if cp not in current_cps:
+                            current_cps.append(cp)
+                            zona.codigos_postales = ", ".join(current_cps)
+                            modificado = True
+                            
+                    if colonia:
+                        current_colds = [c.strip() for c in (zona.colonias or '').split(',') if c.strip()]
+                        if colonia not in current_colds:
+                            current_colds.append(colonia)
+                            zona.colonias = ", ".join(current_colds)
+                            modificado = True
+                            
+                    if modificado:
+                        zona.save()
+                        zonas_actualizadas += 1
+                        
+            messages.success(request, f"Importación finalizada. Zonas nuevas: {zonas_creadas}. Zonas actualizadas: {zonas_actualizadas}.")
+            
+        except Exception as e:
+            messages.error(request, f"Ocurrió un error al procesar el archivo: {str(e)}")
+            
+        return redirect('dashboard:zona_entrega_list')
 

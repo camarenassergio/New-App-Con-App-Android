@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}{% if object %}Editar Llanta {{ object.numero_serie }}{% else %}Registrar Llanta{% endif %}{% endblock %}
+
+{% block content %}
+<div class="form-container" style="max-width: 800px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+    <div style="margin-bottom: 24px; border-bottom: 1px solid #eee; padding-bottom: 16px;">
+        <h3 style="color: #003366;"><i class="fas fa-life-ring"></i> Detalles de Llanta</h3>
+        <p class="text-muted">Alineado a los lineamientos SDC (Módulo 3.5.3.1 Prevención y Mantenimiento).</p>
+    </div>
+
+    <form method="post" id="llantaForm">
+        {% csrf_token %}
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                {{ form.unidad|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+                {{ form.posicion|as_crispy_field }}
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                {{ form.marca|as_crispy_field }}
+            </div>
+            <div class="col-md-4">
+                {{ form.medida|as_crispy_field }}
+            </div>
+            <div class="col-md-4">
+                {{ form.numero_serie|as_crispy_field }}
+            </div>
+        </div>
+
+        <h5 style="color: #003366; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Desgaste e Instalación</h5>
+        
+        <div class="row mb-3 mt-3">
+            <div class="col-md-4">
+                {{ form.profundidad_piso_mm|as_crispy_field }}
+                <small class="text-muted">Mínimo SDC: 3 mm.</small>
+            </div>
+            <div class="col-md-4">
+                {{ form.fecha_instalacion|as_crispy_field }}
+            </div>
+            <div class="col-md-4">
+                {{ form.km_instalacion|as_crispy_field }}
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-4 mt-4">
+                {{ form.activa|as_crispy_field }}
+            </div>
+            <div class="col-md-8">
+                {{ form.observaciones|as_crispy_field }}
+            </div>
+        </div>
+        
+        <div style="margin-top: 32px; display: flex; gap: 16px;">
+            <button type="submit" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
+                <i class="fas fa-save"></i> Guardar Registro
+            </button>
+            <a href="{% url 'dashboard:inventario_llanta_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
