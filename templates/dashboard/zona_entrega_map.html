@@ -69,7 +69,19 @@
             maxZoom: 20
         }).addTo(map);
 
-        setTimeout(function(){ map.invalidateSize(); }, 400);
+        // Resize Observer para evitar desfase de tiles cuando el contenedor cambia de tamaño
+        if (window.ResizeObserver) {
+            var ro = new ResizeObserver(function() {
+                map.invalidateSize();
+            });
+            ro.observe(document.getElementById('mapa-general'));
+        } else {
+            // Fallback para navegadores antiguos
+            setTimeout(function(){ map.invalidateSize(); }, 800);
+            window.addEventListener('resize', function() {
+                map.invalidateSize();
+            });
+        }
 
         // Marker for CEDIS Casa Lupita
         var cedisIcon = L.divIcon({
