@@ -71,8 +71,12 @@
 
         // Resize Observer para evitar desfase de tiles cuando el contenedor cambia de tamaño
         if (window.ResizeObserver) {
+            var resizeTimer;
             var ro = new ResizeObserver(function() {
-                map.invalidateSize();
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    map.invalidateSize();
+                }, 200);
             });
             ro.observe(document.getElementById('mapa-general'));
         } else {
