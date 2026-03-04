@@ -1044,8 +1044,48 @@ class ZonaEntregaMapView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['zonas'] = ZonaEntrega.objects.exclude(geojson_data__isnull=True).exclude(geojson_data__exact='')
+        # Check if any zone exists for warning messages in template
+        context['tiene_zonas'] = ZonaEntrega.objects.exists()
         return context
+
+from django.http import JsonResponse
+from django.views import View
+import json
+
+class ZonasGeoJSONView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        zonas = ZonaEntrega.objects.exclude(geojson_data__isnull=True).exclude(geojson_data__exact='')
+        
+        feature_collection = {
+            "type": "FeatureCollection",
+            "features": []
+        }
+        
+        for zona in zonas:
+            try:
+                # Load the geometry collection saved during model save
+                zone_geo = json.loads(zona.geojson_data)
+                
+                # Each zone might have multiple features, we want to flatten them into the main collection
+                # and attach the zone properties to each feature
+                if "features" in zone_geo:
+                    for feature in zone_geo["features"]:
+                        # Decorate the feature with our custom zone data for the frontend
+                        feature['properties'] = {
+                            "nombre": zona.nombre,
+                            "color": zona.color_hex,
+                            "id": zona.id,
+                            "tiempo": zona.tiempo_traslado_minutos,
+                            "distancia": float(zona.distancia_km),
+                            "tarifa": float(zona.tarifa_flete),
+                            "d_cp": feature.get('properties', {}).get('d_cp', ''), # Re-attach CP
+                        }
+                        feature_collection["features"].append(feature)
+            except json.JSONDecodeError:
+                continue
+                
+        return JsonResponse(feature_collection)
+
 
 class ZonaEntregaCreateView(LoginRequiredMixin, CreateView):
     model = ZonaEntrega

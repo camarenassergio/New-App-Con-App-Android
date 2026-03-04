@@ -335,6 +335,10 @@ class ZonaEntrega(models.Model):
         return list(set(cps)) # Asegurar únicos de origen
 
     def save(self, *args, **kwargs):
+        import json
+        import os
+        from django.conf import settings
+        
         cps_limpios = self.limpiar_codigos()
         
         # Opcional: Desvincular CPs que ya existan en OTRAS zonas
@@ -349,9 +353,48 @@ class ZonaEntrega(models.Model):
                         cambio = True
                 if cambio:
                     zona.codigos_postales = ", ".join(cps_ajena)
-                    zona.save() # Alerta: Esto podría causar bucles si no se maneja bien, usamos Bulk Update o Simple Save
+                    # Use update to avoid calling save to prevent recursive loop
+                    ZonaEntrega.objects.filter(id=zona.id).update(codigos_postales=zona.codigos_postales)
 
         self.codigos_postales = ", ".join(cps_limpios)
+        
+        # Auto-calculate geojson from CPs
+        if cps_limpios:
+            try:
+                # Get path to the local data 
+                # According to logs, the file is at: /home/sscamarenas/Proyectos/Logistica Casa Lupita/App_Stealth/dashboard/data/zonas_texcoco.json
+                data_path = os.path.join(settings.BASE_DIR, 'dashboard', 'data', 'zonas_texcoco.json')
+                
+                features = []
+                with open(data_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            feature = json.loads(line)
+                            # the json property is "d_cp" based on the uploaded file
+                            cp_value = feature.get('properties', {}).get('d_cp', '').strip()
+                            if cp_value in cps_limpios:
+                                # We keep the raw geometry
+                                features.append(feature)
+                        except json.JSONDecodeError:
+                            continue
+                            
+                if features:
+                    # Package them into a FeatureCollection for this specific zone
+                    geo_collection = {
+                        "type": "FeatureCollection",
+                        "features": features
+                    }
+                    self.geojson_data = json.dumps(geo_collection)
+                else:
+                     self.geojson_data = "" # No features matched
+                     
+            except Exception as e:
+                # We catch exceptions to prevent preventing save on missing file
+                print(f"Error loading GeoJSON for zone {self.nombre}: {e}")
+                
         super().save(*args, **kwargs)
 
     def __str__(self):
