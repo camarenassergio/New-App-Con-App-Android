@@ -69,23 +69,23 @@
             maxZoom: 20
         }).addTo(map);
 
-        // Resize Observer para evitar desfase de tiles cuando el contenedor cambia de tamaño
-        if (window.ResizeObserver) {
-            var resizeTimer;
-            var ro = new ResizeObserver(function() {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function() {
-                    map.invalidateSize();
-                }, 200);
-            });
-            ro.observe(document.getElementById('mapa-general'));
-        } else {
-            // Fallback para navegadores antiguos
-            setTimeout(function(){ map.invalidateSize(); }, 800);
-            window.addEventListener('resize', function() {
+        // Solución robusta contra desfase y cuelgues (Reemplazo de ResizeObserver)
+        // Usamos un sondeo (polling) pasivo que jamás bloquea el navegador.
+        var mapEl = document.getElementById('mapa-general');
+        var lastW = mapEl.clientWidth, lastH = mapEl.clientHeight;
+        
+        setInterval(function() {
+            if (!mapEl) return;
+            var currW = mapEl.clientWidth, currH = mapEl.clientHeight;
+            if (currW !== lastW || currH !== lastH) {
+                lastW = currW;
+                lastH = currH;
                 map.invalidateSize();
-            });
-        }
+            }
+        }, 500);
+        
+        // Forzar un recálculo seguro poco después de cargar la pantalla
+        setTimeout(function(){ map.invalidateSize(); }, 600);
 
         // Marker for CEDIS Casa Lupita
         var cedisIcon = L.divIcon({
