@@ -11,6 +11,9 @@
             <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#importExcelModal">
                 <i class="fas fa-file-excel"></i> Importar CSV
             </button>
+            <a href="{% url 'dashboard:zona_entrega_map' %}" class="btn btn-info text-white me-2" style="background-color: #17a2b8; border-color: #17a2b8;">
+                <i class="fas fa-map"></i> Ver Mapa
+            </a>
             <a href="{% url 'dashboard:zona_entrega_create' %}" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
                 <i class="fas fa-plus"></i> Nueva Zona
             </a>
@@ -33,7 +36,10 @@
             <tbody>
                 {% for zona in zonas %}
                 <tr>
-                    <td><strong>{{ zona.nombre }}</strong></td>
+                    <td>
+                        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:{{ zona.color_hex|default:'#3388ff' }}; margin-right:5px;"></span>
+                        <strong>{{ zona.nombre }}</strong>
+                    </td>
                     <td>
                         {% if zona.codigos_postales %}
                             {% for cp in zona.codigos_postales.split %}

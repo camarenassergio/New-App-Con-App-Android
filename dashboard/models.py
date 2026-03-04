@@ -320,6 +320,8 @@ class ZonaEntrega(models.Model):
     distancia_km = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Distancia Media (Km) desde Sucursal")
     tarifa_flete = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Costo Base de Flete ($)", default=0.00)
     costo_maniobra = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Costo Maniobra Adicional ($)", default=0.00)
+    color_hex = models.CharField(max_length=7, default="#3388ff", verbose_name="Color en Mapa", help_text="Color para identificar la zona en el mapa")
+    geojson_data = models.TextField(blank=True, null=True, verbose_name="Polígonos de la Zona (GeoJSON)", help_text="Información geográfica de la zona")
 
     class Meta:
         verbose_name = "Zona de Entrega"

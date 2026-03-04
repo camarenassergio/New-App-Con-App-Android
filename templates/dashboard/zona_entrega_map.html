@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Mapa Zonas de Entrega{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #mapa-general {
+        width: 100%;
+        height: 70vh;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border: 2px solid #ddd;
+    }
+    .legend {
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .legend h5 {
+        margin-top: 0;
+        margin-bottom: 5px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+        font-size: 12px;
+    }
+    .legend-color {
+        width: 15px;
+        height: 15px;
+        margin-right: 8px;
+        border-radius: 3px;
+        border: 1px solid #777;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 style="color: #003366;"><i class="fas fa-map-marked-alt"></i> Mapa Zonas de Entrega</h2>
+        <a href="{% url 'dashboard:zona_entrega_list' %}" class="btn btn-outline-secondary"><i class="fas fa-list"></i> Ver Lista</a>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div id="mapa-general"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var map = L.map('mapa-general').setView([19.4326, -99.1332], 10); // Center in Mexico by Default
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        var bounds = L.featureGroup();
+        
+        var zonasData = [
+            {% for zona in zonas %}
+                {
+                    nombre: "{{ zona.nombre|escapejs }}",
+                    color: "{{ zona.color_hex }}",
+                    distancia: "{{ zona.distancia_km }}",
+                    tiempo: "{{ zona.tiempo_traslado_minutos }}",
+                    tarifa: "{{ zona.tarifa_flete }}",
+                    geojson: JSON.parse('{{ zona.geojson_data|escapejs }}')
+                },
+            {% endfor %}
+        ];
+
+        var legendItems = '';
+
+        zonasData.forEach(function(zona) {
+            if (zona.geojson) {
+                var layer = L.geoJSON(zona.geojson, {
+                    style: function() {
+                        return {
+                            color: zona.color,
+                            weight: 2,
+                            fillOpacity: 0.3
+                        };
+                    },
+                    onEachFeature: function(feature, layer) {
+                        var popupContent = `
+                            <div style="font-family: Arial, sans-serif;">
+                                <h5 style="color: ${zona.color}; margin-top:0; border-bottom: 1px solid #eee; padding-bottom: 5px;">${zona.nombre}</h5>
+                                <b>Distancia Media:</b> ${zona.distancia} Km<br>
+                                <b>Tiempo de Traslado:</b> ${zona.tiempo} mins<br>
+                                <b>Tarifa Base:</b> $${zona.tarifa}<br>
+                            </div>
+                        `;
+                        layer.bindPopup(popupContent);
+                        layer.bindTooltip(zona.nombre, {permanent: false, direction: "center"});
+                    }
+                }).addTo(map);
+                
+                bounds.addLayer(layer);
+
+                legendItems += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${zona.color};"></div>
+                        <span>${zona.nombre}</span>
+                    </div>
+                `;
+            }
+        });
+
+        if (zonasData.length > 0) {
+            // Check if bounds has layers
+            if (Object.keys(bounds._layers).length > 0) {
+                map.fitBounds(bounds.getBounds());
+            }
+            
+            // Add legend
+            var legend = L.control({position: 'bottomright'});
+            legend.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'legend');
+                div.innerHTML = `<h5 style="margin-bottom: 10px;"><i class="fas fa-layer-group"></i> Zonas</h5>${legendItems}`;
+                return div;
+            };
+            legend.addTo(map);
+        }
+    });
+</script>
+{% endblock %}

@@ -48,6 +48,7 @@ urlpatterns = [
     path('zonas/<int:pk>/editar/', views.ZonaEntregaUpdateView.as_view(), name='zona_entrega_update'),
     path('zonas/<int:pk>/eliminar/', views.ZonaEntregaDeleteView.as_view(), name='zona_entrega_delete'),
     path('zonas/importar/', views.ZonaEntregaImportView.as_view(), name='zona_entrega_import'),
+    path('zonas/mapa/', views.ZonaEntregaMapView.as_view(), name='zona_entrega_map'),
 
     path('usuarios/', views.UsuarioListView.as_view(), name='usuarios_list'),
     path('usuarios/nuevo/', views.UsuarioCreateView.as_view(), name='usuario_create'),

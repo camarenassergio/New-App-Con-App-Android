@@ -400,6 +400,8 @@ class ZonaEntregaForm(forms.ModelForm):
             'distancia_km',
             'tarifa_flete',
             'costo_maniobra',
+            'color_hex',
+            'geojson_data',
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Zona Norte'}),
@@ -409,5 +411,7 @@ class ZonaEntregaForm(forms.ModelForm):
             'distancia_km': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'min': 0}),
             'tarifa_flete': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0}),
             'costo_maniobra': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0}),
+            'color_hex': forms.TextInput(attrs={'class': 'form-control form-control-color', 'type': 'color'}),
+            'geojson_data': forms.HiddenInput(attrs={'id': 'id_geojson_data'}),
         }
 

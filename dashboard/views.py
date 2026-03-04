@@ -1039,6 +1039,14 @@ class ZonaEntregaListView(LoginRequiredMixin, ListView):
     context_object_name = "zonas"
     ordering = ['nombre']
 
+class ZonaEntregaMapView(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/zona_entrega_map.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['zonas'] = ZonaEntrega.objects.exclude(geojson_data__isnull=True).exclude(geojson_data__exact='')
+        return context
+
 class ZonaEntregaCreateView(LoginRequiredMixin, CreateView):
     model = ZonaEntrega
     form_class = ZonaEntregaForm

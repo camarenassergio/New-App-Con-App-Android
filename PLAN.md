@@ -7,15 +7,19 @@
 - [x] Fase 4: Pruebas y Verificación (Tailscale, Docker)
 - [x] Fase 5: Protocolos de Prevención y Plan de Contingencia
 
+## Pendientes (Backlog)
+- [ ] Modificar evidencias de entrega: permitir guardar más de una evidencia fotográfica y solicitar obligatoriamente la foto del ticket.
+
 ## Trayectoria Actual
-- **Paso**: Fase 5 - Protocolos de Prevención y Plan de Contingencia
-- **Objetivo**: Integrar Scraping Oficial de SEDEMA y Lógicas de Restricción Vehicular (Doble Hoy No Circula).
+- **Paso**: Punto 3.1.1.1 (Sello de la Casa) - Mapa de zonas de entrega
+- **Objetivo**: Implementar un mapa interactivo o digital que incluya las zonas de entrega, considerando restricciones por vialidades, tiempos de traslado y distancia, y ponerlo al alcance del personal.
 - **Estado**: Funcionalidad Desarrollada, Probada vía Docker y Documentada (Walkthrough completado).
 
 ## Estado del Squad
 | Agente | Tarea | Estado |
 | :--- | :--- | :--- |
 | Antigravity | Inicialización del Proyecto | Verificado [AUTO-HEALED] |
+| Antigravity | Mapa Zonas de Entrega (Leaflet) | Verificado y Pulido |
 | Antigravity | Auditoría de Seguridad y Hardening | Verificado [AUTO-HEALED] |
 | Antigravity | Implementación Fase 2 (Auth/Dash) | Verificado [Environment Fixed] |
 | Antigravity | Plan de Contingencia (SEDEMA Scraping) | Verificado y Pulido |

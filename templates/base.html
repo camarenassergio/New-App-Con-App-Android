@@ -112,9 +112,15 @@
               </li>
               {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
               <li class="nav-item">
-                <a href="{% url 'dashboard:zona_entrega_list' %}" class="nav-link {% if 'zonas' in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
+                <a href="{% url 'dashboard:zona_entrega_list' %}" class="nav-link {% if 'zonas' in request.path and 'mapa' not in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
                   <i class="fas fa-map-pin nav-icon" style="font-size: 0.9rem;"></i>
                   <span>Zonas de Entrega</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'dashboard:zona_entrega_map' %}" class="nav-link {% if 'mapa' in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
+                  <i class="fas fa-map-marked-alt nav-icon" style="font-size: 0.9rem;"></i>
+                  <span>Mapa de Zonas</span>
                 </a>
               </li>
               {% endif %}

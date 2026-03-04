@@ -4,7 +4,7 @@
 {% block page_title %}{% if object %}Editar Zona: {{ object.nombre }}{% else %}Nueva Zona de Entrega{% endif %}{% endblock %}
 
 {% block content %}
-<div class="form-container" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+<div class="form-container" style="max-width: 800px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
     <div style="margin-bottom: 24px; border-bottom: 1px solid #eee; padding-bottom: 16px;">
         <h3 style="color: #003366;"><i class="fas fa-map-marked-alt"></i> Detalles de la Zona</h3>
         <p class="text-muted small">Agregue los Códigos Postales separados por comas para agrupar destinos en automático.</p>
@@ -42,7 +42,15 @@
             <div class="col-md-6">
                 {{ form.costo_maniobra|as_crispy_field }}
             </div>
+            <div class="col-md-12 mt-3">
+                {{ form.color_hex|as_crispy_field }}
+            </div>
         </div>
+        
+        <hr class="mb-4 mt-4">
+        <h5 class="mb-3" style="color: #003366;"><i class="fas fa-draw-polygon"></i> Área en el Mapa de Zonas</h5>
+        <div id="mapa-dibujo" style="height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px;"></div>
+        {{ form.geojson_data|as_crispy_field }}
         
         <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: flex-end;">
             <a href="{% url 'dashboard:zona_entrega_list' %}" class="btn btn-outline-secondary">Cancelar</a>
@@ -52,4 +60,71 @@
         </div>
     </form>
 </div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+<style>
+    /* Asegurar que la paleta de color no esté fea */
+    .form-control-color { height: 40px; padding: 0.375rem 0.75rem; }
+</style>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var map = L.map('mapa-dibujo').setView([19.4326, -99.1332], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        var hiddenInput = document.getElementById('id_geojson_data');
+        var colorInput = document.getElementById('id_color_hex');
+
+        if (hiddenInput.value) {
+            try {
+                var geojsonData = JSON.parse(hiddenInput.value);
+                var geojsonLayer = L.geoJSON(geojsonData, {
+                    style: function(feature) {
+                        return { color: colorInput.value || '#3388ff', fillOpacity: 0.4 };
+                    }
+                });
+                geojsonLayer.eachLayer(function(layer) {
+                    drawnItems.addLayer(layer);
+                });
+                map.fitBounds(drawnItems.getBounds());
+            } catch(e) { console.error('Error parsing geojson:', e); }
+        }
+
+        var drawControl = new L.Control.Draw({
+            edit: { featureGroup: drawnItems },
+            draw: {
+                polygon: { shapeOptions: { color: colorInput.value || '#3388ff' } },
+                polyline: false, rectangle: false, circle: false, marker: false, circlemarker: false
+            }
+        });
+        map.addControl(drawControl);
+
+        function updateGeojson() {
+            var data = drawnItems.toGeoJSON();
+            if (data.features.length === 0) {
+               hiddenInput.value = '';
+            } else {
+               hiddenInput.value = JSON.stringify(data);
+            }
+        }
+
+        map.on(L.Draw.Event.CREATED, function (event) {
+            var layer = event.layer;
+            layer.options.color = colorInput.value || '#3388ff';
+            drawnItems.addLayer(layer);
+            updateGeojson();
+        });
+        
+        map.on(L.Draw.Event.EDITED, function () { updateGeojson(); });
+        map.on(L.Draw.Event.DELETED, function () { updateGeojson(); });
+    });
+</script>
 {% endblock %}
