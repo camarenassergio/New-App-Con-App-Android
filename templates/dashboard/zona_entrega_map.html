@@ -62,7 +62,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var map = L.map('mapa-general').setView([19.51000, -98.88250], 11); 
+        var map = L.map('mapa-general').setView([19.4638, -98.8835], 14); 
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -72,7 +72,7 @@
 
         setTimeout(function(){ map.invalidateSize(); }, 400);
 
-        // Marker for CEDIS
+        // Marker for CEDIS Casa Lupita
         var cedisIcon = L.divIcon({
             html: '<i class="fas fa-warehouse fa-2x" style="color: #d9534f; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);"></i>',
             className: 'custom-div-icon',
@@ -81,9 +81,26 @@
             popupAnchor: [0, -30]
         });
         
-        L.marker([19.51000, -98.88250], {icon: cedisIcon})
+        L.marker([19.4638, -98.8835], {icon: cedisIcon})
          .addTo(map)
-         .bindPopup("<b>CEDIS Casa Lupita</b><br>Lat: 19.51000<br>Lon: -98.88250");
+         .bindPopup("<b>Construrama Casa Lupita</b><br>Centro de Logística.<br>Cto. Acolhuacan Manzana 037, Lomas de Cristo, 56225 Texcoco de Mora.");
+
+        // Custom Control Button to Center Map
+        var centerControl = L.control({position: 'topleft'});
+        centerControl.onAdd = function(map) {
+            var btn = L.DomUtil.create('button', 'btn btn-sm btn-light shadow-sm');
+            btn.innerHTML = '<i class="fas fa-crosshairs"></i> Centrar Casa Lupita';
+            btn.style.marginLeft = '10px';
+            btn.style.marginTop = '10px';
+            btn.style.fontWeight = 'bold';
+            btn.style.color = '#003366';
+            btn.onclick = function(e){
+                e.preventDefault();
+                map.setView([19.4638, -98.8835], 14);
+            }
+            return btn;
+        };
+        centerControl.addTo(map);
 
         var bounds = L.featureGroup();
         var legendItems = '';
