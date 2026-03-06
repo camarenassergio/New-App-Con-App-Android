@@ -1263,3 +1263,25 @@ class ZonaEntregaImportView(LoginRequiredMixin, NonChoferRequiredMixin, View):
             
         return redirect('dashboard:zona_entrega_list')
 
+from django.http import JsonResponse
+from dashboard.models import CodigoPostalCat
+
+def colonias_por_cp_api(request):
+    """
+    Recibe una cadena de CPs separados por coma (ej. '?cps=50091, 56225') 
+    y devuelve la lista concatenada de todas sus colonias encontradas en BD.
+    """
+    cps_param = request.GET.get('cps', '')
+    if not cps_param:
+        return JsonResponse({'colonias': []})
+        
+    # Limpiar y separar los CPs
+    cps = [cp.strip() for cp in cps_param.split(',') if cp.strip()]
+    
+    # Consultar a la base de datos
+    colonias_encontradas = CodigoPostalCat.objects.filter(codigo__in=cps).values_list('asentamiento', flat=True)
+    
+    # Ordenar y asegurar únicos
+    colonias_unicas = sorted(list(set(colonias_encontradas)))
+    
+    return JsonResponse({'colonias': colonias_unicas})

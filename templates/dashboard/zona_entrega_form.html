@@ -70,3 +70,50 @@
     .form-control-color { height: 40px; padding: 0.375rem 0.75rem; }
 </style>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const cpInput = document.getElementById("id_codigos_postales");
+    const coloniasInput = document.getElementById("id_colonias");
+    
+    if (cpInput && coloniasInput) {
+        let debounceTimer;
+        
+        cpInput.addEventListener("input", function() {
+            let cps = cpInput.value;
+            
+            clearTimeout(debounceTimer);
+            
+            // Si está vacío, limpiar colonias y salir
+            if (!cps.trim()) {
+                coloniasInput.value = '';
+                return;
+            }
+            
+            // Petición asíncrona tras 600ms de no teclear
+            debounceTimer = setTimeout(function() {
+                fetch(`{% url 'dashboard:colonias_por_cp_api' %}?cps=${encodeURIComponent(cps)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.colonias && data.colonias.length > 0) {
+                        coloniasInput.value = data.colonias.join(', ');
+                        
+                        // Efecto visual sutil para indicar autocompletado
+                        coloniasInput.style.transition = 'background-color 0.3s ease';
+                        coloniasInput.style.backgroundColor = '#e8f5e9';
+                        setTimeout(() => { coloniasInput.style.backgroundColor = ''; }, 800);
+                        
+                    } else {
+                        coloniasInput.value = "No se encontraron colonias para estos CP";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error al buscar las colonias:", error);
+                });
+            }, 600);
+        });
+    }
+});
+</script>
+{% endblock %}

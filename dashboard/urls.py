@@ -50,6 +50,7 @@ urlpatterns = [
     path('zonas/importar/', views.ZonaEntregaImportView.as_view(), name='zona_entrega_import'),
     path('zonas/mapa/', views.ZonaEntregaMapView.as_view(), name='zona_entrega_map'),
     path('api/zonas-geojson/', views.ZonasGeoJSONView.as_view(), name='zonas_geojson_api'),
+    path('api/colonias-por-cp/', views.colonias_por_cp_api, name='colonias_por_cp_api'),
 
     path('usuarios/', views.UsuarioListView.as_view(), name='usuarios_list'),
     path('usuarios/nuevo/', views.UsuarioCreateView.as_view(), name='usuario_create'),
