@@ -1285,3 +1285,56 @@ def colonias_por_cp_api(request):
     colonias_unicas = sorted(list(set(colonias_encontradas)))
     
     return JsonResponse({'colonias': colonias_unicas})
+
+def calcular_centroide_zona_api(request):
+    """
+    Calcula el centroide aproximado basado en las geometrías de los CPs.
+    """
+    import os
+    import json
+    from django.conf import settings
+    
+    cps_param = request.GET.get('cps', '')
+    if not cps_param:
+        return JsonResponse({'error': 'No CPs provided'})
+        
+    cps_limpios = [cp.strip() for cp in cps_param.split(',') if cp.strip()]
+    if not cps_limpios:
+        return JsonResponse({'error': 'No valid CPs'})
+        
+    data_path = os.path.join(settings.BASE_DIR, 'dashboard', 'data', 'zonas_texcoco.json')
+    if not os.path.exists(data_path):
+        return JsonResponse({'error': 'Data missing'})
+        
+    total_lat = 0
+    total_lon = 0
+    count = 0
+    
+    def process_coords(coords):
+        nonlocal total_lat, total_lon, count
+        if isinstance(coords[0], (int, float)):
+            total_lon += coords[0]
+            total_lat += coords[1]
+            count += 1
+        else:
+            for item in coords:
+                process_coords(item)
+                
+    with open(data_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line: continue
+            try:
+                feature = json.loads(line)
+                cp_val = feature.get('properties', {}).get('d_cp', '').strip()
+                if cp_val in cps_limpios:
+                    geom = feature.get('geometry', {})
+                    if geom and 'coordinates' in geom:
+                        process_coords(geom['coordinates'])
+            except:
+                pass
+                
+    if count > 0:
+        return JsonResponse({'lat': total_lat / count, 'lon': total_lon / count})
+    else:
+        return JsonResponse({'error': 'Geocoding failed for CPs'})

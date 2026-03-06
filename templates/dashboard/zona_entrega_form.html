@@ -93,17 +93,58 @@ document.addEventListener("DOMContentLoaded", function() {
             
             // Petición asíncrona tras 600ms de no teclear
             debounceTimer = setTimeout(function() {
+                // 1. Llenar colonias
                 fetch(`{% url 'dashboard:colonias_por_cp_api' %}?cps=${encodeURIComponent(cps)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.colonias && data.colonias.length > 0) {
                         coloniasInput.value = data.colonias.join(', ');
                         
-                        // Efecto visual sutil para indicar autocompletado
+                        // Efecto visual sutil
                         coloniasInput.style.transition = 'background-color 0.3s ease';
                         coloniasInput.style.backgroundColor = '#e8f5e9';
                         setTimeout(() => { coloniasInput.style.backgroundColor = ''; }, 800);
                         
+                        // 2. Calcular Centroide y Enrutamiento (OSRM)
+                        fetch(`{% url 'dashboard:calcular_centroide_api' %}?cps=${encodeURIComponent(cps)}`)
+                        .then(res => res.json())
+                        .then(centroid => {
+                            if (centroid.lat && centroid.lon) {
+                                const lon_cedis = -98.8835;
+                                const lat_cedis = 19.4638;
+                                const urlOSRM = `https://router.project-osrm.org/route/v1/driving/${lon_cedis},${lat_cedis};${centroid.lon},${centroid.lat}?overview=false`;
+                                
+                                fetch(urlOSRM)
+                                .then(r => r.json())
+                                .then(osrmData => {
+                                    if(osrmData.routes && osrmData.routes.length > 0) {
+                                        const tiempoMinutos = Math.round(osrmData.routes[0].duration / 60);
+                                        const distanciaKm = (osrmData.routes[0].distance / 1000).toFixed(2);
+                                        
+                                        const tiempoInput = document.getElementById('id_tiempo_traslado_minutos');
+                                        const distInput = document.getElementById('id_distancia_km');
+                                        
+                                        if (tiempoInput && distInput) {
+                                            tiempoInput.value = tiempoMinutos;
+                                            distInput.value = distanciaKm;
+                                            
+                                            // Efecto visual en ambos
+                                            tiempoInput.style.transition = 'background-color 0.3s ease';
+                                            distInput.style.transition = 'background-color 0.3s ease';
+                                            tiempoInput.style.backgroundColor = '#e8f5e9';
+                                            distInput.style.backgroundColor = '#e8f5e9';
+                                            
+                                            setTimeout(() => { 
+                                                tiempoInput.style.backgroundColor = ''; 
+                                                distInput.style.backgroundColor = ''; 
+                                            }, 800);
+                                        }
+                                    }
+                                });
+                            }
+                        })
+                        .catch(err => console.error("Error al calcular ruta OSRM:", err));
+
                     } else {
                         coloniasInput.value = "No se encontraron colonias para estos CP";
                     }
