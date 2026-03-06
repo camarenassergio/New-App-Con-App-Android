@@ -118,26 +118,31 @@ document.addEventListener("DOMContentLoaded", function() {
                                 .then(r => r.json())
                                 .then(osrmData => {
                                     if(osrmData.routes && osrmData.routes.length > 0) {
-                                        const tiempoMinutos = Math.round(osrmData.routes[0].duration / 60);
-                                        const distanciaKm = (osrmData.routes[0].distance / 1000).toFixed(2);
+                                        // OSRM devuelve tiempo ideal sin tráfico.
+                                        // Multiplicamos por 1.45 (45% más) para simular Hora Pico realista
+                                        const tiempoSegundosBase = osrmData.routes[0].duration;
+                                        const tiempoHoraPicoMinutos = Math.round((tiempoSegundosBase * 1.45) / 60);
+                                        
+                                        // Distancia a 1 solo decimal
+                                        const distanciaKm = (osrmData.routes[0].distance / 1000).toFixed(1);
                                         
                                         const tiempoInput = document.getElementById('id_tiempo_traslado_minutos');
                                         const distInput = document.getElementById('id_distancia_km');
                                         
                                         if (tiempoInput && distInput) {
-                                            tiempoInput.value = tiempoMinutos;
+                                            tiempoInput.value = tiempoHoraPicoMinutos;
                                             distInput.value = distanciaKm;
                                             
-                                            // Efecto visual en ambos
+                                            // Efecto visual en ambos (color anaranjado suave indicando tráfico)
                                             tiempoInput.style.transition = 'background-color 0.3s ease';
                                             distInput.style.transition = 'background-color 0.3s ease';
-                                            tiempoInput.style.backgroundColor = '#e8f5e9';
-                                            distInput.style.backgroundColor = '#e8f5e9';
+                                            tiempoInput.style.backgroundColor = '#fff3e0'; // Naranja suave (alerta de hora pico)
+                                            distInput.style.backgroundColor = '#e8f5e9';   // Verde suave normal
                                             
                                             setTimeout(() => { 
                                                 tiempoInput.style.backgroundColor = ''; 
                                                 distInput.style.backgroundColor = ''; 
-                                            }, 800);
+                                            }, 1000);
                                         }
                                     }
                                 });
