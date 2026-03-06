@@ -401,6 +401,23 @@ class ZonaEntrega(models.Model):
         return f"Zona: {self.nombre} ({self.tiempo_traslado_minutos} min)"
 
 
+class CodigoPostalCat(models.Model):
+    codigo = models.CharField(max_length=10, db_index=True, verbose_name="Código Postal")
+    asentamiento = models.CharField(max_length=200, verbose_name="Colonia/Asentamiento")
+    tipo_asentamiento = models.CharField(max_length=100, null=True, blank=True)
+    municipio = models.CharField(max_length=100)
+    estado = models.CharField(max_length=100)
+    ciudad = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Código Postal"
+        verbose_name_plural = "Códigos Postales"
+        ordering = ['codigo', 'asentamiento']
+
+    def __str__(self):
+        return f"{self.codigo} - {self.asentamiento}"
+
+
 class Viaje(models.Model):
     TIPO_VIAJE_CHOICES = [
         ('VENTA', 'Venta Normal'),
