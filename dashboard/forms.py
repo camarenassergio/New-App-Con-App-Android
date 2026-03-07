@@ -365,7 +365,7 @@ class InventarioLlantaForm(forms.ModelForm):
         ]
         widgets = {
             'costo': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'fecha_instalacion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'fecha_instalacion': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'observaciones': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
 

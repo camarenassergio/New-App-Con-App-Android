@@ -33,7 +33,9 @@
                 <tr>
                     <th>Unidad</th>
                     <th>Posición</th>
-                    <th>Llanta (Serie/DOT)</th>
+                    <th>Llanta (DOT)</th>
+                    <th>Instalación</th>
+                    <th>Vencimiento</th>
                     <th>Medida</th>
                     <th>Prof. Piso (mm)</th>
                     <th>Costo</th>
@@ -48,9 +50,17 @@
                     <td>{{ llanta.get_posicion_display }}</td>
                     <td>
                         {{ llanta.marca }}<br>
-                        <small class="text-muted">DOT: {{ llanta.numero_serie }}</small><br>
+                        <small class="text-muted">DOT: {{ llanta.numero_serie }}</small>
+                    </td>
+                    <td>
+                        {{ llanta.fecha_instalacion|date:"d M Y" }}<br>
+                        <small class="text-muted">{{ llanta.km_instalacion }} km</small>
+                    </td>
+                    <td>
                         {% if llanta.fecha_vencimiento %}
-                        <small class="text-info"><i class="fas fa-calendar-times"></i> Vence: {{ llanta.fecha_vencimiento|date:"M Y"|title }}</small>
+                            <span class="text-info"><i class="fas fa-calendar-times"></i> {{ llanta.fecha_vencimiento|date:"M Y"|title }}</span>
+                        {% else %}
+                            <span class="text-muted">N/A</span>
                         {% endif %}
                     </td>
                     <td>{{ llanta.medida }}</td>
