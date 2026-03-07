@@ -36,6 +36,7 @@
                     <th>Llanta (Serie/DOT)</th>
                     <th>Medida</th>
                     <th>Prof. Piso (mm)</th>
+                    <th>Costo</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -62,6 +63,7 @@
                             {% endif %}
                         </div>
                     </td>
+                    <td>${{ llanta.costo|floatformat:2 }}</td>
                     <td>
                         {% if llanta.activa %}
                             <span class="badge bg-success">Activa / Rodando</span>

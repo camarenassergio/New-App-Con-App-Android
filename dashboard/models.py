@@ -966,6 +966,7 @@ class InventarioLlanta(models.Model):
     
     # SDC: Profundidad mínima de piso (3.5.3.1)
     profundidad_piso_mm = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Profundidad de Piso (mm)")
+    costo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Costo de la Llanta ($)")
     fecha_instalacion = models.DateField(default=timezone.now, verbose_name="Fecha Instalación")
     km_instalacion = models.PositiveIntegerField(verbose_name="Km al Instalar")
     activa = models.BooleanField(default=True, verbose_name="Instalada Actualmente")

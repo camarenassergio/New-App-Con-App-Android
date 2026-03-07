@@ -360,10 +360,11 @@ class InventarioLlantaForm(forms.ModelForm):
         model = InventarioLlanta
         fields = [
             'unidad', 'posicion', 'marca', 'medida', 'numero_serie', 
-            'profundidad_piso_mm', 'fecha_instalacion', 'km_instalacion',
+            'profundidad_piso_mm', 'costo', 'fecha_instalacion', 'km_instalacion',
             'activa', 'observaciones'
         ]
         widgets = {
+            'costo': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'fecha_instalacion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'observaciones': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
