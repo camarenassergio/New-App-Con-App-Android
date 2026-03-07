@@ -966,7 +966,8 @@ class InventarioLlanta(models.Model):
     posicion = models.CharField(max_length=20, choices=POSICION_CHOICES, verbose_name="Posición en Unidad")
     
     # SDC: Profundidad mínima de piso (3.5.3.1)
-    profundidad_piso_mm = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Profundidad de Piso (mm)")
+    profundidad_inicial_mm = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True, verbose_name="Profundidad Inicial (mm)")
+    profundidad_piso_mm = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Profundidad de Piso Actual (mm)")
     costo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Costo de la Llanta ($)")
     fecha_instalacion = models.DateField(default=timezone.now, verbose_name="Fecha Instalación")
     km_instalacion = models.PositiveIntegerField(verbose_name="Km al Instalar")
@@ -980,6 +981,12 @@ class InventarioLlanta(models.Model):
         unique_together = ('unidad', 'posicion', 'activa') # Solo una llanta activa por posición
 
     def save(self, *args, **kwargs):
+        if not self.pk and not self.profundidad_inicial_mm:
+            self.profundidad_inicial_mm = self.profundidad_piso_mm
+        elif self.pk and not self.profundidad_inicial_mm:
+            # Para registros existentes antes de la migración
+            self.profundidad_inicial_mm = self.profundidad_piso_mm
+            
         # Calcular fecha vencimiento a partir del DOT (últimos 4 dígitos = Semana/Año)
         import re, datetime
         serie_val = self.numero_serie.strip()
@@ -1040,6 +1047,7 @@ class MedicionNeumatico(models.Model):
     km_medicion = models.PositiveIntegerField(verbose_name="Kilometraje al Medir")
     presion_psi = models.DecimalField(max_digits=5, decimal_places=1, verbose_name="Presión (PSI)")
     profundidad_mm = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Profundidad (mm)")
+    observaciones = models.TextField(blank=True, null=True, verbose_name="Causa Probable / Observaciones")
     
     class Meta:
         verbose_name = "Medición de Neumático"

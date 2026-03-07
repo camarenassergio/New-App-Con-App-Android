@@ -65,6 +65,18 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
         
         llantas_activas = InventarioLlanta.objects.filter(activa=True).select_related('unidad')
         for llanta in llantas_activas:
+            # Alerta de desgaste acelerado por tasa
+            if llanta.observaciones and "Desgaste Acelerado" in llanta.observaciones:
+                context['alertas'].append({
+                    'nivel': 'danger',
+                    'mensaje': f"🚨 DESGASTE ACELERADO: {llanta.unidad.nUnidad} - {llanta.get_posicion_display()}. {llanta.observaciones}"
+                })
+            elif llanta.observaciones and "Desgaste Alta" in llanta.observaciones:
+                context['alertas'].append({
+                    'nivel': 'warning',
+                    'mensaje': f"⚠️ DESGASTE ALTO: {llanta.unidad.nUnidad} - {llanta.get_posicion_display()}. {llanta.observaciones}"
+                })
+
             # Riesgo por profundidad de piso
             if llanta.profundidad_piso_mm <= config.limite_seguridad_llanta_mm:
                 context['alertas'].append({
@@ -989,19 +1001,51 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
             form.instance.unidad.kilometraje_actual = km_actual
             form.instance.unidad.save()
             
+        from .models import ConfiguracionGeneral
+        config = ConfiguracionGeneral.get_solo()
+        limite_mm = Decimal(config.limite_seguridad_llanta_mm)
+        vida_util_km = Decimal(config.vida_util_estimada_llanta_km)
+            
         for llanta in llantas_activas:
             psi_val = self.request.POST.get(f"psi_{llanta.id}")
             mm_val = self.request.POST.get(f"mm_{llanta.id}")
+            tipo_desgaste = self.request.POST.get(f"desgaste_{llanta.id}", "Uniforme")
+            
             if psi_val and mm_val:
                 hubo_medicion = True
-                MedicionNeumatico.objects.create(
+                
+                observacion_auto = None
+                if llanta.profundidad_inicial_mm:
+                    prof_actual = Decimal(mm_val)
+                    prof_inicial = Decimal(llanta.profundidad_inicial_mm)
+                    km_recorridos = Decimal(km_actual - llanta.km_instalacion)
+                    
+                    if km_recorridos > 0 and prof_inicial > limite_mm:
+                        # Tasa esperada de desgaste por km
+                        tasa_esperada = (prof_inicial - limite_mm) / vida_util_km
+                        # Tasa real de desgaste por km
+                        tasa_actual = (prof_inicial - prof_actual) / km_recorridos
+                        
+                        if tasa_actual > (tasa_esperada * Decimal('1.5')):
+                            observacion_auto = "Desgaste Acelerado. Causa: Sobrecarga constante. Acción: Revisar bitácoras de peso vs capacidad de unidad."
+                        elif tasa_actual > (tasa_esperada * Decimal('1.25')):
+                            if tipo_desgaste == "Irregular":
+                                observacion_auto = "Desgaste Alta + Irregular. Causa: Alineación / Balanceo. Acción: Programar servicio de alineación inmediato."
+                            else:
+                                observacion_auto = "Desgaste Alta + Uniforme. Causa: Presión de aire baja / Estilo de manejo. Acción: Revisar presión en cada carga de combustible."
+                                
+                medicion = MedicionNeumatico.objects.create(
                     unidad_id=unidad_id,
                     llanta=llanta,
                     km_medicion=km_actual,
                     presion_psi=Decimal(psi_val),
-                    profundidad_mm=Decimal(mm_val)
+                    profundidad_mm=Decimal(mm_val),
+                    observaciones=observacion_auto
                 )
+                
                 llanta.profundidad_piso_mm = Decimal(mm_val)
+                if observacion_auto:
+                    llanta.observaciones = observacion_auto
                 llanta.save()
                 
         if hubo_medicion:
