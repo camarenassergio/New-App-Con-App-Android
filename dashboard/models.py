@@ -979,3 +979,23 @@ class InventarioLlanta(models.Model):
     def __str__(self):
         return f"Llanta {self.numero_serie} ({self.posicion}) - {self.unidad.nUnidad}"
 
+class ConfiguracionGeneral(models.Model):
+    sueldo_base_chofer = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Sueldo Base Chofer ($)")
+    sueldo_base_chalan = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Sueldo Base Chalán ($)")
+    
+    class Meta:
+        verbose_name = "Configuración General"
+        verbose_name_plural = "Configuraciones Generales"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_solo(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return "Configuración Global"
+

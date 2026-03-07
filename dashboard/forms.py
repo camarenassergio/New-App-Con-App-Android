@@ -415,3 +415,13 @@ class ZonaEntregaForm(forms.ModelForm):
             'geojson_data': forms.HiddenInput(attrs={'id': 'id_geojson_data'}),
         }
 
+from .models import ConfiguracionGeneral
+
+class ConfiguracionGeneralForm(forms.ModelForm):
+    class Meta:
+        model = ConfiguracionGeneral
+        fields = ['sueldo_base_chofer', 'sueldo_base_chalan']
+        widgets = {
+            'sueldo_base_chofer': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'sueldo_base_chalan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }

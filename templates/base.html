@@ -198,6 +198,16 @@
             <span>Usuarios / Admin</span>
           </a>
         </li>
+        
+        <li class="nav-item">
+          <a
+            href="{% url 'dashboard:configuracion_general' %}"
+            class="nav-link {% if 'configuraciones' in request.path %}active{% endif %}"
+          >
+            <i class="fas fa-cogs nav-icon"></i>
+            <span>Configuración General</span>
+          </a>
+        </li>
         {% endif %}
 
         <!-- Spacer to push Logout to bottom -->

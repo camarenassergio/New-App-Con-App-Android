@@ -1338,3 +1338,20 @@ def calcular_centroide_zona_api(request):
         return JsonResponse({'lat': total_lat / count, 'lon': total_lon / count})
     else:
         return JsonResponse({'error': 'Geocoding failed for CPs'})
+
+from .models import ConfiguracionGeneral
+from .forms import ConfiguracionGeneralForm
+from django.contrib import messages
+
+class ConfiguracionGeneralUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, UpdateView):
+    model = ConfiguracionGeneral
+    form_class = ConfiguracionGeneralForm
+    template_name = 'dashboard/configuracion_general.html'
+    success_url = reverse_lazy('dashboard:configuracion_general')
+    
+    def get_object(self, queryset=None):
+        return ConfiguracionGeneral.get_solo()
+    
+    def form_valid(self, form):
+        messages.success(self.request, "Configuración general actualizada correctamente.")
+        return super().form_valid(form)
