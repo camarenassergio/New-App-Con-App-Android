@@ -1,0 +1,6 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "deploy": {
+    "releaseCommand": "python manage.py migrate --noinput && python manage.py load_cp_data"
+  }
+}
