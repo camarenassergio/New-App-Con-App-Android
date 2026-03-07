@@ -48,7 +48,10 @@
                     <td>{{ llanta.get_posicion_display }}</td>
                     <td>
                         {{ llanta.marca }}<br>
-                        <small class="text-muted">DOT: {{ llanta.numero_serie }}</small>
+                        <small class="text-muted">DOT: {{ llanta.numero_serie }}</small><br>
+                        {% if llanta.fecha_vencimiento %}
+                        <small class="text-info"><i class="fas fa-calendar-times"></i> Vence: {{ llanta.fecha_vencimiento|date:"M Y"|title }}</small>
+                        {% endif %}
                     </td>
                     <td>{{ llanta.medida }}</td>
                     <td>

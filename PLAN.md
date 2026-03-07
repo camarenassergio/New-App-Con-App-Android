@@ -30,6 +30,7 @@
 | Antigravity | Fix: Mostrar todas las colonias en tabla sin truncar | Verificado y Pulido |
 | Antigravity | Nueva Vista: Configuraciones Generales (Sueldos) | Verificado y Pulido |
 | Antigravity | KPI: Costo de cada llanta para unidades | Verificado [AUTO-HEALED] |
+| Antigravity | Automatización: Cálculo Fecha de Vencimiento Llanta (DOT) | Verificado y Pulido |
 
 ## Reglas del Proyecto
 -   **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).

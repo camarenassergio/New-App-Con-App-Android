@@ -971,11 +971,40 @@ class InventarioLlanta(models.Model):
     km_instalacion = models.PositiveIntegerField(verbose_name="Km al Instalar")
     activa = models.BooleanField(default=True, verbose_name="Instalada Actualmente")
     observaciones = models.TextField(blank=True, null=True, verbose_name="Condición / Observaciones")
+    fecha_vencimiento = models.DateField(blank=True, null=True, verbose_name="Fecha de Vencimiento (por DOT)")
 
     class Meta:
         verbose_name = "Inventario de Llanta"
         verbose_name_plural = "Inventario de Llantas"
         unique_together = ('unidad', 'posicion', 'activa') # Solo una llanta activa por posición
+
+    def save(self, *args, **kwargs):
+        # Calcular fecha vencimiento a partir del DOT (últimos 4 dígitos = Semana/Año)
+        import re, datetime
+        serie_val = self.numero_serie.strip()
+        match = re.search(r'(\d{4})$', serie_val)
+        if match:
+            dot_code = match.group(1)
+            semana_str = dot_code[:2]
+            anio_str = dot_code[2:]
+            try:
+                semana = int(semana_str)
+                anio = int(anio_str)
+                anio_completo = 2000 + anio
+                
+                if 1 <= semana <= 53:
+                    primer_dia_anio = datetime.date(anio_completo, 1, 1)
+                    fecha_fabricacion = primer_dia_anio + datetime.timedelta(weeks=semana-1)
+                    # Vencimiento estimado de llanta: 5 años
+                    try:
+                        self.fecha_vencimiento = fecha_fabricacion.replace(year=fecha_fabricacion.year + 5)
+                    except ValueError:
+                        # Si es 29 de febrero, retrocedemos a 28 de feb
+                        self.fecha_vencimiento = fecha_fabricacion + datetime.timedelta(days=5*365+1)
+            except ValueError:
+                pass
+                
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Llanta {self.numero_serie} ({self.posicion}) - {self.unidad.nUnidad}"
