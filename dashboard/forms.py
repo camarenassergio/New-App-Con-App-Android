@@ -327,8 +327,54 @@ class ChecklistUnidadForm(forms.ModelForm):
         exclude = ['unidad', 'chofer', 'fecha', 'hora_registro']
         widgets = {
             'observaciones': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Opcional: Detalles de alguna anomalía...'}),
+            'km_actual': forms.NumberInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Ej. 125000', 'required': 'required'}),
             # Los campos booleanos se manejarán manualmente en el template para la UI de switches/botones
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        unidad_id = self.data.get('unidad_id')
+        km_actual = cleaned_data.get('km_actual')
+        
+        if not unidad_id or km_actual is None:
+            return cleaned_data
+            
+        from .models import Unidad, MedicionNeumatico, InventarioLlanta
+        import datetime
+        from django.utils import timezone
+        
+        try:
+            unidad = Unidad.objects.get(id=unidad_id)
+        except Unidad.DoesNotExist:
+            return cleaned_data
+            
+        ultima_medicion = MedicionNeumatico.objects.filter(unidad=unidad).order_by('-fecha').first()
+        requiere_inspeccion = False
+        
+        if ultima_medicion:
+            dias_transcurridos = (timezone.now().date() - ultima_medicion.fecha).days
+            km_transcurridos = km_actual - ultima_medicion.km_medicion
+            
+            if dias_transcurridos >= 15 or km_transcurridos >= 5000:
+                requiere_inspeccion = True
+        else:
+            # Si nunca se ha medido, requiere inspección inicial
+            requiere_inspeccion = True
+            
+        if requiere_inspeccion:
+            llantas_activas = InventarioLlanta.objects.filter(unidad=unidad, activa=True)
+            faltan_datos = False
+            for llanta in llantas_activas:
+                psi_val = self.data.get(f"psi_{llanta.id}")
+                mm_val = self.data.get(f"mm_{llanta.id}")
+                if not psi_val or not mm_val:
+                    faltan_datos = True
+                    break
+                    
+            if faltan_datos:
+                raise forms.ValidationError("Criterio de seguridad alcanzado: Es obligatorio medir profundidad y presión para continuar.")
+                
+        return cleaned_data
 
 from .models import Viaje
 

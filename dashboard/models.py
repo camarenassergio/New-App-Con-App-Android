@@ -922,6 +922,7 @@ class ChecklistUnidad(models.Model):
     chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name="Chofer")
     fecha = models.DateField(default=timezone.now, verbose_name="Fecha")
     hora_registro = models.TimeField(auto_now_add=True, verbose_name="Hora de Registro")
+    km_actual = models.PositiveIntegerField(default=0, verbose_name="Kilometraje Actual")
 
     # Módulo 3.5.1.3 - Aspectos a revisar
     nivel_combustible = models.IntegerField(choices=[(25, '25%'), (50, '50%'), (75, '75%'), (100, '100%')], verbose_name="Nivel Combustible")
@@ -1031,3 +1032,19 @@ class ConfiguracionGeneral(models.Model):
     def __str__(self):
         return "Configuración Global"
 
+
+class MedicionNeumatico(models.Model):
+    unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE, related_name="mediciones_neumaticos", verbose_name="Unidad")
+    llanta = models.ForeignKey('InventarioLlanta', on_delete=models.CASCADE, related_name="mediciones", verbose_name="Llanta")
+    fecha = models.DateField(default=timezone.now, verbose_name="Fecha de Medición")
+    km_medicion = models.PositiveIntegerField(verbose_name="Kilometraje al Medir")
+    presion_psi = models.DecimalField(max_digits=5, decimal_places=1, verbose_name="Presión (PSI)")
+    profundidad_mm = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Profundidad (mm)")
+    
+    class Meta:
+        verbose_name = "Medición de Neumático"
+        verbose_name_plural = "Mediciones de Neumáticos"
+        ordering = ['-fecha', '-id']
+
+    def __str__(self):
+        return f"Medición {self.llanta.get_posicion_display()} - {self.unidad.nUnidad} ({self.fecha})"

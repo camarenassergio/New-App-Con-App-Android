@@ -935,9 +935,25 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
          context = super().get_context_data(**kwargs)
-         # Fetch all units so the chofer can decide which one they are driving today
-         # If they only drive one, we could auto-assign, but it's safer to let them pick or pre-select.
-         context['unidades_activas'] = Unidad.objects.filter(en_servicio=True)
+         unidades = Unidad.objects.filter(en_servicio=True)
+         context['unidades_activas'] = unidades
+         
+         from .models import MedicionNeumatico, InventarioLlanta
+         import json
+         
+         datos_mediciones = {}
+         for u in unidades:
+             ultima_medicion = MedicionNeumatico.objects.filter(unidad=u).order_by('-fecha').first()
+             llantas_qs = InventarioLlanta.objects.filter(unidad=u, activa=True)
+             llantas_list = [{'id': l.id, 'posicion': l.get_posicion_display()} for l in llantas_qs]
+             
+             datos_mediciones[u.id] = {
+                 'ultima_fecha': ultima_medicion.fecha.isoformat() if ultima_medicion else None,
+                 'ultimo_km': ultima_medicion.km_medicion if ultima_medicion else 0,
+                 'llantas': llantas_list
+             }
+             
+         context['datos_mediciones_json'] = json.dumps(datos_mediciones)
          return context
 
     def form_valid(self, form):
@@ -959,6 +975,38 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
             # Podemos permitirlo (sobreescribir/duplicar) o bloquearlo. Lo permitimos como registro extra.
             
         response = super().form_valid(form)
+        
+        # Guardar mediciones de neumáticos si fueron obligadas o provistas e inyectadas al form
+        from .models import MedicionNeumatico, InventarioLlanta
+        from decimal import Decimal
+        
+        llantas_activas = InventarioLlanta.objects.filter(unidad_id=unidad_id, activa=True)
+        hubo_medicion = False
+        km_actual = form.instance.km_actual
+        
+        # Actualizar kilometraje general de la unidad de paso
+        if km_actual > form.instance.unidad.kilometraje_actual:
+            form.instance.unidad.kilometraje_actual = km_actual
+            form.instance.unidad.save()
+            
+        for llanta in llantas_activas:
+            psi_val = self.request.POST.get(f"psi_{llanta.id}")
+            mm_val = self.request.POST.get(f"mm_{llanta.id}")
+            if psi_val and mm_val:
+                hubo_medicion = True
+                MedicionNeumatico.objects.create(
+                    unidad_id=unidad_id,
+                    llanta=llanta,
+                    km_medicion=km_actual,
+                    presion_psi=Decimal(psi_val),
+                    profundidad_mm=Decimal(mm_val)
+                )
+                llanta.profundidad_piso_mm = Decimal(mm_val)
+                llanta.save()
+                
+        if hubo_medicion:
+            messages.info(self.request, "Mediciones de seguridad de neumáticos registradas exitosamente.")
+            
         messages.success(self.request, "Checklist diario guardado correctamente. ¡Buen viaje!")
         return response
 
