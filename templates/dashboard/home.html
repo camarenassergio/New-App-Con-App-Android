@@ -31,8 +31,8 @@
     
     <!-- Configurable Alerts -->
     {% for alerta in alertas %}
-    <div class="stat-card danger">
-        <span class="stat-label">ALERTA</span>
+    <div class="stat-card {{ alerta.nivel }}">
+        <span class="stat-label">{% if alerta.nivel == 'warning' %}AVISO PREVENTIVO{% else %}ALERTA CRÍTICA{% endif %}</span>
         <span class="stat-value" style="font-size:1.2rem; margin-top:10px;">{{ alerta.mensaje }}</span>
     </div>
     {% endfor %}

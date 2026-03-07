@@ -37,6 +37,16 @@
                             {{ form.sueldo_base_chalan|as_crispy_field }}
                         </div>
                     </div>
+
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary"><i class="fas fa-life-ring me-1"></i> Límites de Llantas (SDC)</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.limite_seguridad_llanta_mm|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.vida_util_estimada_llanta_km|as_crispy_field }}
+                        </div>
+                    </div>
                     
                     <!-- Aquí se pueden agregar más secciones en el futuro con crispy forms fields -->
 

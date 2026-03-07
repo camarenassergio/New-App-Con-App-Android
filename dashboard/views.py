@@ -60,6 +60,28 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
                 'mensaje': f"CONTINGENCIA ACTIVA: {contingencia.get_estado_contingencia_display()}"
             })
 
+        from .models import InventarioLlanta, ConfiguracionGeneral
+        config = ConfiguracionGeneral.get_solo()
+        
+        llantas_activas = InventarioLlanta.objects.filter(activa=True).select_related('unidad')
+        for llanta in llantas_activas:
+            # Riesgo por profundidad de piso
+            if llanta.profundidad_piso_mm <= config.limite_seguridad_llanta_mm:
+                context['alertas'].append({
+                    'nivel': 'danger',
+                    'mensaje': f"⚠️ ALERTA DE LLANTA: La unidad {llanta.unidad.nUnidad} alcanzó el límite de seguridad ({llanta.profundidad_piso_mm} mm) en la llanta {llanta.get_posicion_display()}. Requiere cambio urgente."
+                })
+            else:
+                # Riesgo por kilometraje
+                km_recorridos = llanta.unidad.kilometraje_actual - llanta.km_instalacion
+                if km_recorridos >= 0:
+                    km_restantes = config.vida_util_estimada_llanta_km - km_recorridos
+                    if km_restantes < 5000:  # Umbral de aviso preventivo de 5,000 km
+                        context['alertas'].append({
+                            'nivel': 'warning',
+                            'mensaje': f"🔔 PREVENCIÓN DE LLANTA: La unidad {llanta.unidad.nUnidad} está a {km_restantes} km de superar la vida útil estimada en su llanta {llanta.get_posicion_display()}."
+                        })
+
         # --- DATOS PARA GRÁFICAS ---
         import json
         from django.db.models import Sum, Count, Max, Min
@@ -955,6 +977,20 @@ class InventarioLlantaListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['unidades'] = Unidad.objects.all()
+        from .models import ConfiguracionGeneral
+        
+        config = ConfiguracionGeneral.get_solo()
+        context['config'] = config
+        
+        # Inyectar cálculo de kilómetros dinámicamente al queryset resultante de la página actual
+        for llanta in context['llantas']:
+            km_recorridos = llanta.unidad.kilometraje_actual - llanta.km_instalacion
+            if km_recorridos < 0:
+                km_recorridos = 0
+                
+            llanta.km_recorridos = km_recorridos
+            llanta.km_restantes = config.vida_util_estimada_llanta_km - km_recorridos
+            
         return context
 
 class InventarioLlantaCreateView(LoginRequiredMixin, CreateView):

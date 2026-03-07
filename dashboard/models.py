@@ -1012,6 +1012,8 @@ class InventarioLlanta(models.Model):
 class ConfiguracionGeneral(models.Model):
     sueldo_base_chofer = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Sueldo Base Chofer ($)")
     sueldo_base_chalan = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Sueldo Base Chalán ($)")
+    limite_seguridad_llanta_mm = models.DecimalField(max_digits=4, decimal_places=1, default=3.0, verbose_name="Límite Seguridad Llanta (mm)")
+    vida_util_estimada_llanta_km = models.PositiveIntegerField(default=100000, verbose_name="Vida Útil Estimada Llanta (km)")
     
     class Meta:
         verbose_name = "Configuración General"

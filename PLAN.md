@@ -31,6 +31,7 @@
 | Antigravity | Nueva Vista: Configuraciones Generales (Sueldos) | Verificado y Pulido |
 | Antigravity | KPI: Costo de cada llanta para unidades | Verificado [AUTO-HEALED] |
 | Antigravity | Automatización: Cálculo Fecha de Vencimiento Llanta (DOT) | Verificado y Pulido |
+| Antigravity | Monitoreo: Alertas de límite de seguridad y vida útil de llantas | Verificado y Pulido |
 
 ## Reglas del Proyecto
 -   **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).
