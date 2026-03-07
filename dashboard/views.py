@@ -71,6 +71,11 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
                     'nivel': 'danger',
                     'mensaje': f"🚨 DESGASTE ACELERADO: {llanta.unidad.nUnidad} - {llanta.get_posicion_display()}. {llanta.observaciones}"
                 })
+            elif llanta.observaciones and "Disparidad Detectada" in llanta.observaciones:
+                context['alertas'].append({
+                    'nivel': 'warning',
+                    'mensaje': f"⚠️ ALERTA ALINEACIÓN/PRESIÓN: {llanta.unidad.nUnidad} - Eje {llanta.get_posicion_display()}. {llanta.observaciones}"
+                })
             elif llanta.observaciones and "Desgaste Alta" in llanta.observaciones:
                 context['alertas'].append({
                     'nivel': 'warning',
@@ -1107,7 +1112,7 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
                         for l_obj in (l1, l2):
                             if alerta_txt not in (l_obj.observaciones or ""):
                                 # Prefijo para que salga en dashboard
-                                new_obs = f"Desgaste Acelerado: {alerta_txt}"
+                                new_obs = f"Disparidad Detectada: {alerta_txt}"
                                 l_obj.observaciones = (l_obj.observaciones + " | " + new_obs) if l_obj.observaciones else new_obs
                                 l_obj.save()
                                 
