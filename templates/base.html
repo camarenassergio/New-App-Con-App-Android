@@ -347,8 +347,8 @@
     <!-- Auto-Logout Script -->
     <script>
         (function() {
-            // Tiempo en milisegundos (30 segundos para prueba)
-            const INACTIVITY_LIMIT = 60 * 10000; 
+            // Tiempo en milisegundos (60 minutos)
+            const INACTIVITY_LIMIT = 60 * 60 * 1000; 
             let timeout;
 
             function resetTimer() {

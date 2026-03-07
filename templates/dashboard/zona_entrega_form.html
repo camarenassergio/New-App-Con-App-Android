@@ -57,6 +57,18 @@
             <i class="fas fa-magic"></i> <strong>Generación Automática:</strong> Los polígonos de la zona se generarán y actualizarán automáticamente en el mapa principal en base a los Códigos Postales ingresados al momento de guardar.
         </div>
         
+        <!-- CONTENEDOR DE COTIZACIONES -->
+        <div id="cotizaciones-container" style="display: none; margin-top: 20px; padding: 15px; border-radius: 8px; background-color: #f8f9fa; border: 1px solid #dee2e6;">
+            <h5 style="color: #003366; margin-bottom: 10px;"><i class="fas fa-calculator"></i> Cotización Sugerida (Basada en Gastos Reales)</h5>
+            <p class="text-muted small mb-2">Selecciona la unidad ideal para fijar la tarifa de la zona. Se muestra el <strong>Peor Escenario</strong> por defecto para garantizar rentabilidad.</p>
+            <div id="cotizaciones-badges" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+                <!-- Aquí se inyectan las pills con JS -->
+            </div>
+            <div id="cotizacion-desglose" class="small text-muted" style="background: #fff; padding: 10px; border-radius: 5px; border: 1px dashed #ccc;">
+                <!-- Desglose inyectado con JS -->
+            </div>
+        </div>
+
         <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: flex-end;">
             <a href="{% url 'dashboard:zona_entrega_list' %}" class="btn btn-outline-secondary">Cancelar</a>
             <button type="submit" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
@@ -143,6 +155,109 @@ document.addEventListener("DOMContentLoaded", function() {
                                                 tiempoInput.style.backgroundColor = ''; 
                                                 distInput.style.backgroundColor = ''; 
                                             }, 1000);
+
+                                            // 3. CONSULTAR COTIZACIÓN DE FLETE SUGERIDO (NUEVO endpoint)
+                                            console.log("Llamando a API de flete sugerido...");
+                                            fetch('{% url "dashboard:calcular_flete_api" %}', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                                                },
+                                                body: JSON.stringify({
+                                                    distancia_km: parseFloat(distanciaKm),
+                                                    tiempo_minutos: parseFloat(tiempoHoraPicoMinutos)
+                                                })
+                                            })
+                                            .then(resp => {
+                                                console.log("HTTP status de Flete API:", resp.status);
+                                                if (!resp.ok) {
+                                                    console.error("La API de flete devolvió un error:", resp.status);
+                                                    return resp.text().then(text => { throw new Error(text) });
+                                                }
+                                                return resp.json();
+                                            })
+                                            .then(fleteData => {
+                                                console.log("Datos recibidos de Flete API:", fleteData);
+                                                if(fleteData.status === 'ok' && fleteData.cotizaciones && fleteData.cotizaciones.length > 0) {
+                                                    const container = document.getElementById('cotizaciones-container');
+                                                    const badgesDiv = document.getElementById('cotizaciones-badges');
+                                                    const desgloseDiv = document.getElementById('cotizacion-desglose');
+                                                    const tarifaInput = document.getElementById('id_tarifa_flete');
+                                                    
+                                                    container.style.display = 'block';
+                                                    badgesDiv.innerHTML = ''; // Limpiar anteriores
+                                                    
+                                                    // Tomar el más costoso (el de índice 0 por como viene ordenado del backend)
+                                                    const peorEscenario = fleteData.cotizaciones[0];
+                                                    
+                                                    // Funcion helper para renderizar desglose
+                                                    const renderDesglose = (cot) => {
+                                                        const d = cot.desglose;
+                                                        return `
+                                                            <strong>Ejemplo de análisis basado en: ${cot.ejemplo_unidad}</strong><br>
+                                                            - Distancia Redonda: ${d.km_totales.toFixed(1)} km 
+                                                            (Operación: $${d.costo_operativo_km.toFixed(2)}/km) = <strong>$${d.subtotal_km.toFixed(2)}</strong><br>
+                                                            - Tiempo Estimado c/Descarga: ${d.tiempo_total_mins} min
+                                                            (Personal: $${d.costo_minuto_personal.toFixed(2)}/min) = <strong>$${d.subtotal_tiempo.toFixed(2)}</strong><br>
+                                                            <strong style="color: #003366; font-size: 1.1em; display: inline-block; margin-top: 5px;">
+                                                              COSTO BASE TOTAL: $${cot.costo.toFixed(2)}
+                                                            </strong>
+                                                        `;
+                                                    };
+                                                    
+                                                    // Llenar por defecto con el más caro SIEMPRE O SOBREESCRIBIR
+                                                    if (tarifaInput) {
+                                                        tarifaInput.value = peorEscenario.costo.toFixed(2);
+                                                        // Animación color
+                                                        tarifaInput.style.transition = 'background-color 0.3s ease';
+                                                        tarifaInput.style.backgroundColor = '#e3f2fd'; // Azul suave
+                                                        setTimeout(() => { tarifaInput.style.backgroundColor = ''; }, 1000);
+                                                    }
+                                                    
+                                                    desgloseDiv.innerHTML = renderDesglose(peorEscenario);
+
+                                                    // Crear Pills con botones interactivos
+                                                    fleteData.cotizaciones.forEach((cot, index) => {
+                                                        const btn = document.createElement('button');
+                                                        btn.type = 'button';
+                                                        // El más caro (index 0) inicia activo
+                                                        if (index === 0) {
+                                                            btn.className = 'btn btn-primary btn-sm rounded-pill fw-bold';
+                                                        } else {
+                                                            btn.className = 'btn btn-outline-secondary btn-sm rounded-pill';
+                                                        }
+                                                        
+                                                        btn.innerHTML = `🚚 ${cot.tipo}: <strong>$${cot.costo.toFixed(2)}</strong>`;
+                                                        
+                                                        // Evento click
+                                                        btn.onclick = () => {
+                                                            // Quitar clase active de todos
+                                                            Array.from(badgesDiv.children).forEach(b => {
+                                                                b.className = 'btn btn-outline-secondary btn-sm rounded-pill';
+                                                            });
+                                                            // Activar este
+                                                            btn.className = 'btn btn-primary btn-sm rounded-pill fw-bold';
+                                                            
+                                                            // Actualizar Input y Desglose
+                                                            if (tarifaInput) {
+                                                                tarifaInput.value = cot.costo.toFixed(2);
+                                                                tarifaInput.style.backgroundColor = '#e3f2fd';
+                                                                setTimeout(() => { tarifaInput.style.backgroundColor = ''; }, 800);
+                                                            }
+                                                            desgloseDiv.innerHTML = renderDesglose(cot);
+                                                        };
+                                                        
+                                                        badgesDiv.appendChild(btn);
+                                                    });
+                                                } else {
+                                                    console.warn("La API devolvió status ok, pero no hay cotizaciones en el array.");
+                                                }
+                                            })
+                                            .catch(err => {
+                                                console.error("Error al calcular Flete Sugerido:", err);
+                                                alert("Ocurrió un error consultando el costo base sugerido. Por favor, revisa la consola.");
+                                            });
                                         }
                                     }
                                 });

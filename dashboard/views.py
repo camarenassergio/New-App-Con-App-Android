@@ -1246,6 +1246,7 @@ class ZonaEntregaMapView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         # Check if any zone exists for warning messages in template
         context['tiene_zonas'] = ZonaEntrega.objects.exists()
+        context['zonas'] = ZonaEntrega.objects.all().order_by('nombre')
         return context
 
 from django.http import JsonResponse
@@ -1278,6 +1279,7 @@ class ZonasGeoJSONView(LoginRequiredMixin, View):
                             "tiempo": zona.tiempo_traslado_minutos,
                             "distancia": float(zona.distancia_km),
                             "tarifa": float(zona.tarifa_flete),
+                            "colonias": str(zona.colonias or 'No hay colonias asignadas.'),
                             "d_cp": feature.get('properties', {}).get('d_cp', ''), # Re-attach CP
                         }
                         feature_collection["features"].append(feature)
@@ -1555,3 +1557,76 @@ class ConfiguracionGeneralUpdateView(LoginRequiredMixin, NonChoferRequiredMixin,
     def form_valid(self, form):
         messages.success(self.request, "Configuración general actualizada correctamente.")
         return super().form_valid(form)
+
+from django.http import JsonResponse
+from decimal import Decimal
+
+class CalcularFleteSugeridoView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            import json
+            data = json.loads(request.body)
+            distancia_km = Decimal(str(data.get('distancia_km', 0)))
+            tiempo_minutos = Decimal(str(data.get('tiempo_minutos', 0)))
+            
+            if distancia_km <= 0 or tiempo_minutos <= 0:
+                return JsonResponse({'error': 'Distancia y tiempo requeridos'}, status=400)
+                
+            config = ConfiguracionGeneral.get_solo()
+            costo_minuto_chofer = config.costo_minuto_chofer
+            costo_minuto_chalan = config.costo_minuto_chalan
+            tiempo_descarga = Decimal(config.tiempo_descarga_promedio_min)
+            
+            # Buscar unidades reales
+            unidades_reales = list(Unidad.objects.filter(en_servicio=True).select_related())
+            tipos_existentes = {u.tipo: u for u in unidades_reales}
+            
+            # Garantizar que evaluemos los 4 tipos principales
+            tipos_base = ['CAMION', 'CAMIONETA', 'AUTO', 'MOTO']
+            unidades_a_evaluar = []
+            
+            for tb in tipos_base:
+                if tb in tipos_existentes:
+                    unidades_a_evaluar.append(tipos_existentes[tb])
+                else:
+                    # Crear unidad Mock/Virtual en memoria para el cálculo
+                    virtual_u = Unidad(tipo=tb, nombre_corto=f"Estimado ({tb.title()})", kilometraje_actual=0)
+                    # Forzar pk para evitar consultas que arrojen error si el property las necesita
+                    virtual_u.pk = -1
+                    unidades_a_evaluar.append(virtual_u)
+            
+            tipos_calculados = {}
+            
+            for u in unidades_a_evaluar:
+                if u.tipo not in tipos_calculados:
+                    # Calculamos viaje (Ida y Vuelta)
+                    km_totales = distancia_km * 2
+                    tiempo_total_viaje = (tiempo_minutos * 2) + tiempo_descarga
+                    
+                    costo_km = u.costo_operativo_total_por_km
+                    costo_operativo = km_totales * costo_km
+                    costo_tiempo = tiempo_total_viaje * (costo_minuto_chofer + costo_minuto_chalan)
+                    
+                    costo_flete = round(costo_operativo + costo_tiempo, 2)
+                    
+                    tipos_calculados[u.tipo] = {
+                        'tipo': u.get_tipo_display() if hasattr(u, 'get_tipo_display') else u.tipo.title(),
+                        'costo': float(costo_flete),
+                        'ejemplo_unidad': u.nombre_corto or u.nUnidad or 'Virtual Estimado',
+                        'desglose': {
+                            'km_totales': float(km_totales),
+                            'tiempo_total_mins': float(tiempo_total_viaje),
+                            'costo_operativo_km': float(costo_km),
+                            'subtotal_km': float(costo_operativo),
+                            'costo_minuto_personal': float(costo_minuto_chofer + costo_minuto_chalan),
+                            'subtotal_tiempo': float(costo_tiempo)
+                        }
+                    }
+                    
+            # Ordenar de mayor a menor costo
+            resultados = sorted(list(tipos_calculados.values()), key=lambda x: x['costo'], reverse=True)
+            
+            return JsonResponse({'status': 'ok', 'cotizaciones': resultados})
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)

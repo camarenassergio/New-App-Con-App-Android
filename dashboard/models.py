@@ -279,12 +279,106 @@ class Unidad(models.Model):
             self.holograma = "00"
         elif self.modelo_anio >= 2006:
             self.holograma = "0"
-        elif self.modelo_anio >= (anio_actual - 25):
-            self.holograma = "1"
         else:
             self.holograma = "2"
             
         super().save(*args, **kwargs)
+
+    @property
+    def costo_combustible_por_km(self):
+        """Calcula el costo por km en base al último precio de carga y el rendimiento histórico"""
+        from decimal import Decimal
+        
+        ultimo_registro = self.registrocombustible_set.order_by('-fecha', '-id').first() # Changed from registros_combustible to registrocombustible_set
+        precio_litro = ultimo_registro.precio_litro if ultimo_registro else Decimal('23.50') # default diesel
+        
+        # Para unidades particulares (personal), usar estimación
+        if self.tipo in ['AUTO', 'MOTO']:
+            rendimientos_fijos = {
+                'AUTO': Decimal('9.0'),
+                'MOTO': Decimal('16.0')
+            }
+            return precio_litro / rendimientos_fijos[self.tipo]
+        
+        # Calcular rendimiento real
+        registros = self.registrocombustible_set.order_by('fecha', 'id') # Changed from registros_combustible to registrocombustible_set
+        if registros.count() > 1:
+            km_inicial = registros.first().kilometraje_actual
+            km_final = registros.last().kilometraje_actual
+            litros_totales = sum([r.litros for r in registros])
+            if litros_totales > 0 and km_final > km_inicial:
+                rendimiento = Decimal(km_final - km_inicial) / litros_totales
+            else:
+                rendimiento = Decimal('4.0') # Rendimiento promedio Camión
+        else:
+            # Rendimientos por default basados en el tipo de unidad
+            rendimientos_default = {
+                'CAMIONETA': Decimal('6.5'),
+                'CAMION': Decimal('4.0')
+            }
+            rendimiento = rendimientos_default.get(self.tipo, Decimal('4.0'))
+            
+        return precio_litro / rendimiento
+
+    @property
+    def costo_mantenimiento_por_km(self):
+        """Costo de mtto dividido entre kilometraje histórico en la plataforma"""
+        from django.db.models import Sum
+        from decimal import Decimal
+        
+        # Para unidades particulares (personal), usar estimación: Auto: 1500 / 10000 = 0.15, Moto: 1000 / 4000 = 0.25
+        if self.tipo in ['AUTO', 'MOTO']:
+            default_mto_km = {
+                'AUTO': Decimal('0.15'),
+                'MOTO': Decimal('0.25')
+            }
+            return default_mto_km[self.tipo]
+        
+        gastos = self.gastos_generales.filter(tipo='Mantenimiento').aggregate(Sum('costo'))['costo__sum']
+        total_mantenimiento = gastos if gastos else Decimal('0.00')
+        
+        km_actual = self.kilometraje_actual
+        if km_actual > 1000:
+            return total_mantenimiento / Decimal(km_actual)
+        
+        default_mto_km = {
+            'CAMION': Decimal('2.00'),
+            'CAMIONETA': Decimal('1.20'),
+        }
+        return default_mto_km.get(self.tipo, Decimal('1.00'))
+        
+    @property
+    def costo_llantas_por_km(self):
+        """Csuma precio llantas activas / vida útil estimada"""
+        from decimal import Decimal
+        
+        # Para unidades particulares (personal)
+        if self.tipo in ['AUTO', 'MOTO']:
+            default_llanta_km = {
+                'AUTO': Decimal('0.12'), # 6000 / 50000 km
+                'MOTO': Decimal('0.08')  # 1600 / 20000 km
+            }
+            return default_llanta_km[self.tipo]
+        
+        config = ConfiguracionGeneral.get_solo()
+        vida_util_km = Decimal(config.vida_util_estimada_llanta_km) if config.vida_util_estimada_llanta_km else Decimal('100000')
+        
+        llantas_activas = self.llantas.filter(activa=True)
+        if not llantas_activas.exists():
+            default_precio_llanta = {
+                'CAMION': Decimal('5500.00') * Decimal(self.numero_llantas or 6),
+                'CAMIONETA': Decimal('2500.00') * Decimal(self.numero_llantas or 4),
+            }
+            costo_total = default_precio_llanta.get(self.tipo, Decimal('1000.00'))
+        else:
+            costo_total = sum([ll.costo for ll in llantas_activas if ll.costo])
+            
+        return Decimal(costo_total) / vida_util_km
+
+    @property
+    def costo_operativo_total_por_km(self):
+        """Suma Mantenimiento + Combustible + Llantas por KM recorrido"""
+        return self.costo_combustible_por_km + self.costo_mantenimiento_por_km + self.costo_llantas_por_km
 
     class Meta:
         verbose_name = "Unidad"
@@ -1019,10 +1113,22 @@ class InventarioLlanta(models.Model):
         return f"Llanta {self.numero_serie} ({self.posicion}) - {self.unidad.nUnidad}"
 
 class ConfiguracionGeneral(models.Model):
-    sueldo_base_chofer = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Sueldo Base Chofer ($)")
-    sueldo_base_chalan = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Sueldo Base Chalán ($)")
+    sueldo_semanal_chofer = models.DecimalField(max_digits=10, decimal_places=2, default=2500.00, verbose_name="Sueldo Semanal Chofer ($)")
+    sueldo_semanal_chalan = models.DecimalField(max_digits=10, decimal_places=2, default=1500.00, verbose_name="Sueldo Semanal Chalán ($)")
+    tiempo_descarga_promedio_min = models.PositiveIntegerField(default=30, verbose_name="Tiempo de Descarga Promedio (min)", help_text="Tiempo fijo agregado a cada viaje por maniobras.")
     limite_seguridad_llanta_mm = models.DecimalField(max_digits=4, decimal_places=1, default=3.0, verbose_name="Límite Seguridad Llanta (mm)")
     vida_util_estimada_llanta_km = models.PositiveIntegerField(default=100000, verbose_name="Vida Útil Estimada Llanta (km)")
+    
+    @property
+    def costo_minuto_chofer(self):
+        # 53 hrs a la semana = 3180 minutos a la semana laborables
+        from decimal import Decimal
+        return Decimal(str(self.sueldo_semanal_chofer)) / Decimal('3180.0')
+
+    @property
+    def costo_minuto_chalan(self):
+        from decimal import Decimal
+        return Decimal(str(self.sueldo_semanal_chalan)) / Decimal('3180.0')
     
     class Meta:
         verbose_name = "Configuración General"

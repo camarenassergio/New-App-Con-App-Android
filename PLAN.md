@@ -9,6 +9,7 @@
 
 ## Pendientes (Backlog)
 - [ ] Modificar evidencias de entrega: permitir guardar más de una evidencia fotográfica y solicitar obligatoriamente la foto del ticket.
+- [ ] **[HITO FUTURO]** Sistema Experto Predictivo de Tiempos de Maniobra: Aprenderá del historial empírico basado en familia de materiales, peso y unidad para cotizar dinámicamente.
 
 ## Trayectoria Actual
 - **Paso**: Punto 3.1.1.1 (Sello de la Casa) - Mapa de zonas de entrega
