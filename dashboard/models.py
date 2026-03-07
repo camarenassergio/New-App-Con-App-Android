@@ -35,6 +35,7 @@ class Unidad(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='CAMIONETA')
     capacidad_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Capacidad (kg)")
     capacidad_tanque = models.PositiveIntegerField(default=100, verbose_name="Capacidad Tanque (Litros)")
+    numero_llantas = models.PositiveIntegerField(choices=[(4, '4 Llantas'), (6, '6 Llantas')], default=6, verbose_name="Número de Llantas")
     
     COMBUSTIBLE_UNIDAD_CHOICES = [
         ('DIESEL', 'Diesel'),
@@ -922,6 +923,7 @@ class ChecklistUnidad(models.Model):
     chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name="Chofer")
     fecha = models.DateField(default=timezone.now, verbose_name="Fecha")
     hora_registro = models.TimeField(auto_now_add=True, verbose_name="Hora de Registro")
+    km_actual = models.PositiveIntegerField(default=0, verbose_name="Kilometraje Actual")
 
     # Módulo 3.5.1.3 - Aspectos a revisar
     nivel_combustible = models.IntegerField(choices=[(25, '25%'), (50, '50%'), (75, '75%'), (100, '100%')], verbose_name="Nivel Combustible")
@@ -965,17 +967,93 @@ class InventarioLlanta(models.Model):
     posicion = models.CharField(max_length=20, choices=POSICION_CHOICES, verbose_name="Posición en Unidad")
     
     # SDC: Profundidad mínima de piso (3.5.3.1)
-    profundidad_piso_mm = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Profundidad de Piso (mm)")
+    profundidad_inicial_mm = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True, verbose_name="Profundidad Inicial (mm)")
+    profundidad_piso_mm = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Profundidad de Piso Actual (mm)")
+    costo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Costo de la Llanta ($)")
     fecha_instalacion = models.DateField(default=timezone.now, verbose_name="Fecha Instalación")
     km_instalacion = models.PositiveIntegerField(verbose_name="Km al Instalar")
     activa = models.BooleanField(default=True, verbose_name="Instalada Actualmente")
     observaciones = models.TextField(blank=True, null=True, verbose_name="Condición / Observaciones")
+    fecha_vencimiento = models.DateField(blank=True, null=True, verbose_name="Fecha de Vencimiento (por DOT)")
 
     class Meta:
         verbose_name = "Inventario de Llanta"
         verbose_name_plural = "Inventario de Llantas"
         unique_together = ('unidad', 'posicion', 'activa') # Solo una llanta activa por posición
 
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.profundidad_inicial_mm:
+            self.profundidad_inicial_mm = self.profundidad_piso_mm
+        elif self.pk and not self.profundidad_inicial_mm:
+            # Para registros existentes antes de la migración
+            self.profundidad_inicial_mm = self.profundidad_piso_mm
+            
+        # Calcular fecha vencimiento a partir del DOT (últimos 4 dígitos = Semana/Año)
+        import re, datetime
+        serie_val = self.numero_serie.strip()
+        match = re.search(r'(\d{4})$', serie_val)
+        if match:
+            dot_code = match.group(1)
+            semana_str = dot_code[:2]
+            anio_str = dot_code[2:]
+            try:
+                semana = int(semana_str)
+                anio = int(anio_str)
+                anio_completo = 2000 + anio
+                
+                if 1 <= semana <= 53:
+                    primer_dia_anio = datetime.date(anio_completo, 1, 1)
+                    fecha_fabricacion = primer_dia_anio + datetime.timedelta(weeks=semana-1)
+                    # Vencimiento estimado de llanta: 5 años
+                    try:
+                        self.fecha_vencimiento = fecha_fabricacion.replace(year=fecha_fabricacion.year + 5)
+                    except ValueError:
+                        # Si es 29 de febrero, retrocedemos a 28 de feb
+                        self.fecha_vencimiento = fecha_fabricacion + datetime.timedelta(days=5*365+1)
+            except ValueError:
+                pass
+                
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Llanta {self.numero_serie} ({self.posicion}) - {self.unidad.nUnidad}"
 
+class ConfiguracionGeneral(models.Model):
+    sueldo_base_chofer = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Sueldo Base Chofer ($)")
+    sueldo_base_chalan = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Sueldo Base Chalán ($)")
+    limite_seguridad_llanta_mm = models.DecimalField(max_digits=4, decimal_places=1, default=3.0, verbose_name="Límite Seguridad Llanta (mm)")
+    vida_util_estimada_llanta_km = models.PositiveIntegerField(default=100000, verbose_name="Vida Útil Estimada Llanta (km)")
+    
+    class Meta:
+        verbose_name = "Configuración General"
+        verbose_name_plural = "Configuraciones Generales"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_solo(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return "Configuración Global"
+
+
+class MedicionNeumatico(models.Model):
+    unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE, related_name="mediciones_neumaticos", verbose_name="Unidad")
+    llanta = models.ForeignKey('InventarioLlanta', on_delete=models.CASCADE, related_name="mediciones", verbose_name="Llanta")
+    fecha = models.DateField(default=timezone.now, verbose_name="Fecha de Medición")
+    km_medicion = models.PositiveIntegerField(verbose_name="Kilometraje al Medir")
+    presion_psi = models.DecimalField(max_digits=5, decimal_places=1, verbose_name="Presión (PSI)")
+    profundidad_mm = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Profundidad (mm)")
+    observaciones = models.TextField(blank=True, null=True, verbose_name="Causa Probable / Observaciones")
+    
+    class Meta:
+        verbose_name = "Medición de Neumático"
+        verbose_name_plural = "Mediciones de Neumáticos"
+        ordering = ['-fecha', '-id']
+
+    def __str__(self):
+        return f"Medición {self.llanta.get_posicion_display()} - {self.unidad.nUnidad} ({self.fecha})"

@@ -33,9 +33,12 @@
                 <tr>
                     <th>Unidad</th>
                     <th>Posición</th>
-                    <th>Llanta (Serie/DOT)</th>
+                    <th>Llanta (DOT)</th>
+                    <th>Instalación</th>
+                    <th>Vencimiento</th>
                     <th>Medida</th>
                     <th>Prof. Piso (mm)</th>
+                    <th>Costo</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -49,19 +52,42 @@
                         {{ llanta.marca }}<br>
                         <small class="text-muted">DOT: {{ llanta.numero_serie }}</small>
                     </td>
+                    <td>
+                        {{ llanta.fecha_instalacion|date:"d M Y" }}<br>
+                        <small class="text-muted">{{ llanta.km_instalacion }} km</small>
+                    </td>
+                    <td>
+                        {% if llanta.fecha_vencimiento %}
+                            <span class="text-info"><i class="fas fa-calendar-times"></i> {{ llanta.fecha_vencimiento|date:"M Y"|title }}</span>
+                        {% else %}
+                            <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </td>
                     <td>{{ llanta.medida }}</td>
                     <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <span>{{ llanta.profundidad_piso_mm }} mm</span>
-                            {% if llanta.profundidad_piso_mm < 3.0 %}
-                                <span class="badge bg-danger" title="Requiere cambio urgente">Crítico</span>
-                            {% elif llanta.profundidad_piso_mm < 5.0 %}
-                                <span class="badge bg-warning text-dark" title="Próxima a cambio">Atención</span>
-                            {% else %}
-                                <span class="badge bg-success">OK</span>
+                        <div class="d-flex flex-column gap-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span>{{ llanta.profundidad_piso_mm }} mm</span>
+                                {% if llanta.profundidad_piso_mm <= config.limite_seguridad_llanta_mm %}
+                                    <span class="badge bg-danger" title="Límite de seguridad alcanzado">Crítico</span>
+                                {% elif llanta.profundidad_piso_mm <= config.limite_seguridad_llanta_mm|add:"2.0" %}
+                                    <span class="badge bg-warning text-dark" title="Próxima a cambio">Atención</span>
+                                {% else %}
+                                    <span class="badge bg-success">OK</span>
+                                {% endif %}
+                            </div>
+                            {% if llanta.km_restantes is not None %}
+                                {% if llanta.km_restantes < 5000 and llanta.km_restantes > 0 %}
+                                    <small class="text-warning fw-bold"><i class="fas fa-exclamation-triangle"></i> {{ llanta.km_restantes }} km restantes</small>
+                                {% elif llanta.km_restantes <= 0 %}
+                                    <small class="text-danger fw-bold"><i class="fas fa-radiation"></i> Vida útil superada</small>
+                                {% else %}
+                                    <small class="text-muted">{{ llanta.km_restantes }} km restantes</small>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </td>
+                    <td>${{ llanta.costo|floatformat:2 }}</td>
                     <td>
                         {% if llanta.activa %}
                             <span class="badge bg-success">Activa / Rodando</span>

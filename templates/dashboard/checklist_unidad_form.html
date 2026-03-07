@@ -121,6 +121,13 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="mb-3 mt-3">
+            <label class="form-label" style="font-weight:bold;">Kilometraje Actual:</label>
+            {{ form.km_actual }}
+            {% if form.km_actual.errors %}
+                <div class="text-danger small">{{ form.km_actual.errors.0 }}</div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- 2. Combustible -->
@@ -182,6 +189,32 @@
             <i class="fas fa-save"></i> Enviar y Registrar Salida
         </button>
     </div>
+
+    <!-- Modal Validación Llantas -->
+    <div class="modal fade" id="modalLlantas" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-dark"><i class="fas fa-exclamation-triangle"></i> Validación de Seguridad Construrama</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger mb-3">
+                        <i class="fas fa-shield-alt"></i> Criterio de seguridad alcanzado (15 días o 5,000 km recorridos): Es obligatorio medir profundidad y presión de los neumáticos de esta unidad para continuar con el registro del checklist y poder iniciar ruta.
+                    </div>
+                    <h6>Por favor ingresa los datos de cada llanta activa de la unidad seleccionada:</h6>
+                    <div id="llantas-inputs-container" class="mt-3">
+                        <!-- JS inyectará los inputs dinámicamente -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btnConfirmarLlantas">
+                        <i class="fas fa-check-circle"></i> Confirmar Mediciones
+                    </button>
+                    <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">Cancelar Checklist</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </form>
 {% endblock %}
 
@@ -233,12 +266,143 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
+    // --- Lógica de Inspección de Llantas (Condición A y B) ---
+    const datosMedicionesStr = '{{ datos_mediciones_json|escapejs }}';
+    const datosMediciones = datosMedicionesStr ? JSON.parse(datosMedicionesStr) : {};
+    const kmInputUI = document.getElementById('id_km_actual');
+    const unidadSelectUI = document.querySelector('select[name="unidad_id"]');
+    const submitBtn = document.getElementById('submitBtn');
+    let requiereInspeccion = false;
+    let modalLlantasInstance = null;
+
+    function verificarLlantas() {
+        if (!unidadSelectUI.value || !kmInputUI.value) return;
+        
+        let unidadId = unidadSelectUI.value;
+        let kmActualStr = kmInputUI.value.trim();
+        if(!kmActualStr) return;
+        let kmActual = parseInt(kmActualStr);
+        let datos = datosMediciones[unidadId];
+        requiereInspeccion = false;
+        
+        if (datos) {
+            let ultimaFechaStr = datos.ultima_fecha;
+            let ultimoKm = parseInt(datos.ultimo_km || "0");
+            
+            if (!ultimaFechaStr) {
+                // Nunca se ha medido, fuerza inspección
+                requiereInspeccion = true;
+            } else {
+                // Condición A: Fecha >= 15 días posteriores
+                let ultimaFecha = new Date(ultimaFechaStr + 'T00:00:00'); // Evitar timezone issues
+                let hoy = new Date();
+                let diferenciaDias = Math.floor((hoy - ultimaFecha) / (1000 * 60 * 60 * 24));
+                
+                // Condición B: km_actual ingresado >= 5000 superior al ultimoKm
+                let kmTranscurridos = kmActual - ultimoKm;
+                
+                if (diferenciaDias >= 15 || kmTranscurridos >= 5000) {
+                    requiereInspeccion = true;
+                }
+            }
+        } else {
+            // Si la unidad no está en la base JSON por alguna razón, se fuerza la seguridad
+            requiereInspeccion = true;
+        }
+        
+        if (requiereInspeccion) {
+            submitBtn.disabled = true;
+            mostrarModalLlantas(datos ? datos.llantas : []);
+        } else {
+            submitBtn.disabled = false;
+        }
+    }
+
+    unidadSelectUI.addEventListener('change', verificarLlantas);
+    kmInputUI.addEventListener('blur', verificarLlantas);
+    kmInputUI.addEventListener('change', verificarLlantas);
+
+    function mostrarModalLlantas(llantas) {
+        const container = document.getElementById('llantas-inputs-container');
+        container.innerHTML = '';
+        
+        if (!llantas || llantas.length === 0) {
+            container.innerHTML = '<div class="alert alert-warning">Esta unidad no tiene llantas instaladas/activas en el inventario. Acude con administración.</div>';
+            document.getElementById('btnConfirmarLlantas').disabled = true;
+        } else {
+            let html = '<div class="row">';
+            llantas.forEach(ll => {
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card p-3 border-primary shadow-sm h-100">
+                            <strong class="text-primary fs-5 mb-2">${ll.posicion}</strong>
+                            <div class="mt-1 text-dark">
+                              <label class="small fw-bold">Presión (PSI)</label>
+                              <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                                <input type="number" step="0.1" name="psi_${ll.id}" class="form-control llanta-val input-psi" placeholder="Ej. 100" required>
+                              </div>
+                              
+                              <label class="small fw-bold text-danger">Profundidad Dibujo (mm) - Límite: 3.0mm</label>
+                              <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text"><i class="fas fa-ruler"></i></span>
+                                <input type="number" step="0.1" name="mm_${ll.id}" class="form-control llanta-val input-mm" placeholder="Ej. 12.5" required>
+                              </div>
+                              
+                              <label class="small fw-bold mt-1 text-info">Tipo de Desgaste</label>
+                              <select name="desgaste_${ll.id}" class="form-select form-select-sm" required>
+                                  <option value="Uniforme">Uniforme (Normal)</option>
+                                  <option value="Irregular">Irregular / Disperejo</option>
+                              </select>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+            document.getElementById('btnConfirmarLlantas').disabled = false;
+        }
+        
+        if (!modalLlantasInstance) {
+            modalLlantasInstance = new bootstrap.Modal(document.getElementById('modalLlantas'));
+        }
+        modalLlantasInstance.show();
+    }
+
+    document.getElementById('btnConfirmarLlantas').addEventListener('click', function() {
+        let isValid = true;
+        const inputs = document.getElementById('llantas-inputs-container').querySelectorAll('.llanta-val');
+        inputs.forEach(inp => {
+            if(!inp.value) {
+                isValid = false;
+                inp.classList.add('is-invalid');
+            } else {
+                inp.classList.remove('is-invalid');
+            }
+        });
+        
+        if(isValid) {
+            submitBtn.disabled = false;
+            modalLlantasInstance.hide();
+        } else {
+            alert("Completa todas las mediciones correctamente.");
+        }
+    });
+
+
     // --- Submisión del Formulario ---
-    document.getElementById('submitBtn').addEventListener('click', function(e) {
+    submitBtn.addEventListener('click', function(e) {
         let unidadSelect = document.querySelector('select[name="unidad_id"]');
         if(!unidadSelect.value) {
             alert("Por favor, selecciona la unidad a operar.");
             unidadSelect.focus();
+            return;
+        }
+
+        if(!kmInputUI.value) {
+            alert("Por favor, ingresa tu kilometraje actual.");
+            kmInputUI.focus();
             return;
         }
 
@@ -247,6 +411,17 @@ document.addEventListener("DOMContentLoaded", function() {
             // Hacer scroll a la sección de gas
             document.querySelector('.gas-level-container').scrollIntoView({behavior: "smooth"});
             return;
+        }
+        
+        // Final force check before submit (si bypass a JS button disable)
+        if (requiereInspeccion) {
+            const inputs = document.getElementById('llantas-inputs-container').querySelectorAll('.llanta-val');
+            let hasEmpties = Array.from(inputs).some(inp => !inp.value);
+            if(inputs.length === 0 || hasEmpties) {
+               alert("Debes llenar obligatoriamente el reporte de llantas para continuar.");
+               mostrarModalLlantas(datosMediciones[unidadSelect.value]?.llantas || []);
+               return;
+            }
         }
 
         document.getElementById('checklistForm').submit();

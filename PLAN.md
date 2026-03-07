@@ -27,6 +27,14 @@
 | Antigravity | BI: Gráfica de Gastos Mes Apilada (Dashboard) | Verificado y Pulido |
 | Antigravity | Digitalización: Módulo "Orden de Servicio" (Mantenimiento) | Verificado y Pulido |
 | Antigravity | Automatización: Carga de CPs en Railway (Release Phase) | Verificado [AUTO-HEALED] |
+| Antigravity | Fix: Mostrar todas las colonias en tabla sin truncar | Verificado y Pulido |
+| Antigravity | Nueva Vista: Configuraciones Generales (Sueldos) | Verificado y Pulido |
+| Antigravity | KPI: Costo de cada llanta para unidades | Verificado [AUTO-HEALED] |
+| Antigravity | Automatización: Cálculo Fecha de Vencimiento Llanta (DOT) | Verificado y Pulido |
+| Antigravity | Monitoreo: Alertas de límite de seguridad y vida útil de llantas | Verificado y Pulido |
+| Antigravity | Seguridad: Validación de Medición Neumática obligatoria en Checklist (15 días o 5M km) | Verificado y Pulido |
+| Antigravity | Análisis Predictivo: Tasa de Desgaste (TE vs TA) y Causas Raíz (Irregular/Uniforme) | Verificado y Pulido |
+| Antigravity | Diagnóstico Automático: Comparación por Eje y Gemelas con Esquema Visual de Desgaste | Verificado y Pulido |
 
 ## Reglas del Proyecto
 -   **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).

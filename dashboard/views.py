@@ -60,6 +60,50 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
                 'mensaje': f"CONTINGENCIA ACTIVA: {contingencia.get_estado_contingencia_display()}"
             })
 
+        from .models import InventarioLlanta, ConfiguracionGeneral
+        config = ConfiguracionGeneral.get_solo()
+        
+        llantas_activas = InventarioLlanta.objects.filter(activa=True).select_related('unidad')
+        for llanta in llantas_activas:
+            # Alerta de desgaste acelerado por tasa
+            if llanta.observaciones and "Desgaste Acelerado" in llanta.observaciones:
+                context['alertas'].append({
+                    'nivel': 'danger',
+                    'mensaje': f"🚨 DESGASTE ACELERADO: {llanta.unidad.nUnidad} - {llanta.get_posicion_display()}. {llanta.observaciones}"
+                })
+            elif llanta.observaciones and "Disparidad Detectada" in llanta.observaciones:
+                context['alertas'].append({
+                    'nivel': 'warning',
+                    'mensaje': f"⚠️ ALERTA ALINEACIÓN/PRESIÓN: {llanta.unidad.nUnidad} - Eje {llanta.get_posicion_display()}. {llanta.observaciones}"
+                })
+            elif llanta.observaciones and "Desgaste Alta" in llanta.observaciones:
+                context['alertas'].append({
+                    'nivel': 'warning',
+                    'mensaje': f"⚠️ DESGASTE ALTO: {llanta.unidad.nUnidad} - {llanta.get_posicion_display()}. {llanta.observaciones}"
+                })
+
+            # Riesgo por profundidad de piso
+            if llanta.profundidad_piso_mm <= config.limite_seguridad_llanta_mm:
+                context['alertas'].append({
+                    'nivel': 'danger',
+                    'mensaje': f"⚠️ ALERTA DE LLANTA: La unidad {llanta.unidad.nUnidad} alcanzó el límite de seguridad ({llanta.profundidad_piso_mm} mm) en la llanta {llanta.get_posicion_display()}. Requiere cambio urgente."
+                })
+            elif llanta.profundidad_piso_mm <= (config.limite_seguridad_llanta_mm + 2):
+                context['alertas'].append({
+                    'nivel': 'warning',
+                    'mensaje': f"🔔 PREVENCIÓN DE LLANTA: La unidad {llanta.unidad.nUnidad} está cerca del límite de seguridad ({llanta.profundidad_piso_mm} mm) en la llanta {llanta.get_posicion_display()}. Considere prever el cambio."
+                })
+            else:
+                # Riesgo por kilometraje
+                km_recorridos = llanta.unidad.kilometraje_actual - llanta.km_instalacion
+                if km_recorridos >= 0:
+                    km_restantes = config.vida_util_estimada_llanta_km - km_recorridos
+                    if km_restantes < 5000:  # Umbral de aviso preventivo de 5,000 km
+                        context['alertas'].append({
+                            'nivel': 'warning',
+                            'mensaje': f"🔔 PREVENCIÓN DE LLANTA: La unidad {llanta.unidad.nUnidad} está a {km_restantes} km de superar la vida útil estimada en su llanta {llanta.get_posicion_display()}."
+                        })
+
         # --- DATOS PARA GRÁFICAS ---
         import json
         from django.db.models import Sum, Count, Max, Min
@@ -215,6 +259,41 @@ class UnidadDetailView(LoginRequiredMixin, NonChoferRequiredMixin, DetailView):
     model = Unidad
     template_name = "dashboard/unidad_detail.html"
     context_object_name = "unidad"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from .models import InventarioLlanta
+        llantas_activas = InventarioLlanta.objects.filter(unidad=self.object, activa=True)
+        llantas_dic = {}
+        for ll in llantas_activas:
+            estado = "success"
+            if ll.profundidad_piso_mm <= 3.0:
+                 estado = "danger"
+            llantas_dic[ll.posicion] = {
+                'id': ll.id,
+                'profundidad': float(ll.profundidad_piso_mm),
+                'marca': ll.marca,
+                'estado': estado,
+                'obj': ll
+            }
+            
+        # Comparación por eje y gemelas para colorear en amarillo
+        # Parejas de Eje
+        parejas_eje = [('DI1', 'DD1'), ('TI1', 'TD1'), ('TI2', 'TD2')]
+        # Gemelas
+        gemelas = [('TI1', 'TI2'), ('TD1', 'TD2')]
+        
+        for izq, der in (parejas_eje + gemelas):
+            if izq in llantas_dic and der in llantas_dic:
+                diff = abs(llantas_dic[izq]['profundidad'] - llantas_dic[der]['profundidad'])
+                if diff > 1.5:
+                    if llantas_dic[izq]['estado'] != 'danger':
+                         llantas_dic[izq]['estado'] = 'warning'
+                    if llantas_dic[der]['estado'] != 'danger':
+                         llantas_dic[der]['estado'] = 'warning'
+
+        context['esquema_llantas'] = llantas_dic
+        return context
 
 from django.views import View
 
@@ -908,9 +987,25 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
          context = super().get_context_data(**kwargs)
-         # Fetch all units so the chofer can decide which one they are driving today
-         # If they only drive one, we could auto-assign, but it's safer to let them pick or pre-select.
-         context['unidades_activas'] = Unidad.objects.filter(en_servicio=True)
+         unidades = Unidad.objects.filter(en_servicio=True)
+         context['unidades_activas'] = unidades
+         
+         from .models import MedicionNeumatico, InventarioLlanta
+         import json
+         
+         datos_mediciones = {}
+         for u in unidades:
+             ultima_medicion = MedicionNeumatico.objects.filter(unidad=u).order_by('-fecha').first()
+             llantas_qs = InventarioLlanta.objects.filter(unidad=u, activa=True)
+             llantas_list = [{'id': l.id, 'posicion': l.get_posicion_display()} for l in llantas_qs]
+             
+             datos_mediciones[u.id] = {
+                 'ultima_fecha': ultima_medicion.fecha.isoformat() if ultima_medicion else None,
+                 'ultimo_km': ultima_medicion.km_medicion if ultima_medicion else 0,
+                 'llantas': llantas_list
+             }
+             
+         context['datos_mediciones_json'] = json.dumps(datos_mediciones)
          return context
 
     def form_valid(self, form):
@@ -932,6 +1027,97 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
             # Podemos permitirlo (sobreescribir/duplicar) o bloquearlo. Lo permitimos como registro extra.
             
         response = super().form_valid(form)
+        
+        # Guardar mediciones de neumáticos si fueron obligadas o provistas e inyectadas al form
+        from .models import MedicionNeumatico, InventarioLlanta
+        from decimal import Decimal
+        
+        llantas_activas = InventarioLlanta.objects.filter(unidad_id=unidad_id, activa=True)
+        hubo_medicion = False
+        km_actual = form.instance.km_actual
+        
+        # Actualizar kilometraje general de la unidad de paso
+        if km_actual > form.instance.unidad.kilometraje_actual:
+            form.instance.unidad.kilometraje_actual = km_actual
+            form.instance.unidad.save()
+            
+        from .models import ConfiguracionGeneral
+        config = ConfiguracionGeneral.get_solo()
+        limite_mm = Decimal(config.limite_seguridad_llanta_mm)
+        vida_util_km = Decimal(config.vida_util_estimada_llanta_km)
+            
+        for llanta in llantas_activas:
+            psi_val = self.request.POST.get(f"psi_{llanta.id}")
+            mm_val = self.request.POST.get(f"mm_{llanta.id}")
+            tipo_desgaste = self.request.POST.get(f"desgaste_{llanta.id}", "Uniforme")
+            
+            if psi_val and mm_val:
+                hubo_medicion = True
+                
+                observacion_auto = None
+                if llanta.profundidad_inicial_mm:
+                    prof_actual = Decimal(mm_val)
+                    prof_inicial = Decimal(llanta.profundidad_inicial_mm)
+                    km_recorridos = Decimal(km_actual - llanta.km_instalacion)
+                    
+                    if km_recorridos > 0 and prof_inicial > limite_mm:
+                        # Tasa esperada de desgaste por km
+                        tasa_esperada = (prof_inicial - limite_mm) / vida_util_km
+                        # Tasa real de desgaste por km
+                        tasa_actual = (prof_inicial - prof_actual) / km_recorridos
+                        
+                        if tasa_actual > (tasa_esperada * Decimal('1.5')):
+                            observacion_auto = "Desgaste Acelerado. Causa: Sobrecarga constante. Acción: Revisar bitácoras de peso vs capacidad de unidad."
+                        elif tasa_actual > (tasa_esperada * Decimal('1.25')):
+                            if tipo_desgaste == "Irregular":
+                                observacion_auto = "Desgaste Alta + Irregular. Causa: Alineación / Balanceo. Acción: Programar servicio de alineación inmediato."
+                            else:
+                                observacion_auto = "Desgaste Alta + Uniforme. Causa: Presión de aire baja / Estilo de manejo. Acción: Revisar presión en cada carga de combustible."
+                                
+                medicion = MedicionNeumatico.objects.create(
+                    unidad_id=unidad_id,
+                    llanta=llanta,
+                    km_medicion=km_actual,
+                    presion_psi=Decimal(psi_val),
+                    profundidad_mm=Decimal(mm_val),
+                    observaciones=observacion_auto
+                )
+                
+                llanta.profundidad_piso_mm = Decimal(mm_val)
+                if observacion_auto:
+                    llanta.observaciones = observacion_auto
+                llanta.save()
+                
+        # 4. Validar disparidad en Medidas (Alineación / Doble Rodado)
+        if hubo_medicion:
+            posiciones = {l.posicion: l for l in llantas_activas}
+            
+            check_pares = [
+                ('DI1', 'DD1', 'Mala alineación / Convergencia Eje Delantero', 'Programar Alineación Eje Delantero'),
+                ('TI1', 'TD1', 'Desgaste disparejo en Eje Trasero', 'Revisar suspensión/alineación Eje Trasero'),
+                ('TI2', 'TD2', 'Desgaste disparejo en Eje Trasero', 'Revisar suspensión/alineación Eje Trasero')
+            ]
+            check_duales = [
+                ('TI1', 'TI2', 'Presión dispareja en doble rodado Izquierdo', 'Nivelar aire en Eje Trasero Izquierdo'),
+                ('TD1', 'TD2', 'Presión dispareja en doble rodado Derecho', 'Nivelar aire en Eje Trasero Derecho')
+            ]
+            
+            for p1, p2, causa, accion in (check_pares + check_duales):
+                if p1 in posiciones and p2 in posiciones:
+                    l1 = posiciones[p1]
+                    l2 = posiciones[p2]
+                    diff = abs(l1.profundidad_piso_mm - l2.profundidad_piso_mm)
+                    if diff > Decimal('1.5'):
+                        alerta_txt = f"Desgaste Disparejo (>1.5mm entre lados/gemelas). Causa: {causa}. Acción: {accion}."
+                        for l_obj in (l1, l2):
+                            if alerta_txt not in (l_obj.observaciones or ""):
+                                # Prefijo para que salga en dashboard
+                                new_obs = f"Disparidad Detectada: {alerta_txt}"
+                                l_obj.observaciones = (l_obj.observaciones + " | " + new_obs) if l_obj.observaciones else new_obs
+                                l_obj.save()
+                                
+            messages.info(self.request, "Mediciones de seguridad de neumáticos registradas exitosamente y validadas.")
+            
         messages.success(self.request, "Checklist diario guardado correctamente. ¡Buen viaje!")
         return response
 
@@ -955,6 +1141,20 @@ class InventarioLlantaListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['unidades'] = Unidad.objects.all()
+        from .models import ConfiguracionGeneral
+        
+        config = ConfiguracionGeneral.get_solo()
+        context['config'] = config
+        
+        # Inyectar cálculo de kilómetros dinámicamente al queryset resultante de la página actual
+        for llanta in context['llantas']:
+            km_recorridos = llanta.unidad.kilometraje_actual - llanta.km_instalacion
+            if km_recorridos < 0:
+                km_recorridos = 0
+                
+            llanta.km_recorridos = km_recorridos
+            llanta.km_restantes = config.vida_util_estimada_llanta_km - km_recorridos
+            
         return context
 
 class InventarioLlantaCreateView(LoginRequiredMixin, CreateView):
@@ -1338,3 +1538,20 @@ def calcular_centroide_zona_api(request):
         return JsonResponse({'lat': total_lat / count, 'lon': total_lon / count})
     else:
         return JsonResponse({'error': 'Geocoding failed for CPs'})
+
+from .models import ConfiguracionGeneral
+from .forms import ConfiguracionGeneralForm
+from django.contrib import messages
+
+class ConfiguracionGeneralUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, UpdateView):
+    model = ConfiguracionGeneral
+    form_class = ConfiguracionGeneralForm
+    template_name = 'dashboard/configuracion_general.html'
+    success_url = reverse_lazy('dashboard:configuracion_general')
+    
+    def get_object(self, queryset=None):
+        return ConfiguracionGeneral.get_solo()
+    
+    def form_valid(self, form):
+        messages.success(self.request, "Configuración general actualizada correctamente.")
+        return super().form_valid(form)
