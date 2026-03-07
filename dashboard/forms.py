@@ -468,10 +468,11 @@ from .models import ConfiguracionGeneral
 class ConfiguracionGeneralForm(forms.ModelForm):
     class Meta:
         model = ConfiguracionGeneral
-        fields = ['sueldo_base_chofer', 'sueldo_base_chalan', 'limite_seguridad_llanta_mm', 'vida_util_estimada_llanta_km']
+        fields = ['sueldo_semanal_chofer', 'sueldo_semanal_chalan', 'tiempo_descarga_promedio_min', 'limite_seguridad_llanta_mm', 'vida_util_estimada_llanta_km']
         widgets = {
-            'sueldo_base_chofer': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'sueldo_base_chalan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'sueldo_semanal_chofer': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'sueldo_semanal_chalan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'tiempo_descarga_promedio_min': forms.NumberInput(attrs={'class': 'form-control'}),
             'limite_seguridad_llanta_mm': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
             'vida_util_estimada_llanta_km': forms.NumberInput(attrs={'class': 'form-control'}),
         }
