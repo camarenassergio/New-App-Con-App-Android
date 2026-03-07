@@ -27,6 +27,7 @@
 | Antigravity | BI: Gráfica de Gastos Mes Apilada (Dashboard) | Verificado y Pulido |
 | Antigravity | Digitalización: Módulo "Orden de Servicio" (Mantenimiento) | Verificado y Pulido |
 | Antigravity | Automatización: Carga de CPs en Railway (Release Phase) | Verificado [AUTO-HEALED] |
+| Antigravity | Fix: Mostrar todas las colonias en tabla sin truncar | Verificado y Pulido |
 
 ## Reglas del Proyecto
 -   **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).
