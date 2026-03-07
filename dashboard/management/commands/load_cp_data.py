@@ -7,17 +7,31 @@ from dashboard.models import CodigoPostalCat
 class Command(BaseCommand):
     help = 'Carga el catálogo de Códigos Postales desde el archivo CSV'
 
-    def handle(self, *args, **kwargs):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            help='Forzar la recarga de datos borrando los preexistentes.',
+        )
+
+    def handle(self, *args, **options):
+        force = options['force']
+        
+        if CodigoPostalCat.objects.exists() and not force:
+            self.stdout.write(self.style.WARNING('Los datos ya están cargados. Usa --force para forzar la recarga.'))
+            return
+
         file_path = os.path.join(settings.BASE_DIR, 'dashboard', 'data', 'México.csv')
         
         if not os.path.exists(file_path):
             self.stdout.write(self.style.ERROR(f'El archivo {file_path} no existe.'))
             return
 
-        self.stdout.write(self.style.WARNING('Borrando datos anteriores...'))
-        CodigoPostalCat.objects.all().delete()
-        
-        self.stdout.write(self.style.WARNING('Cargando nuevos datos desde CSV...'))
+        if force or not CodigoPostalCat.objects.exists():
+            self.stdout.write(self.style.WARNING('Borrando datos anteriores...'))
+            CodigoPostalCat.objects.all().delete()
+            
+            self.stdout.write(self.style.WARNING('Cargando nuevos datos desde CSV...'))
         
         objetos_a_crear = []
         contador = 0
