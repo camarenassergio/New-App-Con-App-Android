@@ -203,6 +203,126 @@
             </div>
         </div>
     </div>
+    </div>
+</div>
+
+<!-- Esquema Visual de Llantas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 text-center">
+                <h3 class="card-title mb-4 pb-2 border-bottom text-start" style="font-size: 1.25rem; color: #003366;">
+                    <i class="fas fa-truck-moving me-2"></i> Diagnóstico de Ejes (Alineación y Desgaste)
+                </h3>
+                
+                <div class="d-inline-block position-relative bg-light rounded shadow-inner" style="padding: 2rem 4rem; border: 2px dashed #ccc;">
+                    <!-- Cabina (Frontal) -->
+                    <div style="width: 100px; height: 120px; border: 3px solid #333; border-radius: 20px 20px 0 0; margin: 0 auto 20px auto; background: #e9ecef; position: relative;">
+                        <span class="position-absolute w-100 text-center fw-bold" style="top: -25px; left: 0;">FRENTE</span>
+                    </div>
+
+                    <!-- Eje Delantero -->
+                    <div class="d-flex justify-content-between align-items-center mb-5" style="width: 200px;">
+                        {% with l=esquema_llantas.DI1 %}
+                        <div class="text-center">
+                            <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                 class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
+                                 style="width: 45px; height: 90px;">
+                                {% if l %}{{ l.profundidad }}<br><small>mm</small>{% else %}?{% endif %}
+                            </div>
+                            <small class="text-muted fw-bold d-block mt-1">DI</small>
+                        </div>
+                        {% endwith %}
+                        
+                        <!-- Eje físico (línea) -->
+                        <div style="height: 6px; flex-grow: 1; background-color: #555; margin: 0 5px;"></div>
+
+                        {% with l=esquema_llantas.DD1 %}
+                        <div class="text-center">
+                            <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                 class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
+                                 style="width: 45px; height: 90px;">
+                                {% if l %}{{ l.profundidad }}<br><small>mm</small>{% else %}?{% endif %}
+                            </div>
+                            <small class="text-muted fw-bold d-block mt-1">DD</small>
+                        </div>
+                        {% endwith %}
+                    </div>
+                    
+                    <!-- Chasis central -->
+                    <div style="width: 80px; height: 60px; border-left: 3px solid #333; border-right: 3px solid #333; margin: 0 auto; background: transparent;"></div>
+
+                    <!-- Eje Trasero 1 -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 mt-n2" style="width: 250px; transform: translateX(-25px);">
+                        
+                        <!-- Izquierda (Dual o Sencillo) -->
+                        <div class="d-flex gap-1 text-center">
+                            {% with l=esquema_llantas.TI2 %}
+                            {% if l or unidad.nUnidad == 'UNIDAD_6_LLANTAS' %}
+                            <div>
+                                <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                     class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
+                                     style="width: 45px; height: 90px;">
+                                    {% if l %}{{ l.profundidad }}{% else %}?{% endif %}
+                                </div>
+                                <small class="text-muted fw-bold d-block mt-1">TI2</small>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                            
+                            {% with l=esquema_llantas.TI1 %}
+                            <div>
+                                <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                     class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
+                                     style="width: 45px; height: 90px;">
+                                    {% if l %}{{ l.profundidad }}{% else %}?{% endif %}
+                                </div>
+                                <small class="text-muted fw-bold d-block mt-1">TI1</small>
+                            </div>
+                            {% endwith %}
+                        </div>
+                        
+                        <!-- Eje físico (línea) -->
+                        <div style="height: 6px; flex-grow: 1; background-color: #555; margin: 0 5px;"></div>
+
+                        <!-- Derecha (Dual o Sencillo) -->
+                        <div class="d-flex gap-1 text-center">
+                            {% with l=esquema_llantas.TD1 %}
+                            <div>
+                                <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                     class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
+                                     style="width: 45px; height: 90px;">
+                                    {% if l %}{{ l.profundidad }}{% else %}?{% endif %}
+                                </div>
+                                <small class="text-muted fw-bold d-block mt-1">TD1</small>
+                            </div>
+                            {% endwith %}
+                            
+                            {% with l=esquema_llantas.TD2 %}
+                            {% if l or unidad.nUnidad == 'UNIDAD_6_LLANTAS' %}
+                            <div>
+                                <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                     class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
+                                     style="width: 45px; height: 90px;">
+                                    {% if l %}{{ l.profundidad }}{% else %}?{% endif %}
+                                </div>
+                                <small class="text-muted fw-bold d-block mt-1">TD2</small>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 d-flex justify-content-center gap-4">
+                    <span class="badge bg-success p-2"><i class="fas fa-check"></i> Desgaste Parejo</span>
+                    <span class="badge bg-warning text-dark p-2"><i class="fas fa-exclamation-triangle"></i> Disparidad Detectada (Alineación / Presión)</span>
+                    <span class="badge bg-danger p-2"><i class="fas fa-skull-crossbones"></i> Límite de Seguridad (Cambio Urgente)</span>
+                    <span class="badge bg-secondary p-2"><i class="fas fa-question"></i> Sin Registro</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div style="margin-top: 24px;">

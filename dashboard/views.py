@@ -255,6 +255,41 @@ class UnidadDetailView(LoginRequiredMixin, NonChoferRequiredMixin, DetailView):
     template_name = "dashboard/unidad_detail.html"
     context_object_name = "unidad"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from .models import InventarioLlanta
+        llantas_activas = InventarioLlanta.objects.filter(unidad=self.object, activa=True)
+        llantas_dic = {}
+        for ll in llantas_activas:
+            estado = "success"
+            if ll.profundidad_piso_mm <= 3.0:
+                 estado = "danger"
+            llantas_dic[ll.posicion] = {
+                'id': ll.id,
+                'profundidad': float(ll.profundidad_piso_mm),
+                'marca': ll.marca,
+                'estado': estado,
+                'obj': ll
+            }
+            
+        # Comparación por eje y gemelas para colorear en amarillo
+        # Parejas de Eje
+        parejas_eje = [('DI1', 'DD1'), ('TI1', 'TD1'), ('TI2', 'TD2')]
+        # Gemelas
+        gemelas = [('TI1', 'TI2'), ('TD1', 'TD2')]
+        
+        for izq, der in (parejas_eje + gemelas):
+            if izq in llantas_dic and der in llantas_dic:
+                diff = abs(llantas_dic[izq]['profundidad'] - llantas_dic[der]['profundidad'])
+                if diff > 1.5:
+                    if llantas_dic[izq]['estado'] != 'danger':
+                         llantas_dic[izq]['estado'] = 'warning'
+                    if llantas_dic[der]['estado'] != 'danger':
+                         llantas_dic[der]['estado'] = 'warning'
+
+        context['esquema_llantas'] = llantas_dic
+        return context
+
 from django.views import View
 
 class UnidadToggleEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View):
@@ -1048,8 +1083,35 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
                     llanta.observaciones = observacion_auto
                 llanta.save()
                 
+        # 4. Validar disparidad en Medidas (Alineación / Doble Rodado)
         if hubo_medicion:
-            messages.info(self.request, "Mediciones de seguridad de neumáticos registradas exitosamente.")
+            posiciones = {l.posicion: l for l in llantas_activas}
+            
+            check_pares = [
+                ('DI1', 'DD1', 'Mala alineación / Convergencia Eje Delantero', 'Programar Alineación Eje Delantero'),
+                ('TI1', 'TD1', 'Desgaste disparejo en Eje Trasero', 'Revisar suspensión/alineación Eje Trasero'),
+                ('TI2', 'TD2', 'Desgaste disparejo en Eje Trasero', 'Revisar suspensión/alineación Eje Trasero')
+            ]
+            check_duales = [
+                ('TI1', 'TI2', 'Presión dispareja en doble rodado Izquierdo', 'Nivelar aire en Eje Trasero Izquierdo'),
+                ('TD1', 'TD2', 'Presión dispareja en doble rodado Derecho', 'Nivelar aire en Eje Trasero Derecho')
+            ]
+            
+            for p1, p2, causa, accion in (check_pares + check_duales):
+                if p1 in posiciones and p2 in posiciones:
+                    l1 = posiciones[p1]
+                    l2 = posiciones[p2]
+                    diff = abs(l1.profundidad_piso_mm - l2.profundidad_piso_mm)
+                    if diff > Decimal('1.5'):
+                        alerta_txt = f"Desgaste Disparejo (>1.5mm entre lados/gemelas). Causa: {causa}. Acción: {accion}."
+                        for l_obj in (l1, l2):
+                            if alerta_txt not in (l_obj.observaciones or ""):
+                                # Prefijo para que salga en dashboard
+                                new_obs = f"Desgaste Acelerado: {alerta_txt}"
+                                l_obj.observaciones = (l_obj.observaciones + " | " + new_obs) if l_obj.observaciones else new_obs
+                                l_obj.save()
+                                
+            messages.info(self.request, "Mediciones de seguridad de neumáticos registradas exitosamente y validadas.")
             
         messages.success(self.request, "Checklist diario guardado correctamente. ¡Buen viaje!")
         return response
