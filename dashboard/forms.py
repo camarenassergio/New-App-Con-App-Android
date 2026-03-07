@@ -57,6 +57,7 @@ class UnidadForm(forms.ModelForm):
             'en_servicio',              # (Activa / Baja Temporal)
             'capacidad_kg',             # 10. Capacidad
             'capacidad_tanque',         # (Extra) Capacidad Tanque
+            'numero_llantas',           # (Extra) Número de Llantas
             'tarjeta_circulacion',      # 11. Tarjeta de Circulación
             'vencimiento_placa',        # 12. Vencimiento Placa
             'poliza_seguro',            # 13. Número de Póliza

@@ -35,6 +35,7 @@ class Unidad(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='CAMIONETA')
     capacidad_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Capacidad (kg)")
     capacidad_tanque = models.PositiveIntegerField(default=100, verbose_name="Capacidad Tanque (Litros)")
+    numero_llantas = models.PositiveIntegerField(choices=[(4, '4 Llantas'), (6, '6 Llantas')], default=6, verbose_name="Número de Llantas")
     
     COMBUSTIBLE_UNIDAD_CHOICES = [
         ('DIESEL', 'Diesel'),

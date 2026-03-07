@@ -258,7 +258,7 @@
                         <!-- Izquierda (Dual o Sencillo) -->
                         <div class="d-flex gap-1 text-center">
                             {% with l=esquema_llantas.TI2 %}
-                            {% if l or unidad.nUnidad == 'UNIDAD_6_LLANTAS' %}
+                            {% if l or unidad.numero_llantas == 6 %}
                             <div>
                                 <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
                                      class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
@@ -299,7 +299,7 @@
                             {% endwith %}
                             
                             {% with l=esquema_llantas.TD2 %}
-                            {% if l or unidad.nUnidad == 'UNIDAD_6_LLANTAS' %}
+                            {% if l or unidad.numero_llantas == 6 %}
                             <div>
                                 <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
                                      class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
