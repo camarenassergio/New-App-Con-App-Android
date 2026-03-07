@@ -21,6 +21,7 @@
 | :--- | :--- | :--- |
 | Antigravity | Inicialización del Proyecto | Verificado [AUTO-HEALED] |
 | Antigravity | Mapa Zonas de Entrega (Leaflet) | Verificado y Pulido |
+| Antigravity | Command Center Híbrido, Flete Dinámico y Autocompletado | Verificado [AUTO-HEALED] |
 | Antigravity | Auditoría de Seguridad y Hardening | Verificado [AUTO-HEALED] |
 | Antigravity | Implementación Fase 2 (Auth/Dash) | Verificado [Environment Fixed] |
 | Antigravity | Plan de Contingencia (SEDEMA Scraping) | Verificado y Pulido |
