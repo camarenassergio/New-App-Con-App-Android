@@ -71,6 +71,11 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
                     'nivel': 'danger',
                     'mensaje': f"⚠️ ALERTA DE LLANTA: La unidad {llanta.unidad.nUnidad} alcanzó el límite de seguridad ({llanta.profundidad_piso_mm} mm) en la llanta {llanta.get_posicion_display()}. Requiere cambio urgente."
                 })
+            elif llanta.profundidad_piso_mm <= (config.limite_seguridad_llanta_mm + 2):
+                context['alertas'].append({
+                    'nivel': 'warning',
+                    'mensaje': f"🔔 PREVENCIÓN DE LLANTA: La unidad {llanta.unidad.nUnidad} está cerca del límite de seguridad ({llanta.profundidad_piso_mm} mm) en la llanta {llanta.get_posicion_display()}. Considere prever el cambio."
+                })
             else:
                 # Riesgo por kilometraje
                 km_recorridos = llanta.unidad.kilometraje_actual - llanta.km_instalacion
