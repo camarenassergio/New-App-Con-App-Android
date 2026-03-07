@@ -37,14 +37,17 @@
         <h5 style="color: #003366; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Desgaste e Instalación</h5>
         
         <div class="row mb-3 mt-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 {{ form.profundidad_piso_mm|as_crispy_field }}
                 <small class="text-muted">Mínimo SDC: 3 mm.</small>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                {{ form.costo|as_crispy_field }}
+            </div>
+            <div class="col-md-3">
                 {{ form.fecha_instalacion|as_crispy_field }}
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 {{ form.km_instalacion|as_crispy_field }}
             </div>
         </div>
