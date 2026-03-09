@@ -14,6 +14,30 @@ import datetime
 
 User = get_user_model()
 
+from django.http import HttpResponse
+
+class AjaxSuccessMixin:
+    """Mixin para renderizar una palomita verde en HTMX y redireccionar suavemente"""
+    ajax_success_message = "¡Registro guardado con éxito!"
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if "HX-Request" in self.request.headers:
+            return HttpResponse(
+                f'''<div id="formContainer">
+                      <div class="alert alert-success d-flex align-items-center mt-3" style="animation: fadeIn 0.5s;">
+                        <i class="fas fa-check-circle fs-3 me-3"></i>
+                        <span class="fs-5">{self.ajax_success_message}</span>
+                      </div>
+                      <script>
+                          setTimeout(() => {{
+                              window.location.href = "{self.get_success_url()}";
+                          }}, 1200);
+                      </script>
+                    </div>'''
+            )
+        return response
+
 class NonChoferRequiredMixin(UserPassesTestMixin):
 
     def test_func(self):
@@ -243,17 +267,19 @@ class UnidadListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
 
 from .forms import UnidadForm
 
-class UnidadCreateView(LoginRequiredMixin, NonChoferRequiredMixin, CreateView):
+class UnidadCreateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, CreateView):
     model = Unidad
     form_class = UnidadForm
     template_name = "dashboard/unidad_form.html"
     success_url = reverse_lazy('dashboard:unidades_list')
+    ajax_success_message = "¡Unidad registrada con éxito!"
 
-class UnidadUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, UpdateView):
+class UnidadUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, UpdateView):
     model = Unidad
     form_class = UnidadForm
     template_name = "dashboard/unidad_form.html"
     success_url = reverse_lazy('dashboard:unidades_list')
+    ajax_success_message = "¡Unidad actualizada con éxito!"
 
 class UnidadDetailView(LoginRequiredMixin, NonChoferRequiredMixin, DetailView):
     model = Unidad
@@ -320,22 +346,24 @@ from .forms import ViajeForm
 from django.urls import reverse_lazy
 from django.contrib import messages
 
-class ViajeCreateView(LoginRequiredMixin, CreateView):
+class ViajeCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     model = Viaje
     form_class = ViajeForm
     template_name = "dashboard/viaje_form.html"
     success_url = reverse_lazy('dashboard:viajes_list')
+    ajax_success_message = "¡Viaje programado correctamente!"
 
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Viaje programado correctamente.")
         return response
 
-class ViajeUpdateView(LoginRequiredMixin, UpdateView):
+class ViajeUpdateView(LoginRequiredMixin, AjaxSuccessMixin, UpdateView):
     model = Viaje
     form_class = ViajeForm
     template_name = "dashboard/viaje_form.html"
     success_url = reverse_lazy('dashboard:viajes_list')
+    ajax_success_message = "¡Viaje actualizado correctamente!"
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -345,17 +373,19 @@ class ViajeUpdateView(LoginRequiredMixin, UpdateView):
 from .models import Unidad, Operador, Viaje, ConfiguracionLogistica, RegistroCombustible, Personal
 from .forms import UnidadForm, RegistroCombustibleForm, PersonalCreationForm
 
-class UsuarioCreateView(LoginRequiredMixin, NonChoferRequiredMixin, CreateView):
+class UsuarioCreateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, CreateView):
     model = User
     form_class = PersonalCreationForm
     template_name = "dashboard/usuario_form.html"
     success_url = reverse_lazy('dashboard:usuarios_list')
+    ajax_success_message = "¡Usuario registrado correctamente!"
 
-class CombustibleCreateView(LoginRequiredMixin, CreateView):
+class CombustibleCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     model = RegistroCombustible
     form_class = RegistroCombustibleForm
     template_name = "dashboard/combustible_form.html"
     success_url = reverse_lazy('dashboard:combustible_general') 
+    ajax_success_message = "¡Registro de combustible guardado!"
 
     def form_valid(self, form):
         unidad = form.cleaned_data['unidad']
@@ -379,11 +409,12 @@ class CombustibleCreateView(LoginRequiredMixin, CreateView):
         
         return response
 
-class CombustibleUpdateView(LoginRequiredMixin, UpdateView):
+class CombustibleUpdateView(LoginRequiredMixin, AjaxSuccessMixin, UpdateView):
     model = RegistroCombustible
     form_class = RegistroCombustibleForm
     template_name = "dashboard/combustible_form.html"
     success_url = reverse_lazy('dashboard:combustible_general')
+    ajax_success_message = "¡Registro de combustible actualizado!"
 
     def get_success_url(self):
         # Redirect back to the unit detail if possible
@@ -786,18 +817,18 @@ class GastoUnidadListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
         context['tipos_gasto'] = GastoUnidad.TIPO_GASTO_CHOICES
         return context
 
-class GastoUnidadCreateView(LoginRequiredMixin, NonChoferRequiredMixin, CreateView):
+
+class GastoUnidadCreateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, CreateView):
     model = GastoUnidad
     form_class = GastoUnidadForm
     template_name = "dashboard/gasto_form.html"
     success_url = reverse_lazy('dashboard:gastos_list')
+    ajax_success_message = "¡Gasto registrado correctamente!"
 
     def form_valid(self, form):
         # La lógica de negocio fuerte está en el método save() del modelo GastoUnidad.
-        # Aquí solo guardamos y notificamos éxito.
-        response = super().form_valid(form)
-        # Podríamos agregar mensajes flash aquí
-        return response
+        # super() llama validación y nuestro Mixin.
+        return super().form_valid(form)
 
 from .forms import CombustibleDeleteForm
 from django.views.generic import FormView
@@ -925,11 +956,12 @@ class OrdenServicioListView(LoginRequiredMixin, ListView):
         context['unidades'] = Unidad.objects.all()
         return context
 
-class OrdenServicioCreateView(LoginRequiredMixin, CreateView):
+class OrdenServicioCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     model = OrdenServicio
     form_class = OrdenServicioForm
     template_name = "dashboard/orden_servicio_form.html"
     success_url = reverse_lazy('dashboard:orden_servicio_list')
+    ajax_success_message = "¡Orden de Servicio registrada con éxito!"
 
     def form_valid(self, form):
         # Asignar usuario logueado como chofer (si aplica, o permitir la selección en la vista)
@@ -979,11 +1011,12 @@ class ChecklistUnidadListView(LoginRequiredMixin, ListView):
             context['ya_lleno_hoy'] = ChecklistUnidad.objects.filter(chofer=self.request.user, fecha=hoy).exists()
         return context
 
-class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
+class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     model = ChecklistUnidad
     form_class = ChecklistUnidadForm
     template_name = "dashboard/checklist_unidad_form.html"
     success_url = reverse_lazy('dashboard:checklist_unidad_list')
+    ajax_success_message = "¡Checklist diario guardado correctamente. Buen viaje!"
 
     def get_context_data(self, **kwargs):
          context = super().get_context_data(**kwargs)
@@ -1157,22 +1190,34 @@ class InventarioLlantaListView(LoginRequiredMixin, ListView):
             
         return context
 
-class InventarioLlantaCreateView(LoginRequiredMixin, CreateView):
+class InventarioLlantaCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     model = InventarioLlanta
     form_class = InventarioLlantaForm
     template_name = "dashboard/inventario_llanta_form.html"
     success_url = reverse_lazy('dashboard:inventario_llanta_list')
+    ajax_success_message = "¡Llanta registrada exitosamente!"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        unidad_id = self.request.GET.get('unidad')
+        posicion = self.request.GET.get('posicion')
+        if unidad_id:
+            initial['unidad'] = unidad_id
+        if posicion:
+            initial['posicion'] = posicion
+        return initial
 
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Llanta registrada exitosamente.")
         return response
 
-class InventarioLlantaUpdateView(LoginRequiredMixin, UpdateView):
+class InventarioLlantaUpdateView(LoginRequiredMixin, AjaxSuccessMixin, UpdateView):
     model = InventarioLlanta
     form_class = InventarioLlantaForm
     template_name = "dashboard/inventario_llanta_form.html"
     success_url = reverse_lazy('dashboard:inventario_llanta_list')
+    ajax_success_message = "¡Registro de llanta actualizado!"
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -1184,10 +1229,11 @@ from .models import EvaluacionEntrega
 from .forms import EvaluacionEntregaForm
 from django.shortcuts import get_object_or_404
 
-class EvaluacionEntregaCreateView(LoginRequiredMixin, CreateView):
+class EvaluacionEntregaCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     model = EvaluacionEntrega
     form_class = EvaluacionEntregaForm
     template_name = "dashboard/evaluacion_entrega_form.html"
+    ajax_success_message = "¡Evaluación de entrega registrada correctamente!"
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1210,10 +1256,11 @@ class EvaluacionEntregaCreateView(LoginRequiredMixin, CreateView):
         return reverse_lazy('dashboard:viajes_list')
 
 
-class EvaluacionEntregaUpdateView(LoginRequiredMixin, UpdateView):
+class EvaluacionEntregaUpdateView(LoginRequiredMixin, AjaxSuccessMixin, UpdateView):
     model = EvaluacionEntrega
     form_class = EvaluacionEntregaForm
     template_name = "dashboard/evaluacion_entrega_form.html"
+    ajax_success_message = "¡Evaluación de entrega actualizada correctamente!"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1289,18 +1336,19 @@ class ZonasGeoJSONView(LoginRequiredMixin, View):
         return JsonResponse(feature_collection)
 
 
-class ZonaEntregaCreateView(LoginRequiredMixin, CreateView):
+class ZonaEntregaCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     model = ZonaEntrega
     form_class = ZonaEntregaForm
     template_name = "dashboard/zona_entrega_form.html"
     success_url = reverse_lazy('dashboard:zona_entrega_list')
+    ajax_success_message = "¡Zona de Entrega creada exitosamente!"
 
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Zona de Entrega creada exitosamente.")
         return response
 
-class ZonaEntregaUpdateView(LoginRequiredMixin, UpdateView):
+class ZonaEntregaUpdateView(LoginRequiredMixin, AjaxSuccessMixin, UpdateView):
     model = ZonaEntrega
     form_class = ZonaEntregaForm
     template_name = "dashboard/zona_entrega_form.html"

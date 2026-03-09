@@ -82,7 +82,8 @@
         <small class="text-muted">Fecha Original: {{ viaje.fecha }} | Zona: {{ viaje.zona.nombre|default:"N/A" }}</small>
     </div>
 
-    <form method="post" id="evaluacionForm">
+    <div id="formContainer">
+<form method="post" id="evaluacionForm" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
         {% csrf_token %}
         
         <!-- Oculto para lógica Django -->
@@ -153,6 +154,7 @@
             </button>
         </div>
     </form>
+</div>
 </div>
 {% endblock %}
 

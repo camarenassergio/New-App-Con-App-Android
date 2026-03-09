@@ -4,22 +4,23 @@
 {% block page_title %}{% if object %}Editar Zona: {{ object.nombre }}{% else %}Nueva Zona de Entrega{% endif %}{% endblock %}
 
 {% block content %}
-<div class="form-container" style="max-width: 800px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-    <div style="margin-bottom: 24px; border-bottom: 1px solid #eee; padding-bottom: 16px;">
-        <h3 style="color: #003366;"><i class="fas fa-map-marked-alt"></i> Detalles de la Zona</h3>
-        <p class="text-muted small">Agregue los Códigos Postales separados por comas para agrupar destinos en automático.</p>
+<div class="form-container" style="max-width: 800px; margin: 0 auto; background: var(--bg-card); padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+    <div style="margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+        <h3 style="color: var(--primary-blue, #003366);"><i class="fas fa-map-marked-alt"></i> Detalles de la Zona</h3>
+        <p class="text-muted small" style="color: var(--text-muted);">Agregue los Códigos Postales separados por comas para agrupar destinos en automático.</p>
     </div>
 
-    <form method="post">
+    <div id="formContainer">
+<form method="post" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
         {% csrf_token %}
         
         <div class="mb-3">
             {{ form.nombre|as_crispy_field }}
         </div>
         
-        <div class="mb-3 p-3 bg-light border rounded">
+        <div class="mb-3 p-3 rounded" style="background-color: var(--bg-body); border: 1px solid var(--border-color) !important;">
             {{ form.codigos_postales|as_crispy_field }}
-            <small class="text-info d-block"><i class="fas fa-info-circle"></i> Al guardar, si un código postal ingresado ya pertenece a otra zona, será removido de aquella y transferido a esta zona actual (Prevalencia única de Códigos Postales).</small>
+            <small class="text-info d-block" style="color: var(--primary-orange, #ff7504) !important;"><i class="fas fa-info-circle"></i> Al guardar, si un código postal ingresado ya pertenece a otra zona, será removido de aquella y transferido a esta zona actual (Prevalencia única de Códigos Postales).</small>
         </div>
         
         <div class="mb-3">
@@ -58,24 +59,25 @@
         </div>
         
         <!-- CONTENEDOR DE COTIZACIONES -->
-        <div id="cotizaciones-container" style="display: none; margin-top: 20px; padding: 15px; border-radius: 8px; background-color: #f8f9fa; border: 1px solid #dee2e6;">
-            <h5 style="color: #003366; margin-bottom: 10px;"><i class="fas fa-calculator"></i> Cotización Sugerida (Basada en Gastos Reales)</h5>
-            <p class="text-muted small mb-2">Selecciona la unidad ideal para fijar la tarifa de la zona. Se muestra el <strong>Peor Escenario</strong> por defecto para garantizar rentabilidad.</p>
+        <div id="cotizaciones-container" style="display: none; margin-top: 20px; padding: 15px; border-radius: 8px; background-color: var(--bg-body); border: 1px solid var(--border-color);">
+            <h5 style="color: var(--primary-blue, #003366); margin-bottom: 10px;"><i class="fas fa-calculator"></i> Cotización Sugerida (Basada en Gastos Reales)</h5>
+            <p class="text-muted small mb-2" style="color: var(--text-muted);">Selecciona la unidad ideal para fijar la tarifa de la zona. Se muestra el <strong>Peor Escenario</strong> por defecto para garantizar rentabilidad.</p>
             <div id="cotizaciones-badges" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
                 <!-- Aquí se inyectan las pills con JS -->
             </div>
-            <div id="cotizacion-desglose" class="small text-muted" style="background: #fff; padding: 10px; border-radius: 5px; border: 1px dashed #ccc;">
+            <div id="cotizacion-desglose" class="small text-muted" style="background: var(--bg-card); color: var(--text-main); padding: 10px; border-radius: 5px; border: 1px dashed var(--border-color);">
                 <!-- Desglose inyectado con JS -->
             </div>
         </div>
 
         <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: flex-end;">
             <a href="{% url 'dashboard:zona_entrega_list' %}" class="btn btn-outline-secondary">Cancelar</a>
-            <button type="submit" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
+            <button type="submit" class="btn btn-primary" style="background-color: var(--primary-blue, #003366); border-color: var(--primary-blue, #003366);">
                 <i class="fas fa-save"></i> Guardar Zona
             </button>
         </div>
     </form>
+</div>
 </div>
 <style>
     /* Asegurar que la paleta de color no esté fea */

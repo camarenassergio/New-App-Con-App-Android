@@ -39,7 +39,8 @@
                     </div>
                 </div>
 
-                <form method="post" enctype="multipart/form-data">
+                <div id="formContainer">
+<form method="post" enctype="multipart/form-data" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML" hx-encoding="multipart/form-data">
                     {% csrf_token %}
                     
                     <div class="mb-3">
@@ -160,6 +161,7 @@
                         <a href="{% url 'dashboard:home' %}" class="btn btn-light text-muted" id="cancelBtn">Cancelar</a>
                     </div>
                 </form>
+</div>
             </div>
         </div>
     </div>

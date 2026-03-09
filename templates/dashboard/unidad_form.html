@@ -10,7 +10,8 @@
         <p style="color: var(--text-muted);">Ingrese la información normalizada (Año a 4 dígitos, Marca, Submarca).</p>
     </div>
 
-    <form method="post" id="unidadForm" enctype="multipart/form-data">
+    <div id="formContainer">
+<form method="post" id="unidadForm" enctype="multipart/form-data" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML" hx-encoding="multipart/form-data">
         {% csrf_token %}
         {{ form|crispy }}
         
@@ -19,6 +20,7 @@
             <a href="{% url 'dashboard:unidades_list' %}" style="padding: 10px 20px; color: var(--text-muted); text-decoration: none;">Cancelar</a>
         </div>
     </form>
+</div>
 </div>
 
 <script>
@@ -96,7 +98,7 @@
                 if (initialKm !== null && currentKm !== initialKm) {
                     // Check if auth is already filled (retry)
                     if (authInputHidden.value) {
-                         form.submit();
+                         form.requestSubmit();
                          return;
                     }
                     
@@ -115,7 +117,7 @@
                 } else {
                     // No change in KM, submit directly
                     console.log("No KM change, submitting...");
-                    form.submit();
+                    form.requestSubmit();
                 }
             });
 
@@ -130,7 +132,7 @@
                         // Submit form after small delay
                         setTimeout(() => {
                             console.log("Submitting with Auth...");
-                            form.submit();
+                            form.requestSubmit();
                         }, 200);
                     } else {
                         alert("Debe ingresar la contraseña del supervisor.");

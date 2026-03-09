@@ -4,13 +4,14 @@
 {% block page_title %}{% if object %}Editar Viaje #{{ object.n_viaje }}{% else %}Programar Nuevo Viaje{% endif %}{% endblock %}
 
 {% block content %}
-<div class="form-container" style="max-width: 800px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-    <div style="margin-bottom: 24px; border-bottom: 1px solid #eee; padding-bottom: 16px;">
-        <h3 style="color: #003366;"><i class="fas fa-route"></i> Detalles del Viaje</h3>
-        <p class="text-muted">Alineado a los lineamientos SDC (Módulo 3.1 Entregas y Logística).</p>
+<div class="form-container" style="max-width: 800px; margin: 0 auto; background: var(--bg-card); padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+    <div style="margin-bottom: 24px; border-bottom: 1px solid var(--border-color, #eee); padding-bottom: 16px;">
+        <h3 style="color: var(--primary-blue, #003366);"><i class="fas fa-route"></i> Detalles del Viaje</h3>
+        <p class="text-muted" style="color: var(--text-muted);">Alineado a los lineamientos SDC (Módulo 3.1 Entregas y Logística).</p>
     </div>
 
-    <form method="post" id="viajeForm">
+    <div id="formContainer">
+<form method="post" id="viajeForm" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
         {% csrf_token %}
         
         <div class="row mb-3">
@@ -40,7 +41,7 @@
             </div>
         </div>
 
-        <h5 style="color: #003366; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Control de Tiempos y Distancias</h5>
+        <h5 style="color: var(--primary-blue, #003366); margin-top: 30px; border-bottom: 1px solid var(--border-color, #eee); padding-bottom: 10px;">Control de Tiempos y Distancias</h5>
         
         <div class="row mb-3 mt-3">
             <div class="col-md-6">
@@ -61,11 +62,12 @@
         </div>
         
         <div style="margin-top: 32px; display: flex; gap: 16px;">
-            <button type="submit" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
+            <button type="submit" class="btn btn-primary" style="background-color: var(--primary-blue, #003366); border-color: var(--primary-blue, #003366);">
                 <i class="fas fa-save"></i> Guardar Viaje
             </button>
             <a href="{% url 'dashboard:viajes_list' %}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
     </form>
+</div>
 </div>
 {% endblock %}

@@ -96,10 +96,19 @@
                 </td>
             </tr>
             {% empty %}
-            <tr>
-                <td colspan="6" class="text-center py-4 text-muted">No se encontraron gastos registrados.</td>
-            </tr>
-            {% endfor %}
+<tr>
+    <td colspan="100%" class="text-center" style="border: none; padding: 4rem 1rem;">
+        <div class="empty-state d-flex flex-column align-items-center justify-content-center" style="opacity: 0.8; animation: fadeIn 0.6s ease-in-out;">
+            <i class="fas fa-file-invoice-dollar text-muted mb-3" style="font-size: 4.5rem; color: #cbd5e1 !important;"></i>
+            <h4 class="text-muted fw-bold mb-2" style="color: #64748b !important;">Aún no hay registros de Gastos</h4>
+            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.05rem;">Comienza creando el primer registro para visualizar y administrar la información aquí.</p>
+            <a href="{% url 'dashboard:gastos_create' %}" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 50px; padding: 10px 30px;">
+                <i class="fas fa-plus me-2"></i> Registrar Primer Gasto
+            </a>
+        </div>
+    </td>
+</tr>
+{% endfor %}
         </tbody>
     </table>
 </div>

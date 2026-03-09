@@ -18,10 +18,18 @@
       rel="stylesheet"
     />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.15" />
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     {% block extra_css %}{% endblock %}
   </head>
-  <body>
+  <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <script>
+      // Aplicar tema instantáneo para evitar FOUC
+      if (localStorage.getItem('theme') === 'dark') {
+          document.body.classList.add('dark-theme');
+      }
+    </script>
     <!-- Sidebar -->
     {% block sidebar %}
     <aside class="sidebar">
@@ -241,6 +249,39 @@
         </div>
 
         <div class="user-profile dropdown" style="display: flex; align-items: center; gap: 15px;">
+          <!-- Switch Dark Mode Premium -->
+          <button id="themeToggle" class="btn btn-outline-secondary" style="border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.3s;" title="Cambiar Tema">
+              <i class="fas fa-moon" id="themeIcon" style="font-size: 1.2rem;"></i>
+          </button>
+          
+          <script>
+              document.addEventListener('DOMContentLoaded', () => {
+                  const toggleBtn = document.getElementById('themeToggle');
+                  const themeIcon = document.getElementById('themeIcon');
+                  const body = document.body;
+                  
+                  // Set initial icon based on applied class
+                  if (body.classList.contains('dark-theme')) {
+                      themeIcon.classList.replace('fa-moon', 'fa-sun');
+                      themeIcon.style.color = '#F1C40F'; // Sun color
+                  }
+                  
+                  toggleBtn.addEventListener('click', () => {
+                      body.classList.toggle('dark-theme');
+                      const isDark = body.classList.contains('dark-theme');
+                      
+                      if (isDark) {
+                          localStorage.setItem('theme', 'dark');
+                          themeIcon.classList.replace('fa-moon', 'fa-sun');
+                          themeIcon.style.color = '#F1C40F';
+                      } else {
+                          localStorage.setItem('theme', 'light');
+                          themeIcon.classList.replace('fa-sun', 'fa-moon');
+                          themeIcon.style.color = 'inherit';
+                      }
+                  });
+              });
+          </script>
           <!-- Indicador de Contingencia Ambiental (Hoy No Circula) -->
           {% if estado_contingencia == 'NORMAL' %}
             <span class="env-badge" style="background-color: #d1fae5; color: #065f46;" title="{{ mensaje_contingencia|default:'Condiciones Normales' }}">🟢 NORMAL</span>

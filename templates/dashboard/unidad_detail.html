@@ -144,65 +144,72 @@
     </div>
     
     <!-- Expediente Construrama SDC -->
-    <div class="col-12 col-lg-4 d-flex">
-        <div class="card shadow-sm w-100 border-0" style="border-left: 4px solid #003366 !important;">
+    <div class="col-12 mt-4">
+        <div class="card shadow-sm w-100 border-0" style="border-left: 4px solid var(--primary-blue) !important;">
             <div class="card-body p-4 d-flex flex-column">
-                <h3 class="card-title mb-3 pb-2 border-bottom" style="font-size: 1.25rem; color: #003366;">
+                <h3 class="card-title mb-4 pb-2 border-bottom texto-azul-corporativo" style="font-size: 1.25rem;">
                     <i class="fas fa-folder-open me-2"></i> Expediente Digital SDC
                 </h3>
-                <div class="table-responsive flex-grow-1">
-                    <table class="table table-borderless mb-0 align-middle">
-                        <tbody>
-                            <!-- Factura -->
-                            <tr>
-                                <td class="text-muted py-2"><i class="fas fa-file-invoice me-2"></i>Factura:</td>
-                                <td class="fw-bold py-2 text-end">
-                                    {% if unidad.doc_factura %}
-                                        <a href="{{ unidad.doc_factura.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i> Ver</a>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Sin Archivo</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <!-- Tarjeta Circulación -->
-                            <tr>
-                                <td class="text-muted py-2"><i class="fas fa-id-card me-2"></i>T. Circulación:</td>
-                                <td class="fw-bold py-2 text-end">
-                                    {% if unidad.doc_tarjeta_circulacion %}
-                                        <a href="{{ unidad.doc_tarjeta_circulacion.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i> Ver</a>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Sin Archivo</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <!-- Póliza -->
-                            <tr>
-                                <td class="text-muted py-2"><i class="fas fa-shield-alt me-2"></i>Póliza:</td>
-                                <td class="fw-bold py-2 text-end">
-                                    {% if unidad.doc_poliza %}
-                                        <a href="{{ unidad.doc_poliza.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i> Ver</a>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Sin Archivo</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <!-- Permisos SDC -->
-                            <tr>
-                                <td class="text-muted py-2"><i class="fas fa-stamp me-2"></i>Permisos:</td>
-                                <td class="fw-bold py-2 text-end">
-                                    {% if unidad.doc_permisos %}
-                                        <a href="{{ unidad.doc_permisos.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i> Ver</a>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Sin Archivo</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                
+                <div class="row g-3">
+                    <!-- Factura -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="p-3 rounded border text-center h-100 d-flex flex-column justify-content-center">
+                            <div class="text-muted mb-3"><i class="fas fa-file-invoice fa-2x"></i><br><span class="mt-2 d-inline-block fw-bold">Factura</span></div>
+                            <div class="mt-auto">
+                                {% if unidad.doc_factura %}
+                                    <a href="{{ unidad.doc_factura.url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100"><i class="fas fa-download"></i> Descargar / Ver</a>
+                                {% else %}
+                                    <span class="badge bg-secondary w-100 py-2">Sin Archivo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tarjeta Circulación -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="p-3 rounded border text-center h-100 d-flex flex-column justify-content-center">
+                            <div class="text-muted mb-3"><i class="fas fa-id-card fa-2x"></i><br><span class="mt-2 d-inline-block fw-bold">T. Circulación</span></div>
+                            <div class="mt-auto">
+                                {% if unidad.doc_tarjeta_circulacion %}
+                                    <a href="{{ unidad.doc_tarjeta_circulacion.url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100"><i class="fas fa-download"></i> Descargar / Ver</a>
+                                {% else %}
+                                    <span class="badge bg-secondary w-100 py-2">Sin Archivo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Póliza -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="p-3 rounded border text-center h-100 d-flex flex-column justify-content-center">
+                            <div class="text-muted mb-3"><i class="fas fa-shield-alt fa-2x"></i><br><span class="mt-2 d-inline-block fw-bold">Póliza</span></div>
+                            <div class="mt-auto">
+                                {% if unidad.doc_poliza %}
+                                    <a href="{{ unidad.doc_poliza.url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100"><i class="fas fa-download"></i> Descargar / Ver</a>
+                                {% else %}
+                                    <span class="badge bg-secondary w-100 py-2">Sin Archivo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Permisos SDC -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="p-3 rounded border text-center h-100 d-flex flex-column justify-content-center">
+                            <div class="text-muted mb-3"><i class="fas fa-stamp fa-2x"></i><br><span class="mt-2 d-inline-block fw-bold">Permisos Especiales</span></div>
+                            <div class="mt-auto">
+                                {% if unidad.doc_permisos %}
+                                    <a href="{{ unidad.doc_permisos.url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100"><i class="fas fa-download"></i> Descargar / Ver</a>
+                                {% else %}
+                                    <span class="badge bg-secondary w-100 py-2">Sin Archivo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     </div>
 </div>
 
@@ -225,11 +232,11 @@
                     <div class="d-flex justify-content-between align-items-center mb-5 mx-auto" style="width: 200px;">
                         {% with l=esquema_llantas.DI1 %}
                         <div class="text-center">
-                            <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                            <a href="{% if l %}{% url 'dashboard:inventario_llanta_update' l.id %}{% else %}{% url 'dashboard:inventario_llanta_create' %}?unidad={{ unidad.id }}&posicion=DI1{% endif %}" style="text-decoration: none; display: inline-block; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"><div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
                                  class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
                                  style="width: 45px; height: 90px;">
                                 {% if l %}{{ l.profundidad }}<br><small>mm</small>{% else %}?{% endif %}
-                            </div>
+                            </div></a>
                             <small class="text-muted fw-bold d-block mt-1">DI</small>
                         </div>
                         {% endwith %}
@@ -239,11 +246,11 @@
 
                         {% with l=esquema_llantas.DD1 %}
                         <div class="text-center">
-                            <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                            <a href="{% if l %}{% url 'dashboard:inventario_llanta_update' l.id %}{% else %}{% url 'dashboard:inventario_llanta_create' %}?unidad={{ unidad.id }}&posicion=DD1{% endif %}" style="text-decoration: none; display: inline-block; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"><div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
                                  class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
                                  style="width: 45px; height: 90px;">
                                 {% if l %}{{ l.profundidad }}<br><small>mm</small>{% else %}?{% endif %}
-                            </div>
+                            </div></a>
                             <small class="text-muted fw-bold d-block mt-1">DD</small>
                         </div>
                         {% endwith %}
@@ -260,11 +267,11 @@
                             {% with l=esquema_llantas.TI2 %}
                             {% if l or unidad.numero_llantas == 6 %}
                             <div>
-                                <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                <a href="{% if l %}{% url 'dashboard:inventario_llanta_update' l.id %}{% else %}{% url 'dashboard:inventario_llanta_create' %}?unidad={{ unidad.id }}&posicion=TI2{% endif %}" style="text-decoration: none; display: inline-block; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"><div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
                                      class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
                                      style="width: 45px; height: 90px;">
                                     {% if l %}{{ l.profundidad }}{% else %}?{% endif %}
-                                </div>
+                                </div></a>
                                 <small class="text-muted fw-bold d-block mt-1">TI2</small>
                             </div>
                             {% endif %}
@@ -272,11 +279,11 @@
                             
                             {% with l=esquema_llantas.TI1 %}
                             <div>
-                                <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                <a href="{% if l %}{% url 'dashboard:inventario_llanta_update' l.id %}{% else %}{% url 'dashboard:inventario_llanta_create' %}?unidad={{ unidad.id }}&posicion=TI1{% endif %}" style="text-decoration: none; display: inline-block; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"><div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
                                      class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
                                      style="width: 45px; height: 90px;">
                                     {% if l %}{{ l.profundidad }}{% else %}?{% endif %}
-                                </div>
+                                </div></a>
                                 <small class="text-muted fw-bold d-block mt-1">TI1</small>
                             </div>
                             {% endwith %}
@@ -289,11 +296,11 @@
                         <div class="d-flex gap-1 text-center">
                             {% with l=esquema_llantas.TD1 %}
                             <div>
-                                <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                <a href="{% if l %}{% url 'dashboard:inventario_llanta_update' l.id %}{% else %}{% url 'dashboard:inventario_llanta_create' %}?unidad={{ unidad.id }}&posicion=TD1{% endif %}" style="text-decoration: none; display: inline-block; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"><div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
                                      class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
                                      style="width: 45px; height: 90px;">
                                     {% if l %}{{ l.profundidad }}{% else %}?{% endif %}
-                                </div>
+                                </div></a>
                                 <small class="text-muted fw-bold d-block mt-1">TD1</small>
                             </div>
                             {% endwith %}
@@ -301,11 +308,11 @@
                             {% with l=esquema_llantas.TD2 %}
                             {% if l or unidad.numero_llantas == 6 %}
                             <div>
-                                <div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
+                                <a href="{% if l %}{% url 'dashboard:inventario_llanta_update' l.id %}{% else %}{% url 'dashboard:inventario_llanta_create' %}?unidad={{ unidad.id }}&posicion=TD2{% endif %}" style="text-decoration: none; display: inline-block; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"><div title="{% if l %}{{ l.marca }} {{ l.profundidad }}mm{% else %}Sin registrar{% endif %}" 
                                      class="rounded-3 shadow-sm d-flex flex-column justify-content-center align-items-center text-white fw-bold ts-tire {% if l %}bg-{{ l.estado }}{% else %}bg-secondary{% endif %}" 
                                      style="width: 45px; height: 90px;">
                                     {% if l %}{{ l.profundidad }}{% else %}?{% endif %}
-                                </div>
+                                </div></a>
                                 <small class="text-muted fw-bold d-block mt-1">TD2</small>
                             </div>
                             {% endif %}

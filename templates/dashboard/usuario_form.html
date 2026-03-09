@@ -14,7 +14,8 @@
                 </h5>
             </div>
             <div class="card-body p-4">
-                <form method="post">
+                <div id="formContainer">
+<form method="post" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
                     {% csrf_token %}
                     {{ form|crispy }}
                     
@@ -47,6 +48,7 @@
                         <a href="{% url 'dashboard:usuarios_list' %}" class="btn btn-light text-muted">Cancelar</a>
                     </div>
                 </form>
+</div>
             </div>
         </div>
     </div>
