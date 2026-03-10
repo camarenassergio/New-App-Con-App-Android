@@ -28,32 +28,52 @@
 
 /* --- DARK MODE (Graphite/High Contrast) --- */
 body.dark-theme {
-  --bg-body: #0f172a; /* Azul Pizarra Oscuro (Tailwind slate-900) */
-  --bg-card: #1e293b; /* Pizarra más claro (slate-800) para contenedores */
-  --text-main: #f8fafc; /* Blanco Pizarra */
-  --text-muted: #94a3b8; /* Gris azulado para secundario */
+  --bg-body: #0f172a;
+  /* Azul Pizarra Oscuro (Tailwind slate-900) */
+  --bg-card: #1e293b;
+  /* Pizarra más claro (slate-800) para contenedores */
+  --text-main: #f8fafc;
+  /* Blanco Pizarra */
+  --text-muted: #94a3b8;
+  /* Gris azulado para secundario */
   --sidebar-bg: #0f172a;
   --navbar-bg: #1e293b;
-  --primary-blue: #10355d; /* Azul cielo para alto contraste sobre oscuro */
-  --primary-orange: #ff7606; /* Naranja brillante (orange-400) */
-  --border-color: #334155; /* slate-700 */
+  --primary-blue: #10355d;
+  /* Azul cielo para alto contraste sobre oscuro */
+  --primary-orange: #ff7606;
+  /* Naranja brillante (orange-400) */
+  --border-color: #334155;
+  /* slate-700 */
   --table-hover-bg: #334155;
-  --invert-close-btn: invert(1); /* Invertir iconos oscuros como la 'X' de los modales en dark mode */
+  --invert-close-btn: invert(1);
+  /* Invertir iconos oscuros como la 'X' de los modales en dark mode */
 }
 
-body.dark-theme .page-title,
+body.dark-theme .page-title {
+  color: #ff7606 !important;
+}
+
+.sidebar-header {
+  color: #ff7606 !important;
+}
+
 body.dark-theme .stat-value,
-body.dark-theme h1, body.dark-theme h2, body.dark-theme h3, 
-body.dark-theme h4, body.dark-theme h5, body.dark-theme h6 {
-    color: #e2e8f0 !important;
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4,
+body.dark-theme h5,
+body.dark-theme h6 {
+  color: #e2e8f0 !important;
 }
 
 body.dark-theme th {
   background-color: var(--table-header-bg) !important;
-  color: #e2e8f0 !important; /* Brighter than muted for headers */
+  color: #e2e8f0 !important;
+  /* Brighter than muted for headers */
 }
 
-body.dark-theme td, body.dark-theme span {
+body.dark-theme td {
   color: var(--text-main);
 }
 
@@ -65,13 +85,15 @@ body.dark-theme tr:hover td {
 body.dark-theme .empty-state h4,
 body.dark-theme .empty-state p,
 body.dark-theme .empty-state i {
-  color: #cbd5e1 !important; /* Forzar legibilidad */
+  color: #cbd5e1 !important;
+  /* Forzar legibilidad */
 }
 
 /* Ensure buttons don't get lost in dark backgrounds if they use dark corporate colors */
 body.dark-theme .btn {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
+
 body.dark-theme .btn-primary {
   color: #ffffff !important;
 }
@@ -88,7 +110,8 @@ body.dark-theme .text-dark {
 }
 
 body.dark-theme .bg-light {
-  background-color: #1e293b !important; /* Slate gray equivalent in graphite */
+  background-color: #1e293b !important;
+  /* Slate gray equivalent in graphite */
   color: var(--text-main) !important;
 }
 
@@ -101,7 +124,8 @@ body.dark-theme .table-borderless td {
 }
 
 body.dark-theme .text-muted {
-  color: #dddee0 !important; /* Force slate gray for muted text over bootstrap's */
+  color: #dddee0 !important;
+  /* Force slate gray for muted text over bootstrap's */
 }
 
 /* Force Bootstrap tables to respect dark backgrounds */
@@ -114,30 +138,36 @@ body.dark-theme .table {
 
 body.dark-theme .table td,
 body.dark-theme .table th {
-  background-color: transparent !important; 
+  background-color: transparent !important;
   color: var(--text-main) !important;
 }
 
 /* Force Badges / Alerts to have strong contrast in Dark Mode */
 body.dark-theme .bg-danger {
-  background-color: #ef4444 !important; /* Red más vivo y legible */
+  background-color: #ef4444 !important;
+  /* Red más vivo y legible */
   color: #ffffff !important;
-  text-shadow: 0px 1px 2px rgba(0,0,0,0.5); /* Sombra para resaltar texto */
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.5);
+  /* Sombra para resaltar texto */
 }
 
 body.dark-theme .bg-success {
-  background-color: #16a34a !important; /* Verde bosque/jade para excelente contraste con blanco */
+  background-color: #16a34a !important;
+  /* Verde bosque/jade para excelente contraste con blanco */
   color: #ffffff !important;
-  text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 body.dark-theme .bg-warning {
-  background-color: #f59e0b !important; /* Naranja/Ámbar vivo */
-  color: #000000 !important; /* Letra negra obligada por el contraste */
+  background-color: #f59e0b !important;
+  /* Naranja/Ámbar vivo */
+  color: #000000 !important;
+  /* Letra negra obligada por el contraste */
 }
 
 body.dark-theme .bg-secondary {
-  background-color: #475569 !important; /* Pizarra/Plomo */
+  background-color: #475569 !important;
+  /* Pizarra/Plomo */
   color: #ffffff !important;
 }
 
@@ -146,18 +176,22 @@ body.dark-theme .form-select {
   background-color: var(--bg-body);
   color: var(--text-main);
   border-color: var(--border-color);
-  color-scheme: dark; /* Cambia a negro el calendario nativo del navegador */
+  color-scheme: dark;
+  /* Cambia a negro el calendario nativo del navegador */
 }
 
 body.dark-theme .form-control::placeholder,
 body.dark-theme .form-select::placeholder {
-  color: #64748b !important; /* Gris intermedio claro para marcadores de posición */
-  opacity: 1; /* Override bootstrap default opacity if necessary */
+  color: #64748b !important;
+  /* Gris intermedio claro para marcadores de posición */
+  opacity: 1;
+  /* Override bootstrap default opacity if necessary */
 }
 
 body.dark-theme .form-text,
 body.dark-theme .help-block {
-  color: #94a3b8 !important; /* Asegurar que los textos de ayuda (help texts) como "Separados por coma" sean grises claros y no azul marino */
+  color: #94a3b8 !important;
+  /* Asegurar que los textos de ayuda (help texts) como "Separados por coma" sean grises claros y no azul marino */
 }
 
 body.dark-theme .form-control:focus,
@@ -203,20 +237,24 @@ body.dark-theme input[type="file"]::file-selector-button:hover {
 }
 
 body.dark-theme form a[style*="var(--text-muted)"] {
-  color: #cbd5e1 !important; /* Un gris platinado más brillante que var(--text-muted) */
+  color: #cbd5e1 !important;
+  /* Un gris platinado más brillante que var(--text-muted) */
   font-weight: 500;
   transition: all 0.2s ease-in-out;
   border-radius: 5px;
   background-color: transparent !important;
-  border: 1px solid #475569 !important; /* Borde sutil para darle forma de botón */
+  border: 1px solid #475569 !important;
+  /* Borde sutil para darle forma de botón */
 }
 
 body.dark-theme form a[style*="var(--text-muted)"]:hover {
-  color: #ffffff !important; 
-  background-color: #334155 !important; /* Gris oscuro en lugar de blanco transparente */
+  color: #ffffff !important;
+  background-color: #334155 !important;
+  /* Gris oscuro en lugar de blanco transparente */
   border-color: #64748b !important;
   text-decoration: none !important;
 }
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -233,7 +271,8 @@ body {
   color: var(--text-main);
   display: flex;
   min-height: 100vh;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  /* Prevent horizontal scroll */
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
@@ -408,12 +447,15 @@ body {
 .stat-card.orange {
   border-left-color: var(--primary-orange);
 }
+
 .stat-card.success {
   border-left-color: var(--success);
 }
+
 .stat-card.danger {
   border-left-color: var(--danger);
 }
+
 .stat-card.info {
   border-left-color: var(--info);
 }
@@ -436,7 +478,8 @@ body {
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-  overflow-x: auto; /* Allow horizontal scroll on mobile */
+  overflow-x: auto;
+  /* Allow horizontal scroll on mobile */
   transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
 }
 
@@ -446,7 +489,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; /* Wrap on small screens */
+  flex-wrap: wrap;
+  /* Wrap on small screens */
   gap: 10px;
 }
 
@@ -470,7 +514,8 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px; /* Force min width so scroll appears */
+  min-width: 600px;
+  /* Force min width so scroll appears */
 }
 
 th,
@@ -504,10 +549,12 @@ tr:hover {
   background: rgba(46, 204, 113, 0.1);
   color: var(--success);
 }
+
 .badge-warning {
   background: rgba(241, 196, 15, 0.1);
   color: #d4ac0d;
 }
+
 .badge-danger {
   background: rgba(231, 76, 60, 0.1);
   color: var(--danger);
@@ -549,45 +596,53 @@ tr:hover {
   font-weight: bold;
   color: white;
 }
+
 .env-dev {
   background-color: var(--success);
 }
+
 .env-qa {
   background-color: var(--danger);
 }
 
 /* --- MOBILE RESPONSIVENESS --- */
 @media (max-width: 768px) {
+
   /* Main Layout */
   .sidebar {
-    transform: translateX(-100%); /* Hidden by default */
+    transform: translateX(-100%);
+    /* Hidden by default */
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   }
 
   .sidebar.open {
-    transform: translateX(0); /* Slides in */
+    transform: translateX(0);
+    /* Slides in */
   }
 
   .main-content {
-    margin-left: 0; /* Full width */
+    margin-left: 0;
+    /* Full width */
   }
 
   /* Header */
   .menu-toggle {
-    display: block; /* Show menu button */
+    display: block;
+    /* Show menu button */
   }
 
   .top-header {
     padding: 0 16px;
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
-}
+  }
 
   .page-title {
     font-size: 1.1rem;
   }
 
   .user-profile span {
-    display: none; /* Hide username on small screens, keep avatar */
+    display: none;
+    /* Hide username on small screens, keep avatar */
   }
 
   /* Content */
@@ -598,12 +653,12 @@ tr:hover {
   .form-container {
     padding: 20px;
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
-}
+  }
 
   /* Sidebar Close Button */
-    .close-sidebar-btn {
-        display: block;
-    }
+  .close-sidebar-btn {
+    display: block;
+  }
 }
 
 /* --- UI COMPONENTS (Placas & Actions) --- */
@@ -650,27 +705,97 @@ tr:hover {
 
 /* --- DARK MODE OVERRIDES FOR COMPONENTS --- */
 body.dark-theme .texto-azul-corporativo {
-  color: var(--text-main); /* Gris claro para que sea muy legible */
+  color: var(--text-main);
+  /* Gris claro para que sea muy legible */
 }
 
 body.dark-theme .placa-badge {
-  background: #1e293b; /* Fondo oscuro que contrasta con la fila */
+  background: #1e293b;
+  /* Fondo oscuro que contrasta con la fila */
   border-color: #334155;
-  color: #f1f5f9; /* Texto muy blanco */
+  color: #f1f5f9;
+  /* Texto muy blanco */
 }
 
 body.dark-theme .placa-legend {
-  color: #94a3b8; /* Slate gray */
+  color: #94a3b8;
+  /* Slate gray */
 }
 
 body.dark-theme .edit-icon {
-  color: var(--primary-orange); /* Super contraste naranja para la acción */
+  color: var(--primary-orange);
+  /* Super contraste naranja para la acción */
 }
 
 body.dark-theme .view-icon {
-  color: #cbd5e1; /* Gris claro visible */
+  color: #cbd5e1;
+  /* Gris claro visible */
 }
 
 body.dark-theme .view-icon:hover {
-  color: var(--primary-orange); /* Brillo naranja al pasar el mouse por detalle */
+  color: var(--primary-orange);
+  /* Brillo naranja al pasar el mouse por detalle */
+}
+
+/* --- LEAFLET UI AND ZONES CATALOG (DARK MODE) --- */
+body.dark-theme .leaflet-bar a,
+body.dark-theme .leaflet-control-zoom-in,
+body.dark-theme .leaflet-control-zoom-out {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.dark-theme .leaflet-popup-content-wrapper,
+body.dark-theme .leaflet-popup-tip {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+}
+
+body.dark-theme .leaflet-control-attribution {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+  color: var(--text-muted) !important;
+}
+
+body.dark-theme .legend {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* Overrides para el panel derecho de Zonas */
+body.dark-theme .catalog-panel {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.dark-theme .catalog-body {
+  background-color: var(--bg-body) !important;
+}
+
+body.dark-theme .list-group-item {
+  background-color: transparent !important;
+  color: var(--text-main) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+body.dark-theme .list-group-item:hover {
+  background-color: var(--table-hover-bg) !important;
+}
+
+body.dark-theme .zona-title {
+  color: #f1f5f9 !important;
+  /* Tailwind slate-100 */
+}
+
+/* Forzar botones blancos (como el btn-light del mapa) a respetar variables */
+body.dark-theme .btn-light {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.dark-theme .btn-light:hover {
+  background-color: var(--table-hover-bg) !important;
+  color: #fff !important;
 }
