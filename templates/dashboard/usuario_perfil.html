@@ -2,6 +2,7 @@
 {% load crispy_forms_tags %}
 
 {% block page_title %}Mi Perfil{% endblock %}
+{% block meta_description %}<meta name="description" content="Perfil de usuario — Sistema de Gestión Logística Casa Lupita">{% endblock %}
 
 {% block content %}
 <!-- Cropper CSS -->
@@ -10,70 +11,96 @@
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
-            <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
-                <div class="card-header bg-primary text-white d-flex align-items-center py-3" style="background-color: var(--primary-blue) !important;">
-                    <i class="fas fa-user-circle fa-2x me-3"></i>
-                    <h4 class="mb-0 mx-2" style="color:white; font-weight:bold;">Información del Usuario</h4>
+            <div class="perfil-card">
+
+                <!-- Header -->
+                <div class="perfil-card-header">
+                    <i class="fas fa-user-circle fa-2x"></i>
+                    <h4 class="mb-0 ms-2">Información del Usuario</h4>
                 </div>
-                
-                <div class="card-body p-4 bg-white" style="border-radius: 0 0 12px 12px;">
+
+                <div class="perfil-card-body">
+
+                    <!-- Avatar Preview -->
                     <div class="text-center mb-4">
                         {% if request.user.personal and request.user.personal.foto %}
-                            <img id="profile_preview" src="{{ request.user.personal.foto.url }}" alt="Profile Photo" class="img-fluid rounded-circle shadow-sm" style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #f8f9fa;">
+                            <img id="profile_preview" src="{{ request.user.personal.foto.url }}"
+                                 alt="Foto de perfil de {{ request.user.username }}"
+                                 class="perfil-avatar-img">
                         {% else %}
-                            <img id="profile_preview" src="" alt="Profile Photo" class="img-fluid rounded-circle shadow-sm" style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #f8f9fa; display: none;">
-                            <div id="avatar_placeholder" class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white shadow-sm" style="width: 150px; height: 150px; font-size: 64px; border: 4px solid #f8f9fa;">
+                            <img id="profile_preview" src="" alt="Foto de perfil"
+                                 class="perfil-avatar-img" style="display: none;">
+                            <div id="avatar_placeholder" class="perfil-avatar-placeholder">
                                 {{ request.user.username|first|upper }}
                             </div>
                         {% endif %}
-                        <h4 class="mt-3 font-weight-bold" style="color: var(--primary-blue);">{{ request.user.personal.nombre|default:request.user.username }} {{ request.user.personal.apellido_paterno|default:"" }}</h4>
-                        <p class="text-muted"><i class="fas fa-briefcase me-2"></i> Puesto: <strong>{{ request.user.personal.get_puesto_display|default:"Sin Puesto Definido" }}</strong></p>
+                        <h4 class="perfil-name">
+                            {{ request.user.personal.nombre|default:request.user.username }}
+                            {{ request.user.personal.apellido_paterno|default:"" }}
+                        </h4>
+                        <p class="text-muted">
+                            <i class="fas fa-briefcase me-2"></i>
+                            Puesto: <strong>{{ request.user.personal.get_puesto_display|default:"Sin Puesto Definido" }}</strong>
+                        </p>
                     </div>
 
-                    <hr>
+                    <hr class="perfil-divider">
 
-                    <h5 class="mb-3" style="color: var(--primary-blue); font-weight:600;">Actualizar Foto de Perfil</h5>
+                    <h5 class="perfil-section-title">
+                        <i class="fas fa-camera me-2"></i> Actualizar Foto de Perfil
+                    </h5>
+
                     <form method="post" enctype="multipart/form-data" id="perfil_form">
                         {% csrf_token %}
-                        
-                        <!-- Contenedor oculto: renderizamos el form nativo pero no mostramos su UI fea -->
+
+                        <!-- Hidden native form fields -->
                         <div class="d-none">
                             {{ form|crispy }}
                         </div>
 
-                        <!-- Botones Premium Mobile-First para Selección -->
-                        <div class="row g-3 mb-4 mt-2 px-2">
-                            <div class="col-6">
-                                <button type="button" id="btn_camera" class="btn btn-outline-primary w-100 h-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center" style="border-radius: 16px; border-width: 2px;">
-                                    <i class="fas fa-camera mb-2" style="font-size: 2rem;"></i>
-                                    <span class="fw-bold" style="font-size: 0.9rem;">Cámara</span>
-                                </button>
-                            </div>
-                            <div class="col-6">
-                                <button type="button" id="btn_gallery" class="btn btn-outline-secondary w-100 h-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center" style="border-radius: 16px; border-width: 2px;">
-                                    <i class="fas fa-images mb-2" style="font-size: 2rem;"></i>
-                                    <span class="fw-bold" style="font-size: 0.9rem;">Galería</span>
-                                </button>
+                        <!-- DnD Upload Zone (igual que combustible) -->
+                        <div class="dnd-upload-zone" id="dndZone-perfil"
+                             role="button" tabindex="0"
+                             aria-label="Arrastra tu foto de perfil aquí o toca para abrir la cámara">
+                            <input type="file" id="foto_input_dnd"
+                                   accept="image/*"
+                                   capture="environment"
+                                   class="dnd-input"
+                                   aria-label="Seleccionar foto de perfil">
+                            <div class="dnd-content">
+                                <i class="fas fa-user-circle dnd-icon"></i>
+                                <p class="dnd-title">Arrastra tu foto aquí</p>
+                                <p class="dnd-subtitle">o toca para abrir la cámara / galería</p>
+                                <span class="dnd-badge">JPG / PNG · Máx. 5MB</span>
                             </div>
                         </div>
-                        
+                        <div class="dnd-preview" id="dndPreview-perfil"></div>
+
+                        <!-- Progress bar -->
                         <div id="progress_container" class="mt-3 d-none">
                             <div class="d-flex justify-content-between mb-1">
-                                <small class="text-primary fw-bold">Subiendo foto...</small>
+                                <small class="fw-bold" style="color: var(--primary-blue);">Subiendo foto...</small>
                                 <small id="progress_text" class="text-muted">0%</small>
                             </div>
                             <div class="progress" style="height: 10px; border-radius: 10px;">
-                                <div id="progress_bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                                     role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <div id="progress_bar" class="progress-bar progress-bar-striped progress-bar-animated"
+                                     style="background-color: var(--primary-orange);"
+                                     role="progressbar" style="width: 0%;"
+                                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="d-grid gap-2 mt-4">
-                            <button type="submit" id="submit_btn" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">
+                            <button type="submit" id="submit_btn" class="btn btn-primary btn-lg"
+                                    style="background-color: var(--primary-orange); border: none;"
+                                    aria-label="Guardar cambios de foto de perfil">
                                 <i class="fas fa-save me-2"></i> Guardar Cambios
                             </button>
-                            <a href="{% url 'dashboard:home' %}" class="btn btn-light text-muted" id="cancel_btn">Cancelar</a>
+                            <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary"
+                               id="cancel_btn" aria-label="Cancelar y volver al dashboard">
+                                Cancelar
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -83,27 +110,29 @@
 </div>
 
 <!-- Modal para Cropper -->
-<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" aria-labelledby="cropModalTitle">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; background: var(--bg-card);">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold">Arrastra para ajustar</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title fw-bold" id="cropModalTitle" style="color: var(--text-main);">Ajusta tu foto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body p-4">
-        <div class="img-container mb-4" style="height: 350px; background: #f0f2f5; border-radius: 8px; overflow: hidden;">
-            <img id="image_to_crop" src="" style="max-width: 100%;">
+        <div class="img-container mb-4" style="height: 350px; background: var(--bg-body); border-radius: 8px; overflow: hidden;">
+            <img id="image_to_crop" src="" style="max-width: 100%;" alt="Imagen a recortar">
         </div>
-        
         <div class="d-flex align-items-center justify-content-center px-3">
             <i class="fas fa-image me-3 text-muted" style="font-size: 0.8rem;"></i>
-            <input type="range" class="form-range" id="zoomRange" min="0" max="1" step="0.01" value="0">
+            <input type="range" class="form-range" id="zoomRange" min="0" max="1" step="0.01" value="0"
+                   aria-label="Zoom de recorte de foto">
             <i class="fas fa-image ms-3 text-muted" style="font-size: 1.2rem;"></i>
         </div>
       </div>
       <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-link text-decoration-none text-muted fw-bold" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary px-4 shadow-sm" id="crop_button" style="border-radius: 20px; background-color: #1a73e8; border: none;">
+        <button type="button" class="btn btn-primary px-4" id="crop_button"
+                style="border-radius: 20px; background-color: var(--primary-blue); border: none;"
+                aria-label="Confirmar recorte de foto">
             Aceptar
         </button>
       </div>
@@ -115,105 +144,53 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js" referrerpolicy="no-referrer"></script>
 
 <style>
-/* Máscara circular perfecta */
 .cropper-view-box,
-.cropper-face {
-    border-radius: 50%;
-    outline: none !important;
-}
-
-/* Oscurecer el área fuera del círculo (estilo Google) */
-.cropper-modal {
-    opacity: 0.7;
-    background-color: #000;
-}
-
-/* Quitar líneas de guía y bordes innecesarios */
-.cropper-line, .cropper-point {
-    display: none !important;
-}
-
-.cropper-view-box {
-    outline: 2px solid #fff !important;
-}
-
-/* Estilo del slider */
-#zoomRange {
-    max-width: 300px;
-}
-/* Ensure the image container works with cropper */
-.img-container {
-    width: 100%;
-    margin: 0 auto;
-    height: 350px; /* Es crítico tener una altura definida para que drag funcione bien */
-    background-color: #f8f9fa;
-}
-.img-container img {
-  display: block;
-  max-width: 100%;
-}
-/* Mejora en cursor */
-.cropper-drag-box.cropper-move, .cropper-face.cropper-move {
-    cursor: move;
-    cursor: grab;
-}
-.cropper-drag-box.cropper-move:active, .cropper-face.cropper-move:active {
-    cursor: grabbing;
-}
+.cropper-face { border-radius: 50%; outline: none !important; }
+.cropper-modal { opacity: 0.7; background-color: #000; }
+.cropper-line, .cropper-point { display: none !important; }
+.cropper-view-box { outline: 2px solid #fff !important; }
+#zoomRange { max-width: 300px; }
+.img-container { width: 100%; margin: 0 auto; height: 350px; }
+.img-container img { display: block; max-width: 100%; }
+.cropper-drag-box.cropper-move, .cropper-face.cropper-move { cursor: grab; }
+.cropper-drag-box.cropper-move:active, .cropper-face.cropper-move:active { cursor: grabbing; }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const fotoInput = document.getElementById('foto_input');
+    // === Re-use the DnD zone's hidden input instead of separate btn_camera/btn_gallery ===
+    const dndZone    = document.getElementById('dndZone-perfil');
+    const dndInput   = dndZone ? dndZone.querySelector('input[type="file"]') : null;
     const base64Input = document.getElementById('id_foto_base64');
     const imageToCrop = document.getElementById('image_to_crop');
     const cropModalElement = document.getElementById('cropModal');
-    const cropModal = new bootstrap.Modal(cropModalElement);
+    const cropModal  = new bootstrap.Modal(cropModalElement);
     const cropButton = document.getElementById('crop_button');
-    const profilePreview = document.getElementById('profile_preview');
+    const profilePreview   = document.getElementById('profile_preview');
     const avatarPlaceholder = document.getElementById('avatar_placeholder');
-    const zoomRange = document.getElementById('zoomRange');
-    
-    // UI Botones Premium
-    const btnCamera = document.getElementById('btn_camera');
-    const btnGallery = document.getElementById('btn_gallery');
+    const zoomRange  = document.getElementById('zoomRange');
     let cropper;
 
-    // Flujo Inteligente de Cámara Frontal
-    if (btnCamera && fotoInput) {
-        btnCamera.addEventListener('click', function() {
-            // 'user' fuerza la cámara frontal para selfies
-            fotoInput.setAttribute('capture', 'user');
-            fotoInput.click(); // Disparamos input original
-        });
-    }
-
-    // Flujo Inteligente de Galería
-    if (btnGallery && fotoInput) {
-        btnGallery.addEventListener('click', function() {
-            // Remover 'capture' fuerza abrir el explorador / galería por defecto
-            fotoInput.removeAttribute('capture');
-            fotoInput.click(); // Disparamos input original
-        });
-    }
-
-    if (fotoInput) {
-        fotoInput.addEventListener('change', function (e) {
+    // When user picks a file via DnD or click → open cropper instead of default preview
+    if (dndInput) {
+        dndInput.addEventListener('change', function(e) {
             const files = e.target.files;
             if (files && files.length > 0) {
                 const reader = new FileReader();
-                reader.onload = function (event) {
+                reader.onload = function(event) {
                     imageToCrop.src = event.target.result;
                     cropModal.show();
                 };
                 reader.readAsDataURL(files[0]);
+                // Prevent the global DnD handler from showing a thumbnail before crop
+                e.stopImmediatePropagation();
             }
-        });
+        }, true); // capture phase to run before the global DnD handler
     }
 
+    // Initialize Cropper when modal opens
     cropModalElement.addEventListener('shown.bs.modal', function () {
         if (cropper) cropper.destroy();
-        
         cropper = new Cropper(imageToCrop, {
             aspectRatio: 1,
             viewMode: 1,
@@ -225,178 +202,108 @@ document.addEventListener('DOMContentLoaded', function () {
             cropBoxResizable: false,
             toggleDragModeOnDblclick: false,
             responsive: true,
-            // Ajuste para que la imagen ocupe el área del círculo al inicio
-            ready: function () {
-                // Sincronizar slider al inicio
-                zoomRange.value = 0;
-            },
+            ready: function () { zoomRange.value = 0; },
             zoom: function (e) {
-                // Sincronizar slider cuando se hace zoom con el scroll
-                // El rango de zoom suele ser entre 0.1 y 2 o 3
                 let ratio = e.detail.ratio;
-                // Ajustamos el valor del slider (0 a 1) basándonos en el ratio
-                // Esto es aproximado para que se mueva con el scroll
-                zoomRange.value = (ratio - 0.1) / 2; 
+                zoomRange.value = (ratio - 0.1) / 2;
             }
         });
     });
 
-    // CORRECCIÓN ZOOM: Slider de 0 a 1 mapeado a zoom real
+    // Zoom slider
     if (zoomRange) {
         zoomRange.addEventListener('input', function() {
             if (cropper) {
-                // Mapeamos el 0-1 del slider a un zoom de 0.1 a 2.0
-                let zoomValue = parseFloat(this.value);
-                let targetZoom = 0.1 + (zoomValue * 2); 
+                let targetZoom = 0.1 + (parseFloat(this.value) * 2);
                 cropper.zoomTo(targetZoom);
             }
         });
     }
 
-    cropButton.addEventListener('click', function () {
-        if (!cropper) return;
-
-        const canvas = cropper.getCroppedCanvas({
-            width: 500, // Un poco más de calidad
-            height: 500,
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
-        });
-
-        const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        
-        if (base64Input) {
-            base64Input.value = croppedDataUrl;
-            console.log("Base64 generado correctamente"); // Para depuración
-        }
-
-        // --- CRÍTICO PARA EL GUARDADO ---
-        // Vaciamos el input de archivo original para que Django 
-        // no intente procesar el archivo sin recortar.
-        if (fotoInput) {
-            fotoInput.value = ""; 
-        }
-
-        if (profilePreview) {
-            profilePreview.src = croppedDataUrl;
-            profilePreview.style.display = 'inline-block';
-            if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
-        }
-
-        cropModal.hide();
-    });
-
-    // Control de Zoom con el Slider
-    if (zoomRange) {
-        zoomRange.addEventListener('input', function() {
-            if (cropper) {
-                var zoomValue = parseFloat(this.value); // De 0 a 1
-                // Calculamos un zoom progresivo proporcional al contenedor (hasta +3x de zoom extra)
-                cropper.zoomTo(minZoomRatio * (1 + (zoomValue * 3))); 
-            }
-        });
-    }
-
-    // Destruir Cropper cuando se cierre el modal para limpiar la memoria
-    cropModalElement.addEventListener('hidden.bs.modal', function () {
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
-        // Limpiamos el input si cerró el modal sin recortar para evitar subidas accidentales completas
-        // a menos que ya tengamos un base64 guardado
-        if (fotoInput && (!base64Input || !base64Input.value)) {
-           fotoInput.value = '';
-        }
-    });
-
-    // Cuando hace click en Aplicar Recorte
+    // Apply crop
     if (cropButton) {
         cropButton.addEventListener('click', function () {
             try {
                 if (!cropper) return;
+                const canvas = cropper.getCroppedCanvas({ width: 500, height: 500, imageSmoothingQuality: 'high' });
+                if (!canvas) return;
+                const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
-                // Extraer el pedacito de la imagen recortada
-                var canvas = cropper.getCroppedCanvas({
-                    width: 400,
-                    height: 400,
-                    imageSmoothingEnabled: true,
-                    imageSmoothingQuality: 'high',
-                });
+                if (base64Input) base64Input.value = croppedDataUrl;
 
-                if (!canvas) {
-                    console.error("El canvas de recorte regresó nulo.");
-                    return;
-                }
+                // Clear the file input (Django will use base64 field)
+                if (dndInput) dndInput.value = '';
 
-                // Convertir el canvas a string en base64 (JPEG a 80% de calidad para no pesar mucho)
-                var croppedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                
-                // Guardar la data en el input oculto que recogerá Django
-                if (base64Input) {
-                    base64Input.value = croppedDataUrl;
-                }
-
-                // Actualizar la previsualización instatánea para que el usuario se vea
+                // Show preview in avatar circle
                 if (profilePreview) {
                     profilePreview.src = croppedDataUrl;
                     profilePreview.style.display = 'inline-block';
-                    if (avatarPlaceholder) {
-                        avatarPlaceholder.style.display = 'none';
-                    }
+                    if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
                 }
 
-                // Esconder Modal de forma segura
-                var modalInstance = bootstrap.Modal.getInstance(cropModalElement);
-                if (modalInstance) {
-                    modalInstance.hide();
-                } else if (cropModal) {
-                    cropModal.hide();
+                // Also show mini preview in DnD zone
+                const dndPreview = document.getElementById('dndPreview-perfil');
+                if (dndPreview) {
+                    dndPreview.innerHTML = '';
+                    const item = document.createElement('div');
+                    item.className = 'dnd-preview-item';
+                    const img = document.createElement('img');
+                    img.src = croppedDataUrl;
+                    img.alt = 'Foto recortada';
+                    item.appendChild(img);
+                    dndPreview.appendChild(item);
                 }
-            } catch (err) {
-                console.error("Error aplicando recorte:", err);
-                alert("Hubo un error al recortar. Revisa la consola.");
+
+                cropModal.hide();
+            } catch(err) {
+                console.error('Error al recortar:', err);
             }
         });
     }
 
-    document.getElementById('perfil_form').addEventListener('submit', function (e) {
-        var submitBtn = document.getElementById('submit_btn');
-        var cancelBtn = document.getElementById('cancel_btn');
-        var progressContainer = document.getElementById('progress_container');
-        var progressBar = document.getElementById('progress_bar');
-        var progressText = document.getElementById('progress_text');
+    // Clean up on close
+    cropModalElement.addEventListener('hidden.bs.modal', function () {
+        if (cropper) { cropper.destroy(); cropper = null; }
+        if (dndInput && (!base64Input || !base64Input.value)) dndInput.value = '';
+    });
 
-        // 1. Bloquear botones para evitar doble clic
+    // Submit progress simulation
+    document.getElementById('perfil_form').addEventListener('submit', function () {
+        const submitBtn = document.getElementById('submit_btn');
+        const cancelBtn = document.getElementById('cancel_btn');
+        const progressContainer = document.getElementById('progress_container');
+        const progressBar = document.getElementById('progress_bar');
+        const progressText = document.getElementById('progress_text');
+
         if (submitBtn) submitBtn.disabled = true;
         if (cancelBtn) cancelBtn.classList.add('disabled');
-        
-        // 2. Mostrar la barra de progreso
         if (progressContainer) progressContainer.classList.remove('d-none');
 
-        // 3. Simular el progreso (Estética de Google)
         let width = 0;
-        let interval = setInterval(function() {
-            if (width >= 100) {
-                // Al llegar al 100% detenemos la simulación visual
-                clearInterval(interval);
-                if (progressText) {
-                    progressText.innerText = "¡Listo! Procesando...";
-                }
-            } else {
-                width += Math.random() * 20; // Incrementar aleatoriamente
-                if (width > 100) width = 100;
-                
-                let widthPercent = Math.round(width) + '%';
-                if (progressBar) {
-                    progressBar.style.width = widthPercent;
-                    progressBar.setAttribute('aria-valuenow', Math.round(width));
-                }
-                if (progressText && width < 100) {
-                    progressText.innerText = widthPercent;
-                }
-            }
+        const interval = setInterval(function() {
+            width += Math.random() * 20;
+            if (width >= 100) { width = 100; clearInterval(interval); if (progressText) progressText.innerText = '¡Listo!'; }
+            const pct = Math.round(width) + '%';
+            if (progressBar) { progressBar.style.width = pct; progressBar.setAttribute('aria-valuenow', Math.round(width)); }
+            if (progressText && width < 100) progressText.innerText = pct;
         }, 120);
+    });
+
+    // Toast auto-dismiss
+    document.querySelectorAll('.toast-close').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const toast = btn.closest('.toast-msg');
+            if (toast) { toast.style.opacity = '0'; toast.style.transform = 'translateX(120%)'; setTimeout(() => toast.remove(), 300); }
+        });
+    });
+    // Auto-dismiss after 5s
+    document.querySelectorAll('.toast-msg').forEach(function(toast) {
+        setTimeout(function() {
+            toast.style.transition = 'opacity 0.4s, transform 0.4s';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(120%)';
+            setTimeout(() => toast.remove(), 400);
+        }, 5000);
     });
 });
 </script>

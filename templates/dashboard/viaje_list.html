@@ -4,82 +4,89 @@
 
 {% block content %}
 <div class="table-container">
-    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <h3>Historial de Rutas</h3>
-        <a href="{% url 'dashboard:viaje_create' %}" class="btn btn-primary" style="background-color: var(--primary-orange, #e65100); border-color: var(--primary-orange, #e65100);">
-            <i class="fas fa-plus"></i> Asignar Viaje SDC
+    <div class="table-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Historial de Rutas</h3>
+        <a href="{% url 'dashboard:viaje_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Asignar Viaje
         </a>
     </div>
     
-    <table>
-        <thead>
-            <tr>
-                <th>Folio</th>
-                <th>Fecha</th>
-                <th>Unidad</th>
-                <th>Operador</th>
-                <th>Zona de Entrega</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for viaje in viajes %}
-            <tr>
-                <td><strong>#{{ viaje.n_viaje }}</strong></td>
-                <td>{{ viaje.fecha|date:"d M Y" }}</td>
-                <td>{{ viaje.unidad.nUnidad }}</td>
-                <td>{{ viaje.operador.nombre }}</td>
-                <td>
-                    {% if viaje.zona %}
-                        <span class="badge bg-secondary"><i class="fas fa-map-marker-alt"></i> {{ viaje.zona.nombre }}</span>
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-                <td>{{ viaje.get_tipo_viaje_display }}</td>
-                <td>
-                    {% if viaje.estado_actual == 'ESPERA' %}
-                        <span class="badge badge-warning">{{ viaje.get_estado_actual_display }}</span>
-                    {% elif viaje.estado_actual == 'TRANSITO' %}
-                        <span class="badge badge-success">{{ viaje.get_estado_actual_display }}</span>
-                    {% else %}
-                        <span class="badge badge-default">{{ viaje.get_estado_actual_display }}</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'dashboard:viaje_update' viaje.pk %}" class="btn btn-sm btn-outline-primary" title="Editar Viaje">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        {% if viaje.tiene_evaluacion %}
-                            <a href="{% url 'dashboard:evaluacion_entrega_update' viaje.evaluacion.pk %}" class="btn btn-sm btn-outline-success" title="Ver / Editar Evaluación">
-                                <i class="fas fa-star"></i>
-                            </a>
-                        {% elif viaje.estado_actual == 'FINALIZADO' or viaje.estado_actual == 'TRANSITO' %}
-                            <a href="{% url 'dashboard:evaluacion_entrega_create' viaje.id %}" class="btn btn-sm btn-warning" title="Evaluar Entrega">
-                                <i class="far fa-star"></i> Evaluar
-                            </a>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th class="ps-4">Folio</th>
+                    <th>Fecha</th>
+                    <th>Unidad</th>
+                    <th>Operador</th>
+                    <th>Zona de Entrega</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th class="pe-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for viaje in viajes %}
+                <tr>
+                    <td class="ps-4"><strong>#{{ viaje.n_viaje }}</strong></td>
+                    <td>{{ viaje.fecha|date:"d M Y" }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ viaje.unidad.nUnidad }}</span></td>
+                    <td>{{ viaje.operador.nombre }}</td>
+                    <td>
+                        {% if viaje.zona %}
+                            <span class="badge bg-secondary"><i class="fas fa-map-marker-alt me-1"></i> {{ viaje.zona.nombre }}</span>
+                        {% else %}
+                            <span class="text-muted small">-</span>
                         {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-<tr>
-    <td colspan="100%" class="text-center" style="border: none; padding: 4rem 1rem;">
-        <div class="empty-state d-flex flex-column align-items-center justify-content-center" style="opacity: 0.8; animation: fadeIn 0.6s ease-in-out;">
-            <i class="fas fa-truck-moving text-muted mb-3" style="font-size: 4.5rem; color: #cbd5e1 !important;"></i>
-            <h4 class="text-muted fw-bold mb-2" style="color: #64748b !important;">Aún no hay registros de Viajes</h4>
-            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.05rem;">Comienza creando el primer registro para visualizar y administrar la información aquí.</p>
-            <a href="{% url 'dashboard:viaje_create' %}" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 50px; padding: 10px 30px;">
-                <i class="fas fa-plus me-2"></i> Programar Primer Viaje
-            </a>
-        </div>
-    </td>
-</tr>
-{% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                    <td>{{ viaje.get_tipo_viaje_display }}</td>
+                    <td>
+                        {% if viaje.estado_actual == 'ESPERA' %}
+                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">{{ viaje.get_estado_actual_display }}</span>
+                        {% elif viaje.estado_actual == 'TRANSITO' %}
+                            <span class="badge bg-success px-3 py-2 rounded-pill">{{ viaje.get_estado_actual_display }}</span>
+                        {% elif viaje.estado_actual == 'FINALIZADO' %}
+                            <span class="badge bg-primary px-3 py-2 rounded-pill">{{ viaje.get_estado_actual_display }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary px-3 py-2 rounded-pill">{{ viaje.get_estado_actual_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-center">
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="{% url 'dashboard:viaje_update' viaje.pk %}" class="btn btn-sm btn-outline-primary"
+                               title="Editar" aria-label="Editar viaje {{ viaje.folio|default:viaje.pk }}">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if viaje.tiene_evaluacion %}
+                                <a href="{% url 'dashboard:evaluacion_entrega_update' viaje.evaluacion.pk %}" class="btn btn-sm btn-outline-success"
+                                   title="Ver Evaluación" aria-label="Ver evaluación del viaje {{ viaje.folio|default:viaje.pk }}">
+                                    <i class="fas fa-star"></i>
+                                </a>
+                            {% elif viaje.estado_actual == 'FINALIZADO' or viaje.estado_actual == 'TRANSITO' %}
+                                <a href="{% url 'dashboard:evaluacion_entrega_create' viaje.id %}" class="btn btn-sm btn-warning"
+                                   title="Evaluar" aria-label="Evaluar viaje {{ viaje.folio|default:viaje.pk }}">
+                                    <i class="far fa-star me-1"></i> Evaluar
+                                </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="100%" class="text-center py-5">
+                        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
+                            <i class="fas fa-truck-moving mb-3" style="font-size: 5rem;"></i>
+                            <h4 class="fw-bold mb-2">Aún no hay registros de Viajes</h4>
+                            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.1rem;">Comienza creando el primer registro para gestionar tus entregas.</p>
+                            <a href="{% url 'dashboard:viaje_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
+                                <i class="fas fa-plus me-2"></i> Programar Primer Viaje
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

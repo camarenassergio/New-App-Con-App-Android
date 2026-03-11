@@ -4,6 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {% block meta_description %}<meta name="description" content="Sistema de Gestión Logística — Casa Lupita Tlapalería, Ferretería y Construcción.">{% endblock %}
     <title>{% block title %}Casa Lupita Admin{% endblock %}</title>
     <!-- Fonts -->
     <link
@@ -18,7 +19,7 @@
       rel="stylesheet"
     />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.15" />
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.30" />
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     {% block extra_css %}{% endblock %}
@@ -30,74 +31,74 @@
           document.body.classList.add('dark-theme');
       }
     </script>
+    <!-- Skip to content (keyboard / screen reader) -->
+    <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
     <!-- Sidebar -->
     {% block sidebar %}
     <aside class="sidebar">
       <div class="sidebar-header">
-        <i class="fas fa-truck-moving"></i>
-        <span>CASA LUPITA</span>
+        <div class="d-flex align-items-center gap-2">
+          <i class="fas fa-truck-moving"></i>
+          <span>CASA LUPITA</span>
+        </div>
       </div>
 
       <ul class="nav-links" style="display: flex; flex-direction: column; height: 100%;">
-        
-        <!-- Dashboard: Hide for CHOFER -->
+
+        <!-- === DASHBOARD === -->
         {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
         <li class="nav-item">
-          <a
-            href="{% url 'dashboard:home' %}"
-            class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
-          >
+          <a href="{% url 'dashboard:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
             <i class="fas fa-chart-line nav-icon"></i>
             <span>Dashboard</span>
           </a>
         </li>
+        {% endif %}
+
+        <!-- === SECCIÓN: FLOTILLA === -->
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+        <li class="nav-section-label">Flotilla</li>
 
         <li class="nav-item">
-          <a
-            href="{% url 'dashboard:unidades_list' %}"
-            class="nav-link {% if 'unidades' in request.path %}active{% endif %}"
-          >
+          <a href="{% url 'dashboard:unidades_list' %}" class="nav-link {% if 'unidades' in request.path %}active{% endif %}">
             <i class="fas fa-truck nav-icon"></i>
             <span>Unidades</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a
-            href="{% url 'dashboard:orden_servicio_list' %}"
-            class="nav-link {% if 'ordenes-servicio' in request.path %}active{% endif %}"
-          >
+          <a href="{% url 'dashboard:inventario_llanta_list' %}" class="nav-link {% if 'llantas' in request.path %}active{% endif %}">
+            <i class="fas fa-life-ring nav-icon"></i>
+            <span>Control de Llantas</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="{% url 'dashboard:orden_servicio_list' %}" class="nav-link {% if 'ordenes-servicio' in request.path %}active{% endif %}">
             <i class="fas fa-tools nav-icon"></i>
             <span>Órdenes de Servicio</span>
           </a>
         </li>
-
-        <li class="nav-item">
-          <a
-            href="{% url 'dashboard:operadores_list' %}"
-            class="nav-link {% if 'operadores' in request.path %}active{% endif %}"
-          >
-            <i class="fas fa-id-card nav-icon"></i>
-            <span>Operadores</span>
-          </a>
-        </li>
         {% endif %}
 
-        <!-- Visible for ALL (including CHOFER) -->
+        <!-- === SECCIÓN: OPERACIONES === -->
+        <li class="nav-section-label">Operaciones</li>
+
         <li class="nav-item">
-          <a
-            href="{% url 'dashboard:checklist_unidad_list' %}"
-            class="nav-link {% if 'checklist' in request.path %}active{% endif %}"
-          >
+          <a href="{% url 'dashboard:checklist_unidad_list' %}" class="nav-link {% if 'checklist' in request.path %}active{% endif %}">
             <i class="fas fa-clipboard-check nav-icon"></i>
             <span>Checklist Diario</span>
           </a>
         </li>
 
+        <!-- === SECCIÓN: LOGÍSTICA === -->
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+        <li class="nav-section-label">Logística</li>
+        {% endif %}
+
         <!-- Rutas y Viajes Dropdown -->
         <li class="nav-item">
-          <a
-            class="nav-link collapsed"
+          <a class="nav-link collapsed"
             data-bs-toggle="collapse"
             href="#rutasSubmenu"
             role="button"
@@ -106,33 +107,68 @@
             style="display: flex; justify-content: space-between; align-items: center;"
           >
             <div style="display: flex; align-items: center;">
-                <i class="fas fa-map-marked-alt nav-icon"></i>
-                <span>Rutas y Viajes</span>
+              <i class="fas fa-map-marked-alt nav-icon"></i>
+              <span>Rutas y Viajes</span>
             </div>
             <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.7;"></i>
           </a>
           <div class="collapse {% if 'viajes' in request.path or 'zonas' in request.path %}show{% endif %}" id="rutasSubmenu">
-            <ul class="nav flex-column" style="padding-left: 20px; background: rgba(0,0,0,0.05);">
+            <ul class="nav-submenu">
               <li class="nav-item">
-                <a href="{% url 'dashboard:viajes_list' %}" class="nav-link {% if 'viajes' in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
-                  <i class="fas fa-route nav-icon" style="font-size: 0.9rem;"></i>
+                <a href="{% url 'dashboard:viajes_list' %}" class="nav-link nav-sub-link {% if 'viajes' in request.path %}active{% endif %}">
+                  <i class="fas fa-route nav-icon"></i>
                   <span>Historial de Viajes</span>
                 </a>
               </li>
               {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
               <li class="nav-item">
-                <a href="{% url 'dashboard:zona_entrega_list' %}" class="nav-link {% if 'zonas' in request.path and 'mapa' not in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
-                  <i class="fas fa-map-pin nav-icon" style="font-size: 0.9rem;"></i>
+                <a href="{% url 'dashboard:zona_entrega_list' %}" class="nav-link nav-sub-link {% if 'zonas' in request.path and 'mapa' not in request.path %}active{% endif %}">
+                  <i class="fas fa-map-pin nav-icon"></i>
                   <span>Zonas de Entrega</span>
                 </a>
               </li>
               <li class="nav-item">
-                <a href="{% url 'dashboard:zona_entrega_map' %}" class="nav-link {% if 'mapa' in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
-                  <i class="fas fa-map-marked-alt nav-icon" style="font-size: 0.9rem;"></i>
+                <a href="{% url 'dashboard:zona_entrega_map' %}" class="nav-link nav-sub-link {% if 'mapa' in request.path %}active{% endif %}">
+                  <i class="fas fa-globe-americas nav-icon"></i>
                   <span>Mapa de Zonas</span>
                 </a>
               </li>
               {% endif %}
+            </ul>
+          </div>
+        </li>
+
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+        <!-- Control de Gastos Dropdown -->
+        <li class="nav-item">
+          <a class="nav-link collapsed"
+            data-bs-toggle="collapse"
+            href="#gastosSubmenu"
+            role="button"
+            aria-expanded="{% if 'combustible' in request.path or 'gastos' in request.path %}true{% else %}false{% endif %}"
+            aria-controls="gastosSubmenu"
+            style="display: flex; justify-content: space-between; align-items: center;"
+          >
+            <div style="display: flex; align-items: center;">
+              <i class="fas fa-file-invoice-dollar nav-icon"></i>
+              <span>Control de Gastos</span>
+            </div>
+            <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.7;"></i>
+          </a>
+          <div class="collapse {% if 'combustible' in request.path or 'gastos' in request.path %}show{% endif %}" id="gastosSubmenu">
+            <ul class="nav-submenu">
+              <li class="nav-item">
+                <a href="{% url 'dashboard:gastos_list' %}" class="nav-link nav-sub-link {% if request.resolver_match.url_name == 'gastos_list' %}active{% endif %}">
+                  <i class="fas fa-list-ul nav-icon"></i>
+                  <span>Historial de Gastos</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'dashboard:gastos_create' %}" class="nav-link nav-sub-link {% if request.resolver_match.url_name == 'gastos_create' %}active{% endif %}">
+                  <i class="fas fa-plus-circle nav-icon"></i>
+                  <span>Registrar Gasto</span>
+                </a>
+              </li>
             </ul>
           </div>
         </li>
@@ -143,93 +179,44 @@
             <span>Combustible</span>
           </a>
         </li>
-        <!-- Control de Gastos Dropdown -->
-        <li class="nav-item">
-          <a
-            class="nav-link collapsed"
-            data-bs-toggle="collapse"
-            href="#gastosSubmenu"
-            role="button"
-            aria-expanded="{% if 'combustible' in request.path or 'gastos' in request.path %}true{% else %}false{% endif %}"
-            aria-controls="gastosSubmenu"
-            style="display: flex; justify-content: space-between; align-items: center;"
-          >
-            <div style="display: flex; align-items: center;">
-                <i class="fas fa-file-invoice-dollar nav-icon"></i>
-                <span>Control de Gastos</span>
-            </div>
-            <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.7;"></i>
-          </a>
-          <div class="collapse {% if 'combustible' in request.path or 'gastos' in request.path %}show{% endif %}" id="gastosSubmenu">
-            <ul class="nav flex-column" style="padding-left: 20px; background: rgba(0,0,0,0.05);">
-              <li class="nav-item">
-                <a href="{% url 'dashboard:gastos_list' %}" class="nav-link {% if request.resolver_match.url_name == 'gastos_list' %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
-                  <i class="fas fa-list-ul nav-icon" style="font-size: 0.9rem;"></i>
-                  <span>Historial de Gastos</span>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="{% url 'dashboard:gastos_create' %}" class="nav-link {% if request.resolver_match.url_name == 'gastos_create' %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
-                  <i class="fas fa-plus-circle nav-icon" style="font-size: 0.9rem;"></i>
-                  <span>Registrar Gasto</span>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="{% url 'dashboard:combustible_general' %}" class="nav-link {% if 'combustible' in request.path %}active{% endif %}" style="padding: 10px 15px; font-size: 0.95rem;">
-                  <i class="fas fa-gas-pump nav-icon" style="font-size: 0.9rem;"></i>
-                  <span>Combustible</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </li>
-        <!-- Admin/Users: Hide for CHOFER -->
-        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
 
+        <!-- === SECCIÓN: ADMINISTRACIÓN === -->
+        <li class="nav-section-label">Administración</li>
 
         <li class="nav-item">
-          <a
-            href="{% url 'dashboard:inventario_llanta_list' %}"
-            class="nav-link {% if 'llantas' in request.path %}active{% endif %}"
-          >
-            <i class="fas fa-life-ring nav-icon"></i>
-            <span>Control de Llantas</span>
+          <a href="{% url 'dashboard:operadores_list' %}" class="nav-link {% if 'operadores' in request.path %}active{% endif %}">
+            <i class="fas fa-id-card nav-icon"></i>
+            <span>Operadores</span>
           </a>
         </li>
-        
+
         <li class="nav-item">
-          <a
-            href="{% url 'dashboard:usuarios_list' %}"
-            class="nav-link {% if 'usuarios' in request.path %}active{% endif %}"
-          >
+          <a href="{% url 'dashboard:usuarios_list' %}" class="nav-link {% if 'usuarios' in request.path %}active{% endif %}">
             <i class="fas fa-users-cog nav-icon"></i>
-            <span>Usuarios / Admin</span>
+            <span>Usuarios</span>
           </a>
         </li>
-        
+
         <li class="nav-item">
-          <a
-            href="{% url 'dashboard:configuracion_general' %}"
-            class="nav-link {% if 'configuraciones' in request.path %}active{% endif %}"
-          >
+          <a href="{% url 'dashboard:configuracion_general' %}" class="nav-link {% if 'configuraciones' in request.path %}active{% endif %}">
             <i class="fas fa-cogs nav-icon"></i>
-            <span>Configuración General</span>
+            <span>Configuración</span>
           </a>
         </li>
         {% endif %}
 
-        <!-- Spacer to push Logout to bottom -->
+        <!-- Spacer -->
         <li style="flex-grow: 1;"></li>
 
+        <!-- Logout -->
         <li class="nav-item" style="margin-bottom: 20px;">
-             <!-- Logout Form (POST required for security) -->
-            <form action="{% url 'logout' %}" method="post" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="nav-link" style="background: none; border: none; width: 100%; cursor: pointer; text-align: left; color: rgba(255,255,255,0.8);">
-                    <i class="fas fa-sign-out-alt nav-icon"></i>
-                    <span>Cerrar Sesión</span>
-                </button>
-            </form>
+          <form action="{% url 'logout' %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="nav-link" style="background: none; border: none; width: 100%; cursor: pointer; text-align: left; color: rgba(255,255,255,0.8);">
+              <i class="fas fa-sign-out-alt nav-icon"></i>
+              <span>Cerrar Sesión</span>
+            </button>
+          </form>
         </li>
       </ul>
     </aside>
@@ -319,7 +306,23 @@
       </header>
 
       <!-- Content -->
-      <div class="content-wrapper">{% block content %} {% endblock %}</div>
+      <div class="content-wrapper" id="main-content">
+        {% if messages %}
+        <div class="toast-container" id="django-toasts" aria-live="polite" aria-atomic="true">
+          {% for message in messages %}
+          <div class="toast-msg toast-{{ message.tags }}" role="alert" aria-live="assertive">
+            {% if message.tags == 'success' %}<i class="fas fa-check-circle toast-icon"></i>
+            {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="fas fa-times-circle toast-icon"></i>
+            {% elif message.tags == 'warning' %}<i class="fas fa-exclamation-triangle toast-icon"></i>
+            {% else %}<i class="fas fa-info-circle toast-icon"></i>{% endif %}
+            <span>{{ message }}</span>
+            <button class="toast-close" aria-label="Cerrar notificación">&times;</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %} {% endblock %}
+      </div>
     </main>
     
     <!-- Bootstrap JS -->
@@ -414,6 +417,112 @@
             document.ontouchstart = resetTimer; // Para móviles
             document.onclick = resetTimer;      // Clics
         })();
+    </script>
+    <!-- Global Drag & Drop Upload Handler -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.dnd-upload-zone').forEach(function(zone) {
+            const input = zone.querySelector('input[type="file"]');
+            const zoneId = zone.id;
+            const previewId = zoneId.replace('dndZone-', 'dndPreview-');
+            const preview = document.getElementById(previewId);
+
+            if (!input || !preview) return;
+
+            // Drag events
+            zone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+            zone.addEventListener('dragleave', function() {
+                zone.classList.remove('dragover');
+            });
+            zone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    // Assign dropped files to input
+                    const dt = new DataTransfer();
+                    Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+                    input.files = dt.files;
+                    renderPreviews(input.files, preview);
+                }
+            });
+
+            // Click/change
+            input.addEventListener('change', function() {
+                renderPreviews(input.files, preview);
+            });
+        });
+
+        function renderPreviews(files, container) {
+            container.innerHTML = '';
+            Array.from(files).forEach(function(file) {
+                const item = document.createElement('div');
+                item.className = 'dnd-preview-item';
+
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = file.name;
+                        item.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // PDF or other — show icon
+                    item.style.display = 'flex';
+                    item.style.alignItems = 'center';
+                    item.style.justifyContent = 'center';
+                    item.style.background = 'var(--bg-body)';
+                    item.innerHTML = '<i class="fas fa-file-pdf" style="font-size:2rem; color: #ef4444;"></i>';
+                }
+
+                // Remove button (visual only — clears input)
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'dnd-remove';
+                removeBtn.type = 'button';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.title = 'Quitar';
+                removeBtn.addEventListener('click', function() {
+                    container.innerHTML = '';
+                    // Reset the file input
+                    const zone = document.getElementById(container.id.replace('dndPreview-', 'dndZone-'));
+                    if (zone) {
+                        const inp = zone.querySelector('input[type="file"]');
+                        if (inp) inp.value = '';
+                    }
+                });
+                item.appendChild(removeBtn);
+                container.appendChild(item);
+            });
+        }
+    });
+    </script>
+    <!-- Toast auto-dismiss -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.toast-close').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var toast = btn.closest('.toast-msg');
+                if (toast) {
+                    toast.style.transition = 'opacity 0.3s, transform 0.3s';
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(120%)';
+                    setTimeout(function() { toast.remove(); }, 320);
+                }
+            });
+        });
+        document.querySelectorAll('.toast-msg').forEach(function(toast) {
+            setTimeout(function() {
+                toast.style.transition = 'opacity 0.4s, transform 0.4s';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(120%)';
+                setTimeout(function() { toast.remove(); }, 420);
+            }, 5000);
+        });
+    });
     </script>
     {% block extra_js %}{% endblock %}
   </body>

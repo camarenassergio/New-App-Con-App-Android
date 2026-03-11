@@ -5,16 +5,16 @@
 
 {% block content %}
 <div class="table-container">
-    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <h3>Control de Llantas (SDC)</h3>
-        <a href="{% url 'dashboard:inventario_llanta_create' %}" class="btn btn-primary" style="background-color: #003366; border-color: #003366;">
+    <div class="table-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Control de Llantas (SDC)</h3>
+        <a href="{% url 'dashboard:inventario_llanta_create' %}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Registrar Llanta
         </a>
     </div>
 
     <!-- Filtros -->
-    <div style="padding: 15px;">
-        <form method="GET" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+    <div style="padding: 20px;">
+        <form method="GET" class="d-flex gap-3 mb-0 flex-wrap">
             <select name="unidad" class="form-select" style="max-width: 300px;">
                 <option value="">Todas las Unidades</option>
                 {% for u in unidades %}
@@ -23,15 +23,18 @@
                 </option>
                 {% endfor %}
             </select>
-            <button type="submit" class="btn btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+            <button type="submit" class="btn btn-secondary px-4"><i class="fas fa-filter me-1"></i> Filtrar</button>
+            <a href="?" class="btn btn-outline-secondary" title="Resetear Filtros">
+                <i class="fas fa-undo"></i>
+            </a>
         </form>
     </div>
 
     <div class="table-responsive">
-        <table>
+        <table class="table align-middle">
             <thead>
                 <tr>
-                    <th>Unidad</th>
+                    <th class="ps-4">Folio</th>
                     <th>Posición</th>
                     <th>Llanta (DOT)</th>
                     <th>Instalación</th>
@@ -40,81 +43,84 @@
                     <th>Prof. Piso (mm)</th>
                     <th>Costo</th>
                     <th>Estado</th>
-                    <th>Acciones</th>
+                    <th class="pe-4 text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for llanta in llantas %}
                 <tr>
-                    <td><strong>{{ llanta.unidad.nUnidad }}</strong></td>
-                    <td>{{ llanta.get_posicion_display }}</td>
+                    <td class="ps-4"><strong>{{ llanta.unidad.nUnidad }}</strong></td>
+                    <td><span class="badge bg-light text-dark border">{{ llanta.get_posicion_display }}</span></td>
                     <td>
-                        {{ llanta.marca }}<br>
+                        <div class="fw-bold">{{ llanta.marca }}</div>
                         <small class="text-muted">DOT: {{ llanta.numero_serie }}</small>
                     </td>
                     <td>
-                        {{ llanta.fecha_instalacion|date:"d M Y" }}<br>
+                        <div>{{ llanta.fecha_instalacion|date:"d M Y" }}</div>
                         <small class="text-muted">{{ llanta.km_instalacion }} km</small>
                     </td>
                     <td>
                         {% if llanta.fecha_vencimiento %}
-                            <span class="text-info"><i class="fas fa-calendar-times"></i> {{ llanta.fecha_vencimiento|date:"M Y"|title }}</span>
+                            <span class="text-info"><i class="fas fa-calendar-times me-1"></i> {{ llanta.fecha_vencimiento|date:"M Y"|title }}</span>
                         {% else %}
-                            <span class="text-muted">N/A</span>
+                            <span class="text-muted small">N/A</span>
                         {% endif %}
                     </td>
                     <td>{{ llanta.medida }}</td>
                     <td>
                         <div class="d-flex flex-column gap-1">
                             <div class="d-flex align-items-center gap-2">
-                                <span>{{ llanta.profundidad_piso_mm }} mm</span>
+                                <span class="fw-bold">{{ llanta.profundidad_piso_mm }} mm</span>
                                 {% if llanta.profundidad_piso_mm <= config.limite_seguridad_llanta_mm %}
-                                    <span class="badge bg-danger" title="Límite de seguridad alcanzado">Crítico</span>
+                                    <span class="badge bg-danger">Crítico</span>
                                 {% elif llanta.profundidad_piso_mm <= config.limite_seguridad_llanta_mm|add:"2.0" %}
-                                    <span class="badge bg-warning text-dark" title="Próxima a cambio">Atención</span>
+                                    <span class="badge bg-warning text-dark">Atención</span>
                                 {% else %}
                                     <span class="badge bg-success">OK</span>
                                 {% endif %}
                             </div>
                             {% if llanta.km_restantes is not None %}
                                 {% if llanta.km_restantes < 5000 and llanta.km_restantes > 0 %}
-                                    <small class="text-warning fw-bold"><i class="fas fa-exclamation-triangle"></i> {{ llanta.km_restantes }} km restantes</small>
+                                    <small class="text-warning fw-bold" style="font-size: 0.75rem;"><i class="fas fa-exclamation-triangle"></i> {{ llanta.km_restantes }} km restantes</small>
                                 {% elif llanta.km_restantes <= 0 %}
-                                    <small class="text-danger fw-bold"><i class="fas fa-radiation"></i> Vida útil superada</small>
+                                    <small class="text-danger fw-bold" style="font-size: 0.75rem;"><i class="fas fa-radiation"></i> Vida útil superada</small>
                                 {% else %}
-                                    <small class="text-muted">{{ llanta.km_restantes }} km restantes</small>
+                                    <small class="text-muted" style="font-size: 0.75rem;">{{ llanta.km_restantes }} km est.</small>
                                 {% endif %}
                             {% endif %}
                         </div>
                     </td>
-                    <td>${{ llanta.costo|floatformat:2 }}</td>
+                    <td class="fw-bold text-success">${{ llanta.costo|floatformat:2 }}</td>
                     <td>
                         {% if llanta.activa %}
-                            <span class="badge bg-success">Activa / Rodando</span>
+                            <span class="badge bg-success rounded-pill px-3">Activa</span>
                         {% else %}
-                            <span class="badge bg-secondary">Inactiva / Baja</span>
+                            <span class="badge bg-secondary rounded-pill px-3">Baja</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <a href="{% url 'dashboard:inventario_llanta_update' llanta.pk %}" class="btn btn-sm btn-outline-primary" title="Editar / Actualizar Profundidad">
+                    <td class="pe-4 text-center">
+                        <a href="{% url 'dashboard:inventario_llanta_update' llanta.pk %}"
+                           class="btn btn-sm btn-outline-primary shadow-sm"
+                           title="Editar"
+                           aria-label="Editar llanta {{ llanta.marca }} {{ llanta.medida }} ({{ llanta.numero_serie|default:'Sin Serie' }})">
                             <i class="fas fa-edit"></i>
                         </a>
                     </td>
                 </tr>
                 {% empty %}
-<tr>
-    <td colspan="100%" class="text-center" style="border: none; padding: 4rem 1rem;">
-        <div class="empty-state d-flex flex-column align-items-center justify-content-center" style="opacity: 0.8; animation: fadeIn 0.6s ease-in-out;">
-            <i class="fas fa-life-ring text-muted mb-3" style="font-size: 4.5rem; color: #cbd5e1 !important;"></i>
-            <h4 class="text-muted fw-bold mb-2" style="color: #64748b !important;">Aún no hay registros de Llantas en Inventario</h4>
-            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.05rem;">Comienza creando el primer registro para visualizar y administrar la información aquí.</p>
-            <a href="{% url 'dashboard:inventario_llanta_create' %}" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 50px; padding: 10px 30px;">
-                <i class="fas fa-plus me-2"></i> Registrar Primera Llanta
-            </a>
-        </div>
-    </td>
-</tr>
-{% endfor %}
+                <tr>
+                    <td colspan="100%" class="text-center py-5">
+                        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
+                            <i class="fas fa-life-ring mb-3" style="font-size: 5rem;"></i>
+                            <h4 class="fw-bold mb-2">Aún no hay registros de Llantas</h4>
+                            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.1rem;">Comienza creando el primer registro para gestionar la vida útil de tus neumáticos.</p>
+                            <a href="{% url 'dashboard:inventario_llanta_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
+                                <i class="fas fa-plus me-2"></i> Registrar Primera Llanta
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

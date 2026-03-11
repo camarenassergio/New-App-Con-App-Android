@@ -40,8 +40,17 @@
 | Antigravity | Diagnóstico Automático: Comparación por Eje y Gemelas con Esquema Visual de Desgaste | Verificado y Pulido |
 | Antigravity | Refactor: Migración de Formularios a HTMX (SPA/AJAX) | Verificado y Pulido |
 | Antigravity | UX: Implementación de "Empty States" Modernos | Verificado y Pulido |
+| Antigravity | UX: Pulido de Dark Mode en Historial de Gastos y Listas | Verificado y Pulido |
+| Antigravity | UI/UX: Auditoría Full — Modales dark mode, skip-link, aria-labels, focus ring, toasts, DnD perfil | Verificado [AUTO-HEALED] |
+| Antigravity | UX: Eliminación de páginas intermedias de éxito — solo Toast feedback (AjaxSuccessMixin refactor) | Verificado y Pulido |
+| Antigravity | Design System Rulebook v2.0 (15 secciones) registrado en .agent/workflows | Verificado y Pulido |
+| Antigravity | HTMX Audit: convertidos configuracion_general, usuario_cambiar_password, unidad_list toggle | Verificado y Pulido |
+| Antigravity | UX: Redirección de ConfiguracionGeneral a Dashboard Home post-guardado | Verificado y Pulido |
 
 ## Reglas del Proyecto
 - **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).
-- **Frontend / UX**: Todos los NUEVOS formularios y flujos transaccionales DEBEN implementarse usando HTMX o como una API (AJAX/JS Nativo) para asegurar un 'Immediate Feedback < 100ms' sin recargar la página completa, logrando una sensación de SPA (Single Page Application). No se permiten formularios SSR tradicionales (full page reload) para nuevas operaciones transaccionales.
-- **Empty States / UI**: Todas las NUEVAS listas y tablas del sistema DEBEN incorporar "Empty States" vistosos y modernos en caso de no contener datos (etiqueta `{% empty %}`). En lugar de mensajes de texto genéricos (ej. "Sin registros"), se exige un diseño con un ícono semántico grande, mensaje de orientación descriptivo y un Botón de Llamado a la Acción (CTA) para invitar a crear el primer registro.
+- **Frontend — HTMX (REGLA ABSOLUTA)**: TODO formulario transaccional DEBE usar HTMX (`hx-post`, `hx-put`, etc.). PROHIBIDO usar `<form method="post">` sin atributos HTMX en vistas del dashboard. La única excepción permitida es `login.html` y `usuario_perfil.html` (upload binario multipart con cropper). Spinner obligatorio con `hx-indicator`.
+- **Frontend / UX**: Todos los NUEVOS formularios y flujos transaccionales DEBEN implementarse usando HTMX para asegurar 'Immediate Feedback < 100ms' sin recargar página completa.
+- **Empty States / UI**: Todas las NUEVAS listas y tablas DEBEN incorporar "Empty States" vistosos con ícono semántico, mensaje orientativo y CTA.
+- **Feedback de Acciones**: PROHIBIDO mostrar páginas intermedias de "éxito" o "confirmación". El único feedback permitido son Toasts vía `messages.success/error/warning` → `base.html`.
+- **Dark Mode**: TODA nueva vista debe ser 100% compatible con dark mode usando CSS variables. Ver Design System `/ui_ux_design_system`.

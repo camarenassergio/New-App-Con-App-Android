@@ -9,9 +9,9 @@
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
         <div class="card shadow-sm" style="border-radius: 12px; border: none;">
-            <div class="card-header bg-white" style="border-bottom: 1px solid #f0f0f0; padding: 20px;">
-                <h5 class="mb-0" style="color: var(--primary-blue); font-weight: 700;">
-                    <i class="fas fa-gas-pump" style="margin-right: 10px; color: var(--primary-orange);"></i>
+            <div class="card-header border-bottom" style="padding: 20px;">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-gas-pump me-2" style="color: var(--primary-orange);"></i>
                     Carga de Combustible
                 </h5>
             </div>
@@ -48,31 +48,17 @@
                     </div>
 
                     <!-- Evidencia Antes -->
-                    <div class="mb-4 p-3 rounded" style="background-color: #e3f2fd; border: 1px solid #90caf9;">
-                         <label class="form-label fw-bold text-primary mb-2">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-2">
                             <i class="fas fa-camera me-1"></i> Evidencia ANTES de cargar
-                         </label>
-                         <div class="d-none">
-                            {{ form.evidencia_antes|as_crispy_field }}
-                         </div>
-                         <div class="row g-2 mb-2 mt-1 px-1">
-                            <div class="col-6">
-                                <button type="button" id="btn_camera_antes" class="btn btn-outline-primary w-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center" style="border-radius: 12px; border-width: 2px;">
-                                    <i class="fas fa-camera mb-1" style="font-size: 1.5rem;"></i>
-                                    <span class="fw-bold" style="font-size: 0.8rem;">Cámara Trasera</span>
-                                </button>
-                            </div>
-                            <div class="col-6">
-                                <button type="button" id="btn_gallery_antes" class="btn btn-outline-secondary w-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center" style="border-radius: 12px; border-width: 2px;">
-                                    <i class="fas fa-images mb-1" style="font-size: 1.5rem;"></i>
-                                    <span class="fw-bold" style="font-size: 0.8rem;">Galería</span>
-                                </button>
-                            </div>
-                         </div>
-                         <div id="status_antes" class="text-success fw-bold d-none mb-2 mt-1" style="font-size: 0.85rem; word-break: break-all;">
-                             <i class="fas fa-check-circle me-1"></i> <span>Imagen lista</span>
-                         </div>
-                         <small class="text-muted d-block mt-1">Tomar foto del tablero.</small>
+                        </label>
+                        <div class="dnd-upload-zone" id="dndZone-evidencia_antes">
+                            <input type="file" name="evidencia_antes" id="id_evidencia_antes" accept="image/*" capture="environment" required>
+                            <i class="fas fa-camera-retro dnd-icon"></i>
+                            <span class="dnd-label">Toca para abrir la cámara o arrastra una foto</span>
+                            <span class="dnd-sublabel">JPG o PNG &middot; Foto del tablero ANTES de cargar</span>
+                        </div>
+                        <div class="dnd-preview-container" id="dndPreview-evidencia_antes"></div>
                     </div>
 
                     <div class="row">
@@ -115,31 +101,17 @@
                     </div>
 
                     <!-- Evidencia Después -->
-                    <div class="mb-4 mt-3 p-3 rounded" style="background-color: #e8f5e9; border: 1px solid #a5d6a7;">
-                        <label class="form-label fw-bold text-success mb-2">
-                             <i class="fas fa-check-circle me-1"></i> Evidencia DESPUÉS de cargar
+                    <div class="mb-4 mt-3">
+                        <label class="form-label fw-bold mb-2">
+                            <i class="fas fa-check-circle me-1"></i> Evidencia DESPUÉS de cargar
                         </label>
-                        <div class="d-none">
-                            {{ form.evidencia_despues|as_crispy_field }}
+                        <div class="dnd-upload-zone" id="dndZone-evidencia_despues">
+                            <input type="file" name="evidencia_despues" id="id_evidencia_despues" accept="image/*" capture="environment" required>
+                            <i class="fas fa-images dnd-icon" style="color: var(--success);"></i>
+                            <span class="dnd-label">Toca para foto del ticket y tablero</span>
+                            <span class="dnd-sublabel">JPG o PNG &middot; Foto DESPUÉS de cargar con nuevo nivel</span>
                         </div>
-                        <div class="row g-2 mb-2 mt-1 px-1">
-                            <div class="col-6">
-                                <button type="button" id="btn_camera_despues" class="btn btn-outline-success w-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center" style="border-radius: 12px; border-width: 2px;">
-                                    <i class="fas fa-camera mb-1" style="font-size: 1.5rem;"></i>
-                                    <span class="fw-bold" style="font-size: 0.8rem;">Cámara Trasera</span>
-                                </button>
-                            </div>
-                            <div class="col-6">
-                                <button type="button" id="btn_gallery_despues" class="btn btn-outline-secondary w-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center" style="border-radius: 12px; border-width: 2px;">
-                                    <i class="fas fa-images mb-1" style="font-size: 1.5rem;"></i>
-                                    <span class="fw-bold" style="font-size: 0.8rem;">Galería</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="status_despues" class="text-success fw-bold d-none mb-2 mt-1" style="font-size: 0.85rem; word-break: break-all;">
-                             <i class="fas fa-check-circle me-1"></i> <span>Imagen lista</span>
-                        </div>
-                        <small class="text-muted d-block mt-1">Tomar foto del ticket y tablero con nuevo nivel.</small>
+                        <div class="dnd-preview-container" id="dndPreview-evidencia_despues"></div>
                     </div>
 
                     <div id="progress_container" class="mt-4 d-none">
@@ -261,77 +233,7 @@
             totalInput.readOnly = true; 
         }
 
-        // --- INTEGRA UI DE ARCHIVOS PREMIUM ---
-        function setupPremiumInput(inputId, camBtnId, galBtnId, statusId, isSuccessCam = false) {
-            const fileInput = document.getElementById(inputId);
-            const btnCam = document.getElementById(camBtnId);
-            const btnGal = document.getElementById(galBtnId);
-            const statusDiv = document.getElementById(statusId);
-            const statusSpan = statusDiv ? statusDiv.querySelector('span') : null;
-
-            if (btnCam && fileInput) {
-                btnCam.addEventListener('click', function() {
-                    // "environment" = Camara trasera principal (tickets, tablero, calle)
-                    fileInput.setAttribute('capture', 'environment');
-                    fileInput.click();
-                });
-            }
-
-            if (btnGal && fileInput) {
-                btnGal.addEventListener('click', function() {
-                    fileInput.removeAttribute('capture');
-                    fileInput.click();
-                });
-            }
-
-            if (fileInput) {
-                fileInput.addEventListener('change', function(e) {
-                    if (e.target.files && e.target.files.length > 0) {
-                        const fileLabel = e.target.files[0].name;
-                        const isCaptured = fileInput.hasAttribute('capture');
-                        
-                        if (statusDiv) {
-                            statusDiv.classList.remove('d-none');
-                            if (statusSpan) {
-                                // Mostrar texto dependiendo del método
-                                statusSpan.innerText = isCaptured ? "Foto tomada correctamente" : "Archivo cargado: " + fileLabel;
-                            }
-                        }
-                        
-                        // Iluminar el botón accionado para retroalimentación visual táctil
-                        if (isCaptured) {
-                            if (btnCam) {
-                                btnCam.classList.remove('btn-outline-primary', 'btn-outline-success');
-                                btnCam.classList.add('text-white');
-                                btnCam.style.backgroundColor = isSuccessCam ? '#198754' : '#0d6efd';
-                            }
-                            if (btnGal) {
-                                btnGal.classList.add('btn-outline-secondary');
-                                btnGal.classList.remove('btn-secondary', 'text-white');
-                            }
-                        } else {
-                            if (btnGal) {
-                                btnGal.classList.remove('btn-outline-secondary');
-                                btnGal.classList.add('btn-secondary', 'text-white');
-                            }
-                            if (btnCam) {
-                                btnCam.classList.add(isSuccessCam ? 'btn-outline-success' : 'btn-outline-primary');
-                                btnCam.classList.remove('text-white');
-                                btnCam.style.backgroundColor = 'transparent';
-                            }
-                        }
-                    } else {
-                        // Reseteó campo
-                        if (statusDiv) statusDiv.classList.add('d-none');
-                        if (btnCam) { btnCam.classList.add(isSuccessCam ? 'btn-outline-success' : 'btn-outline-primary'); btnCam.classList.remove('text-white'); btnCam.style.backgroundColor = 'transparent'; }
-                        if (btnGal) { btnGal.classList.add('btn-outline-secondary'); btnGal.classList.remove('btn-secondary', 'text-white'); }
-                    }
-                });
-            }
-        }
-
-        setupPremiumInput('id_evidencia_antes', 'btn_camera_antes', 'btn_gallery_antes', 'status_antes', false);
-        setupPremiumInput('id_evidencia_despues', 'btn_camera_despues', 'btn_gallery_despues', 'status_despues', true);
+        // Foto/evidencia: handled by global DnD handler in base.html
 
 
         // --- PREVENIR DOUBLE SUBMIT Y BARRA DE PROGRESO ---

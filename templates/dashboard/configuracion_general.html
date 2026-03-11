@@ -4,67 +4,65 @@
 {% block page_title %}Configuración General{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow-sm mt-4">
-            <div class="card-header bg-dark text-white d-flex align-items-center">
-                <i class="fas fa-cogs fa-lg me-2"></i> 
-                <h5 class="mb-0">Ajustes Globales del Sistema</h5>
+<div class="form-container" style="max-width: 800px; margin: 0 auto;">
+    <div class="form-header">
+        <h3><i class="fas fa-cogs me-2"></i> Ajustes Globales del Sistema</h3>
+        <p class="text-muted mb-0">Variables de configuración global para la operación logística.</p>
+    </div>
+
+    <div class="p-4">
+        <form id="configForm" method="post" action=""
+              hx-post=""
+              hx-target="#configForm"
+              hx-swap="outerHTML"
+              hx-indicator="#config-spinner"
+              aria-label="Formulario de configuración general">
+            {% csrf_token %}
+
+            <div class="border-bottom pb-2 mb-4">
+                <h5 class="fw-bold mb-0"><i class="fas fa-money-bill-wave me-2 text-success"></i> Sueldos Base Semanales</h5>
             </div>
-            <div class="card-body">
-                {% if messages %}
-                <div class="messages mb-4">
-                    {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    {% endfor %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.sueldo_semanal_chofer|as_crispy_field }}
                 </div>
-                {% endif %}
-
-                <p class="text-muted mb-4">En esta sección puedes definir variables globales de acceso rápido, como los sueldos base para el personal, entre otros ajustes.</p>
-
-                <form method="post" action="">
-                    {% csrf_token %}
-                    
-                    <h6 class="border-bottom pb-2 mb-3 text-primary"><i class="fas fa-money-bill-wave me-1"></i> Sueldos Base semanales</h6>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.sueldo_semanal_chofer|as_crispy_field }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form.sueldo_semanal_chalan|as_crispy_field }}
-                        </div>
-                    </div>
-
-                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary"><i class="fas fa-clock me-1"></i> Tiempos Logísticos</h6>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.tiempo_descarga_promedio_min|as_crispy_field }}
-                        </div>
-                    </div>
-
-                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary"><i class="fas fa-life-ring me-1"></i> Límites de Llantas (SDC)</h6>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.limite_seguridad_llanta_mm|as_crispy_field }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form.vida_util_estimada_llanta_km|as_crispy_field }}
-                        </div>
-                    </div>
-                    
-                    <!-- Aquí se pueden agregar más secciones en el futuro con crispy forms fields -->
-
-                    <div class="d-flex justify-content-end mt-4">
-                        <button type="submit" class="btn btn-primary" style="background-color: var(--primary-blue); border-color: var(--primary-blue);">
-                            <i class="fas fa-save me-1"></i> Guardar Cambios
-                        </button>
-                    </div>
-                </form>
+                <div class="col-md-6 mb-3">
+                    {{ form.sueldo_semanal_chalan|as_crispy_field }}
+                </div>
             </div>
-        </div>
+
+            <div class="border-bottom pb-2 mb-4 mt-4">
+                <h5 class="fw-bold mb-0"><i class="fas fa-clock me-2 text-info"></i> Tiempos Logísticos</h5>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.tiempo_descarga_promedio_min|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="border-bottom pb-2 mb-4 mt-4">
+                <h5 class="fw-bold mb-0"><i class="fas fa-life-ring me-2 text-warning"></i> Límites de Llantas (SDC)</h5>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.limite_seguridad_llanta_mm|as_crispy_field }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.vida_util_estimada_llanta_km|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end align-items-center gap-3 mt-4">
+                <span id="config-spinner" class="htmx-indicator">
+                    <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                    <small class="text-muted ms-1">Guardando...</small>
+                </span>
+                <button type="submit" class="btn btn-primary px-5"
+                        aria-label="Guardar configuración general">
+                    <i class="fas fa-save me-2"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

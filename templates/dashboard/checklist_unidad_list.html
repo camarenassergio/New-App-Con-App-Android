@@ -4,121 +4,138 @@
 
 {% block content %}
 <div class="table-container">
-    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <h3>Historial de Revisiones Diarias</h3>
-        
-        <!-- Botón para Chofer para realizar Checklist Hoy -->
+    <div class="table-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Historial de Revisiones Diarias</h3>
+
         {% if request.user.personal.puesto == 'CHOFER' %}
             {% if ya_lleno_hoy %}
-            <button class="btn btn-success" disabled>
-                <i class="fas fa-check-circle"></i> Checklist de Hoy: Completado
-            </button>
-            <a href="{% url 'dashboard:checklist_unidad_create' %}" class="btn btn-outline-primary ms-2" title="Registrar otro vehículo hoy">
-                <i class="fas fa-plus"></i> Otro Vehículo
-            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success" disabled>
+                    <i class="fas fa-check-circle me-1"></i> Checklist Hoy: Completado
+                </button>
+                <a href="{% url 'dashboard:checklist_unidad_create' %}" class="btn btn-outline-primary" title="Registrar otro vehículo hoy">
+                    <i class="fas fa-plus me-1"></i> Otro Vehículo
+                </a>
+            </div>
             {% else %}
-            <a href="{% url 'dashboard:checklist_unidad_create' %}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-clipboard-check"></i> <span style="font-weight: bold;">Hacer Checklist de HOY</span>
+            <a href="{% url 'dashboard:checklist_unidad_create' %}" class="btn btn-primary">
+                <i class="fas fa-clipboard-check me-1"></i> <strong>Hacer Checklist de HOY</strong>
             </a>
             {% endif %}
         {% else %}
-            <!-- Botón para Admin (Opcional) -->
             <a href="{% url 'dashboard:checklist_unidad_create' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nuevo Registro
+                <i class="fas fa-plus me-2"></i> Nuevo Registro
             </a>
         {% endif %}
     </div>
-    
-    <div style="padding: 15px;">
-        <form method="GET" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-            <select name="unidad" class="form-select" style="max-width: 200px;">
-                <option value="">Todas las Unidades</option>
-                {% for u in unidades %}
-                <option value="{{ u.id }}" {% if request.GET.unidad == u.id|stringformat:"i" %}selected{% endif %}>
-                    {{ u.nUnidad }}
-                </option>
-                {% endfor %}
-            </select>
-            <input type="date" name="fecha" class="form-control" style="max-width: 200px;" value="{{ request.GET.fecha }}">
-            <button type="submit" class="btn btn-secondary">Filtrar</button>
+
+    <!-- Filtros -->
+    <div style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+        <form method="GET" class="d-flex gap-3 align-items-end flex-wrap">
+            <div>
+                <label class="form-label fw-bold mb-1">Unidad</label>
+                <select name="unidad" class="form-select" style="min-width: 200px;">
+                    <option value="">Todas las Unidades</option>
+                    {% for u in unidades %}
+                    <option value="{{ u.id }}" {% if request.GET.unidad == u.id|stringformat:"i" %}selected{% endif %}>
+                        {{ u.nUnidad }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label fw-bold mb-1">Fecha</label>
+                <input type="date" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-secondary"><i class="fas fa-filter me-1"></i> Filtrar</button>
+                <a href="?" class="btn btn-outline-secondary">Limpiar</a>
+            </div>
         </form>
     </div>
 
     <div class="table-responsive">
-        <table>
+        <table class="table align-middle">
             <thead>
                 <tr>
-                    <th>Fecha</th>
+                    <th class="ps-4">Fecha</th>
                     <th>Hora</th>
                     <th>Unidad</th>
                     <th>Chofer</th>
                     <th>Estado de Revisión</th>
-                    <th>Observaciones</th>
+                    <th class="pe-4">Observaciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for check in checklists %}
                 <tr>
-                    <td>{{ check.fecha|date:"d M Y" }}</td>
+                    <td class="ps-4">{{ check.fecha|date:"d M Y" }}</td>
                     <td>{{ check.hora_registro|time:"H:i" }}</td>
                     <td><strong>{{ check.unidad.nUnidad }}</strong></td>
                     <td>{{ check.chofer.get_full_name|default:check.chofer.username }}</td>
                     <td>
-                        <!-- Conteo rápido de items -->
-                        {% with oks=0 fallas=0 %}
-                            <!-- Lógica visual rápida (simplificada para HTML) -->
-                            {% if check.aceite_motor and check.anticongelante and check.llantas_birlos and check.carroceria_golpes and check.luces and check.cinturon and check.equipo_seguridad and check.documentacion and check.frenos and check.bateria_arranque and check.limpiaparabrisas and check.claxon %}
-                                <span class="badge bg-success">100% OK</span>
-                            {% else %}
-                                <span class="badge bg-danger">Atención Requerida</span>
-                            {% endif %}
-                        {% endwith %}
-                        <small class="ms-2">Gasolina: {{ check.nivel_combustible }}%</small>
+                        {% if check.aceite_motor and check.anticongelante and check.llantas_birlos and check.carroceria_golpes and check.luces and check.cinturon and check.equipo_seguridad and check.documentacion and check.frenos and check.bateria_arranque and check.limpiaparabrisas and check.claxon %}
+                            <span class="badge bg-success px-3 py-2 rounded-pill">100% OK</span>
+                        {% else %}
+                            <span class="badge bg-danger px-3 py-2 rounded-pill">Atención Requerida</span>
+                        {% endif %}
+                        <small class="ms-2 text-muted">Gasolina: {{ check.nivel_combustible }}%</small>
                     </td>
-                    <td>
+                    <td class="pe-4">
                         {% if check.observaciones %}
-                           <i class="fas fa-exclamation-triangle text-warning" title="{{ check.observaciones }}"></i> {{ check.observaciones|truncatechars:30 }}
+                           <i class="fas fa-exclamation-triangle text-warning me-1" title="{{ check.observaciones }}"></i>
+                           <span>{{ check.observaciones|truncatechars:40 }}</span>
                         {% else %}
                            <span class="text-muted">-</span>
                         {% endif %}
                     </td>
                 </tr>
                 {% empty %}
-<tr>
-    <td colspan="100%" class="text-center" style="border: none; padding: 4rem 1rem;">
-        <div class="empty-state d-flex flex-column align-items-center justify-content-center" style="opacity: 0.8; animation: fadeIn 0.6s ease-in-out;">
-            <i class="fas fa-clipboard-check text-muted mb-3" style="font-size: 4.5rem; color: #cbd5e1 !important;"></i>
-            <h4 class="text-muted fw-bold mb-2" style="color: #64748b !important;">Aún no hay registros de Checklists Diarios</h4>
-            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.05rem;">Comienza creando el primer registro para visualizar y administrar la información aquí.</p>
-            <a href="{% url 'dashboard:checklist_unidad_create' %}" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 50px; padding: 10px 30px;">
-                <i class="fas fa-plus me-2"></i> Crear Primer Checklist
-            </a>
-        </div>
-    </td>
-</tr>
-{% endfor %}
+                <tr>
+                    <td colspan="100%" class="text-center py-5">
+                        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
+                            <i class="fas fa-clipboard-check mb-3" style="font-size: 5rem;"></i>
+                            <h4 class="fw-bold mb-2">Aún no hay registros de Checklists</h4>
+                            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.1rem;">Comienza registrando la revisión diaria de las unidades.</p>
+                            <a href="{% url 'dashboard:checklist_unidad_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
+                                <i class="fas fa-plus me-2"></i> Crear Primer Checklist
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
-    
+
     <!-- Paginación -->
     {% if is_paginated %}
-    <div style="padding: 15px; text-align: center;">
-        <span class="step-links">
-            {% if page_obj.has_previous %}
-                <a href="?page=1{% if request.GET.unidad %}&unidad={{ request.GET.unidad }}{% endif %}{% if request.GET.fecha %}&fecha={{ request.GET.fecha }}{% endif %}">&laquo; Primera</a>
-                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.unidad %}&unidad={{ request.GET.unidad }}{% endif %}{% if request.GET.fecha %}&fecha={{ request.GET.fecha }}{% endif %}">Anterior</a>
-            {% endif %}
+    <div style="padding: 20px;">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.unidad %}&unidad={{ request.GET.unidad }}{% endif %}{% if request.GET.fecha %}&fecha={{ request.GET.fecha }}{% endif %}">&laquo; Primera</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.unidad %}&unidad={{ request.GET.unidad }}{% endif %}{% if request.GET.fecha %}&fecha={{ request.GET.fecha }}{% endif %}">Anterior</a>
+                </li>
+                {% endif %}
 
-            <span class="current">
-                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}.
-            </span>
+                <li class="page-item disabled">
+                    <span class="page-link">Pág {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
 
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.unidad %}&unidad={{ request.GET.unidad }}{% endif %}{% if request.GET.fecha %}&fecha={{ request.GET.fecha }}{% endif %}">Siguiente</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.unidad %}&unidad={{ request.GET.unidad }}{% endif %}{% if request.GET.fecha %}&fecha={{ request.GET.fecha }}{% endif %}">Última &raquo;</a>
-            {% endif %}
-        </span>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.unidad %}&unidad={{ request.GET.unidad }}{% endif %}{% if request.GET.fecha %}&fecha={{ request.GET.fecha }}{% endif %}">Siguiente</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.unidad %}&unidad={{ request.GET.unidad }}{% endif %}{% if request.GET.fecha %}&fecha={{ request.GET.fecha }}{% endif %}">Última &raquo;</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
     {% endif %}
 </div>

@@ -17,26 +17,34 @@ User = get_user_model()
 from django.http import HttpResponse
 
 class AjaxSuccessMixin:
-    """Mixin para renderizar una palomita verde en HTMX y redireccionar suavemente"""
+    """
+    Mixin universal de éxito:
+    - HTMX: redirige al cliente con HX-Redirect + dispara el toast vía HX-Trigger
+    - Normal: agrega messages.success y redirige como siempre
+    En ambos casos el usuario SOLO ve el toast en la esquina superior derecha.
+    """
     ajax_success_message = "¡Registro guardado con éxito!"
 
     def form_valid(self, form):
         response = super().form_valid(form)
+
+        # Aseguramos que el mensaje quede en el sistema de mensajes de Django
+        # (Aplica tanto para HTMX como normal — el toast se renderiza en base.html)
+        messages.success(self.request, self.ajax_success_message)
+
         if "HX-Request" in self.request.headers:
-            return HttpResponse(
-                f'''<div id="formContainer">
-                      <div class="alert alert-success d-flex align-items-center mt-3" style="animation: fadeIn 0.5s;">
-                        <i class="fas fa-check-circle fs-3 me-3"></i>
-                        <span class="fs-5">{self.ajax_success_message}</span>
-                      </div>
-                      <script>
-                          setTimeout(() => {{
-                              window.location.href = "{self.get_success_url()}";
-                          }}, 1200);
-                      </script>
-                    </div>'''
-            )
+            # Para HTMX: redirigimos limpiamente con HX-Redirect.
+            # NO renderizamos HTML intermedio → NO hay página de "éxito".
+            # El toast se dispara porque el cliente sigue la redirección y
+            # base.html renderiza los messages de Django al cargar la nueva página.
+            from django.http import HttpResponse
+            redirect_url = self.get_success_url()
+            r = HttpResponse(status=204)       # 204 = No Content (no body needed)
+            r["HX-Redirect"] = redirect_url   # HTMX navega allí inmediatamente
+            return r
+
         return response
+
 
 class NonChoferRequiredMixin(UserPassesTestMixin):
 
@@ -325,10 +333,41 @@ from django.views import View
 
 class UnidadToggleEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
+        from django.shortcuts import get_object_or_404
         unidad = get_object_or_404(Unidad, pk=pk)
-        # Hacemos toggle del booleano
         unidad.en_servicio = not unidad.en_servicio
         unidad.save()
+
+        # HTMX: devuelve solo la fila actualizada (hx-swap="outerHTML" en closest tr)
+        if "HX-Request" in request.headers:
+            from django.template.loader import render_to_string
+            estado_badge = (
+                f'<button type="button" '
+                f'class="badge bg-success border-0 px-3 py-2 rounded-pill" '
+                f'hx-post="/dashboard/unidades/{unidad.pk}/toggle/" '
+                f'hx-target="closest tr" hx-swap="outerHTML" '
+                f'hx-headers=\'{{"X-CSRFToken": "{request.META.get("CSRF_COOKIE", "")}"}}\' '
+                f'hx-confirm="Dar de BAJA TEMPORAL a {unidad.nombre_corto or unidad.nUnidad}. ¿Continuar?" '
+                f'title="En servicio. Clic para dar de baja temporal">'
+                f'<i class="fas fa-toggle-on me-1"></i> Activa</button>'
+                if unidad.en_servicio else
+                f'<button type="button" '
+                f'class="badge bg-danger border-0 px-3 py-2 rounded-pill" '
+                f'hx-post="/dashboard/unidades/{unidad.pk}/toggle/" '
+                f'hx-target="closest tr" hx-swap="outerHTML" '
+                f'hx-headers=\'{{"X-CSRFToken": "{request.META.get("CSRF_COOKIE", "")}"}}\' '
+                f'hx-confirm="REACTIVAR la unidad {unidad.nombre_corto or unidad.nUnidad}. ¿Continuar?" '
+                f'title="En taller. Clic para reactivar">'
+                f'<i class="fas fa-toggle-off me-1"></i> Inactiva</button>'
+            )
+            # Devolvemos solo la celda de estado actualizada dentro de la fila
+            # El cliente reemplaza el <tr> completo con hx-swap="outerHTML"
+            messages.success(request, f"Unidad {unidad.nUnidad} {'reactivada' if unidad.en_servicio else 'dada de baja temporal'}.")
+            r = HttpResponse(status=204)
+            r["HX-Redirect"] = "/dashboard/unidades/"
+            return r
+
+        messages.success(request, f"Unidad {unidad.nUnidad} {'reactivada' if unidad.en_servicio else 'dada de baja temporal'}.")
         return redirect('dashboard:unidades_list')
 
 class OperadorListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
@@ -1593,18 +1632,16 @@ from .models import ConfiguracionGeneral
 from .forms import ConfiguracionGeneralForm
 from django.contrib import messages
 
-class ConfiguracionGeneralUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, UpdateView):
+class ConfiguracionGeneralUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, UpdateView):
     model = ConfiguracionGeneral
     form_class = ConfiguracionGeneralForm
     template_name = 'dashboard/configuracion_general.html'
-    success_url = reverse_lazy('dashboard:configuracion_general')
+    success_url = reverse_lazy('dashboard:home')
+    ajax_success_message = "Configuración general actualizada correctamente."
     
     def get_object(self, queryset=None):
         return ConfiguracionGeneral.get_solo()
-    
-    def form_valid(self, form):
-        messages.success(self.request, "Configuración general actualizada correctamente.")
-        return super().form_valid(form)
+
 
 from django.http import JsonResponse
 from decimal import Decimal

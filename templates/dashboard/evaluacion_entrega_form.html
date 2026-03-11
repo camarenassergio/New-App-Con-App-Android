@@ -6,15 +6,15 @@
 {% block extra_css %}
 <style>
     .eval-section {
-        background: #fff;
+        background: var(--bg-card);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid #003366;
+        border-left: 4px solid var(--primary-blue);
     }
     .eval-section h4 {
-        color: #003366;
+        color: var(--primary-blue);
         margin-bottom: 15px;
         font-weight: 600;
         font-size: 1.1rem;
@@ -31,11 +31,11 @@
     .sat-btn {
         flex: 1;
         padding: 20px 10px;
-        border: 2px solid #ddd;
+        border: 2px solid var(--border-color);
         border-radius: 8px;
-        background: #fff;
+        background: var(--bg-body);
         font-weight: bold;
-        color: #555;
+        color: var(--text-main);
         cursor: pointer;
         transition: all 0.2s;
         display: flex;
@@ -76,9 +76,12 @@
 {% block content %}
 <div class="form-container" style="max-width: 800px; margin: 0 auto;">
     
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd;">
-        <strong><i class="fas fa-route"></i> Datos del Viaje:</strong><br>
-        Viaje #{{ viaje.n_viaje }} | Unidad: {{ viaje.unidad.nUnidad }} | Operador: {{ viaje.operador.nombre }} <br>
+    <div class="form-header">
+        <h3><i class="fas fa-clipboard-check me-2"></i> Evaluación de Entrega SDC</h3>
+        <p class="text-muted mb-0">Viaje #{{ viaje.n_viaje }} | Unidad: {{ viaje.unidad.nUnidad }} | Operador: {{ viaje.operador.nombre }}</p>
+    </div>
+    <div style="padding: 24px;">
+    <div style="background: rgba(0,0,0,0.04); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color);">
         <small class="text-muted">Fecha Original: {{ viaje.fecha }} | Zona: {{ viaje.zona.nombre|default:"N/A" }}</small>
     </div>
 
@@ -147,15 +150,15 @@
             {{ form.comentarios|as_crispy_field }}
         </div>
 
-        <div style="margin-top: 30px; margin-bottom: 40px; text-align: right;">
-            <a href="{% url 'dashboard:viajes_list' %}" class="btn btn-outline-secondary btn-lg me-2">Cancelar</a>
-            <button type="submit" class="btn btn-primary btn-lg" style="background-color: #003366; border-color: #003366;">
-                <i class="fas fa-save"></i> Guardar Evaluación
+        <div class="d-flex gap-3 mt-4 mb-4 justify-content-end">
+            <a href="{% url 'dashboard:viajes_list' %}" class="btn btn-outline-secondary btn-lg px-4">Cancelar</a>
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-save me-2"></i> Guardar Evaluación
             </button>
         </div>
     </form>
-</div>
-</div>
+</div><!-- end padding -->
+</div><!-- end form-container -->
 {% endblock %}
 
 {% block extra_js %}

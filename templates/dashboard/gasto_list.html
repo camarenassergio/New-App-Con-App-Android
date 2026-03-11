@@ -3,115 +3,122 @@
 {% block page_title %}Control de Gastos Logísticos{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3><i class="fas fa-file-invoice-dollar"></i> Historial de Gastos</h3>
-    <a href="{% url 'dashboard:gastos_create' %}" class="btn btn-primary">
-        <i class="fas fa-plus-circle"></i> Nuevo Gasto
-    </a>
-</div>
+<div class="table-container">
+    <div class="table-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Historial de Gastos</h3>
+        <a href="{% url 'dashboard:gastos_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Nuevo Gasto
+        </a>
+    </div>
 
-<!-- Filtros -->
-<div class="card mb-4 p-3 bg-light shadow-sm">
-    <form method="get" class="row g-3 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label fw-bold">Unidad</label>
-            <select name="unidad" class="form-select">
-                <option value="">Todas</option>
-                {% for u in unidades %}
-                <option value="{{ u.id }}" {% if request.GET.unidad == u.id|stringformat:"s" %}selected{% endif %}>
-                    {{ u.nUnidad }} - {{ u.nombre_corto|default:u.placas }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label fw-bold">Tipo de Gasto</label>
-            <select name="tipo" class="form-select">
-                <option value="">Todos</option>
-                {% for val, label in tipos_gasto %}
-                <option value="{{ val }}" {% if request.GET.tipo == val %}selected{% endif %}>
-                    {{ label }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
-        </div>
-    </form>
-</div>
+    <!-- Filtros -->
+    <div style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Unidad</label>
+                <select name="unidad" class="form-select">
+                    <option value="">Todas las Unidades</option>
+                    {% for u in unidades %}
+                    <option value="{{ u.id }}" {% if request.GET.unidad == u.id|stringformat:"s" %}selected{% endif %}>
+                        {{ u.nUnidad }} - {{ u.nombre_corto|default:u.placas }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Tipo de Gasto</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos los Tipos</option>
+                    {% for val, label in tipos_gasto %}
+                    <option value="{{ val }}" {% if request.GET.tipo == val %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100"><i class="fas fa-filter me-1"></i> Filtrar</button>
+            </div>
+            <div class="col-md-2">
+                <a href="?" class="btn btn-outline-secondary w-100">Limpiar</a>
+            </div>
+        </form>
+    </div>
 
-<!-- Tabla de Gastos -->
-<div class="table-responsive bg-white rounded shadow-sm">
-    <table class="table table-hover align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>Fecha</th>
-                <th>Unidad</th>
-                <th>Tipo</th>
-                <th>Concepto / Detalle</th>
-                <th>Costo ($)</th>
-                <th>Evidencia</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for gasto in gastos %}
-            <tr>
-                <td>{{ gasto.fecha|date:"d M Y" }}</td>
-                <td>
-                    <span class="badge bg-secondary">{{ gasto.unidad.nUnidad }}</span>
-                    <small class="d-block text-muted">{{ gasto.unidad.nombre_corto|default:"" }}</small>
-                </td>
-                <td>
-                    {% if gasto.tipo == 'Verificación' %}
-                        <span class="badge bg-info text-dark"><i class="fas fa-search"></i> Verif.</span>
-                    {% elif gasto.tipo == 'Seguro' %}
-                        <span class="badge bg-success"><i class="fas fa-shield-alt"></i> Seguro</span>
-                    {% elif gasto.tipo == 'Multa' %}
-                        <span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Multa</span>
-                    {% elif gasto.tipo == 'Mantenimiento' %}
-                        <span class="badge bg-warning text-dark"><i class="fas fa-tools"></i> Mto.</span>
-                    {% else %}
-                        <span class="badge bg-light text-dark border">{{ gasto.tipo }}</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {{ gasto.detalle }}
-                    {% if gasto.tipo == 'Multa' and gasto.chofer %}
-                        <small class="d-block text-danger">Responsable: {{ gasto.chofer.get_full_name }}</small>
-                    {% endif %}
-                    {% if gasto.tipo == 'Seguro' and gasto.poliza_seguro %}
-                        <small class="d-block text-success">Póliza: {{ gasto.poliza_seguro }}</small>
-                    {% endif %}
-                </td>
-                <td class="fw-bold text-end">${{ gasto.costo|floatformat:2 }}</td>
-                <td class="text-center">
-                    {% if gasto.evidencia %}
-                    <a href="{{ gasto.evidencia.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-eye"></i> Ver
-                    </a>
-                    {% else %}
-                    <span class="text-muted">-</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-<tr>
-    <td colspan="100%" class="text-center" style="border: none; padding: 4rem 1rem;">
-        <div class="empty-state d-flex flex-column align-items-center justify-content-center" style="opacity: 0.8; animation: fadeIn 0.6s ease-in-out;">
-            <i class="fas fa-file-invoice-dollar text-muted mb-3" style="font-size: 4.5rem; color: #cbd5e1 !important;"></i>
-            <h4 class="text-muted fw-bold mb-2" style="color: #64748b !important;">Aún no hay registros de Gastos</h4>
-            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.05rem;">Comienza creando el primer registro para visualizar y administrar la información aquí.</p>
-            <a href="{% url 'dashboard:gastos_create' %}" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 50px; padding: 10px 30px;">
-                <i class="fas fa-plus me-2"></i> Registrar Primer Gasto
-            </a>
-        </div>
-    </td>
-</tr>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th class="ps-4">Fecha</th>
+                    <th>Unidad</th>
+                    <th>Tipo</th>
+                    <th>Concepto / Detalle</th>
+                    <th class="text-end">Costo ($)</th>
+                    <th class="pe-4 text-center">Evidencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gasto in gastos %}
+                <tr>
+                    <td class="ps-4">{{ gasto.fecha|date:"d M Y" }}</td>
+                    <td>
+                        <span class="badge bg-light text-dark border">{{ gasto.unidad.nUnidad }}</span>
+                        {% if gasto.unidad.nombre_corto %}
+                            <small class="d-block text-muted mt-1">{{ gasto.unidad.nombre_corto }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if gasto.tipo == 'Verificación' %}
+                            <span class="badge bg-info text-dark px-2 py-1"><i class="fas fa-search me-1"></i> Verif.</span>
+                        {% elif gasto.tipo == 'Seguro' %}
+                            <span class="badge bg-success px-2 py-1"><i class="fas fa-shield-alt me-1"></i> Seguro</span>
+                        {% elif gasto.tipo == 'Multa' %}
+                            <span class="badge bg-danger px-2 py-1"><i class="fas fa-exclamation-triangle me-1"></i> Multa</span>
+                        {% elif gasto.tipo == 'Mantenimiento' %}
+                            <span class="badge bg-warning text-dark px-2 py-1"><i class="fas fa-tools me-1"></i> Mto.</span>
+                        {% else %}
+                            <span class="badge bg-secondary px-2 py-1">{{ gasto.tipo }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ gasto.detalle }}
+                        {% if gasto.tipo == 'Multa' and gasto.chofer %}
+                            <small class="d-block text-danger mt-1">Responsable: {{ gasto.chofer.get_full_name }}</small>
+                        {% endif %}
+                        {% if gasto.tipo == 'Seguro' and gasto.poliza_seguro %}
+                            <small class="d-block text-success mt-1">Póliza: {{ gasto.poliza_seguro }}</small>
+                        {% endif %}
+                    </td>
+                    <td class="fw-bold text-end text-success">${{ gasto.costo|floatformat:2 }}</td>
+                    <td class="pe-4 text-center">
+                        {% if gasto.evidencia %}
+                        <a href="{{ gasto.evidencia.url }}" target="_blank" class="btn btn-sm btn-outline-primary"
+                           aria-label="Ver evidencia del gasto: {{ gasto.detalle|truncatechars:30 }}">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="100%" class="text-center py-5">
+                        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
+                            <i class="fas fa-file-invoice-dollar mb-3" style="font-size: 5rem;"></i>
+                            <h4 class="fw-bold mb-2">Aún no hay registros de Gastos</h4>
+                            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.1rem;">Comienza creando el primer registro para control de costos.</p>
+                            <a href="{% url 'dashboard:gastos_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
+                                <i class="fas fa-plus me-2"></i> Registrar Primer Gasto
+                            </a>
+                        </div>
+                    </td>
+                </tr>
 {% endfor %}
         </tbody>
     </table>
 </div>
+
 
 <!-- Paginación -->
 {% if is_paginated %}

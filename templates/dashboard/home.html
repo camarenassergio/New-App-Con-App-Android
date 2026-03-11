@@ -39,24 +39,25 @@
 </div>
 
 
+
 <!-- Graphs Section -->
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+<div class="dashboard-charts-grid">
     <!-- Gasto Mensual -->
-    <div class="table-container" style="flex: 2;">
+    <div class="table-container">
         <div class="table-header">
             <h3>Tendencia de Gasto (6 Meses)</h3>
         </div>
-        <div style="padding: 15px; height: 300px;">
+        <div class="chart-box">
             <canvas id="gastoChart"></canvas>
         </div>
     </div>
-    
+
     <!-- Top Consumo (Donut) -->
-    <div class="table-container" style="flex: 1;">
+    <div class="table-container">
         <div class="table-header">
             <h3>Top Consumo (Mes Actual)</h3>
         </div>
-        <div style="padding: 15px; height: 300px; display: flex; justify-content: center;">
+        <div class="chart-box chart-box--center">
             <canvas id="consumoChart"></canvas>
         </div>
     </div>
@@ -67,19 +68,53 @@
     <div class="table-header">
         <h3>Rendimiento Promedio Estimado (Km/Lt) - Año en Curso</h3>
     </div>
-    <div style="padding: 15px; height: 400px;">
+    <div class="chart-box chart-box--tall">
         <canvas id="rendimientoChart"></canvas>
     </div>
 </div>
+
+{% block extra_css %}
+<style>
+.dashboard-charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.chart-box {
+    padding: 15px;
+    height: 300px;
+}
+.chart-box--center {
+    display: flex;
+    justify-content: center;
+}
+.chart-box--tall {
+    padding: 15px;
+    height: 400px;
+}
+@media (max-width: 768px) {
+    .dashboard-charts-grid {
+        grid-template-columns: 1fr;
+    }
+    .chart-box--tall { height: 300px; }
+}
+</style>
+{% endblock %}
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Detect dark mode
+    const isDark = document.body.classList.contains('dark-theme');
+    const chartTextColor = isDark ? '#94a3b8' : '#555';
+    const chartGridColor = isDark ? 'rgba(255,255,255,0.06)' : '#f0f0f0';
+
     // Common Options
     Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.color = '#666';
+    Chart.defaults.color = chartTextColor;
 
     // 1. Gasto Chart
     const ctxGasto = document.getElementById('gastoChart').getContext('2d');
@@ -98,18 +133,20 @@
                 legend: { 
                     display: true, 
                     position: 'bottom',
-                    labels: { boxWidth: 12, font: { size: 11 } }
+                    labels: { boxWidth: 12, font: { size: 11 }, color: chartTextColor }
                 }
             },
             scales: {
                 y: { 
                     beginAtZero: true, 
-                    grid: { color: '#f0f0f0' },
-                    stacked: true
+                    grid: { color: chartGridColor },
+                    stacked: true,
+                    ticks: { color: chartTextColor }
                 },
                 x: { 
                     grid: { display: false },
-                    stacked: true
+                    stacked: true,
+                    ticks: { color: chartTextColor }
                 }
             }
         }
@@ -133,7 +170,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom' }
+                legend: { position: 'bottom', labels: { color: chartTextColor } }
             }
         }
     });
@@ -163,7 +200,12 @@
             scales: {
                 x: { 
                     beginAtZero: true, 
-                    title: { display: true, text: 'Kilómetros por Litro' }
+                    grid: { color: chartGridColor },
+                    ticks: { color: chartTextColor },
+                    title: { display: true, text: 'Kilómetros por Litro', color: chartTextColor }
+                },
+                y: {
+                    ticks: { color: chartTextColor }
                 }
             }
         }

@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 
-{% block title %}Login - Casa Lupita{% endblock %}
+{% block title %}Acceso — Casa Lupita{% endblock %}
 
 {% block sidebar %}
 <!-- Sidebar removed for Login -->
@@ -9,117 +10,347 @@
 
 {% block content %}
 <style>
-    /* Override base styles for Login Page */
-    .sidebar { display: none; }
-    .top-header { display: none; }
-    
+    /* === LOGIN FULL-PAGE OVERRIDE === */
+    .sidebar, .top-header { display: none !important; }
+
     .main-content {
         margin-left: 0 !important;
-        background-color: var(--primary-blue);
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 20px;
+        /* Corporate deep navy gradient */
+        background: linear-gradient(140deg, #001e3c 0%, #003b70 45%, #00264d 100%);
+        position: relative;
+        overflow: hidden;
     }
-    
+
+    /* Subtle background pattern */
+    .main-content::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            radial-gradient(circle at 20% 80%, rgba(243,111,33,0.08) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255,255,255,0.04) 0%, transparent 40%);
+        pointer-events: none;
+    }
+
     .content-wrapper {
         width: 100%;
-        max-width: 500px; /* Limit width for a nice rectangular card */
+        max-width: 440px;
         padding: 0 !important;
         margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* === LOGIN CARD === */
+    .login-card {
+        background: rgba(255, 255, 255, 0.97);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow:
+            0 25px 60px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(12px);
+    }
+
+    /* Top orange accent stripe */
+    .login-card-accent {
+        height: 5px;
+        background: linear-gradient(90deg, #f36f21 0%, #ff9a4d 60%, #f36f21 100%);
+    }
+
+    .login-card-body {
+        padding: 40px 40px 36px;
+    }
+
+    /* Logo */
+    .login-logo {
+        display: block;
+        max-height: 90px;
+        margin: 0 auto 20px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+    }
+
+    /* System title */
+    .login-system-title {
+        text-align: center;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #003b70;
+        margin-bottom: 4px;
+    }
+
+    .login-system-subtitle {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 28px;
+    }
+
+    /* Divider */
+    .login-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+        margin: 0 -40px 28px;
+    }
+
+    /* Fleet animation */
+    .fleet-wrapper {
+        overflow: hidden;
+        width: 100%;
+        margin: 0 0 24px;
+        position: relative;
+        mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+        -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+    }
+    .fleet-track {
+        display: flex;
+        align-items: baseline;
+        width: 200%;
+        animation: carruselFleet 14s linear infinite;
+    }
+    .fleet-group {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        width: 50%;
+        gap: 18px;
+    }
+    .fleet-icon { color: #f36f21; }
+    .pickup-1t { font-size: 1.4rem; }
+    .pickup-3t { font-size: 2rem; }
+    .truck-5t { font-size: 3.2rem; }
+    @keyframes carruselFleet {
+        0%   { transform: translateX(-50%); }
+        100% { transform: translateX(0%); }
+    }
+
+    /* Form overrides */
+    .login-card-body label {
+        font-weight: 600;
+        font-size: 0.88rem;
+        color: #1e293b;
+        margin-bottom: 6px;
+    }
+    .login-card-body .form-control {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 11px 14px;
+        font-size: 0.95rem;
+        background: #f8fafc;
+        transition: all 0.2s;
+        color: #1e293b;
+    }
+    .login-card-body .form-control:focus {
+        border-color: #f36f21;
+        box-shadow: 0 0 0 3px rgba(243, 111, 33, 0.15);
+        background: #fff;
+        outline: none;
+    }
+
+    /* Submit button */
+    .btn-login {
+        background: linear-gradient(135deg, #f36f21 0%, #e05e10 100%);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 13px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(243, 111, 33, 0.35);
+        margin-top: 8px;
+    }
+    .btn-login:hover {
+        background: linear-gradient(135deg, #e06118 0%, #cc5408 100%);
+        box-shadow: 0 6px 20px rgba(243, 111, 33, 0.45);
+        transform: translateY(-1px);
+    }
+    .btn-login:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(243, 111, 33, 0.3);
+    }
+
+    /* Footer text */
+    .login-footer {
+        text-align: center;
+        font-size: 0.73rem;
+        color: rgba(255,255,255,0.45);
+        margin-top: 20px;
+        letter-spacing: 0.04em;
+    }
+
+    /* Error alert */
+    .login-card-body .alert-danger {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        color: #991b1b;
+        font-size: 0.85rem;
+        padding: 10px 14px;
+        margin-bottom: 16px;
+    }
+
+    /* Field labels */
+    .login-field-label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #1e293b;
+        margin-bottom: 7px;
+    }
+
+    /* Input fields */
+    .login-input {
+        width: 100%;
+        display: block;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 11px 14px;
+        font-size: 0.95rem;
+        background: #f8fafc;
+        color: #1e293b;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .login-input:focus {
+        border-color: #f36f21;
+        box-shadow: 0 0 0 3px rgba(243, 111, 33, 0.15);
+        background: #fff;
+    }
+    .login-input::placeholder {
+        color: #94a3b8;
+        font-size: 0.88rem;
     }
 </style>
 
-<div class="card shadow-lg" style="border: none; border-radius: 12px; width: 100%;">
-    <div class="card-body p-5">
-        {% load static %}
+<div class="login-card">
+    <div class="login-card-accent"></div>
+    <div class="login-card-body">
+
+        <!-- Logo -->
+        <img src="{% static 'img/logoMONOCRO1.svg' %}" alt="Casa Lupita" class="login-logo">
+
+        <!-- System label -->
+        <p class="login-system-title">Casa Lupita · Logística</p>
+        <p class="login-system-subtitle">Sistema de Gestión de Flotilla</p>
+
+        <div class="login-divider"></div>
+
+        <!-- Fleet animation (only in DEV) -->
         {% if ENVIRONMENT == 'DEV' %}
-        <div class="text-center mb-3">
-            <img src="{% static 'img/Logo.jpg' %}" alt="Casa Lupita Logo" class="img-fluid" style="max-height: 120px;">
+        <div class="fleet-wrapper">
+            <div class="fleet-track">
+                <div class="fleet-group">
+                    <i class="fas fa-truck-pickup fleet-icon pickup-1t" title="Pickup 1.5 Ton"></i>
+                    <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
+                    <i class="fas fa-truck-moving fleet-icon truck-5t" title="Camión 5 Ton"></i>
+                    <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
+                </div>
+                <div class="fleet-group">
+                    <i class="fas fa-truck-pickup fleet-icon pickup-1t" title="Pickup 1.5 Ton"></i>
+                    <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
+                    <i class="fas fa-truck-moving fleet-icon truck-5t" title="Camión 5 Ton"></i>
+                    <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center mb-4">
+            <i class="fas fa-truck-moving" style="font-size: 2.8rem; color: #f36f21;"></i>
         </div>
         {% endif %}
 
-        <style>
-            .fleet-wrapper {
-                overflow: hidden;
-                width: 100%;
-                margin: 20px 0;
-                position: relative;
-                mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-                -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-            }
-            .fleet-track {
-                display: flex;
-                align-items: baseline;
-                width: 200%; /* 2 Groups */
-                animation: carruselFleet 12s linear infinite; /* Slower for better effect */
-            }
-            .fleet-group {
-                display: flex;
-                align-items: baseline;
-                justify-content: center; /* Center icons in their segment */
-                width: 50%; /* Each group takes 100% of the viewport */
-                gap: 15px;
-            }
-            .fleet-icon {
-                color: var(--primary-orange);
-            }
-            
-            @keyframes carruselFleet {
-                0% { transform: translateX(-50%); } /* Start showing Group 2 (Right Half) */
-                100% { transform: translateX(0%); } /* Move Right to show Group 1 (Left Half) */
-            }
+        <!-- Form -->
+        <form method="post" id="loginForm">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert-danger">
+                <i class="fas fa-exclamation-circle me-1"></i>
+                Usuario o contraseña incorrectos. Inténtalo de nuevo.
+            </div>
+            {% endif %}
 
-            /* Sizes representing fleet hierarchy */
-            .pickup-1t { font-size: 1.5rem; }   /* Smallest */
-            .pickup-3t { font-size: 2.2rem; }   /* Medium (Using Pickup Icon) */
-            .truck-5t { font-size: 3.5rem; }    /* Largest */
-        </style>
-
-        {% if ENVIRONMENT == 'DEV' %}
-            <div class="fleet-wrapper">
-                <div class="fleet-track">
-                     <!-- Logical Order: [Group 1] [Group 2] 
-                          Animation: slide from showing G2 to showing G1 (Rightward) -->
-                    
-                    <!-- Group 1 ( Enters from Left ) -->
-                    <div class="fleet-group">
-                        <i class="fas fa-truck-pickup fleet-icon pickup-1t" title="Pickup 1.5 Ton"></i>
-                        <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
-                        <i class="fas fa-truck-moving fleet-icon truck-5t" title="Camión 5 Ton"></i>
-                        <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
-                    </div>
-
-                    <!-- Group 2 ( Starts Visible ) -->
-                    <div class="fleet-group">
-                        <i class="fas fa-truck-pickup fleet-icon pickup-1t" title="Pickup 1.5 Ton"></i>
-                        <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
-                        <i class="fas fa-truck-moving fleet-icon truck-5t" title="Camión 5 Ton"></i>
-                        <i class="fas fa-truck-pickup fleet-icon pickup-3t" title="Camioneta 3.5 Ton"></i>
-                    </div>
+            <!-- Usuario -->
+            <div class="mb-3">
+                <label for="id_username" class="login-field-label">
+                    <i class="fas fa-user me-1" style="color: #f36f21;"></i> Nombre de Usuario
+                </label>
+                <div class="login-input-wrap">
+                    <input
+                        type="text"
+                        name="username"
+                        id="id_username"
+                        class="login-input"
+                        placeholder="Escribe tu usuario..."
+                        autocomplete="username"
+                        autofocus
+                        required
+                    >
                 </div>
             </div>
-            
-            <div class="text-center mb-4">
-                <p class="text-muted mt-2" style="font-size: 1.1rem;">Sistema de Gestión Logística</p>
+
+            <!-- Contraseña -->
+            <div class="mb-4">
+                <label for="id_password" class="login-field-label">
+                    <i class="fas fa-lock me-1" style="color: #f36f21;"></i> Contraseña
+                </label>
+                <div class="login-input-wrap" style="position: relative;">
+                    <input
+                        type="password"
+                        name="password"
+                        id="id_password"
+                        class="login-input"
+                        placeholder="Escribe tu contraseña..."
+                        autocomplete="current-password"
+                        required
+                        style="padding-right: 44px;"
+                    >
+                    <!-- Toggle visibility -->
+                    <button type="button" id="togglePwd"
+                        style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#94a3b8; font-size:1rem; padding:0;"
+                        title="Mostrar / Ocultar contraseña">
+                        <i class="fas fa-eye" id="togglePwdIcon"></i>
+                    </button>
+                </div>
             </div>
-        {% else %}
-            <!-- Original Single Icon for QA/PROD -->
-            <div class="text-center mb-4">
-                <i class="fas fa-truck-moving" style="font-size: 3rem; color: var(--primary-orange);"></i>
-                <p class="text-muted mt-3" style="font-size: 1.1rem;">Sistema de Gestión Logística</p>
-            </div>
-        {% endif %}
-        
-        <form method="post">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <div class="d-grid gap-2 mt-4">
-                <button type="submit" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none; font-weight: bold;">INGRESAR AL SISTEMA</button>
-            </div>
+
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>Ingresar al Sistema
+            </button>
         </form>
+
+        <script>
+        document.getElementById('togglePwd').addEventListener('click', function() {
+            const input = document.getElementById('id_password');
+            const icon = document.getElementById('togglePwdIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+        </script>
+
     </div>
 </div>
-{% endblock %}
 
+<p class="login-footer">
+    © {{ year|default:"2026" }} Casa Lupita · Tlapalería, Ferretería y Construcción<br>
+    Distribuidor Construrama desde 1988
+</p>
+
+{% endblock %}

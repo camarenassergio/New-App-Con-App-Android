@@ -3,109 +3,111 @@
 {% block page_title %}Gestión de Unidades{% endblock %} 
 
 {% block content %}
-<div style="display: flex; justify-content: flex-end; margin-bottom: 20px">
-  <a href="{% url 'dashboard:unidad_create' %}" class="btn-primary">
-    <i class="fas fa-plus"></i> Nueva Unidad
-  </a>
-</div>
-
 <div class="table-container">
-  <div class="table-header">
-    <h3>Flotilla Registrada</h3>
-    <!-- Search bar could go here -->
-  </div>
+    <div class="table-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Flotilla Registrada</h3>
+        <a href="{% url 'dashboard:unidad_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Nueva Unidad
+        </a>
+    </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Unidad</th>
-        <th>Marca/Submarca</th>
-        <th>Placas</th>
-        <th>Modelo</th>
-        <th>Estatus</th>
-        <th>Semáforo</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for unidad in unidades %}
-      <tr>
-        <td style="font-weight: bold;" class="texto-azul-corporativo">
-          {{ unidad.nUnidad }}
-        </td>
-        <td>{{ unidad.marca }} {{ unidad.submarca }}</td>
-        <td>
-          <span class="placa-badge" style="border-left: 5px solid {{ unidad.color_engomado_hex }};">
-            {{ unidad.placas }}
-          </span>
-          <br />
-          <small class="placa-legend">
-            Holo: <strong>{{ unidad.holograma }}</strong> | {{ unidad.color_engomado }}
-          </small>
-        </td>
-        <td>{{ unidad.modelo_anio }}</td>
-        <td style="vertical-align: middle;">
-          <form method="post" action="{% url 'dashboard:unidad_toggle' unidad.pk %}" style="margin: 0;">
-            {% csrf_token %}
-            {% if unidad.en_servicio %}
-            <button type="submit" class="badge badge-success" style="border: none; cursor: pointer; padding: 6px 10px;" title="Unidad en servicio. Clic para dar de baja temporal" onclick="return confirm('Aviso: Estás a punto de MENDAR A TALLER / DAR DE BAJA TEMPORAL la unidad {{ unidad.nombre_corto|default:unidad.nUnidad }}.\n\nPara confirmar esta acción, da clic en Aceptar.');">
-              <i class="fas fa-toggle-on"></i> Activa
-            </button>
-            {% else %}
-            <button type="submit" class="badge badge-danger" style="border: none; cursor: pointer; padding: 6px 10px;" title="Unidad en taller/fuera de servicio. Clic para reactivar" onclick="return confirm('Aviso: Estás a punto de REACTIVAR la unidad {{ unidad.nombre_corto|default:unidad.nUnidad }} para que vuelva a estar en servicio.\n\nPara confirmar esta acción, da clic en Aceptar.');">
-              <i class="fas fa-toggle-off"></i> Inactiva
-            </button>
-            {% endif %}
-          </form>
-        </td>
-        <td style="vertical-align: middle;">
-          <!-- Alert Logic Preview -->
-          {% if '✅' in unidad.alerta_circulacion %}
-          <span
-            class="badge badge-success" style="padding: 6px 10px;"
-            title="{{ unidad.alerta_circulacion }}"
-            >Circula</span
-          >
-          {% else %}
-          <span
-            class="badge badge-danger" style="padding: 6px 10px;"
-            title="{{ unidad.alerta_circulacion }}"
-            >No Circula</span
-          >
-          {% endif %}
-        </td>
-        <td>
-          <a
-            href="{% url 'dashboard:unidad_update' unidad.pk %}"
-            class="action-icon-btn edit-icon"
-            title="Editar"
-          >
-            <i class="fas fa-edit"></i>
-          </a>
-          <a
-            href="{% url 'dashboard:unidad_detail' unidad.pk %}"
-            class="action-icon-btn view-icon"
-            title="Ver Detalle"
-          >
-            <i class="fas fa-eye"></i>
-          </a>
-        </td>
-      </tr>
-      {% empty %}
-<tr>
-    <td colspan="100%" class="text-center" style="border: none; padding: 4rem 1rem;">
-        <div class="empty-state d-flex flex-column align-items-center justify-content-center" style="opacity: 0.8; animation: fadeIn 0.6s ease-in-out;">
-            <i class="fas fa-truck text-muted mb-3" style="font-size: 4.5rem; color: #cbd5e1 !important;"></i>
-            <h4 class="text-muted fw-bold mb-2" style="color: #64748b !important;">Aún no hay registros de Unidades</h4>
-            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.05rem;">Comienza creando el primer registro para visualizar y administrar la información aquí.</p>
-            <a href="{% url 'dashboard:unidad_create' %}" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 50px; padding: 10px 30px;">
-                <i class="fas fa-plus me-2"></i> Dar de Alta Unidad
-            </a>
-        </div>
-    </td>
-</tr>
-{% endfor %}
-    </tbody>
-  </table>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th class="ps-4">Unidad</th>
+                    <th>Marca/Submarca</th>
+                    <th>Placas</th>
+                    <th>Modelo</th>
+                    <th>Estatus</th>
+                    <th>Semáforo</th>
+                    <th class="pe-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for unidad in unidades %}
+                <tr>
+                    <td class="ps-4 fw-bold">
+                        <span class="text-primary">{{ unidad.nUnidad }}</span>
+                    </td>
+                    <td>{{ unidad.marca }} {{ unidad.submarca }}</td>
+                    <td>
+                        <span class="placa-badge" style="border-left: 5px solid {{ unidad.color_engomado_hex|default:'#ccc' }};">
+                            {{ unidad.placas }}
+                        </span>
+                        <div class="mt-1">
+                            <small class="text-muted">
+                                Holo: <strong>{{ unidad.holograma }}</strong> | {{ unidad.color_engomado }}
+                            </small>
+                        </div>
+                    </td>
+                    <td>{{ unidad.modelo_anio }}</td>
+                    <td>
+                        <form class="m-0">
+                            {% csrf_token %}
+                            {% if unidad.en_servicio %}
+                            <button type="button"
+                                    class="badge bg-success border-0 px-3 py-2 rounded-pill"
+                                    title="En servicio. Clic para dar de baja temporal"
+                                    aria-label="Dar de baja temporal a {{ unidad.nombre_corto|default:unidad.nUnidad }}"
+                                    hx-post="{% url 'dashboard:unidad_toggle' unidad.pk %}"
+                                    hx-target="closest tr"
+                                    hx-swap="outerHTML"
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-confirm="Dar de BAJA TEMPORAL / TALLER a {{ unidad.nombre_corto|default:unidad.nUnidad }}. ¿Continuar?">
+                                <i class="fas fa-toggle-on me-1"></i> Activa
+                            </button>
+                            {% else %}
+                            <button type="button"
+                                    class="badge bg-danger border-0 px-3 py-2 rounded-pill"
+                                    title="En taller. Clic para reactivar"
+                                    aria-label="Reactivar unidad {{ unidad.nombre_corto|default:unidad.nUnidad }}"
+                                    hx-post="{% url 'dashboard:unidad_toggle' unidad.pk %}"
+                                    hx-target="closest tr"
+                                    hx-swap="outerHTML"
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-confirm="REACTIVAR la unidad {{ unidad.nombre_corto|default:unidad.nUnidad }}. ¿Continuar?">
+                                <i class="fas fa-toggle-off me-1"></i> Inactiva
+                            </button>
+                            {% endif %}
+                        </form>
+                    </td>
+                    <td>
+                        {% if '✅' in unidad.alerta_circulacion %}
+                        <span class="badge bg-success px-3 py-2 rounded-pill" title="{{ unidad.alerta_circulacion }}">Circula</span>
+                        {% else %}
+                        <span class="badge bg-danger px-3 py-2 rounded-pill" title="{{ unidad.alerta_circulacion }}">No Circula</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-center">
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="{% url 'dashboard:unidad_update' unidad.pk %}" class="btn btn-sm btn-outline-primary"
+                               title="Editar" aria-label="Editar unidad {{ unidad.nUnidad }}">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'dashboard:unidad_detail' unidad.pk %}" class="btn btn-sm btn-outline-info"
+                               title="Ver detalle" aria-label="Ver detalle de unidad {{ unidad.nUnidad }}">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="100%" class="text-center py-5">
+                        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
+                            <i class="fas fa-truck mb-3" style="font-size: 5rem;"></i>
+                            <h4 class="fw-bold mb-2">Aún no hay registros de Unidades</h4>
+                            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.1rem;">Comienza creando el primer registro para gestionar tu flotilla.</p>
+                            <a href="{% url 'dashboard:unidad_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
+                                <i class="fas fa-plus me-2"></i> Dar de Alta Unidad
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

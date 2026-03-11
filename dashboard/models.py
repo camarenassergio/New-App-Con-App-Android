@@ -423,6 +423,26 @@ class ZonaEntrega(models.Model):
         verbose_name_plural = "Zonas de Entrega"
         ordering = ['nombre']
 
+    @property
+    def text_color(self):
+        """Calcula si el texto debe ser blanco o negro para mejor contraste con color_hex"""
+        if not self.color_hex or not self.color_hex.startswith('#'):
+            return "#ffffff"
+        
+        color = self.color_hex.lstrip('#')
+        if len(color) != 6:
+            return "#ffffff"
+            
+        try:
+            r = int(color[0:2], 16)
+            g = int(color[2:4], 16)
+            b = int(color[4:6], 16)
+            # Algoritmo de luminancia (YIQ)
+            luminance = (r * 299 + g * 587 + b * 114) / 1000
+            return "#000000" if luminance > 125 else "#ffffff"
+        except ValueError:
+            return "#ffffff"
+
     def limpiar_codigos(self):
         """Limpia la cadena de CP, eliminando espacios y duplicados vacíos"""
         if not self.codigos_postales: return []

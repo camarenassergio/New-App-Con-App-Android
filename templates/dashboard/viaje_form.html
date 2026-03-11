@@ -4,70 +4,72 @@
 {% block page_title %}{% if object %}Editar Viaje #{{ object.n_viaje }}{% else %}Programar Nuevo Viaje{% endif %}{% endblock %}
 
 {% block content %}
-<div class="form-container" style="max-width: 800px; margin: 0 auto; background: var(--bg-card); padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-    <div style="margin-bottom: 24px; border-bottom: 1px solid var(--border-color, #eee); padding-bottom: 16px;">
-        <h3 style="color: var(--primary-blue, #003366);"><i class="fas fa-route"></i> Detalles del Viaje</h3>
-        <p class="text-muted" style="color: var(--text-muted);">Alineado a los lineamientos SDC (Módulo 3.1 Entregas y Logística).</p>
+<div class="form-container" style="max-width: 800px; margin: 0 auto;">
+    <div class="form-header">
+        <h3><i class="fas fa-route me-2"></i> Detalles del Viaje</h3>
+        <p class="text-muted mb-0">Alineado a los lineamientos SDC (Módulo 3.1 Entregas y Logística).</p>
     </div>
 
-    <div id="formContainer">
-<form method="post" id="viajeForm" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
-        {% csrf_token %}
-        
-        <div class="row mb-3">
-            <div class="col-md-6">
-                {{ form.unidad|as_crispy_field }}
-            </div>
-            <div class="col-md-6">
-                {{ form.operador|as_crispy_field }}
-            </div>
-        </div>
+    <div id="formContainer" style="padding: 28px;">
+        <form method="post" id="viajeForm" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
+            {% csrf_token %}
 
-        <div class="row mb-3">
-            <div class="col-md-4">
-                {{ form.tipo_viaje|as_crispy_field }}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.unidad|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.operador|as_crispy_field }}
+                </div>
             </div>
-            <div class="col-md-4">
-                {{ form.estado_actual|as_crispy_field }}
-            </div>
-            <div class="col-md-4">
-                {{ form.zona|as_crispy_field }}
-            </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col-12">
-                {{ form.folio_nota_factura|as_crispy_field }}
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    {{ form.tipo_viaje|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.estado_actual|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.zona|as_crispy_field }}
+                </div>
             </div>
-        </div>
 
-        <h5 style="color: var(--primary-blue, #003366); margin-top: 30px; border-bottom: 1px solid var(--border-color, #eee); padding-bottom: 10px;">Control de Tiempos y Distancias</h5>
-        
-        <div class="row mb-3 mt-3">
-            <div class="col-md-6">
-                {{ form.hora_salida_cedis|as_crispy_field }}
+            <div class="row mb-3">
+                <div class="col-12">
+                    {{ form.folio_nota_factura|as_crispy_field }}
+                </div>
             </div>
-            <div class="col-md-6">
-                {{ form.hora_llegada_cedis|as_crispy_field }}
-            </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col-md-6">
-                {{ form.km_salida|as_crispy_field }}
+            <div class="border-bottom pb-2 mb-3 mt-4">
+                <h5 class="fw-bold mb-0"><i class="fas fa-clock me-2"></i>Control de Tiempos y Distancias</h5>
             </div>
-            <div class="col-md-6">
-                {{ form.km_llegada|as_crispy_field }}
+
+            <div class="row mb-3 mt-3">
+                <div class="col-md-6">
+                    {{ form.hora_salida_cedis|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.hora_llegada_cedis|as_crispy_field }}
+                </div>
             </div>
-        </div>
-        
-        <div style="margin-top: 32px; display: flex; gap: 16px;">
-            <button type="submit" class="btn btn-primary" style="background-color: var(--primary-blue, #003366); border-color: var(--primary-blue, #003366);">
-                <i class="fas fa-save"></i> Guardar Viaje
-            </button>
-            <a href="{% url 'dashboard:viajes_list' %}" class="btn btn-outline-secondary">Cancelar</a>
-        </div>
-    </form>
-</div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.km_salida|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.km_llegada|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 mt-4">
+                <button type="submit" class="btn btn-primary px-5">
+                    <i class="fas fa-save me-2"></i> Guardar Viaje
+                </button>
+                <a href="{% url 'dashboard:viajes_list' %}" class="btn btn-outline-secondary px-4">Cancelar</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

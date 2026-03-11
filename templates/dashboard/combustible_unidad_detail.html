@@ -6,19 +6,18 @@
 {% block content %}
 
 <div class="header-actions">
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <i class="fas fa-truck" style="font-size: 2rem; color: var(--primary-color);"></i>
+    <div class="d-flex align-items-center gap-3">
+        <i class="fas fa-truck" style="font-size: 2rem; color: var(--primary-orange);"></i>
         <div>
-            <h1 style="margin: 0;">{{ unidad.nUnidad }} - {{ unidad.marca }} {{ unidad.submarca }}</h1>
-            <p class="text-muted" style="margin: 0;">PLACAS: {{ unidad.placas }} | MODELO: {{ unidad.modelo_anio }}</p>
+            <h1 class="mb-0">{{ unidad.nUnidad }} - {{ unidad.marca }} {{ unidad.submarca }}</h1>
+            <p class="text-muted mb-0">PLACAS: {{ unidad.placas }} | MODELO: {{ unidad.modelo_anio }}</p>
         </div>
     </div>
-    
-    <div style="text-align: right;">
-        <a href="{% url 'dashboard:combustible_general' %}" class="btn btn-secondary">
+    <div class="d-flex gap-2">
+        <a href="{% url 'dashboard:combustible_general' %}" class="btn btn-outline-secondary" aria-label="Volver al listado de combustible">
             <i class="fas fa-arrow-left"></i> Volver
         </a>
-        <a href="{% url 'dashboard:combustible_create' %}?unidad={{ unidad.pk }}" class="btn-primary">
+        <a href="{% url 'dashboard:combustible_create' %}?unidad={{ unidad.pk }}" class="btn btn-primary" aria-label="Registrar nueva carga de combustible para {{ unidad.nUnidad }}">
             <i class="fas fa-plus"></i> Nueva Carga
         </a>
     </div>
@@ -51,17 +50,17 @@
     
     <table class="data-table">
         <thead>
-            <tr style="background-color: #ff6b00; color: white;"> <!-- Orange header per user image -->
-                <th># Carga</th>
+            <tr>
+                <th>\# Carga</th>
                 <th>Fecha</th>
                 <th>Chofer</th>
-                <th class="text-right">Kilometraje</th>
-                <th class="text-right">Km Entre Cargas</th>
-                <th class="text-right">Litros</th>
-                <th class="text-right">Rendimiento (Km/L)</th>
-                <th class="text-right">Precio x Litro</th>
-                <th class="text-right">Total</th>
-                <th class="text-right">Propina</th>
+                <th class="text-end">Kilometraje</th>
+                <th class="text-end">Km Entre Cargas</th>
+                <th class="text-end">Litros</th>
+                <th class="text-end">Rendimiento (Km/L)</th>
+                <th class="text-end">Precio x Litro</th>
+                <th class="text-end">Total</th>
+                <th class="text-end">Propina</th>
                 <th class="text-center">Evidencia</th>
                 <th class="text-center">Obs.</th>
                 <th class="text-center">Acciones</th>
@@ -87,18 +86,20 @@
                 <td class="text-right font-bold">${{ carga.total|floatformat:2|intcomma }}</td>
                 <td class="text-right">${{ carga.propina|floatformat:2 }}</td>
                 <td class="text-center">
-                    <div style="display: flex; gap: 8px; justify-content: center;">
+                    <div class="d-flex gap-2 justify-content-center">
                         {% if carga.evidencia_antes %}
-                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#evidenciaModal" 
-                                data-bs-image="{{ carga.evidencia_antes.url }}" 
-                                data-bs-title="Evidencia Antes - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga #{{ carga.numero }})">
+                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#evidenciaModal"
+                                data-bs-image="{{ carga.evidencia_antes.url }}"
+                                data-bs-title="Evidencia Antes - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga \#{{ carga.numero }})"
+                                aria-label="Ver evidencia ANTES de cargar (Carga \#{{ carga.numero }})">
                             <i class="fas fa-camera" style="color: var(--primary-orange);"></i>
                         </button>
                         {% endif %}
                         {% if carga.evidencia_despues %}
-                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#evidenciaModal" 
-                                data-bs-image="{{ carga.evidencia_despues.url }}" 
-                                data-bs-title="Evidencia Después - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga #{{ carga.numero }})">
+                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#evidenciaModal"
+                                data-bs-image="{{ carga.evidencia_despues.url }}"
+                                data-bs-title="Evidencia Después - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga \#{{ carga.numero }})"
+                                aria-label="Ver evidencia DESPUÉS de cargar (Carga \#{{ carga.numero }})">
                             <i class="fas fa-check-circle text-success"></i>
                         </button>
                         {% endif %}
@@ -120,24 +121,24 @@
                 </td>
                 </td>
                 <td class="text-center">
-                    <div style="display: flex; gap: 5px; justify-content: center;">
+                    <div class="d-flex gap-2 justify-content-center">
                         {% if carga.puede_editar %}
-                            <a href="{% url 'dashboard:combustible_edit' carga.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                            <a href="{% url 'dashboard:combustible_edit' carga.id %}" class="btn btn-sm btn-outline-primary"
+                               aria-label="Editar carga \#{{ carga.numero }} del {{ carga.fecha|date:'d/m/Y' }}" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
                             </a>
                         {% endif %}
-                        
                         {% if carga.es_reciente %}
-                             <button type="button" class="btn btn-sm btn-outline-danger" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#deleteModal" 
+                             <button type="button" class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal"
                                     data-bs-action="{% url 'dashboard:combustible_delete' carga.id %}"
-                                    data-bs-carga="#{{ carga.numero }} ({{ carga.fecha|date:'d/m/Y' }})"
+                                    data-bs-carga="\#{{ carga.numero }} ({{ carga.fecha|date:'d/m/Y' }})"
+                                    aria-label="Eliminar carga \#{{ carga.numero }} del {{ carga.fecha|date:'d/m/Y' }}"
                                     title="Eliminar Registro">
                                 <i class="fas fa-trash"></i>
                             </button>
                         {% endif %}
-                        
                         {% if not carga.puede_editar and not carga.es_reciente %}
                             <span class="text-muted" title="Periodo de edición cerrado"><i class="fas fa-lock"></i></span>
                         {% endif %}
@@ -145,8 +146,8 @@
                 </td>
             </tr>
             {% endfor %}
-            <tr style="background-color: #f0f0f0; font-weight: bold;">
-                <td colspan="5" class="text-right">TOTALES HISTÓRICOS</td>
+            <tr class="totales-row">
+                <td colspan="5" class="text-end fw-bold">TOTALES HISTÓRICOS</td>
                 <td class="text-right">{{ totales_historicos.litros|floatformat:2|intcomma }}</td>
                 <td class="text-right">-</td> <!-- Promedio Rendimiento could go here -->
                 <td class="text-right">-</td>
@@ -180,21 +181,26 @@
 
 <style>
     .text-right { text-align: right; }
+    .text-end { text-align: right; }
     .font-bold { font-weight: bold; }
     .header-actions {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        background: white;
+        background: var(--bg-card);
         padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: var(--shadow-sm);
     }
-    /* Estilo para que el header de la tabla sea naranja como la imagen */
     .data-table thead tr th {
-        background-color: #e65100; /* Darker orange */
+        background-color: var(--primary-orange);
         color: white;
+    }
+    .totales-row td {
+        background-color: var(--bg-body) !important;
+        font-weight: 700;
+        color: var(--text-main);
     }
 </style>
 

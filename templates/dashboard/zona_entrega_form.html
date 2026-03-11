@@ -4,10 +4,10 @@
 {% block page_title %}{% if object %}Editar Zona: {{ object.nombre }}{% else %}Nueva Zona de Entrega{% endif %}{% endblock %}
 
 {% block content %}
-<div class="form-container" style="max-width: 800px; margin: 0 auto; background: var(--bg-card); padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-    <div style="margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
-        <h3 style="color: var(--primary-blue, #003366);"><i class="fas fa-map-marked-alt"></i> Detalles de la Zona</h3>
-        <p class="text-muted small" style="color: var(--text-muted);">Agregue los Códigos Postales separados por comas para agrupar destinos en automático.</p>
+<div class="form-container" style="max-width: 800px; margin: 0 auto;">
+    <div class="form-header">
+        <h3><i class="fas fa-map-marked-alt me-2"></i> Detalles de la Zona</h3>
+        <p class="text-muted mb-0">Agrega los Códigos Postales separados por comas para agrupar destinos automáticamente.</p>
     </div>
 
     <div id="formContainer">
@@ -70,10 +70,10 @@
             </div>
         </div>
 
-        <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: flex-end;">
-            <a href="{% url 'dashboard:zona_entrega_list' %}" class="btn btn-outline-secondary">Cancelar</a>
-            <button type="submit" class="btn btn-primary" style="background-color: var(--primary-blue, #003366); border-color: var(--primary-blue, #003366);">
-                <i class="fas fa-save"></i> Guardar Zona
+        <div class="d-flex gap-3 mt-4 justify-content-end">
+            <a href="{% url 'dashboard:zona_entrega_list' %}" class="btn btn-outline-secondary px-4">Cancelar</a>
+            <button type="submit" class="btn btn-primary px-5">
+                <i class="fas fa-save me-2"></i> Guardar Zona
             </button>
         </div>
     </form>
@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                                             (Operación: $${d.costo_operativo_km.toFixed(2)}/km) = <strong>$${d.subtotal_km.toFixed(2)}</strong><br>
                                                             - Tiempo Estimado c/Descarga: ${d.tiempo_total_mins} min
                                                             (Personal: $${d.costo_minuto_personal.toFixed(2)}/min) = <strong>$${d.subtotal_tiempo.toFixed(2)}</strong><br>
-                                                            <strong style="color: #003366; font-size: 1.1em; display: inline-block; margin-top: 5px;">
+                                                            <strong class="costo-base-total" style="font-size: 1.1em; display: inline-block; margin-top: 5px;">
                                                               COSTO BASE TOTAL: $${cot.costo.toFixed(2)}
                                                             </strong>
                                                         `;
@@ -212,8 +212,9 @@ document.addEventListener("DOMContentLoaded", function() {
                                                     if (tarifaInput) {
                                                         tarifaInput.value = peorEscenario.costo.toFixed(2);
                                                         // Animación color
+                                                        const isDark = document.body.classList.contains('dark-theme');
                                                         tarifaInput.style.transition = 'background-color 0.3s ease';
-                                                        tarifaInput.style.backgroundColor = '#e3f2fd'; // Azul suave
+                                                        tarifaInput.style.backgroundColor = isDark ? 'rgba(255,118,6,0.15)' : '#e3f2fd';
                                                         setTimeout(() => { tarifaInput.style.backgroundColor = ''; }, 1000);
                                                     }
                                                     

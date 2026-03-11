@@ -5,33 +5,32 @@
 
 {% block content %}
 
-<div class="header-actions">
-    <div>
-        <h1>Reporte Mensual de Combustible</h1>
-        <p class="text-muted">Desglose de consumo y costos por unidad</p>
+<div class="table-container">
+    <div class="table-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Reporte Mensual de Combustible</h3>
+        <a href="{% url 'dashboard:combustible_create' %}" class="btn btn-primary">
+            <i class="fas fa-gas-pump"></i> Registrar Carga
+        </a>
     </div>
-    <a href="{% url 'dashboard:combustible_create' %}" class="btn-primary">
-        <i class="fas fa-gas-pump"></i> Registrar Carga
-    </a>
-</div>
 
-<div class="filters-container" style="margin-bottom: 20px;">    
-    <!-- Filtros de Fecha Avanzados -->
-    <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: flex-end; gap: 20px;">
-        <form method="get" style="display: flex; align-items: flex-end; gap: 20px; width: 100%;">
+    <div style="padding: 20px;">
+        <p class="text-muted mb-4">Desglose de consumo y costos por unidad por mes.</p>
+        
+        <!-- Filtros de Fecha Avanzados -->
+        <form method="get" class="d-flex align-items-end gap-3 flex-wrap">
             
             <!-- Grupo Inicio -->
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-weight: 500; font-size: 0.9em; color: #555;">Desde</label>
-                <div style="display: flex; gap: 5px;">
-                    <select name="mes_inicio" class="form-select" style="min-width: 110px;">
+            <div class="d-flex flex-column gap-1">
+                <label class="form-label mb-0 fw-bold" style="font-size: 0.85rem;">Desde</label>
+                <div class="d-flex gap-2">
+                    <select name="mes_inicio" class="form-select" style="min-width: 130px;">
                         {% for m in meses_range %}
                         <option value="{{ m }}" {% if filtros.mes_inicio == m %}selected{% endif %}>
                             {% if m == 1 %}ENERO{% elif m == 2 %}FEBRERO{% elif m == 3 %}MARZO{% elif m == 4 %}ABRIL{% elif m == 5 %}MAYO{% elif m == 6 %}JUNIO{% elif m == 7 %}JULIO{% elif m == 8 %}AGOSTO{% elif m == 9 %}SEPTIEMBRE{% elif m == 10 %}OCTUBRE{% elif m == 11 %}NOVIEMBRE{% elif m == 12 %}DICIEMBRE{% endif %}
                         </option>
                         {% endfor %}
                     </select>
-                    <select name="anio_inicio" class="form-select" style="min-width: 90px;">
+                    <select name="anio_inicio" class="form-select" style="min-width: 100px;">
                         {% for yy in anios_disponibles %}
                         <option value="{{ yy }}" {% if filtros.anio_inicio == yy %}selected{% endif %}>{{ yy }}</option>
                         {% endfor %}
@@ -40,22 +39,22 @@
             </div>
 
             <!-- Separator -->
-            <div style="padding-bottom: 8px; color: #aaa;">
+            <div class="pb-2 text-muted">
                 <i class="fas fa-arrow-right"></i>
             </div>
             
             <!-- Grupo Fin -->
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-weight: 500; font-size: 0.9em; color: #555;">Hasta</label>
-                <div style="display: flex; gap: 5px;">
-                    <select name="mes_fin" class="form-select" style="min-width: 110px;">
+            <div class="d-flex flex-column gap-1">
+                <label class="form-label mb-0 fw-bold" style="font-size: 0.85rem;">Hasta</label>
+                <div class="d-flex gap-2">
+                    <select name="mes_fin" class="form-select" style="min-width: 130px;">
                         {% for m in meses_range %}
                         <option value="{{ m }}" {% if filtros.mes_fin == m %}selected{% endif %}>
                            {% if m == 1 %}ENERO{% elif m == 2 %}FEBRERO{% elif m == 3 %}MARZO{% elif m == 4 %}ABRIL{% elif m == 5 %}MAYO{% elif m == 6 %}JUNIO{% elif m == 7 %}JULIO{% elif m == 8 %}AGOSTO{% elif m == 9 %}SEPTIEMBRE{% elif m == 10 %}OCTUBRE{% elif m == 11 %}NOVIEMBRE{% elif m == 12 %}DICIEMBRE{% endif %}
                         </option>
                         {% endfor %}
                     </select>
-                    <select name="anio_fin" class="form-select" style="min-width: 90px;">
+                    <select name="anio_fin" class="form-select" style="min-width: 100px;">
                         {% for yy in anios_disponibles %}
                         <option value="{{ yy }}" {% if filtros.anio_fin == yy %}selected{% endif %}>{{ yy }}</option>
                         {% endfor %}
@@ -63,11 +62,11 @@
                 </div>
             </div>
             
-            <button type="submit" class="btn btn-primary" style="height: 38px;">
-                <i class="fas fa-filter"></i> Filtrar
+            <button type="submit" class="btn btn-secondary px-4">
+                <i class="fas fa-filter me-1"></i> Filtrar
             </button>
             
-            <a href="?" class="btn btn-outline-secondary" style="height: 38px;" title="Resetear Filtros">
+            <a href="?" class="btn btn-outline-secondary" title="Resetear Filtros">
                 <i class="fas fa-undo"></i>
             </a>
             
@@ -75,77 +74,77 @@
     </div>
 </div>
 
+<div class="mt-4">
 {% for mes_data in reporte_mensual %}
-<div class="table-container" style="margin-bottom: 30px;">
-    <div class="table-header">
-        <h3>{{ mes_data.mes_nombre }}</h3>
-        <span class="badge" style="background: #eee; color: #333;">Total Mes: ${{ mes_data.totales.total_global|floatformat:2|intcomma }}</span>
+<div class="table-container shadow-sm mb-5">
+    <div class="table-header p-3 border-bottom d-flex justify-content-between align-items-center" style="background: rgba(0,0,0,0.02);">
+        <h4 class="mb-0 fw-bold">{{ mes_data.mes_nombre }}</h4>
+        <span class="badge bg-light text-dark border p-2 px-3 fs-6">
+            <span class="text-muted fw-normal">Total Mes:</span> 
+            <span class="fw-bold">${{ mes_data.totales.total_global|floatformat:2|intcomma }}</span>
+        </span>
     </div>
-    
-    <table class="data-table">
+    <table class="table align-middle">
         <thead>
             <tr>
-                <th>Unidad</th>
+                <th class="ps-4">Unidad</th>
                 <th>Placas</th>
                 <th>Km Recorridos</th>
-                <th class="text-right">Litros</th>
-                <th class="text-right">Costo Combustible</th>
-                <th class="text-right">% Consumo</th>
-                <th class="text-right">Total</th>
+                <th class="text-end">Litros</th>
+                <th class="text-end">Costo Combustible</th>
+                <th class="text-end">% Consumo</th>
+                <th class="text-end pe-4">Total</th>
             </tr>
         </thead>
         <tbody>
             {% for fila in mes_data.filas %}
             <tr>
-                <td>
-                    <a href="{% url 'dashboard:combustible_unidad_detail' fila.unidad.pk %}" style="font-weight: bold; color: var(--primary-color);">
-                        {{ fila.unidad.nombre_corto|default:fila.unidad.nUnidad }} - {{ fila.unidad.marca }}
+                <td class="ps-4">
+                    <a href="{% url 'dashboard:combustible_unidad_detail' fila.unidad.pk %}" class="fw-bold text-decoration-none">
+                        {{ fila.unidad.nUnidad }} - {{ fila.unidad.nombre_corto|default:fila.unidad.nUnidad }}
                     </a>
+                    <small class="d-block text-muted">{{ fila.unidad.marca }}</small>
                 </td>
-                <td>{{ fila.unidad.placas }}</td>
+                <td><span class="placa-badge">{{ fila.unidad.placas }}</span></td>
                 <td>{{ fila.km_recorridos|intcomma }} km</td>
                 
-                <td class="text-right">{{ fila.litros|floatformat:2 }} L</td>
-                <td class="text-right font-bold">${{ fila.costo_combustible|floatformat:2|intcomma }}</td>
-                <td class="text-right">{{ fila.pct_consumo|floatformat:1 }}%</td>
-                <td class="text-right font-bold">${{ fila.total|floatformat:2|intcomma }}</td>
+                <td class="text-end">{{ fila.litros|floatformat:2 }} L</td>
+                <td class="text-end fw-bold">${{ fila.costo_combustible|floatformat:2|intcomma }}</td>
+                <td class="text-end">
+                    <div class="progress" style="height: 6px; width: 80px; display: inline-flex; margin-right: 10px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ fila.pct_consumo }}%" aria-valuenow="{{ fila.pct_consumo }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    {{ fila.pct_consumo|floatformat:1 }}%
+                </td>
+                <td class="text-end fw-bold pe-4">${{ fila.total|floatformat:2|intcomma }}</td>
             </tr>
             {% endfor %}
             <!-- Fila de Totales del Mes -->
-            <tr style="background-color: #f9f9f9; font-weight: bold; border-top: 2px solid #ddd;">
-                <td colspan="2" class="text-right">TOTALES</td>
+            <tr class="table-active fw-bold">
+                <td colspan="2" class="text-end ps-4">TOTALES DEL MES</td>
                 <td>{{ mes_data.totales.km|intcomma }} km</td>
-                <td class="text-right">{{ mes_data.totales.litros|floatformat:2|intcomma }} L</td>
-                <td class="text-right">${{ mes_data.totales.combustible|floatformat:2|intcomma }}</td>
-                <td class="text-right">100%</td>
-                <td class="text-right">${{ mes_data.totales.total_global|floatformat:2|intcomma }}</td>
+                <td class="text-end">{{ mes_data.totales.litros|floatformat:2|intcomma }} L</td>
+                <td class="text-end">${{ mes_data.totales.combustible|floatformat:2|intcomma }}</td>
+                <td class="text-end">100%</td>
+                <td class="text-end pe-4">${{ mes_data.totales.total_global|floatformat:2|intcomma }}</td>
             </tr>
         </tbody>
     </table>
 </div>
 {% empty %}
-<div class="empty-state">
-    <i class="fas fa-gas-pump"></i>
-    <h3>No hay registros de combustible</h3>
-    <p>Comienza registrando las cargas de tus unidades.</p>
-    <a href="{% url 'dashboard:combustible_create' %}" class="btn-primary">Registrar Primera Carga</a>
+<div class="table-container">
+    <div class="p-5 text-center">
+        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
+            <i class="fas fa-gas-pump mb-3" style="font-size: 5rem;"></i>
+            <h3 class="fw-bold mb-2">No hay registros de combustible</h3>
+            <p class="mb-4 text-muted" style="max-width: 450px; font-size: 1.1rem;">Comienza registrando las cargas de tus unidades para generar reportes mensuales automáticos.</p>
+            <a href="{% url 'dashboard:combustible_create' %}" class="btn btn-primary btn-lg px-5 shadow-sm" style="border-radius: 50px;">
+                <i class="fas fa-plus me-2"></i> Registrar Primera Carga
+            </a>
+        </div>
+    </div>
 </div>
 {% endfor %}
-
-<style>
-    .text-right { text-align: right; }
-    .font-bold { font-weight: bold; }
-    .header-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    .badge {
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 0.9em;
-    }
-</style>
+</div>
 
 {% endblock %}

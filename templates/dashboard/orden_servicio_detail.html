@@ -3,155 +3,211 @@
 {% block page_title %}Orden de Servicio | {{ orden.unidad.nUnidad }}{% endblock %}
 
 {% block content %}
-<div class="form-container" style="max-width: 800px; margin: 0 auto; background: white; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px;">
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <i class="fas fa-tools fa-3x" style="color: #003366;"></i>
-            <div>
-                <h2 style="margin: 0; color: #003366;">CASA LUPITA</h2>
-                <small>Orden de Servicio - Mantenimiento</small>
-            </div>
-        </div>
-        <div style="text-align: right;">
-            <strong>FOLIO: OS-{{ orden.id }}</strong><br>
-            Clave: 3.5.1.4<br>
-            Fecha: {{ orden.fecha|date:"d M Y" }}
-        </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-        <!-- Columna Izquierda -->
-        <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-                <td style="border: 1px solid #ccc; padding: 8px; font-weight: bold; width: 40%; background: #f9f9f9;">Fecha:</td>
-                <td style="border: 1px solid #ccc; padding: 8px;">{{ orden.fecha|date:"d M Y" }}</td>
-            </tr>
-            <tr>
-                <td style="border: 1px solid #ccc; padding: 8px; font-weight: bold; background: #f9f9f9;">Unidad:</td>
-                <td style="border: 1px solid #ccc; padding: 8px;">{{ orden.unidad.nUnidad }} ({{ orden.unidad.marca }})</td>
-            </tr>
-            <tr>
-                <td style="border: 1px solid #ccc; padding: 8px; font-weight: bold; background: #f9f9f9;">Kilometraje:</td>
-                <td style="border: 1px solid #ccc; padding: 8px;">{{ orden.kilometraje }} km</td>
-            </tr>
-            <tr>
-                <td style="border: 1px solid #ccc; padding: 8px; font-weight: bold; background: #f9f9f9;">Nivel de gasolina:</td>
-                <td style="border: 1px solid #ccc; padding: 8px;">{{ orden.nivel_gasolina }}%</td>
-            </tr>
-        </table>
-
-        <!-- Columna Derecha -->
-        <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-                <td style="border: 1px solid #ccc; padding: 8px; font-weight: bold; width: 40%; background: #f9f9f9;">Chofer:</td>
-                <td style="border: 1px solid #ccc; padding: 8px;">{{ orden.chofer.get_full_name|default:orden.chofer.username }}</td>
-            </tr>
-            <tr>
-                <td colspan="2" style="border: 1px solid #ccc; padding: 8px; text-align: center; font-weight: bold; background: #e0e0e0;">Datos del servicio</td>
-            </tr>
-            <tr>
-                <td style="border: 1px solid #ccc; padding: 8px; font-weight: bold; background: #f9f9f9;">Hora de entrada:</td>
-                <td style="border: 1px solid #ccc; padding: 8px;">{{ orden.hora_entrada|time:"H:i"|default:"N/A" }}</td>
-            </tr>
-            <tr>
-                <td style="border: 1px solid #ccc; padding: 8px; font-weight: bold; background: #f9f9f9;">Hora de salida:</td>
-                <td style="border: 1px solid #ccc; padding: 8px;">{{ orden.hora_salida|time:"H:i"|default:"N/A" }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- Descripción Detallada -->
-    <div style="margin-bottom: 20px;">
-        <p style="font-weight: bold; margin-bottom: 5px;">Descripción detallada del servicio:</p>
-        <div style="border: 1px solid #ccc; padding: 15px; min-height: 80px; background: #fafafa; border-radius: 4px;">
-            {{ orden.descripcion_detallada|linebreaks }}
-        </div>
-    </div>
-
-    <!-- Responsable -->
-    <div style="margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; border-radius: 4px; background: #f9f9f9;">
-        <span style="font-weight: bold;">Responsable de realizar mantenimiento:</span>
-        <span style="margin-left: 15px;">
-            {% if orden.responsable_mantenimiento == 'INTERNO' %}
-                <i class="fas fa-check-square" style="color: #003366;"></i> Interno 
-            {% else %}
-                <i class="far fa-square" style="color: #999;"></i> Interno
-            {% endif %}
-            
-            <span style="display:inline-block; width: 20px;"></span>
-            
-            {% if orden.responsable_mantenimiento == 'EXTERNO' %}
-                <i class="fas fa-check-square" style="color: #003366;"></i> Externo: <u>{{ orden.nombre_responsable_externo|default:"N/A" }}</u>
-            {% else %}
-                <i class="far fa-square" style="color: #999;"></i> Externo
-            {% endif %}
-        </span>
-    </div>
-
-    <!-- Firmas -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; text-align: center;">
-        <div>
-            {% if orden.firma_solicitante_base64 %}
-                <img src="{{ orden.firma_solicitante_base64 }}" style="max-width: 100%; max-height: 100px; border-bottom: 1px solid #000; margin-bottom: 5px;" alt="Firma Solicitante">
-            {% else %}
-                <div style="height: 100px; border-bottom: 1px solid #000; margin-bottom: 5px;"></div>
-            {% endif %}
-            <p style="margin: 0; font-weight: bold;">{{ orden.nombre_solicitante }}</p>
-            <small>Nombre y firma de solicitante</small>
-        </div>
-        <div>
-            {% if orden.firma_autorizante_base64 %}
-                <img src="{{ orden.firma_autorizante_base64 }}" style="max-width: 100%; max-height: 100px; border-bottom: 1px solid #000; margin-bottom: 5px;" alt="Firma Autorizante">
-            {% else %}
-                <div style="height: 100px; border-bottom: 1px solid #000; margin-bottom: 5px;"></div>
-            {% endif %}
-            <p style="margin: 0; font-weight: bold;">{{ orden.nombre_autorizante|default:"-" }}</p>
-            <small>Nombre y firma de autorizante</small>
-        </div>
-    </div>
-
-    <!-- Comentarios -->
-    {% if orden.comentarios %}
-    <div style="margin-bottom: 20px;">
-        <p style="font-weight: bold; margin-bottom: 5px;">Comentarios:</p>
-        <div style="border-bottom: 1px dashed #ccc; padding-bottom: 5px;">
-            {{ orden.comentarios|linebreaks }}
-        </div>
-    </div>
-    {% endif %}
-    
-    <div style="text-align: center; margin-top: 30px;">
-        <button onclick="window.print()" class="btn btn-primary" style="padding: 10px 20px; font-size: 16px;">
-            <i class="fas fa-print"></i> Imprimir Formato
-        </button>
-        <a href="{% url 'dashboard:orden_servicio_list' %}" class="btn btn-secondary" style="padding: 10px 20px; font-size: 16px; margin-left: 10px;">
-            <i class="fas fa-arrow-left"></i> Volver
-        </a>
-    </div>
-</div>
-
 <style>
-/* Estilos para impresión (ocultar botones) */
+/* === ORDEN DE SERVICIO DETAIL === */
+.os-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    padding: 32px;
+    box-shadow: var(--shadow-md);
+    border-radius: 12px;
+    color: var(--text-main);
+}
+.os-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--primary-blue);
+    padding-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.os-header-brand { display: flex; align-items: center; gap: 14px; }
+.os-brand-icon { color: var(--primary-blue); }
+.os-brand-title { margin: 0; color: var(--primary-blue); font-size: 1.3rem; }
+.os-folio { text-align: right; font-size: 0.9rem; color: var(--text-muted); }
+.os-folio strong { color: var(--text-main); font-size: 1rem; }
+
+.os-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+@media (max-width: 620px) {
+    .os-info-grid, .os-firmas-grid { grid-template-columns: 1fr; }
+}
+
+.os-table { width: 100%; border-collapse: collapse; }
+.os-table td {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    font-size: 0.88rem;
+    color: var(--text-main);
+}
+.os-table td.label {
+    font-weight: 600;
+    width: 42%;
+    background: var(--bg-body);
+}
+.os-table td.section-header {
+    text-align: center;
+    font-weight: 700;
+    background: var(--table-header-bg);
+    border: 1px solid var(--border-color);
+}
+
+.os-description-block { margin-bottom: 20px; }
+.os-description-label { font-weight: 600; margin-bottom: 6px; color: var(--text-main); }
+.os-description-content {
+    border: 1px solid var(--border-color);
+    padding: 14px;
+    min-height: 80px;
+    background: var(--bg-body);
+    border-radius: 6px;
+    color: var(--text-main);
+    font-size: 0.9rem;
+}
+
+.os-responsable {
+    margin-bottom: 28px;
+    border: 1px solid var(--border-color);
+    padding: 14px;
+    border-radius: 6px;
+    background: var(--bg-body);
+    font-size: 0.9rem;
+}
+.os-responsable-tag { font-weight: 600; color: var(--text-main); margin-right: 12px; }
+.os-check-spacer { display: inline-block; width: 20px; }
+
+.os-firmas-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-bottom: 28px;
+    text-align: center;
+}
+.os-firma-img { max-width: 100%; max-height: 100px; border-bottom: 1px solid var(--text-main); margin-bottom: 5px; }
+.os-firma-blank { height: 100px; border-bottom: 1px solid var(--text-main); margin-bottom: 5px; }
+.os-firma-name { margin: 0; font-weight: 600; color: var(--text-main); }
+.os-firma-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+.os-comentarios { margin-bottom: 20px; }
+.os-comentarios-label { font-weight: 600; margin-bottom: 4px; color: var(--text-main); }
+.os-comentarios-content {
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 8px;
+    color: var(--text-main);
+    font-size: 0.9rem;
+}
+.os-actions { text-align: center; margin-top: 28px; }
+
 @media print {
-    body {
-        background: white !important;
-        margin: 0;
-        padding: 0;
+    body { background: white !important; margin: 0; padding: 0; }
+    .main-content { margin: 0 !important; padding: 0 !important; }
+    .sidebar, .top-header, .btn { display: none !important; }
+    .os-wrapper {
+        box-shadow: none !important; border: none !important;
+        margin: 0 !important; padding: 0 !important; background: white !important;
     }
-    .main-content {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    .sidebar, .dashboard-header, .btn {
-        display: none !important;
-    }
-    .form-container {
-        box-shadow: none !important;
-        border: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
+    .os-table td, .os-description-content, .os-responsable {
+        background: white !important; color: black !important; border-color: #ccc !important;
     }
 }
 </style>
+
+<div class="os-wrapper">
+
+    <div class="os-header">
+        <div class="os-header-brand">
+            <i class="fas fa-tools fa-3x os-brand-icon"></i>
+            <div>
+                <h2 class="os-brand-title">CASA LUPITA</h2>
+                <small class="text-muted">Orden de Servicio — Mantenimiento</small>
+            </div>
+        </div>
+        <div class="os-folio">
+            <strong>FOLIO: OS-{{ orden.id }}</strong><br>
+            <span>Clave: 3.5.1.4</span><br>
+            <span>Fecha: {{ orden.fecha|date:"d M Y" }}</span>
+        </div>
+    </div>
+
+    <div class="os-info-grid">
+        <table class="os-table">
+            <tr><td class="label">Fecha:</td><td>{{ orden.fecha|date:"d M Y" }}</td></tr>
+            <tr><td class="label">Unidad:</td><td>{{ orden.unidad.nUnidad }} ({{ orden.unidad.marca }})</td></tr>
+            <tr><td class="label">Kilometraje:</td><td>{{ orden.kilometraje }} km</td></tr>
+            <tr><td class="label">Nivel de gasolina:</td><td>{{ orden.nivel_gasolina }}%</td></tr>
+        </table>
+        <table class="os-table">
+            <tr><td class="label">Chofer:</td><td>{{ orden.chofer.get_full_name|default:orden.chofer.username }}</td></tr>
+            <tr><td colspan="2" class="section-header">Datos del servicio</td></tr>
+            <tr><td class="label">Hora de entrada:</td><td>{{ orden.hora_entrada|time:"H:i"|default:"N/A" }}</td></tr>
+            <tr><td class="label">Hora de salida:</td><td>{{ orden.hora_salida|time:"H:i"|default:"N/A" }}</td></tr>
+        </table>
+    </div>
+
+    <div class="os-description-block">
+        <p class="os-description-label">Descripción detallada del servicio:</p>
+        <div class="os-description-content">{{ orden.descripcion_detallada|linebreaks }}</div>
+    </div>
+
+    <div class="os-responsable">
+        <span class="os-responsable-tag">Responsable de realizar mantenimiento:</span>
+        {% if orden.responsable_mantenimiento == 'INTERNO' %}
+            <i class="fas fa-check-square" style="color: var(--primary-blue);"></i> Interno
+        {% else %}
+            <i class="far fa-square text-muted"></i> Interno
+        {% endif %}
+        <span class="os-check-spacer"></span>
+        {% if orden.responsable_mantenimiento == 'EXTERNO' %}
+            <i class="fas fa-check-square" style="color: var(--primary-blue);"></i>
+            Externo: <u>{{ orden.nombre_responsable_externo|default:"N/A" }}</u>
+        {% else %}
+            <i class="far fa-square text-muted"></i> Externo
+        {% endif %}
+    </div>
+
+    <div class="os-firmas-grid">
+        <div>
+            {% if orden.firma_solicitante_base64 %}
+                <img src="{{ orden.firma_solicitante_base64 }}" class="os-firma-img" alt="Firma Solicitante">
+            {% else %}
+                <div class="os-firma-blank"></div>
+            {% endif %}
+            <p class="os-firma-name">{{ orden.nombre_solicitante }}</p>
+            <small class="os-firma-sub">Nombre y firma de solicitante</small>
+        </div>
+        <div>
+            {% if orden.firma_autorizante_base64 %}
+                <img src="{{ orden.firma_autorizante_base64 }}" class="os-firma-img" alt="Firma Autorizante">
+            {% else %}
+                <div class="os-firma-blank"></div>
+            {% endif %}
+            <p class="os-firma-name">{{ orden.nombre_autorizante|default:"-" }}</p>
+            <small class="os-firma-sub">Nombre y firma de autorizante</small>
+        </div>
+    </div>
+
+    {% if orden.comentarios %}
+    <div class="os-comentarios">
+        <p class="os-comentarios-label">Comentarios:</p>
+        <div class="os-comentarios-content">{{ orden.comentarios|linebreaks }}</div>
+    </div>
+    {% endif %}
+
+    <div class="os-actions">
+        <button onclick="window.print()" class="btn btn-primary px-4"
+                aria-label="Imprimir orden de servicio OS-{{ orden.id }}">
+            <i class="fas fa-print me-2"></i> Imprimir Formato
+        </button>
+        <a href="{% url 'dashboard:orden_servicio_list' %}" class="btn btn-outline-secondary px-4 ms-2"
+           aria-label="Volver al listado de órdenes de servicio">
+            <i class="fas fa-arrow-left me-2"></i> Volver
+        </a>
+    </div>
+</div>
 {% endblock %}
