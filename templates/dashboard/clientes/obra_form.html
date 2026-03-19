@@ -20,16 +20,34 @@
 
                         {# ── zona_aprobada siempre True (invisible) ── #}
                         <input type="hidden" name="zona_aprobada" value="on">
-
                         <div class="row g-3">
 
-                            {# ── FILA 1: Cliente + Alias [+ Obra Activa solo en EDICIÓN] ── #}
-                            <div class="col-md-5">
-                                {{ form.cliente|as_crispy_field }}
-                            </div>
+                            {# ── FILA 1: Alias [primero] + Cliente (solo display) [+ Obra Activa en EDICIÓN] ── #}
+
+                            {# ── ALIAS ── #}
                             <div class="col-md-{% if object %}5{% else %}7{% endif %}">
                                 {{ form.alias|as_crispy_field }}
                             </div>
+
+                            {# ── CLIENTE (solo texto informativo, no editable) ── #}
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label class="form-label fw-semibold">Cliente</label>
+                                    <div class="form-control-plaintext bg-light p-2 rounded border" style="min-height:38px;">
+                                        <strong>
+                                            {% if cliente %}
+                                                {{ cliente.id_sae }} — {{ cliente.razon_social }}
+                                            {% elif object and object.cliente %}
+                                                {{ object.cliente.id_sae }} — {{ object.cliente.razon_social }}
+                                            {% else %}
+                                                <span class="text-muted">Cliente no especificado</span>
+                                            {% endif %}
+                                        </strong>
+                                    </div>
+                                    <input type="hidden" name="cliente" value="{% if cliente %}{{ cliente.id }}{% elif object and object.cliente %}{{ object.cliente.id }}{% endif %}">
+                                </div>
+                            </div>
+
                             {% if object %}
                             <div class="col-md-2 mt-md-4 pt-md-2">
                                 {{ form.esta_activa|as_crispy_field }}
@@ -38,10 +56,32 @@
                             <input type="hidden" name="esta_activa" value="true">
                             {% endif %}
 
-                            {# ── FILA 2: Zona (select) + status ── #}
+                            {# ── FILA 2: Zona (solo informativa — asignada automáticamente por colonia) ── #}
+                            {# El campo zona está disabled en el widget, enviamos el valor real vía campo oculto #}
+                            <input type="hidden" name="zona" id="zona_hidden_input" value="{% if object and object.zona %}{{ object.zona.id }}{% endif %}">
                             <div class="col-md-6">
-                                {{ form.zona|as_crispy_field }}
-                                <div id="zona_status" class="mt-1 small"></div>
+                                <div class="form-group">
+                                    <label class="form-label fw-semibold">
+                                        Zona de Entrega
+                                        <span class="badge bg-secondary ms-1 small"><i class="fas fa-lock me-1"></i>Auto-asignada</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-secondary text-white border-secondary">
+                                            <i class="fas fa-map-signs"></i>
+                                        </span>
+                                        <div id="zona_display" class="form-control bg-light text-muted" style="pointer-events:none; user-select:none;">
+                                            {% if object and object.zona %}
+                                                <span class="badge rounded-pill text-white zona-color-badge"
+                                                      data-color="{% if object.zona.color_hex %}{{ object.zona.color_hex }}{% else %}#6c757d{% endif %}">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>{{ object.zona.nombre }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted small"><i class="fas fa-info-circle me-1"></i>Se asignará al seleccionar la colonia</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div id="zona_status" class="mt-1 small"></div>
+                                </div>
                             </div>
 
                             {# ── ALERTA: zona bloqueada (visible solo cuando no hay zona) ── #}
@@ -95,10 +135,30 @@
                             </div>
 
                             <div class="col-md-6">
-                                {{ form.municipio|as_crispy_field }}
+                                <div class="form-group">
+                                    <label for="id_municipio" class="form-label fw-semibold">Municipio</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-secondary text-white border-secondary"><i class="fas fa-city"></i></span>
+                                        {{ form.municipio }}
+                                    </div>
+                                    <small class="text-muted"><i class="fas fa-lock me-1"></i>Se llena automáticamente al seleccionar la colonia.</small>
+                                    {% if form.municipio.errors %}
+                                    <div class="text-danger small mt-1">{{ form.municipio.errors }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                {{ form.cp|as_crispy_field }}
+                                <div class="form-group">
+                                    <label for="id_cp" class="form-label fw-semibold">Código Postal</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-secondary text-white border-secondary"><i class="fas fa-mail-bulk"></i></span>
+                                        {{ form.cp }}
+                                    </div>
+                                    <small class="text-muted"><i class="fas fa-lock me-1"></i>Se llena automáticamente al seleccionar la colonia.</small>
+                                    {% if form.cp.errors %}
+                                    <div class="text-danger small mt-1">{{ form.cp.errors }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 {{ form.calle_numero|as_crispy_field }}
@@ -107,12 +167,13 @@
                                 {{ form.entre_calles|as_crispy_field }}
                             </div>
                             <div class="col-md-12">
+                                {# referencias es campo obligatorio #}
                                 {{ form.referencias|as_crispy_field }}
                             </div>
 
                             {# ── CONTACTO EN SITIO ── #}
                             <div class="col-12 mt-4 text-primary border-bottom pb-2">
-                                <i class="fas fa-user-hard-hat"></i> <strong>Contacto en Sitio (Opcional)</strong>
+                                <i class="fas fa-user-hard-hat"></i> <strong>Contacto en Sitio</strong>
                             </div>
                             <div class="col-md-6">
                                 {{ form.nombre_receptor|as_crispy_field }}
@@ -143,10 +204,7 @@
     </div>
 </div>
 
-{# ══════════════════════════════════════════════════════════════
-   MODAL DE AUTORIZACIÓN DE ZONA
-   3 estados: 1=Solicitar  2=Esperando  3=¡Zona Asignada!
-   ══════════════════════════════════════════════════════════════ #}
+{# ═══════MODAL DE AUTORIZACIÓN DE ZONA 3 estados: 1=Solicitar  2=Esperando  3=¡Zona Asignada!════════ #}
 <div class="modal fade" id="modalZonaNoAsignada" tabindex="-1"
      aria-labelledby="modalZonaLabel" aria-hidden="true"
      data-bs-backdrop="static" data-bs-keyboard="false">
@@ -271,7 +329,11 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ─── Constantes de URLs de API ─────────────────────────────────────
+    // ─── Aplicar color de zona en badges (data-color → style.background) ──
+    document.querySelectorAll('.zona-color-badge[data-color]').forEach(function(el) {
+        el.style.background = el.dataset.color;
+    });
+
     const URL_BUSCAR_COLONIA    = "{% url 'dashboard:buscar_colonia_api' %}";
     const URL_SOLICITAR_AUTH    = "{% url 'dashboard:solicitar_autorizacion_zona_api' %}";
     const URL_VERIFICAR_ZONA    = "{% url 'dashboard:verificar_zona_por_cp_api' %}";
@@ -282,7 +344,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const sugerenciasDiv    = document.getElementById("sugerencias-colonia");
     const inputMunicipio    = document.getElementById("id_municipio");
     const inputCP           = document.getElementById("id_cp");
-    const selectZona        = document.getElementById("id_zona");
+    // La zona ahora es un campo oculto + un div display (no select editable)
+    const zonaHiddenInput   = document.getElementById("zona_hidden_input");
+    const zonaDisplay       = document.getElementById("zona_display");
     const zonaStatus        = document.getElementById("zona_status");
     const alertaBloqueada   = document.getElementById("alerta-zona-bloqueada");
     const btnGuardar        = document.getElementById("btn-guardar");
@@ -304,12 +368,34 @@ document.addEventListener("DOMContentLoaded", function () {
     let timeoutBusqueda   = null;
     let pollingInterval   = null;
     let coloniaActual     = { colonia: '', cp: '', municipio: '', tiene_zona: false };
-    let zonaDesbloqueada  = false;  // true cuando polling detectó zona
+    let zonaDesbloqueada  = false;  // true cuando zona ya está asignada
 
     // ─── Inicializar: si en edición con zona ya asignada, no bloquear ──
-    if (selectZona && selectZona.value) {
+    if (zonaHiddenInput && zonaHiddenInput.value) {
         zonaDesbloqueada = true;
         btnGuardar.disabled = false;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // HELPERS: Actualizar display de zona
+    // ══════════════════════════════════════════════════════════════════
+    function setZonaDisplay(id, nombre, color) {
+        if (zonaHiddenInput) zonaHiddenInput.value = id || '';
+        if (zonaDisplay) {
+            if (id && nombre) {
+                zonaDisplay.innerHTML =
+                    `<span class="badge rounded-pill text-white" style="background:${color || '#6c757d'};">
+                        <i class="fas fa-map-marker-alt me-1"></i>${nombre}
+                    </span>`;
+            } else {
+                zonaDisplay.innerHTML =
+                    `<span class="text-muted small"><i class="fas fa-info-circle me-1"></i>Se asignará al seleccionar la colonia</span>`;
+            }
+        }
+    }
+
+    function clearZonaDisplay() {
+        setZonaDisplay('', '', '');
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -419,8 +505,8 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         if (res.tiene_zona) {
-            // ✅ TIENE ZONA → asignar automáticamente y activar guardado
-            if (selectZona) selectZona.value = res.zona_id;
+            // ✅ TIENE ZONA → asignar en campo oculto y mostrar display
+            setZonaDisplay(res.zona_id, res.zona_nombre, res.zona_color);
             zonaDesbloqueada = true;
             activarGuardado();
             ocultarAlertaBloqueada();
@@ -430,8 +516,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     Zona <strong>${res.zona_nombre}</strong> asignada automáticamente.
                 </span>`;
         } else {
-            // ⛔ SIN ZONA → bloquear y mostrar alerta
-            if (selectZona) selectZona.value = "";
+            // ⛔ SIN ZONA → limpiar y bloquear
+            clearZonaDisplay();
             bloquearGuardado();
             mostrarAlertaBloqueada();
             zonaStatus.innerHTML =
@@ -508,14 +594,13 @@ document.addEventListener("DOMContentLoaded", function () {
         inputColonia.value   = "";
         inputCP.value        = "";
         inputMunicipio.value = "";
-        if (selectZona) selectZona.value = "";
+        clearZonaDisplay();
         zonaStatus.innerHTML = "";
         coloniaActual = { colonia: '', cp: '', municipio: '', tiene_zona: false };
         ocultarAlertaBloqueada();
         bloquearGuardado();  // sigue bloqueado hasta nueva selección
-        // Si el campo zona está vacío después de limpiar, liberar el botón
-        // solo si estábamos en modo edición con zona previa
-        if (selectZona && selectZona.value) {
+        // Si el campo zona oculto ya tenía valor (edición), liberar el botón
+        if (zonaHiddenInput && zonaHiddenInput.value) {
             activarGuardado();
         }
         inputColonia.focus();
@@ -592,25 +677,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ── Zona encontrada por polling ──
     function zonaEncontrada(data) {
-        // Auto-llenar el selector de zona
-        if (selectZona) {
-            // Verificar si la opción ya existe en el select
-            let optionExists = false;
-            for (let opt of selectZona.options) {
-                if (opt.value == data.zona_id) {
-                    optionExists = true;
-                    break;
-                }
-            }
-            // Si no existe, la añadimos dinámicamente
-            if (!optionExists) {
-                const newOpt = document.createElement("option");
-                newOpt.value = data.zona_id;
-                newOpt.textContent = data.zona_nombre;
-                selectZona.appendChild(newOpt);
-            }
-            selectZona.value = data.zona_id;
-        }
+        // Asignar zona en el campo oculto y mostrar en display
+        setZonaDisplay(data.zona_id, data.zona_nombre, data.zona_color || '#198754');
 
         // Actualizar estado visual
         zonaDesbloqueada = true;
@@ -639,11 +707,11 @@ document.addEventListener("DOMContentLoaded", function () {
     // ══════════════════════════════════════════════════════════════════
     if (obraForm) {
         obraForm.addEventListener("submit", function (e) {
-            const zonaSeleccionada = selectZona && selectZona.value;
-            const coloniaValor     = inputColonia && inputColonia.value.trim();
+            const zonaValor    = zonaHiddenInput && zonaHiddenInput.value;
+            const coloniaValor = inputColonia && inputColonia.value.trim();
 
             // Si hay colonia pero no zona y no está desbloqueado → abrir modal
-            if (coloniaValor && !zonaSeleccionada && !zonaDesbloqueada) {
+            if (coloniaValor && !zonaValor && !zonaDesbloqueada) {
                 e.preventDefault();
                 abrirModalSolicitar();
                 return false;
@@ -652,12 +720,72 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // Al cargar en edición, si actualizamos el municipio y ya tiene zona
+    // MÁSCARAS Y VALIDACIONES DE CONTACTO EN SITIO
     // ══════════════════════════════════════════════════════════════════
-    // Si el inputMunicipio es readonly en el form original pero no lo encontramos limpio
-    const inputMunicipioEl = document.getElementById("id_municipio");
-    if (inputMunicipioEl && !inputMunicipioEl.hasAttribute("readonly")) {
-        inputMunicipioEl.setAttribute("readonly", "readonly");
+
+    // ── Nombre receptor: solo letras (incluyendo acentos y ñ) ──
+    const inputNombre = document.getElementById("id_nombre_receptor");
+    if (inputNombre) {
+        inputNombre.addEventListener("keypress", function (e) {
+            const char = e.key;
+            if (!/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]$/.test(char) && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+            }
+        });
+        inputNombre.addEventListener("paste", function (e) {
+            e.preventDefault();
+            const pasteText = (e.clipboardData || window.clipboardData).getData("text");
+            const soloLetras = pasteText.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
+            document.execCommand("insertText", false, soloLetras);
+        });
+    }
+
+    // ── Teléfono receptor: solo dígitos con máscara XX-XX-XX-XX-XX ──
+    const inputTel = document.getElementById("id_telefono_receptor");
+    if (inputTel) {
+        // Máximo 10 dígitos reales → 14 chars con guiones (55-86-99-04-82)
+        inputTel.setAttribute("maxlength", "14");
+
+        // Si tiene valor ya guardado (dígitos limpios), formatear al cargar
+        if (inputTel.value) {
+            inputTel.value = formatearTelefono(inputTel.value.replace(/\D/g, ''));
+        }
+
+        // Bloquear entrada de no-dígitos antes de que modifiquen el valor
+        inputTel.addEventListener("keydown", function (e) {
+            const allowed = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
+            if (allowed.includes(e.key)) return;
+            if (!/^\d$/.test(e.key) && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+            }
+        });
+
+        // Al escribir: extraer solo dígitos, limitar a 10, reformatear
+        // IMPORTANTE: siempre mover cursor al final para evitar inserciones
+        // en posiciones intermedias que reordenan los dígitos (bug de máscara)
+        inputTel.addEventListener("input", function () {
+            const soloDigitos = this.value.replace(/\D/g, '').slice(0, 10);
+            this.value = formatearTelefono(soloDigitos);
+            // Cursor siempre al final — comportamiento estándar de inputs enmascarados
+            const len = this.value.length;
+            this.setSelectionRange(len, len);
+        });
+
+        inputTel.addEventListener("paste", function (e) {
+            e.preventDefault();
+            const pasteText   = (e.clipboardData || window.clipboardData).getData("text");
+            const soloDigitos = pasteText.replace(/\D/g, '').slice(0, 10);
+            this.value = formatearTelefono(soloDigitos);
+        });
+    }
+
+    /**
+     * Formatea hasta 10 dígitos como: XX-XX-XX-XX-XX
+     * Ej: "5586990482" → "55-86-99-04-82"
+     */
+    function formatearTelefono(digitos) {
+        if (!digitos) return '';
+        return digitos.match(/.{1,2}/g).join('-');
     }
 
 });

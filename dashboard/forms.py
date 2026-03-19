@@ -513,18 +513,55 @@ class ObraForm(forms.ModelForm):
         widgets = {
             'alias': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Casa Blanca o Nombre del Despacho'}),
             'cliente': forms.Select(attrs={'class': 'form-select'}),
-            'zona': forms.Select(attrs={'class': 'form-select'}),
-            'cp': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 56200', 'id': 'id_cp'}),
+            'zona': forms.Select(attrs={'class': 'form-select', 'disabled': 'disabled'}),
+            'cp': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 56200', 'id': 'id_cp', 'readonly': 'readonly'}),
             'colonia': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Buscar Colonia...', 'id': 'id_colonia'}),
-            # municipio: el JS lo marca readonly, aquí dejamos sin readonly para que pueda escribirse via JS
-            'municipio': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_municipio'}),
+            # municipio: el JS lo marca readonly, aquí también lo ponemos readonly desde el inicio
+            'municipio': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_municipio', 'readonly': 'readonly'}),
             'calle_numero': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Benito Juarez #123'}),
             'entre_calles': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Entre Hidalgo y Morelos'}),
             'referencias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ej. Portón negro grande, frente a la tienda, etc.'}),
             'nombre_receptor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de la persona que recibe'}),
-            'telefono_receptor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 5512345678'}),
+            'telefono_receptor': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej. 55-12-34-56-78',
+                'inputmode': 'numeric',
+                'id': 'id_telefono_receptor',
+                'maxlength': '14',  # 10 dígitos + 4 guiones
+            }),
             'esta_activa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # referencias es obligatorio
+        self.fields['referencias'].required = True
+        # nombre_receptor y telefono_receptor son opcionales pero con validaciones si se ingresan
+        self.fields['nombre_receptor'].required = True    
+        self.fields['telefono_receptor'].required = True
+
+    def clean_nombre_receptor(self):
+        import re
+        nombre = self.cleaned_data.get('nombre_receptor', '').strip()
+        if nombre:
+            if len(nombre) < 3:
+                raise forms.ValidationError("El nombre debe tener al menos 3 letras.")
+            if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$', nombre):
+                raise forms.ValidationError("El nombre solo puede contener letras.")
+        return nombre
+
+    def clean_telefono_receptor(self):
+        import re
+        telefono = self.cleaned_data.get('telefono_receptor', '').strip()
+        if telefono:
+            # Eliminar guiones y espacios para guardarlo limpio
+            solo_digitos = re.sub(r'[\-\s]', '', telefono)
+            if not re.match(r'^\d+$', solo_digitos):
+                raise forms.ValidationError("El teléfono solo puede contener números.")
+            if len(solo_digitos) < 10:
+                raise forms.ValidationError("El teléfono debe tener al menos 10 dígitos.")
+            return solo_digitos
+        return telefono
 
 class PedidoForm(forms.ModelForm):
     class Meta:
