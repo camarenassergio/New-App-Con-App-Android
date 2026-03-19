@@ -56,7 +56,7 @@
         {% endif %}
 
         <!-- === SECCIÓN: FLOTILLA === -->
-        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' and request.user.personal.puesto != 'MOSTRADOR' %}
         <li class="nav-section-label">Flotilla</li>
 
         <li class="nav-item">
@@ -85,18 +85,37 @@
         <li class="nav-section-label">Operaciones</li>
 
         <li class="nav-item">
+          <a href="{% url 'dashboard:mostrador_home' %}" class="nav-link {% if 'mostrador' in request.path %}active{% endif %}">
+            <i class="fas fa-cash-register nav-icon"></i>
+            <span>Mostrador</span>
+          </a>
+        </li>
+
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' and request.user.personal.puesto != 'MOSTRADOR' %}
+        <li class="nav-item">
           <a href="{% url 'dashboard:checklist_unidad_list' %}" class="nav-link {% if 'checklist' in request.path %}active{% endif %}">
             <i class="fas fa-clipboard-check nav-icon"></i>
             <span>Checklist Diario</span>
           </a>
         </li>
+        {% endif %}
+
+        {% if request.user.personal.puesto == 'MOSTRADOR' %}
+        <li class="nav-item">
+          <a href="{% url 'dashboard:zona_entrega_map' %}" class="nav-link {% if 'mapa' in request.path %}active{% endif %}">
+            <i class="fas fa-globe-americas nav-icon"></i>
+            <span>Mapa de Zonas</span>
+          </a>
+        </li>
+        {% endif %}
 
         <!-- === SECCIÓN: LOGÍSTICA === -->
-        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' and request.user.personal.puesto != 'MOSTRADOR' %}
         <li class="nav-section-label">Logística</li>
         {% endif %}
 
         <!-- Rutas y Viajes Dropdown -->
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' and request.user.personal.puesto != 'MOSTRADOR' %}
         <li class="nav-item">
           <a class="nav-link collapsed"
             data-bs-toggle="collapse"
@@ -137,8 +156,9 @@
             </ul>
           </div>
         </li>
+        {% endif %}
 
-        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
+        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' and request.user.personal.puesto != 'MOSTRADOR' %}
         <!-- Control de Gastos Dropdown -->
         <li class="nav-item">
           <a class="nav-link collapsed"
@@ -179,17 +199,28 @@
             <span>Combustible</span>
           </a>
         </li>
+        {% endif %}
 
         <!-- === SECCIÓN: ADMINISTRACIÓN === -->
-        <li class="nav-section-label">Administración</li>
+        {% if request.user.is_superuser or request.user.personal.puesto == 'MOSTRADOR' or request.user.personal.puesto == 'ADMIN' or request.user.personal.puesto == 'RUTAS' %}
+        <li class="nav-section-label">{% if request.user.personal.puesto == 'MOSTRADOR' %}Directorio{% else %}Administración{% endif %}</li>
 
         <li class="nav-item">
           <a href="{% url 'dashboard:operadores_list' %}" class="nav-link {% if 'operadores' in request.path %}active{% endif %}">
             <i class="fas fa-id-card nav-icon"></i>
-            <span>Operadores</span>
+            <span>Operadores / Personal</span>
           </a>
         </li>
 
+        <li class="nav-item">
+          <a href="{% url 'dashboard:cliente_list' %}" class="nav-link {% if 'clientes' in request.path %}active{% endif %}">
+            <i class="fas fa-user-friends nav-icon"></i>
+            <span>Clientes / Obras</span>
+          </a>
+        </li>
+        {% endif %}
+
+        {% if request.user.is_superuser or request.user.personal.puesto == 'ADMIN' %}
         <li class="nav-item">
           <a href="{% url 'dashboard:usuarios_list' %}" class="nav-link {% if 'usuarios' in request.path %}active{% endif %}">
             <i class="fas fa-users-cog nav-icon"></i>

@@ -1,0 +1,195 @@
+<div class="modal fade shadow-lg" id="cotizadorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius: 16px;">
+            <div class="modal-header bg-success text-white py-3 border-0">
+                <h5 class="modal-title fw-bold"><i class="fas fa-search-dollar me-2"></i> Cotizador Rápido de Flete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-4">Seleccione la colonia de entrega para obtener el costo sugerido.</p>
+                
+                <form hx-post="{% url 'dashboard:cotizar_accion' %}" hx-target="#resultado-cotizacion" class="row g-3" id="cotizador-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="zona" id="cotizador-zona-id" required>
+                    
+                    <div class="col-12 position-relative">
+                        <label class="form-label fw-bold">Colonia de Entrega</label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fas fa-search text-success"></i>
+                            </span>
+                            <input type="text"
+                                   id="input-buscar-colonia"
+                                   class="form-control border-start-0 ps-0 form-control-lg bg-white"
+                                   placeholder="Escribe al menos 3 letras de la colonia..."
+                                   autocomplete="off">
+                        </div>
+                        
+                        <div id="status-cotizador-zona" class="mt-2 small"></div>
+
+                        <div id="sugerencias-cotizador"
+                             class="list-group position-absolute shadow-lg w-100"
+                             style="display:none; z-index:2050; top:100%; max-height:280px; overflow-y:auto; border-radius:0 0 .5rem .5rem; margin-top:2px;">
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <div class="form-check form-switch p-0 d-flex justify-content-between align-items-center">
+                            <label class="form-check-label fw-bold m-0" for="urgenteCheck">
+                                <i class="fas fa-bolt text-danger me-1"></i> ¿Es Entrega Urgente?
+                            </label>
+                            <input class="form-check-input" type="checkbox" name="urgente" id="urgenteCheck" style="width: 3rem; height: 1.5rem; margin: 0;">
+                        </div>
+                        <div class="form-text mt-2 small">La urgencia aplica un recargo del 20% sobre la tarifa base de la zona.</div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="submit" id="btn-calcular-flete" class="btn btn-success w-100 py-2 fw-bold text-uppercase shadow-sm" disabled>
+                            <i class="fas fa-calculator me-2"></i> Calcular Tarifa
+                        </button>
+                    </div>
+                </form>
+
+                <div id="resultado-cotizacion" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // Inicializar Modal
+        const modalEl = document.getElementById('cotizadorModal');
+        const myModal = new bootstrap.Modal(modalEl);
+        myModal.show();
+        
+        // Destruir modal en DOM al cerrarlo para no dejar instancias colgadas al cargar otro HTMX
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            modalEl.remove();
+        });
+
+        // Lógica Buscador
+        const inputColonia   = document.getElementById("input-buscar-colonia");
+        const sugerenciasDiv = document.getElementById("sugerencias-cotizador");
+        const hiddenZonaId   = document.getElementById("cotizador-zona-id");
+        const statusZona     = document.getElementById("status-cotizador-zona");
+        const btnCalcular    = document.getElementById("btn-calcular-flete");
+        const URL_BUSCAR     = "{% url 'dashboard:buscar_colonia_api' %}";
+
+        let timeoutBusqueda = null;
+
+        inputColonia.addEventListener("input", function() {
+            const query = this.value.trim();
+            btnCalcular.disabled = true;
+            hiddenZonaId.value = "";
+            statusZona.innerHTML = "";
+            
+            if (query.length < 3) {
+                sugerenciasDiv.style.display = "none";
+                return;
+            }
+
+            // Mostrar "Buscando..." si es necesario (opcional)
+            clearTimeout(timeoutBusqueda);
+            timeoutBusqueda = setTimeout(() => {
+                fetch(`${URL_BUSCAR}?q=${encodeURIComponent(query)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        sugerenciasDiv.innerHTML = "";
+                        const resultados = data.resultados || [];
+                        
+                        if (resultados.length === 0) {
+                            sugerenciasDiv.innerHTML = '<div class="list-group-item text-muted small py-2"><i class="fas fa-exclamation-circle me-1"></i> Sin resultados.</div>';
+                            sugerenciasDiv.style.display = "block";
+                            return;
+                        }
+
+                        let hayConZona = false;
+                        let haySinZona = false;
+
+                        resultados.forEach(res => {
+                            const a = document.createElement("a");
+                            a.href = "javascript:void(0)";
+                            
+                            if (res.tiene_zona) {
+                                hayConZona = true;
+                                a.className = "list-group-item list-group-item-action py-2";
+                                a.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong class="text-dark">${res.colonia}</strong>
+                                            <div class="text-muted mt-1" style="font-size:0.75rem;">CP: ${res.cp} | ${res.municipio}</div>
+                                        </div>
+                                        <span class="badge rounded-pill" style="background:${res.zona_color};color:white">
+                                            <i class="fas fa-check-circle me-1"></i>${res.zona_nombre}
+                                        </span>
+                                    </div>
+                                `;
+                                a.addEventListener("click", () => seleccionarColonia(res));
+                            } else {
+                                if(!haySinZona && hayConZona) {
+                                    const devider = document.createElement("div");
+                                    devider.className = "list-group-item list-group-item-warning py-1 text-center small fw-semibold text-dark";
+                                    devider.innerText = "Cruces sin zona (No cotizables)";
+                                    sugerenciasDiv.appendChild(devider);
+                                }
+                                haySinZona = true;
+
+                                a.className = "list-group-item list-group-item-action list-group-item-light text-muted py-2 disabled";
+                                a.style.cursor = "not-allowed";
+                                a.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-center opacity-75">
+                                        <div>
+                                            <strong>${res.colonia}</strong>
+                                            <div class="mt-1" style="font-size:0.75rem;">CP: ${res.cp} | ${res.municipio}</div>
+                                        </div>
+                                        <span class="badge bg-secondary text-white">
+                                            <i class="fas fa-lock me-1"></i>Sin Zona
+                                        </span>
+                                    </div>
+                                `;
+                                a.addEventListener("click", () => {
+                                    sugerenciasDiv.style.display = "none";
+                                    inputColonia.value = res.colonia;
+                                    statusZona.innerHTML = `<span class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Colonia sin zona configurada. No se puede calcular flete. (Autorización requerida vía Registro de Obra)</span>`;
+                                });
+                            }
+                            sugerenciasDiv.appendChild(a);
+                        });
+                        
+                        sugerenciasDiv.style.display = "block";
+                    });
+            }, 300);
+        });
+
+        document.addEventListener("click", function(e) {
+            if (!inputColonia.contains(e.target) && !sugerenciasDiv.contains(e.target)) {
+                sugerenciasDiv.style.display = "none";
+            }
+        });
+
+        function seleccionarColonia(res) {
+            inputColonia.value = res.colonia;
+            hiddenZonaId.value = res.zona_id;
+            sugerenciasDiv.style.display = "none";
+            
+            btnCalcular.disabled = false;
+            statusZona.innerHTML = `<span class="text-success small fw-semibold"><i class="fas fa-check-circle me-1"></i>Zona seleccionada: <strong>${res.zona_nombre}</strong></span>`;
+        }
+
+        // Recalcular automáticamente si cambia el Switch de Urgente
+        const switchUrgente = document.getElementById("urgenteCheck");
+        const formCotizador = document.getElementById("cotizador-form");
+        
+        switchUrgente.addEventListener("change", function() {
+            // Solo disparar si ya seleccionaron colonia y la form es válida
+            if (!btnCalcular.disabled && hiddenZonaId.value !== "") {
+                // Verificamos si ya hay un resultado cargado para solo recalcular cuando ya han cotizado al menos una vez
+                const resultadoDiv = document.getElementById("resultado-cotizacion");
+                if (resultadoDiv.innerHTML.trim() !== "") {
+                    htmx.trigger(formCotizador, 'submit');
+                }
+            }
+        });
+    })();
+</script>

@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registrar Nuevo Pedido — Casa Lupita{% endblock %}
+{% block page_title %}Nuevo Pedido de Venta{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+                <div class="card-header bg-primary py-3 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 text-white fw-bold"><i class="fas fa-file-invoice me-2"></i> Captura de Datos (SAE)</h5>
+                    <button type="button" class="btn btn-sm btn-light rounded-pill fw-bold"
+                            hx-get="{% url 'dashboard:cotizador_modal' %}"
+                            hx-target="#modal-container">
+                        <i class="fas fa-calculator me-1"></i> Cotizar Flete
+                    </button>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation">
+                        {% csrf_token %}
+
+                        <!-- Paso 1: Folio y Cliente -->
+                        <div class="section-title mb-4">
+                            <span class="step-badge">1</span>
+                            <h6 class="d-inline ms-2 fw-bold text-uppercase">Identificación del Cliente</h6>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">Folio de Origen (Ticket)</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-hashtag text-muted"></i></span>
+                                    <input type="text" name="folio_sae" id="id_folio_sae" class="form-control border-start-0 py-2" 
+                                           placeholder="Ticket físico" required
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                           value="{{ form.folio_sae.value|default:'' }}">
+                                </div>
+                                <div id="folio-error" class="mt-1 text-danger small">
+                                    {% if form.folio_sae.errors %}{{ form.folio_sae.errors.0 }}{% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold">Cliente Registrado (SAE)</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-user-tag text-muted"></i></span>
+                                    <input type="text" name="id_sae_search" class="form-control border-x-0" 
+                                           placeholder="ID SAE..."
+                                           hx-get="{% url 'dashboard:cliente_sae_busqueda' %}"
+                                           hx-target="#cliente-info-box"
+                                           hx-trigger="keyup changed delay:400ms"
+                                           oninput="this.value = this.value.toUpperCase()">
+                                    <button type="button" class="btn btn-dark" 
+                                            hx-get="{% url 'dashboard:cliente_buscador_modal' %}"
+                                            hx-target="#modal-container">
+                                        <i class="fas fa-search me-1"></i> 
+                                    </button>
+                                </div>
+                                <div id="cliente-info-box" class="mt-2">
+                                    <!-- Aquí se carga el fragmento de info o error -->
+                                    <div class="form-text small">Ingrese ID o use la lupa para buscar por nombre/obra.</div>
+                                </div>
+                                <div style="display:none;">{{ form.cliente }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Panel de Cliente Manual (Mostrador) -->
+                        <div id="manual-client-panel" class="bg-light p-3 border rounded mb-4 shadow-sm" style="display: none;">
+                            <h6 class="fw-bold mb-3 text-primary small"><i class="fas fa-user-edit me-2"></i> DATOS DE CLIENTE MOSTRADOR</h6>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label small fw-bold">Nombre Completo (Bisturí: 2 palabras mín.)</label>
+                                    <input type="text" name="cliente_nombre_manual" id="id_cliente_nombre_manual" class="form-control" 
+                                           placeholder="Ej. Juan Pérez o Constructora Alfa"
+                                           value="{{ form.cliente_nombre_manual.value|default:'' }}">
+                                    {% if form.cliente_nombre_manual.errors %}
+                                    <div class="text-danger small mt-1">{{ form.cliente_nombre_manual.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Teléfono de Contacto</label>
+                                    <input type="text" name="cliente_telefono_manual" id="id_cliente_telefono_manual" class="form-control" 
+                                           placeholder="10 dígitos" value="{{ form.cliente_telefono_manual.value|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paso 2: Punto de Entrega -->
+                        <div id="obra-section" class="section-title mb-4">
+                            <span class="step-badge">2</span>
+                            <h6 class="d-inline ms-2 fw-bold text-uppercase">Lugar de Entrega (Obra)</h6>
+                        </div>
+
+                        <div class="row g-3 mb-4" id="obra-fields">
+                            <!-- Selector de Obra Existente (Para clientes en DB) -->
+                            <div class="col-md-12" id="obra-select-wrapper">
+                                <label class="form-label fw-semibold">Seleccionar Obra / Dirección Registrada</label>
+                                <div class="d-flex gap-2">
+                                    <div id="obras-container" class="flex-grow-1">
+                                        {{ form.obra }}
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary" 
+                                            id="btn-nueva-obra-modal"
+                                            hx-get="{% url 'dashboard:obra_create_modal' %}"
+                                            hx-target="#modal-container">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Formulario de Obra Integrado (Para clientes nuevos/mostrador) -->
+                            <div id="obra-manual-fields" class="col-12 bg-white p-3 border rounded shadow-sm" style="display: none;">
+                                <h6 class="fw-bold mb-3 text-primary small"><i class="fas fa-map-marker-alt me-2"></i> DETALLES DEL DESTINO (NUEVA OBRA)</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Alias del Destino</label>
+                                        <input type="text" name="obra_alias_manual" class="form-control" placeholder="Ej. Casa Blanca / Obra Arcos">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Zona de Entrega</label>
+                                        <select name="obra_zona_manual" class="form-select">
+                                            <option value="">-- Seleccionar Zona --</option>
+                                            {% for zona in zonas %}
+                                            <option value="{{ zona.id }}">{{ zona.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">CP</label>
+                                        <input type="text" name="obra_cp_manual" class="form-control" placeholder="56200">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label small fw-bold">Colonia</label>
+                                        <input type="text" name="obra_colonia_manual" class="form-control" placeholder="Ej. Centro">
+                                    </div>
+                                    <div class="col-MD-12">
+                                        <label class="form-label small fw-bold">Calle y Número</label>
+                                        <input type="text" name="obra_calle_manual" class="form-control" placeholder="Nombre de calle y número ext/int">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-bold">Referencias Visuales</label>
+                                        <textarea name="obra_referencias_manual" class="form-control" rows="2" placeholder="Color de casa, portón, etc."></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Nombre del Receptor</label>
+                                        <input type="text" name="obra_receptor_nombre_manual" class="form-control" placeholder="Quien recibe material">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Teléfono Receptor</label>
+                                        <input type="text" name="obra_receptor_tel_manual" class="form-control" placeholder="10 dígitos">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paso 3: Detalles de Carga y Pago -->
+                        <div class="section-title mb-4">
+                            <span class="step-badge">3</span>
+                            <h6 class="d-inline ms-2 fw-bold text-uppercase">Carga, Pago y Observaciones</h6>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Peso Total (kg)</label>
+                                <div class="input-group">
+                                    {{ form.peso_total_estimado_kg }}
+                                    <span class="input-group-text bg-light">KG</span>
+                                </div>
+                                {% if form.peso_total_estimado_kg.errors %}
+                                    <div class="text-danger small mt-1">{{ form.peso_total_estimado_kg.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Forma de Pago</label>
+                                {{ form.metodo_pago }}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Ticket SAE (PDF/Foto)</label>
+                                {{ form.evidencia_ticket }}
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Observaciones Generales</label>
+                                {{ form.observaciones_mostrador }}
+                            </div>
+                        </div>
+
+                        <!-- Switche de Reglas de Negocio -->
+                        <div class="row g-3 mb-4 p-3 border rounded bg-white shadow-sm mx-0">
+                            <div class="col-md-4">
+                                <div class="form-check form-switch custom-switch">
+                                    {{ form.es_urgente }}
+                                    <label class="form-check-label fw-bold text-danger" for="{{ form.es_urgente.id_for_label }}">
+                                        <i class="fas fa-bolt me-1"></i> ¿Urgente?
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch custom-switch">
+                                    {{ form.maniobra_aceptada }}
+                                    <label class="form-check-label" for="{{ form.maniobra_aceptada.id_for_label }}">
+                                        Maniobra Aceptada
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch custom-switch">
+                                    {{ form.recoleccion_parcial }}
+                                    <label class="form-check-label fw-bold text-primary" for="{{ form.recoleccion_parcial.id_for_label }}">
+                                        Entrega Parcial
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campo de Productos entregados (Visible si es entrega parcial) -->
+                        <div id="partial-products-panel" class="mb-5" style="display: none;">
+                            <label class="form-label fw-bold text-primary small">LISTADO DE PRODUCTOS ENTREGADOS EN MOSTRADOR</label>
+                            {{ form.productos_entregados_parcial }}
+                            <div class="form-text small text-warning"><i class="fas fa-exclamation-triangle"></i> La foto del ticket es obligatoria si entrega mercancía ahora.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center bg-light p-4" style="border-radius: 12px; margin: 0 -1.5rem -1.5rem -1.5rem;">
+                            <a href="{% url 'dashboard:mostrador_home' %}" class="btn btn-link text-muted text-decoration-none fw-semibold">
+                                <i class="fas fa-arrow-left me-1"></i> Volver
+                            </a>
+                            <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm rounded-pill">
+                                Guardar Pedido <i class="fas fa-check-circle ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contenedor para Modales Dinámicos -->
+<div id="modal-container"></div>
+
+<script>
+    function toggleManualClient() {
+        const clienteSelect = document.querySelector('select[name="cliente"]');
+        const manualPanel = document.getElementById('manual-client-panel');
+        const idSaeInput = document.querySelector('[name="id_sae_search"]');
+        const obraSelectWrapper = document.getElementById('obra-select-wrapper');
+        const obraManualFields = document.getElementById('obra-manual-fields');
+
+        // If a DB client is selected, show the simple selector, hide manual address fields
+        if (clienteSelect && clienteSelect.value) {
+            manualPanel.style.display = 'none';
+            obraSelectWrapper.style.display = 'block';
+            obraManualFields.style.display = 'none';
+        } else {
+            // No DB client selected: either brand new or incomplete
+            manualPanel.style.display = 'block';
+            obraSelectWrapper.style.display = 'none';
+            obraManualFields.style.display = 'block';
+        }
+    }
+
+    function togglePartialProducts() {
+        const partialSwitch = document.querySelector('input[name="recoleccion_parcial"]');
+        const partialPanel = document.getElementById('partial-products-panel');
+        partialPanel.style.display = partialSwitch.checked ? 'block' : 'none';
+    }
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', () => {
+        toggleManualClient();
+        togglePartialProducts();
+        
+        document.querySelector('select[name="cliente"]').addEventListener('change', toggleManualClient);
+        document.querySelector('input[name="recoleccion_parcial"]').addEventListener('change', togglePartialProducts);
+    });
+
+    document.addEventListener('abrirModalObra', function() {
+        // Trigger the HTMX request for the new obra modal
+        const btnNuevaObra = document.querySelector('[hx-get*="obra_create_modal"]');
+        if (btnNuevaObra) {
+            htmx.trigger(btnNuevaObra, 'click');
+        }
+    });
+
+    document.addEventListener('htmx:afterOnLoad', function(evt) {
+        if (evt.detail.target.id === 'cliente-info-box') {
+            const detectedId = document.getElementById('detected-cliente-id');
+            const selectCliente = document.querySelector('select[name="cliente"]');
+            if (detectedId && selectCliente) {
+                selectCliente.value = detectedId.value;
+                toggleManualClient();
+                htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + detectedId.value, '#obras-container');
+            } else if (evt.detail.xhr.status === 200 && (evt.detail.target.innerHTML.includes('Nuevo ID SAE') || evt.detail.target.innerHTML.includes('No encontrado'))) {
+                if (selectCliente) selectCliente.value = "";
+                toggleManualClient();
+                // For new SAE or not found, also clear obras and trigger new obra modal
+                document.getElementById('obras-container').innerHTML = '<select class="form-select" disabled><option>Complete datos de cliente</option></select>';
+                document.dispatchEvent(new Event('abrirModalObra'));
+            }
+        }
+    });
+
+    document.addEventListener('clienteSeleccionado', function(evt) {
+        const data = evt.detail;
+        const selectCliente = document.querySelector('select[name="cliente"]');
+        const idSaeInput = document.querySelector('[name="id_sae_search"]');
+        
+        if (selectCliente) {
+            // Crear opción temporal si no existe en el select (que es un fragmento HTMX usualmente)
+            let option = selectCliente.querySelector(`option[value="${data.clienteId}"]`);
+            if (!option) {
+                option = new Option(data.razonSocial, data.clienteId);
+                selectCliente.add(option);
+            }
+            selectCliente.value = data.clienteId;
+            if (idSaeInput) idSaeInput.value = data.idSae;
+            
+            toggleManualClient();
+            
+            // Cargar obras del cliente y pre-seleccionar la obra específica
+            htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + data.clienteId + '&obra_id=' + data.obraId, '#obras-container');
+        }
+    });
+
+    document.body.addEventListener('obraGuardada', function(evt) {
+        const selectCliente = document.querySelector('select[name="cliente"]');
+        if (selectCliente && selectCliente.value) {
+            htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + selectCliente.value, '#obras-container');
+        }
+        const modalEl = document.querySelector('.modal.show');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+        }
+    });
+</script>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .step-badge {
+        background: var(--primary-blue);
+        color: white;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    .section-title {
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+    .custom-switch .form-check-input {
+        width: 3rem;
+        height: 1.5rem;
+        cursor: pointer;
+    }
+    .custom-switch .form-check-label {
+        margin-left: 0.5rem;
+        padding-top: 2px;
+        cursor: pointer;
+    }
+    select.form-select {
+        height: 38px;
+    }
+</style>
+{% endblock %}

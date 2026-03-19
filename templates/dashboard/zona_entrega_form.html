@@ -14,8 +14,11 @@
 <form method="post" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
         {% csrf_token %}
         
-        <div class="mb-3">
-            {{ form.nombre|as_crispy_field }}
+        <div class="row mb-3">
+            <div class="col-md-12">
+                {{ form.nombre|as_crispy_field }}
+            </div>
+            
         </div>
         
         <div class="mb-3 p-3 rounded" style="background-color: var(--bg-body); border: 1px solid var(--border-color) !important;">
@@ -28,6 +31,9 @@
         </div>
 
         <div class="row mb-3">
+            <div class="col-md-6">
+                {{ form.municipio|as_crispy_field }}
+            </div>
             <div class="col-md-6">
                 {{ form.tiempo_traslado_minutos|as_crispy_field }}
             </div>
@@ -89,6 +95,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const cpInput = document.getElementById("id_codigos_postales");
+    const municipioInput = document.getElementById("id_municipio");
     const coloniasInput = document.getElementById("id_colonias");
     
     if (cpInput && coloniasInput) {
@@ -113,6 +120,14 @@ document.addEventListener("DOMContentLoaded", function() {
                 .then(data => {
                     if (data.colonias && data.colonias.length > 0) {
                         coloniasInput.value = data.colonias.join(', ');
+                        
+                        // Llenar municipio si viene en la respuesta y el campo está vacío
+                        if (data.municipio && municipioInput && !municipioInput.value.trim()) {
+                            municipioInput.value = data.municipio;
+                            municipioInput.style.transition = 'background-color 0.3s ease';
+                            municipioInput.style.backgroundColor = '#e8f5e9';
+                            setTimeout(() => { municipioInput.style.backgroundColor = ''; }, 800);
+                        }
                         
                         // Efecto visual sutil
                         coloniasInput.style.transition = 'background-color 0.3s ease';

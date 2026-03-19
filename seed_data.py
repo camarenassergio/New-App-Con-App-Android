@@ -37,7 +37,7 @@ def run():
     
     if not usuario:
         print("Creando usuario de prueba...")
-        usuario = User.objects.create_user('admin_test', 'admin@test.com', 'password123')
+        usuario = User.objects.create_user('admin', 'admin@test.com', 'admin')
         usuario.is_superuser = True
         usuario.is_staff = True
         usuario.save()

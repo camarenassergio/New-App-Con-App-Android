@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Obras de {{ cliente_obj.razon_social }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2 class="texto-azul-corporativo mb-0">
+                <i class="fas fa-map-marker-alt me-2"></i> Obras: {{ cliente_obj.razon_social }}
+            </h2>
+            <p class="text-muted small">ID SAE: {{ cliente_obj.id_sae|default:"--" }}</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Volver a Clientes
+            </a>
+            <a href="{% url 'dashboard:obra_create' cliente_obj.pk %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nueva Obra / Dirección
+            </a>
+        </div>
+    </div>
+
+    <!-- Listado de Obras -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        {% for obra in obras %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 {% if not obra.esta_activa %}opacity-75 grayscale{% endif %}" 
+                 style="border-left: 5px solid {{ obra.zona.color_hex|default:'#333' }} !important;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0 fw-bold">{{ obra.alias }}</h5>
+                        {% if obra.esta_activa %}
+                            <span class="badge bg-success-subtle text-success rounded-pill border border-success px-3">ACTIVA</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary rounded-pill border border-secondary px-3">INACTIVA</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-2">
+                        <small class="text-muted text-uppercase d-block" style="font-size: 0.7em;">Dirección:</small>
+                        <p class="mb-1 text-dark" style="font-size: 0.9em;">
+                            {{ obra.calle_numero }}<br>
+                            {{ obra.zona.nombre|default:"Zona No Asignada" }}
+                        </p>
+                    </div>
+
+                    {% if obra.referencias %}
+                    <div class="mb-2">
+                        <small class="text-muted text-uppercase d-block" style="font-size: 0.7em;">Referencias:</small>
+                        <p class="mb-1 text-muted small fst-italic">{{ obra.referencias|truncatechars:100 }}</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase d-block" style="font-size: 0.7em;">Contacto en Obra:</small>
+                        <p class="mb-0 text-dark small">
+                            <i class="fas fa-user-circle me-1"></i> {{ obra.nombre_receptor|default:"--" }}<br>
+                            <i class="fas fa-phone-alt me-1"></i> {{ obra.telefono_receptor|default:"--" }}
+                        </p>
+                    </div>
+
+                    <div class="d-grid mt-3">
+                        <a href="{% url 'dashboard:obra_update' obra.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i> Editar Dirección
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-map-signs fa-3x text-light mb-3"></i><br>
+            <p class="text-muted">No hay obras registradas para este cliente.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .grayscale {
+        filter: grayscale(1);
+    }
+</style>
+{% endblock %}

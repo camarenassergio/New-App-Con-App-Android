@@ -1,0 +1,63 @@
+<div class="list-group list-group-flush">
+    {% for res in resultados %}
+    <button type="button" class="list-group-item list-group-item-action p-3 border-bottom"
+            onclick="seleccionarResultado('{{ res.cliente.id_sae|default:''|escapejs }}', '{{ res.cliente.razon_social|escapejs }}', '{{ res.obra.pk|default:'' }}', '{{ res.obra.alias|default:'Sin Alias'|escapejs }}', '{{ res.obra.calle_numero|default:'Sin dirección'|escapejs }}')">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h6 class="mb-1 fw-bold text-dark">
+                    {{ res.cliente.razon_social }} 
+                    {% if res.cliente.id_sae %}<span class="badge bg-secondary ms-1 small">SAE: {{ res.cliente.id_sae }}</span>{% endif %}
+                </h6>
+                <p class="mb-1 small text-muted">
+                    <i class="fas fa-map-marker-alt text-danger me-1"></i> 
+                    {% if res.obra %}
+                        <strong>{{ res.obra.alias }}</strong>: {{ res.obra.calle_numero }}, {{ res.obra.colonia }}
+                    {% else %}
+                        <span class="text-warning">Sin obras registradas</span>
+                    {% endif %}
+                </p>
+            </div>
+            {% if res.activa %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Activo</span>
+            {% else %}
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">Inactivo (>12m)</span>
+            {% endif %}
+        </div>
+    </button>
+    {% empty %}
+    <div class="p-5 text-center text-muted">
+        <i class="fas fa-search fa-3x mb-3 opacity-25"></i>
+        {% if query %}
+        <p>No se encontraron resultados para "<strong>{{ query }}</strong>".</p>
+        <p class="small">Intente con búsqueda extendida o registre como nuevo.</p>
+        {% else %}
+        <p>Ingrese un término de búsqueda...</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    function seleccionarResultado(idSae, razonSocial, obraId, obraAlias, direccion) {
+        // Llenar campos del formulario principal
+        const idSaeInput = document.querySelector('[name="id_sae_search"]');
+        const clienteSelect = document.querySelector('[name="cliente"]');
+        const obraSelect = document.querySelector('[name="obra"]');
+
+        if (idSaeInput) idSaeInput.value = idSae;
+        
+        // Disparar la carga de obras para este cliente si es necesario
+        // Pero aquí ya tenemos la obra, así que podemos forzar la selección
+        
+        // Cerrar modal
+        const modalEl = document.getElementById('buscadorClienteModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+        
+        // Notificar al usuario o llenar visualmente el form
+        // Usaremos un evento de JS o HTMX para sincronizar
+        document.dispatchEvent(new CustomEvent('clienteSeleccionado', {
+            detail: { idSae, razonSocial, obraId, obraAlias }
+        }));
+    }
+</script>

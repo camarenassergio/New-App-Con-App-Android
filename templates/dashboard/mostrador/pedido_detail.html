@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pedido {{ pedido.folio_sae }} — Casa Lupita{% endblock %}
+{% block page_title %}Detalles del Pedido{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- Columna Izquierda: Información Principal -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h2 class="fw-bold mb-1">{{ pedido.folio_sae }}</h2>
+                            <p class="text-muted small mb-0">Registrado el {{ pedido.fecha_registro|date:"d/m/Y H:i" }} por {{ request.user.username }}</p>
+                        </div>
+                        <span class="badge {% if pedido.estado == 'REGISTRADO' %}bg-info{% else %}bg-success{% endif %} rounded-pill px-3 py-2">
+                            {{ pedido.get_estado_display }}
+                        </span>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6 border-end">
+                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Cliente</h6>
+                            <h5 class="fw-bold fs-6">{{ pedido.cliente.razon_social }}</h5>
+                            <p class="text-muted small mb-0">ID SAE: {{ pedido.cliente.id_sae }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Destino / Obra</h6>
+                            <h5 class="fw-bold fs-6">{{ pedido.obra.alias }}</h5>
+                            <p class="text-muted small mb-0">{{ pedido.obra.calle_numero }}</p>
+                            <p class="text-muted small mb-0">{{ pedido.obra.zona.nombre }}</p>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="row g-4 text-center">
+                        <div class="col-4">
+                            <div class="bg-light p-3 rounded-3">
+                                <i class="fas fa-weight-hanging text-primary mb-2"></i>
+                                <span class="d-block small text-muted">Peso Est.</span>
+                                <span class="fw-bold">{{ pedido.peso_total_estimado_kg }} kg</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-light p-3 rounded-3">
+                                <i class="{% if pedido.es_urgente %}fas fa-bolt text-danger{% else %}far fa-clock text-muted{% endif %} mb-2"></i>
+                                <span class="d-block small text-muted">Prioridad</span>
+                                <span class="fw-bold">{% if pedido.es_urgente %}URGENTE{% else %}ESTÁNDAR{% endif %}</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-light p-3 rounded-3">
+                                <i class="fas fa-hand-holding-usd text-success mb-2"></i>
+                                <span class="d-block small text-muted">Maniobra</span>
+                                <span class="fw-bold">{% if pedido.maniobra_aceptada %}SÍ{% else %}NO{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Evidencia -->
+            <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="card-header bg-transparent py-3 px-4 fw-bold">
+                    <i class="fas fa-camera me-2"></i> Documentación del Pedido
+                </div>
+                <div class="card-body p-4 text-center">
+                    {% if pedido.evidencia_ticket %}
+                    <img src="{{ pedido.evidencia_ticket.url }}" alt="Ticket SAE" class="img-fluid rounded-3 shadow-sm" style="max-height: 400px;">
+                    <div class="mt-3">
+                        <a href="{{ pedido.evidencia_ticket.url }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
+                            <i class="fas fa-external-link-alt me-1"></i> Ver tamaño completo
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="py-5 text-muted">
+                        <i class="fas fa-file-invoice fa-3x mb-3 opacity-25"></i>
+                        <p>No se cargó evidencia fotográfica del ticket.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Acciones y Estado de Despacho -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="card-header bg-dark text-white py-3 px-4 fw-bold">
+                    <i class="fas fa-lock me-2"></i> Control de Edición
+                </div>
+                <div class="card-body p-4">
+                    {% if pedido.estado == 'REGISTRADO' %}
+                    <div id="unlock-section">
+                        <p class="small text-muted mb-4">
+                            Este pedido está en cola de espera. Para evitar duplicidades o errores en ruta, la edición requiere autorización de un supervisor.
+                        </p>
+                        <form hx-post="{% url 'dashboard:pedido_unlock' pedido.pk %}" hx-target="#unlock-error">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <input type="password" name="password" class="form-control" placeholder="Contraseña Admin" required>
+                            </div>
+                            <div id="unlock-error"></div>
+                            <button type="submit" class="btn btn-warning w-100 fw-bold rounded-pill mb-2">
+                                <i class="fas fa-unlock me-2"></i> Desbloquear Edición
+                            </button>
+                        </form>
+                        
+                        <form hx-post="{% url 'dashboard:pedido_cancel' pedido.pk %}" hx-confirm="¿Está seguro de que desea CANCELAR este pedido?">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger w-100 small rounded-pill mt-2">
+                                <i class="fas fa-ban me-1"></i> Cancelar Pedido
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-secondary py-3 text-center mb-0">
+                        <i class="fas fa-info-circle mb-2 fa-2x d-block opacity-50"></i>
+                        <span class="small fw-bold d-block text-uppercase">Pedido Bloqueado</span>
+                        <span class="small opacity-75">El pedido ya se encuentra en proceso de logística o en ruta. No puede ser modificado.</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Resumen de Despachos (si existen) -->
+            {% if pedido.despachos.all %}
+            <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="card-header bg-transparent py-3 px-4 fw-bold">
+                    <i class="fas fa-shipping-fast me-2"></i> Despachos Asociados
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for despacho in pedido.despachos.all %}
+                    <div class="list-group-item p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small fw-bold">{{ despacho.get_tipo_envio_display }}</span>
+                            <span class="badge bg-light text-dark border">{{ despacho.peso_asignado_kg }} kg</span>
+                        </div>
+                        <div class="text-muted small">Viaje: #{{ despacho.viaje_nuevo.id|default:"N/A" }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

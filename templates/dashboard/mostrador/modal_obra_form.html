@@ -1,0 +1,55 @@
+<div class="modal fade" id="obraModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fas fa-map-marker-alt me-2"></i> Registrar Nueva Obra / Destino</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form hx-post="{% url 'dashboard:obra_create_modal' %}" hx-target="#modal-container" hx-swap="outerHTML">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Alias de la Obra</label>
+                            {{ form.alias }}
+                            <div class="form-text small">Ej. "Construcción Arcos" o "Casa de Campo".</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Cliente</label>
+                            {{ form.cliente }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Zona de Entrega</label>
+                            {{ form.zona }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Calle y Número</label>
+                            {{ form.calle_numero }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Referencias de Ubicación</label>
+                            {{ form.referencias }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Nombre de quien recibe</label>
+                            {{ form.nombre_receptor }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Teléfono del Receptor</label>
+                            {{ form.telefono_receptor }}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 border-top pt-3 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar Destino</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        var obraModal = new bootstrap.Modal(document.getElementById('obraModal'));
+        obraModal.show();
+    </script>
+</div>

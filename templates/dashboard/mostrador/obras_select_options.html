@@ -1,0 +1,18 @@
+<select name="obra" class="form-select" id="id_obra" required>
+    <option value="">-- Seleccionar Destino --</option>
+    {% for obra in obras %}
+    <option value="{{ obra.id }}" {% if selected_obra_id|slugify == obra.id|slugify %}selected{% endif %}>
+        {{ obra.alias }} ({{ obra.calle_numero|truncatechars:20 }})
+    </option>
+    {% endfor %}
+</select>
+{% if not obras %}
+<div class="text-warning small mt-1 animate__animated animate__shakeX">
+    <i class="fas fa-exclamation-circle"></i> Este cliente no tiene obras registradas. Cree una nueva.
+</div>
+<script>
+    setTimeout(() => {
+        document.dispatchEvent(new Event('abrirModalObra'));
+    }, 200);
+</script>
+{% endif %}

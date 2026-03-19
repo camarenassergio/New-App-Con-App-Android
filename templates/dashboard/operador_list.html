@@ -4,36 +4,70 @@
 
 {% block content %}
 <div class="table-container">
-    <div class="table-header">
-        <h3 class="mb-0">Directorio de Operadores</h3>
+    <div class="table-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">{% if request.user.personal.puesto == 'MOSTRADOR' %}Directorio del Personal{% else %}Directorio de Operadores{% endif %}</h3>
+        <a href="{% url 'dashboard:operador_create' %}" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-plus me-1"></i> Nuevo Registro
+        </a>
     </div>
 
     <div style="padding: 24px;">
         <div class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
             {% for op in operadores %}
-            <div class="stat-card" style="border-left: 4px solid {% if op.activo %}var(--success){% else %}var(--text-muted){% endif %};">
+            <div class="stat-card" style="border-left: 4px solid {% if op.usa_sistema %}var(--primary-blue){% else %}var(--success){% endif %};">
                 <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h3 class="mb-1">{{ op.nombre }}</h3>
-                        <p class="text-muted small mb-1"><i class="fas fa-phone me-1"></i> {{ op.telefono }}</p>
-                        <p class="text-muted small mb-0"><i class="fas fa-id-card me-1"></i> {{ op.licencia }}</p>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h3 class="mb-0">{{ op.nombre }}</h3>
+                            {% if op.usa_sistema %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small" style="font-size: 0.65rem;">SISTEMA</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-primary fw-bold small mb-2 text-uppercase letter-spacing-1">{{ op.puesto }}</p>
+                        
+                        <div class="contact-info small text-muted">
+                            <p class="mb-1"><i class="fas fa-phone me-2"></i> {{ op.telefono }}</p>
+                            {% if op.email %}
+                            <p class="mb-1"><i class="fas fa-envelope me-2"></i> {{ op.email }}</p>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="avatar" style="background: rgba(243,111,33,0.15); color: var(--primary-orange);">
-                        <i class="fas fa-user-tie"></i>
+                    <div class="avatar shadow-sm d-flex flex-column align-items-center gap-1" style="background: var(--bg-body); color: var(--primary-blue); width: 48px; height: 48px; position: relative;">
+                        <i class="fas fa-user-tie fa-lg"></i>
+                        <a href="{% url 'dashboard:operador_update' op.pk %}" class="btn btn-sm btn-link p-0 text-muted" style="position: absolute; top: -5px; right: -5px; background: white; border-radius: 50%; width: 20px; height: 20px; line-height: 20px; font-size: 0.7rem; border: 1px solid var(--border-color);">
+                            <i class="fas fa-pencil-alt"></i>
+                        </a>
                     </div>
                 </div>
+
                 <div class="mt-3 pt-3 d-flex justify-content-between align-items-center" style="border-top: 1px solid var(--border-color);">
-                    <div class="small text-muted d-flex flex-column gap-1">
-                        <span>Vence: {{ op.vigencia_licencia|date:"d/m/Y" }}</span>
-                        {% if op.licencia_vencida %}
-                            <span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i> LICENCIA VENCIDA</span>
-                        {% elif op.licencia_por_vencer %}
-                            <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-circle me-1"></i> POR VENCER</span>
-                        {% else %}
-                            <span class="badge bg-success">Vigente</span>
+                    <div class="communication-actions d-flex gap-2">
+                        <!-- WhatsApp siempre disponible -->
+                        <a href="https://wa.me/{{ op.telefono|cut:' ' }}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3" title="WhatsApp Directo">
+                            <i class="fab fa-whatsapp me-1"></i> WhatsApp
+                        </a>
+
+                        {% if op.usa_sistema and op.usuario_asociado %}
+                            <!-- Botón para Mensaje Interno adicional -->
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" 
+                                    hx-get="#" 
+                                    title="Enviar mensaje interno al sistema">
+                                <i class="fas fa-comment-dots me-1"></i> Mensaje
+                            </button>
                         {% endif %}
                     </div>
-                    <a href="#" class="btn btn-sm btn-outline-primary">Ver Detalles</a>
+                    
+                    {% if op.licencia %}
+                    <div class="licence-badge">
+                        {% if op.licencia_vencida %}
+                            <span class="badge bg-danger"><i class="fas fa-id-card me-1"></i> Vencida</span>
+                        {% elif op.licencia_por_vencer %}
+                            <span class="badge bg-warning text-dark"><i class="fas fa-id-card me-1"></i> Próxima</span>
+                        {% else %}
+                            <span class="badge bg-light text-muted border"><i class="fas fa-id-card me-1"></i> Chofer</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% empty %}

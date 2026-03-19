@@ -11,6 +11,8 @@ urlpatterns = [
     path('unidades/<int:pk>/editar/', views.UnidadUpdateView.as_view(), name='unidad_update'),
     path('unidades/<int:pk>/toggle/', views.UnidadToggleEstadoView.as_view(), name='unidad_toggle'),
     path('operadores/', views.OperadorListView.as_view(), name='operadores_list'),
+    path('operadores/nuevo/', views.OperadorCreateView.as_view(), name='operador_create'),
+    path('operadores/<int:pk>/editar/', views.OperadorUpdateView.as_view(), name='operador_update'),
     path('viajes/', views.ViajeListView.as_view(), name='viajes_list'),
     path('viajes/nuevo/', views.ViajeCreateView.as_view(), name='viaje_create'),
     path('viajes/<int:pk>/editar/', views.ViajeUpdateView.as_view(), name='viaje_update'),
@@ -53,6 +55,9 @@ urlpatterns = [
     path('api/colonias-por-cp/', views.colonias_por_cp_api, name='colonias_por_cp_api'),
     path('api/calcular-centroide/', views.calcular_centroide_zona_api, name='calcular_centroide_api'),
     path('api/calcular-flete/', views.CalcularFleteSugeridoView.as_view(), name='calcular_flete_api'),
+    path('api/buscar-colonia/', views.buscar_colonia_api, name='buscar_colonia_api'),
+    path('api/solicitar-autorizacion-zona/', views.solicitar_autorizacion_zona_api, name='solicitar_autorizacion_zona_api'),
+    path('api/verificar-zona-cp/', views.verificar_zona_por_cp_api, name='verificar_zona_por_cp_api'),
 
     path('usuarios/', views.UsuarioListView.as_view(), name='usuarios_list'),
     path('usuarios/nuevo/', views.UsuarioCreateView.as_view(), name='usuario_create'),
@@ -63,4 +68,28 @@ urlpatterns = [
     # --- PERFIL DE USUARIO ---
     path('mi-perfil/', views.UsuarioPerfilView.as_view(), name='usuario_perfil'),
     path('cambiar-password/', views.UsuarioPasswordChangeView.as_view(), name='usuario_cambiar_password'),
+
+    # --- MOSTRADOR (PASO 1 - FASE 2) ---
+    path('mostrador/dashboard/', views.MostradorDashboardView.as_view(), name='mostrador_dashboard'),
+    path('mostrador/', views.MostradorHomeView.as_view(), name='mostrador_home'),
+    path('mostrador/cotizar-modal/', views.CotizadorFleteModalView.as_view(), name='cotizador_modal'),
+    path('mostrador/cotizar-accion/', views.CalcularFleteAccionView.as_view(), name='cotizar_accion'),
+    path('mostrador/cliente-busqueda/', views.ClienteSAEBusquedaView.as_view(), name='cliente_sae_busqueda'),
+    path('mostrador/cliente-buscador-modal/', views.ClienteBuscadorModalView.as_view(), name='cliente_buscador_modal'),
+    path('mostrador/cliente-buscador-accion/', views.ClienteBuscadorAccionView.as_view(), name='cliente_buscador_accion'),
+    path('mostrador/obras-select/', views.ObraSelectFragmentView.as_view(), name='obras_select_fragment'),
+    path('mostrador/obra-nueva-modal/', views.ObraCreateModalView.as_view(), name='obra_create_modal'),
+    path('pedido/nuevo/', views.PedidoCreateView.as_view(), name='pedido_create'),
+    path('pedido/<int:pk>/', views.PedidoDetailView.as_view(), name='pedido_detail'),
+    path('pedido/<int:pk>/editar/', views.PedidoUpdateView.as_view(), name='pedido_update'),
+    path('pedido/<int:pk>/desbloquear/', views.PedidoUnlockView.as_view(), name='pedido_unlock'),
+    path('pedido/<int:pk>/cancelar/', views.PedidoCancelView.as_view(), name='pedido_cancel'),
+
+    # --- GESTIÓN DE CLIENTES Y OBRAS (ADMIN/MOSTRADOR) ---
+    path('clientes/', views.ClienteListView.as_view(), name='cliente_list'),
+    path('clientes/nuevo/', views.ClienteCreateView.as_view(), name='cliente_create'),
+    path('clientes/<int:pk>/editar/', views.ClienteUpdateView.as_view(), name='cliente_update'),
+    path('clientes/<int:cliente_pk>/obras/', views.ObraListView.as_view(), name='obra_list'),
+    path('clientes/<int:cliente_pk>/obras/nueva/', views.ObraCreateView.as_view(), name='obra_create'),
+    path('obras/<int:pk>/editar/', views.ObraUpdateView.as_view(), name='obra_update'),
 ]

@@ -13,8 +13,11 @@ from math import ceil
 
 class Unidad(models.Model):
     TIPO_CHOICES = [
-        ('CAMION', 'Camión'),
-        ('CAMIONETA', 'Camioneta'),
+        ('CAMION', 'Camión (Ruta Pesada)'),
+        ('CAMIONETA_3_5', 'Camioneta 3.5 Ton'),
+        ('CAMIONETA_1_5', 'Camioneta 1.5 Ton'),
+        ('AUTO', 'Auto / Sedán'),
+        ('MOTO', 'Motocicleta (Express)'),
     ]
 
     # Identificadores
@@ -383,34 +386,11 @@ class Unidad(models.Model):
     class Meta:
         verbose_name = "Unidad"
         verbose_name_plural = "Unidades"
-
-class Operador(models.Model):
-    nombre = models.CharField(max_length=100, verbose_name="Nombre Completo")
-    telefono = models.CharField(max_length=15, verbose_name="Teléfono")
-    licencia = models.CharField(max_length=50, unique=True, verbose_name="No. de Licencia")
-    vigencia_licencia = models.DateField(verbose_name="Vigencia de Licencia")
-    activo = models.BooleanField(default=True, verbose_name="¿Está activo?")
-
-    def __str__(self):
-        return self.nombre
-
-    @property
-    def licencia_vencida(self):
-        return self.vigencia_licencia and self.vigencia_licencia < timezone.now().date()
-        
-    @property
-    def licencia_por_vencer(self):
-        if not self.vigencia_licencia: return False
-        days = (self.vigencia_licencia - timezone.now().date()).days
-        return 0 <= days <= 30
-
-    class Meta:
-        verbose_name_plural = "Operadores"
-
 class ZonaEntrega(models.Model):
     nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la Zona (Ej. Norte, Sur, Centro)")
     codigos_postales = models.TextField(verbose_name="Códigos Postales", help_text="Separados por coma", null=True, blank=True)
     colonias = models.TextField(verbose_name="Colonias que Abarca", help_text="Listado de colonias principales", null=True, blank=True)
+    municipio = models.CharField(max_length=100, verbose_name="Municipio", null=True, blank=True)
     tiempo_traslado_minutos = models.PositiveIntegerField(verbose_name="Tiempo Medio Traslado (mins)")
     distancia_km = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Distancia Media (Km) desde Sucursal")
     tarifa_flete = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Costo Base de Flete ($)", default=0.00)
@@ -514,6 +494,234 @@ class ZonaEntrega(models.Model):
 
     def __str__(self):
         return f"Zona: {self.nombre} ({self.tiempo_traslado_minutos} min)"
+
+class Operador(models.Model):
+    nombre = models.CharField(max_length=100, verbose_name="Nombre Completo")
+    puesto = models.CharField(max_length=100, default="Operador", verbose_name="Puesto / Departamento")
+    telefono = models.CharField(max_length=15, verbose_name="Teléfono")
+    email = models.EmailField(null=True, blank=True, verbose_name="Correo Electrónico")
+    
+    # Datos de Licencia (Opcionales para personal administrativo)
+    licencia = models.CharField(max_length=50, null=True, blank=True, verbose_name="No. de Licencia")
+    vigencia_licencia = models.DateField(null=True, blank=True, verbose_name="Vigencia de Licencia")
+    
+    # Vinculación con el sistema
+    usuario_asociado = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='perfil_directorio')
+    usa_sistema = models.BooleanField(default=False, verbose_name="¿Usa el sistema operativo regularmente?")
+    
+    activo = models.BooleanField(default=True, verbose_name="¿Está activo?")
+
+    def __str__(self): 
+        return f"{self.nombre} - {self.puesto}"
+    @property
+    def licencia_vencida(self):
+        return self.vigencia_licencia and self.vigencia_licencia < timezone.now().date()
+    @property
+    def licencia_por_vencer(self):
+        if not self.vigencia_licencia: return False
+        days = (self.vigencia_licencia - timezone.now().date()).days
+        return 0 <= days <= 30
+    class Meta:
+        verbose_name = "Operador"
+        verbose_name_plural = "Operadores"
+class Obra(models.Model):
+    alias = models.CharField(max_length=100, verbose_name="Alias de la Obra (Ej. Casa Blanca)")
+    cliente = models.ForeignKey('Cliente', on_delete=models.CASCADE, related_name='obras')
+    zona = models.ForeignKey(ZonaEntrega, on_delete=models.PROTECT, verbose_name="Zona de Entrega")
+    
+    # Dirección Detallada
+    calle_numero = models.CharField(max_length=255, verbose_name="Calle y Número Ext/Int")
+    entre_calles = models.CharField(max_length=255, blank=True, null=True, verbose_name="Entre Calles")
+    colonia = models.CharField(max_length=150, blank=True, null=True, verbose_name="Colonia")
+    municipio = models.CharField(max_length=150, blank=True, null=True, verbose_name="Municipio")
+    cp = models.CharField(max_length=10, blank=True, null=True, verbose_name="Código Postal")
+    referencias = models.TextField(blank=True, null=True, verbose_name="Referencias Visuales (Color de fachada, portón, etc.)")
+    
+    # Receptor (Contacto Secundario)
+    nombre_receptor = models.CharField(max_length=150, verbose_name="Nombre de quien recibe (Residente/Maestro/Cliente)")
+    telefono_receptor = models.CharField(max_length=15, verbose_name="Teléfono del Receptor")
+    
+    # Reglas de Negocio
+    esta_activa = models.BooleanField(default=True, verbose_name="Obra Activa")
+    zona_aprobada = models.BooleanField(default=True, verbose_name="¿Zona autorizada por Logística?", help_text="Si se desmarca, el pedido quedará bloqueado hasta revisión.")
+    fecha_ultimo_pedido = models.DateTimeField(null=True, blank=True, verbose_name="Fecha del último pedido")
+    
+    class Meta:
+        verbose_name = "Obra / Dirección de Entrega"
+        verbose_name_plural = "Obras / Directorio de Obras"
+        ordering = ['-fecha_ultimo_pedido', 'alias']
+
+    def __str__(self):
+        return f"{self.alias} - {self.cliente.razon_social}"
+
+    @property
+    def es_reciente(self):
+        """Regla de los 12 meses (365 días)"""
+        if not self.fecha_ultimo_pedido:
+            # Si nunca ha tenido pedidos, se considera inactiva tras 1 año de creación si no tiene pedidos
+            return self.esta_activa 
+        limite = timezone.now() - timedelta(days=365)
+        return self.esta_activa and self.fecha_ultimo_pedido >= limite
+    
+class Cliente(models.Model):
+    id_sae = models.CharField(max_length=20, unique=True, verbose_name="ID SAE (ERP)", null=True, blank=True)
+    razon_social = models.CharField(max_length=255, verbose_name="Razón Social / Nombre Completo")
+    telefono_principal = models.CharField(max_length=15, verbose_name="Teléfono Principal", null=True, blank=True)
+    es_mostrador = models.BooleanField(default=False, verbose_name="¿Es Cliente Mostrador?")
+    
+    class Meta:
+        verbose_name = "Cliente"
+        verbose_name_plural = "Clientes"
+
+    def __str__(self):
+        return f"{self.id_sae or 'S/C'} - {self.razon_social}"
+
+    def save(self, *args, **kwargs):
+        # Si no tiene ID SAE, se marca automáticamente como cliente mostrador
+        if not self.id_sae:
+            self.es_mostrador = True
+        else:
+            self.es_mostrador = False
+        super().save(*args, **kwargs)
+
+class Pedido(models.Model):
+    ESTADO_CHOICES = [
+        ('REGISTRADO', 'Registrado'),
+        ('EN_PREPARACION', 'En Preparación'),
+        ('ASIGNADO_A_RUTA', 'Asignado a Ruta'),
+        ('EN_RUTA', 'En Ruta'),
+        ('ENTREGADO', 'Entregado'),
+        ('ENTREGA_PARCIAL', 'Entrega Parcial'),
+        ('REPROGRAMADO', 'Reprogramado'),
+        ('CANCELADO', 'Cancelado'),
+    ]
+
+    METODO_PAGO_CHOICES = [
+        ('EFECTIVO', 'Efectivo'),
+        ('TRANSFERENCIA', 'Transferencia'),
+        ('TARJETA', 'Tarjeta (Débito/Crédito)'),
+        ('POR_COBRAR', 'Por Cobrar (Contra entrega)'),
+        ('CREDITO', 'Crédito SAE'),
+    ]
+
+    folio_sae = models.CharField(max_length=50, unique=True, verbose_name="Folio SAE / Ticket")
+    
+    # Relación con Cliente (Opcional si es Cliente Mostrador genérico)
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='pedidos', null=True, blank=True)
+    obra = models.ForeignKey(Obra, on_delete=models.PROTECT, related_name='pedidos', null=True, blank=True, help_text="Opcional para entregas rápidas en mostrador")
+    
+    # Captura Manual (Para cuando NO hay ID SAE o es cliente nuevo/rápido)
+    cliente_nombre_manual = models.CharField(max_length=255, null=True, blank=True, verbose_name="Nombre Cliente (Manual)")
+    cliente_telefono_manual = models.CharField(max_length=15, null=True, blank=True, verbose_name="Teléfono Cliente (Manual)")
+    cliente_direccion_manual = models.TextField(null=True, blank=True, verbose_name="Dirección de Entrega (Manual)")
+    
+    peso_total_estimado_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Peso Total (kg)")
+    evidencia_ticket = models.FileField(upload_to='pedidos/tickets/', null=True, blank=True, verbose_name="Evidencia Ticket (PDF/IMG)")
+    
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='REGISTRADO')
+    
+    es_urgente = models.BooleanField(default=False, verbose_name="¿Es Urgente / Flete Pagado?")
+    maniobra_aceptada = models.BooleanField(default=False, verbose_name="Maniobra a pie de camión aceptada")
+    
+    # Entrega Parcial en sitio
+    recoleccion_parcial = models.BooleanField(default=False, verbose_name="Recolección parcial en mostrador")
+    productos_entregados_parcial = models.TextField(null=True, blank=True, verbose_name="Productos entregados en Mostrador")
+    
+    # Finanzas y Observaciones
+    metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES, default='EFECTIVO', verbose_name="Forma de Pago")
+    observaciones_mostrador = models.TextField(null=True, blank=True, verbose_name="Observaciones General / Campo Extra")
+    
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    ultima_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Pedido"
+        verbose_name_plural = "Pedidos"
+        ordering = ['-fecha_registro']
+
+    def __str__(self):
+        cliente_nombre = self.cliente.razon_social if self.cliente else self.cliente_nombre_manual
+        return f"{self.folio_sae} - {cliente_nombre}"
+
+    def save(self, *args, **kwargs):
+        # Actualizar fecha de último pedido en la obra vinculada si existe
+        if self.obra:
+            # Usar update para evitar disparar señales de save() de Obra innecesariamente si se prefiere,
+            # pero aquí el diseño original pide actualizar la fecha.
+            self.obra.fecha_ultimo_pedido = timezone.now()
+            self.obra.save()
+        super().save(*args, **kwargs)
+
+class Despacho(models.Model):
+    TIPO_CHOICES = [
+        ('INTERNO_FLOTILLA', 'Ruta A: Unidad Flotilla'),
+        ('INTERNO_PERSONAL', 'Ruta B: Vehículo Personal'),
+        ('PROVEEDOR_EXTERNO', 'Ruta C: Proveedor Externo'),
+    ]
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente'),
+        ('EN_RUTA', 'En Ruta'),
+        ('COMPLETADO', 'Completado'),
+        ('FALLIDO', 'Fallido / Rechazado'),
+    ]
+
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='despachos')
+    viaje = models.ForeignKey('ViajeNuevo', on_delete=models.SET_NULL, null=True, blank=True, related_name='despachos')
+    
+    tipo_envio = models.CharField(max_length=20, choices=TIPO_CHOICES, default='INTERNO_FLOTILLA')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    
+    peso_asignado_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Peso Asignado (kg)")
+    
+    # Datos de entrega (App Chofer)
+    hora_llegada = models.DateTimeField(null=True, blank=True)
+    hora_entrega = models.DateTimeField(null=True, blank=True)
+    
+    maniobra_especial = models.BooleanField(default=False, verbose_name="¿Se realizó maniobra especial?")
+    descripcion_maniobra = models.TextField(blank=True, null=True, verbose_name="Detalle de maniobra/propina")
+    observaciones_entrega = models.TextField(blank=True, null=True, verbose_name="Observaciones del chofer")
+    
+    # Evidencia obligatoria única
+    foto_ticket_firmado = models.ImageField(upload_to='entregas/tickets/', null=True, blank=True, verbose_name="Foto Ticket Firmado")
+
+    def __str__(self):
+        return f"Despacho {self.id} - {self.pedido.folio_sae}"
+
+class EvidenciaMaterial(models.Model):
+    despacho = models.ForeignKey(Despacho, on_delete=models.CASCADE, related_name='evidencias_material')
+    foto = models.ImageField(upload_to='entregas/material/', verbose_name="Foto Material en Sitio")
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+class ViajeNuevo(models.Model):
+    # Sustituirá al Viaje anterior conforme migremos
+    unidad = models.ForeignKey(Unidad, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Unidad Flotilla")
+    vehiculo_personal_info = models.CharField(max_length=150, null=True, blank=True, verbose_name="Info Vehículo Personal (Motos/Particular)")
+    
+    chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='viajes_asignados')
+    chalan = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='viajes_ayuda', verbose_name="Chalán")
+    
+    proveedor_externo = models.CharField(max_length=150, null=True, blank=True, verbose_name="Proveedor Externo (Ej. Sergio Almacen)")
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    completado = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Viaje {self.id} - {self.fecha_creacion.date()}"
+
+class MensajeInterno(models.Model):
+    remitente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mensajes_enviados')
+    destinatario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='mensajes_recibidos', help_text="Nulo para avisos globales")
+    
+    contenido = models.TextField()
+    leido = models.BooleanField(default=False)
+    fecha_envio = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha_envio']
+
+    def __str__(self):
+        return f"De: {self.remitente} - {self.fecha_envio.strftime('%d/%m %H:%M')}"
+
 
 
 class CodigoPostalCat(models.Model):
@@ -1138,6 +1346,10 @@ class ConfiguracionGeneral(models.Model):
     tiempo_descarga_promedio_min = models.PositiveIntegerField(default=30, verbose_name="Tiempo de Descarga Promedio (min)", help_text="Tiempo fijo agregado a cada viaje por maniobras.")
     limite_seguridad_llanta_mm = models.DecimalField(max_digits=4, decimal_places=1, default=3.0, verbose_name="Límite Seguridad Llanta (mm)")
     vida_util_estimada_llanta_km = models.PositiveIntegerField(default=100000, verbose_name="Vida Útil Estimada Llanta (km)")
+    
+    # Fase 2: Pesos y Tolerancias
+    limite_peso_vehiculo_personal_kg = models.DecimalField(max_digits=10, decimal_places=2, default=200.00, verbose_name="Límite Peso Vehículo Personal (kg)")
+    tolerancia_peso_ruta_kg = models.DecimalField(max_digits=10, decimal_places=2, default=50.00, verbose_name="Tolerancia de Peso en Ruta (kg)")
     
     @property
     def costo_minuto_chofer(self):

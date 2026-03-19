@@ -13,9 +13,9 @@
 - [ ] **[DEUDA TÉCNICA / UX]** Migración de flujos transaccionales (ej. Gastos, Checklist) a metodología SPA/AJAX (HTMX/JS Nativo) para eliminar *page reloads*, mejorar la percepción de velocidad (Immediate Feedback <100ms) y dar sensación de app nativa.
 
 ## Trayectoria Actual
-- **Paso**: Refactorización de Arquitectura de Frontend (SPA/AJAX)
-- **Objetivo**: Migrar todos los formularios existentes y transaccionales a HTMX/AJAX para eliminar reloads de página, y asegurar que todos los nuevos formularios sigan este estándar.
-- **Estado**: En progreso - Implementando HTMX en formularios.
+- **Paso**: Desarrollo Fase 2 y 3 (Mostrador, Logística, App Chofer y Mensajería)
+- **Objetivo**: Implementar el flujo híbrido de pedidos (CEMEX), Kanban logístico con cálculos de peso, bifurcación a proveedores externos y App Móvil de Chofer (Módulo HTMX asíncrono y Motor de Mensajes).
+- **Estado**: En progreso - Validación del Plan V3 de implementación.
 
 ## Estado del Squad
 | Agente | Tarea | Estado |
@@ -46,6 +46,7 @@
 | Antigravity | Design System Rulebook v2.0 (15 secciones) registrado en .agent/workflows | Verificado y Pulido |
 | Antigravity | HTMX Audit: convertidos configuracion_general, usuario_cambiar_password, unidad_list toggle | Verificado y Pulido |
 | Antigravity | UX: Redirección de ConfiguracionGeneral a Dashboard Home post-guardado | Verificado y Pulido |
+| Antigravity | Paso 1 (Fase 2): Mostrador — Registro, Cotizador, SAE Sync y Bloqueo de Edición | Verificado y Pulido |
 
 ## Reglas del Proyecto
 - **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).

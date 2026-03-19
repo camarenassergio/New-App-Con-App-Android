@@ -1,20 +1,38 @@
-from django.shortcuts import render
-from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DetailView, DeleteView
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DetailView, DeleteView, View, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
-from django.utils import timezone
-import datetime
-import calendar
-from django.db.models import Sum, F
-from django.db.models.functions import TruncMonth
-from .models import Unidad, Operador, Viaje, ConfiguracionLogistica, GastoUnidad
-import datetime
 
 User = get_user_model()
+from django.urls import reverse_lazy, reverse
+from django.utils import timezone
+from django.db.models import Sum, F, Q
+from django.db.models.functions import TruncMonth
+from django.http import HttpResponse, JsonResponse
+from django.template.loader import render_to_string
+from django.contrib import messages
+import datetime
+import calendar
+import json
+import os
+from decimal import Decimal
 
-from django.http import HttpResponse
+from .models import (
+    Unidad, Operador, Viaje, ConfiguracionLogistica, GastoUnidad,
+    RegistroCombustible, Personal, OrdenServicio, ChecklistUnidad,
+    InventarioLlanta, ConfiguracionGeneral, MedicionNeumatico,
+    ZonaEntrega, Cliente, Obra, Pedido, Despacho, EvidenciaMaterial,
+    ViajeNuevo, MensajeInterno
+)
+from .forms import (
+    UnidadForm, RegistroCombustibleForm, PersonalCreationForm,
+    GastoUnidadForm, CombustibleDeleteForm, UsuarioPerfilForm,
+    OrdenServicioForm, ChecklistUnidadForm, ViajeForm,
+    InventarioLlantaForm, EvaluacionEntregaForm, ZonaEntregaForm,
+    ConfiguracionGeneralForm, ClienteForm, ObraForm, PedidoForm,
+    DespachoForm, DespachoEntregaForm, ViajeNuevoForm, MensajeInternoForm
+)
 
 class AjaxSuccessMixin:
     """
@@ -58,8 +76,12 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/home.html"
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_superuser and hasattr(request.user, 'personal') and request.user.personal.puesto == 'CHOFER':
-            return redirect('dashboard:viajes_list')
+        if not request.user.is_superuser and hasattr(request.user, 'personal'):
+            puesto = request.user.personal.puesto
+            if puesto == 'CHOFER':
+                return redirect('dashboard:viajes_list')
+            elif puesto == 'MOSTRADOR':
+                return redirect('dashboard:mostrador_dashboard')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -375,6 +397,20 @@ class OperadorListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
     model = Operador
     template_name = "dashboard/operador_list.html"
     context_object_name = "operadores"
+
+class OperadorCreateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, CreateView):
+    model = Operador
+    fields = ['nombre', 'puesto', 'telefono', 'email', 'licencia', 'vigencia_licencia', 'usuario_asociado', 'usa_sistema', 'activo']
+    template_name = "dashboard/operador_form.html"
+    success_url = reverse_lazy('dashboard:operadores_list')
+    ajax_success_message = "Registro añadido al directorio correctamente."
+
+class OperadorUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, UpdateView):
+    model = Operador
+    fields = ['nombre', 'puesto', 'telefono', 'email', 'licencia', 'vigencia_licencia', 'usuario_asociado', 'usa_sistema', 'activo']
+    template_name = "dashboard/operador_form.html"
+    success_url = reverse_lazy('dashboard:operadores_list')
+    ajax_success_message = "Registro actualizado correctamente."
 
 class ViajeListView(LoginRequiredMixin, ListView):
     model = Viaje
@@ -1330,9 +1366,19 @@ class ZonaEntregaMapView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Check if any zone exists for warning messages in template
         context['tiene_zonas'] = ZonaEntrega.objects.exists()
-        context['zonas'] = ZonaEntrega.objects.all().order_by('nombre')
+        
+        # Agrupar por municipio para el catálogo lateral
+        zonas = ZonaEntrega.objects.all().order_by('municipio', 'nombre')
+        zonas_por_municipio = {}
+        for z in zonas:
+            muni = z.municipio or "Sin Municipio"
+            if muni not in zonas_por_municipio:
+                zonas_por_municipio[muni] = []
+            zonas_por_municipio[muni].append(z)
+            
+        context['zonas_agrupadas'] = zonas_por_municipio
+        context['zonas_count'] = zonas.count()
         return context
 
 from django.http import JsonResponse
@@ -1360,6 +1406,7 @@ class ZonasGeoJSONView(LoginRequiredMixin, View):
                         # Decorate the feature with our custom zone data for the frontend
                         feature['properties'] = {
                             "nombre": zona.nombre,
+                            "municipio": zona.municipio or "Sin Municipio",
                             "color": zona.color_hex,
                             "id": zona.id,
                             "tiempo": zona.tiempo_traslado_minutos,
@@ -1573,7 +1620,198 @@ def colonias_por_cp_api(request):
     # Ordenar y asegurar únicos
     colonias_unicas = sorted(list(set(colonias_encontradas)))
     
-    return JsonResponse({'colonias': colonias_unicas})
+    # Obtener el municipio predominante (Columna D)
+    municipios = CodigoPostalCat.objects.filter(codigo__in=cps).values_list('municipio', flat=True)
+    municipio_sugerido = ""
+    if municipios:
+        from collections import Counter
+        municipio_sugerido = Counter(municipios).most_common(1)[0][0]
+    
+    return JsonResponse({
+        'colonias': colonias_unicas,
+        'municipio': municipio_sugerido
+    })
+
+def buscar_colonia_api(request):
+    """
+    Busca colonias que coincidan con un texto y devuelve CP, Municipio y sugerencia de Zona.
+    Prioriza las colonias que YA TIENEN zona asignada en el sistema.
+    """
+    query = request.GET.get('q', '').strip()
+    if not query or len(query) < 3:
+        return JsonResponse({'resultados': []})
+
+    # Buscar en CodigoPostalCat - ampliamos a 30 para tener margen de ordenamiento
+    matches = CodigoPostalCat.objects.filter(asentamiento__icontains=query)[:30]
+
+    from dashboard.models import ZonaEntrega
+
+    # Preconstruir índices en memoria para búsqueda O(1) por CP y por colonia
+    todas_las_zonas = ZonaEntrega.objects.all()
+    zona_por_cp = {}        # {'56200': zona_obj}
+    zona_por_colonia = {}   # {'lomas de san esteban': zona_obj}  (minúsculas)
+
+    for zona in todas_las_zonas:
+        if zona.codigos_postales:
+            for cp in zona.codigos_postales.split(','):
+                cp = cp.strip()
+                if cp:
+                    zona_por_cp[cp] = zona
+        if zona.colonias:
+            for col in zona.colonias.split(','):
+                col_norm = col.strip().lower()
+                if col_norm:
+                    zona_por_colonia[col_norm] = zona
+
+    resultados_con_zona = []
+    resultados_sin_zona = []
+
+    for row in matches:
+        zona_match = None
+        zona_id = None
+        zona_color = '#6c757d'
+
+        # 1. Buscar por CP (más exacto)
+        if row.codigo in zona_por_cp:
+            z = zona_por_cp[row.codigo]
+            zona_match = z.nombre
+            zona_id = z.id
+            zona_color = z.color_hex or '#6c757d'
+
+        # 2. Si no hay zona por CP, buscar por nombre de colonia (parcial)
+        if not zona_match:
+            col_norm = row.asentamiento.strip().lower()
+            for col_key, z in zona_por_colonia.items():
+                if col_norm in col_key or col_key in col_norm:
+                    zona_match = z.nombre
+                    zona_id = z.id
+                    zona_color = z.color_hex or '#6c757d'
+                    break
+
+        item = {
+            'colonia': row.asentamiento,
+            'cp': row.codigo,
+            'municipio': row.municipio or row.ciudad or 'N/A',
+            'zona_id': zona_id,
+            'zona_nombre': zona_match or 'No Asignada',
+            'zona_color': zona_color,
+            'tiene_zona': bool(zona_match),
+        }
+
+        if zona_match:
+            resultados_con_zona.append(item)
+        else:
+            resultados_sin_zona.append(item)
+
+    # Colonias con zona PRIMERO, sin zona al final. Máx 15 resultados totales.
+    resultados = (resultados_con_zona + resultados_sin_zona)[:15]
+
+    return JsonResponse({'resultados': resultados})
+
+
+@login_required
+def solicitar_autorizacion_zona_api(request):
+    """
+    Envía MensajeInterno a todos los usuarios Admin y Logística solicitando
+    la creación de una nueva zona para poder registrar la obra.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    import json as _json
+    try:
+        data = _json.loads(request.body)
+    except Exception:
+        data = {}
+
+    colonia  = data.get('colonia', 'No especificada')
+    municipio = data.get('municipio', 'No especificado')
+    cp       = data.get('cp', 'No especificado')
+
+    from dashboard.models import Personal, MensajeInterno
+
+    solicitante = request.user.get_full_name() or request.user.username
+
+    contenido = (
+        f"🚨 SOLICITUD DE AUTORIZACIÓN – ZONA NO REGISTRADA\n\n"
+        f"El usuario {solicitante} intentó registrar una nueva obra en una colonia "
+        f"que NO tiene zona de entrega asignada en el sistema.\n\n"
+        f"📍 Datos del destino:\n"
+        f"  • Colonia:   {colonia}\n"
+        f"  • Municipio: {municipio}\n"
+        f"  • CP:        {cp}\n\n"
+        f"Si es viable atender este destino, por favor registra la nueva zona "
+        f"en Rutas & Zonas incluyendo el CP «{cp}» para desbloquear el formulario. "
+        f"Si NO es viable, notifica al usuario que no se realizan envíos a esa dirección.\n\n"
+        f"— Sistema automático Casa Lupita Logística"
+    )
+
+    # Enviar a todos los ADMIN y RUTAS
+    destinatarios = Personal.objects.filter(
+        puesto__in=['ADMIN', 'RUTAS']
+    ).select_related('usuario')
+
+    enviados = 0
+    for personal in destinatarios:
+        MensajeInterno.objects.create(
+            remitente=request.user,
+            destinatario=personal.usuario,
+            contenido=contenido,
+        )
+        enviados += 1
+
+    # Fallback: mensaje global si no hay destinatarios configurados
+    if enviados == 0:
+        MensajeInterno.objects.create(
+            remitente=request.user,
+            destinatario=None,
+            contenido=contenido,
+        )
+
+    return JsonResponse({'ok': True, 'enviados': enviados})
+
+
+@login_required
+def verificar_zona_por_cp_api(request):
+    """
+    Polling: verifica si un CP o colonia ya tiene zona asignada en el sistema.
+    Usado por el frontend para detectar cuando Admin registró la nueva zona.
+    """
+    cp      = request.GET.get('cp', '').strip()
+    colonia = request.GET.get('colonia', '').strip()
+
+    if not cp and not colonia:
+        return JsonResponse({'tiene_zona': False})
+
+    from dashboard.models import ZonaEntrega
+
+    todas_zonas = ZonaEntrega.objects.all()
+    zona_encontrada = None
+
+    for zona in todas_zonas:
+        # 1. Buscar por CP (prioritario)
+        if cp and zona.codigos_postales:
+            cps = [c.strip() for c in zona.codigos_postales.split(',') if c.strip()]
+            if cp in cps:
+                zona_encontrada = zona
+                break
+        # 2. Buscar por nombre de colonia si no encontró por CP
+        if not zona_encontrada and colonia and zona.colonias:
+            cols = [c.strip().lower() for c in zona.colonias.split(',') if c.strip()]
+            if colonia.strip().lower() in cols:
+                zona_encontrada = zona
+                break
+
+    if zona_encontrada:
+        return JsonResponse({
+            'tiene_zona': True,
+            'zona_id': zona_encontrada.id,
+            'zona_nombre': zona_encontrada.nombre,
+            'zona_color': zona_encontrada.color_hex or '#3388ff',
+            'municipio': zona_encontrada.municipio or '',
+        })
+
+    return JsonResponse({'tiene_zona': False})
 
 def calcular_centroide_zona_api(request):
     """
@@ -1666,8 +1904,8 @@ class CalcularFleteSugeridoView(LoginRequiredMixin, View):
             unidades_reales = list(Unidad.objects.filter(en_servicio=True).select_related())
             tipos_existentes = {u.tipo: u for u in unidades_reales}
             
-            # Garantizar que evaluemos los 4 tipos principales
-            tipos_base = ['CAMION', 'CAMIONETA', 'AUTO', 'MOTO']
+            # Garantizar que evaluemos los tipos principales
+            tipos_base = ['CAMION', 'CAMIONETA_3_5', 'CAMIONETA_1_5', 'AUTO', 'MOTO']
             unidades_a_evaluar = []
             
             for tb in tipos_base:
@@ -1715,3 +1953,395 @@ class CalcularFleteSugeridoView(LoginRequiredMixin, View):
             
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+# --- VISTAS DE MOSTRADOR (PASO 1 - FASE 2) ---
+
+class MostradorHomeView(LoginRequiredMixin, ListView):
+    """Cola de pedidos recientemente registrados"""
+    model = Pedido
+    template_name = 'dashboard/mostrador_home.html'
+    context_object_name = 'pedidos'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return Pedido.objects.filter(estado='REGISTRADO').order_by('-fecha_registro')
+
+class CotizadorFleteModalView(LoginRequiredMixin, TemplateView):
+    """Renderiza el fragmento del modal para cotizar"""
+    template_name = 'dashboard/mostrador/modal_cotizador.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['zonas'] = ZonaEntrega.objects.all()
+        return context
+
+class CalcularFleteAccionView(LoginRequiredMixin, View):
+    """Lógica HTMX para devolver el resultado de la cotización con desglose por unidad"""
+    def post(self, request):
+        zona_id = request.POST.get('zona')
+        es_urgente = request.POST.get('urgente') == 'on'
+        
+        if not zona_id:
+            return HttpResponse('<div class="alert alert-warning">Selecciona una zona</div>')
+            
+        zona = get_object_or_404(ZonaEntrega, pk=zona_id)
+        config = ConfiguracionGeneral.get_solo()
+        
+        # Parámetros de la zona
+        distancia = Decimal(str(zona.distancia_km))
+        tiempo = Decimal(str(zona.tiempo_traslado_minutos))
+        
+        # Tipos a evaluar (Los mismos que el motor avanzado)
+        tipos_base = [
+            ('MOTO', 'Moto Express'), 
+            ('AUTO', 'Auto / Sedán'),
+            ('CAMIONETA_1_5', 'Camioneta 1.5 Ton'),
+            ('CAMIONETA_3_5', 'Camioneta 3.5 Ton'),
+            ('CAMION', 'Camión (Ruta Peso)')
+        ]
+        
+        opciones = []
+        for tipo_cod, tipo_nom in tipos_base:
+            # Buscamos una unidad real de este tipo para obtener su costo operativo real
+            unidad_ejemplo = Unidad.objects.filter(tipo=tipo_cod, en_servicio=True).first()
+            if not unidad_ejemplo:
+                unidad_ejemplo = Unidad(tipo=tipo_cod) # Mock para el cálculo
+                unidad_ejemplo.pk = -1 # Necesario para evitar crash al calcular gastos
+            
+            # Cálculo base (Simular Ida y Vuelta)
+            km_totales = distancia * 2
+            tiempo_total = (tiempo * 2) + config.tiempo_descarga_promedio_min
+            
+            costo_op = km_totales * unidad_ejemplo.costo_operativo_total_por_km
+            costo_rh = tiempo_total * (config.costo_minuto_chofer + config.costo_minuto_chalan)
+            
+            subtotal = costo_op + costo_rh
+            if es_urgente:
+                subtotal *= Decimal('1.20')
+            
+            opciones.append({
+                'tipo': tipo_nom,
+                'codigo': tipo_cod,
+                'costo': round(subtotal, 2)
+            })
+            
+        return render(request, 'dashboard/mostrador/resultado_cotizacion.html', {
+            'opciones': opciones,
+            'zona': zona,
+            'es_urgente': es_urgente
+        })
+
+from django.db import transaction
+
+class PedidoCreateView(LoginRequiredMixin, CreateView):
+    model = Pedido
+    form_class = PedidoForm
+    template_name = 'dashboard/pedido_form.html'
+    success_url = reverse_lazy('dashboard:mostrador_home')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['zonas'] = ZonaEntrega.objects.all()
+        return context
+
+    def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                # SI NO HAY CLIENTE SELECCIONADO EN EL SISTEMA
+                if not form.instance.cliente:
+                    id_sae = self.request.POST.get('id_sae_search', '').strip()
+                    
+                    if id_sae:
+                        cliente = Cliente.objects.filter(id_sae=id_sae).first()
+                        if not cliente:
+                            cliente = Cliente.objects.create(
+                                id_sae=id_sae,
+                                razon_social=form.instance.cliente_nombre_manual or f"Cliente {id_sae}",
+                                telefono_principal=form.instance.cliente_telefono_manual or "",
+                            )
+                        form.instance.cliente = cliente
+                    else:
+                        cliente = Cliente.objects.create(
+                            id_sae=None, # Cliente Mostrador Puro
+                            razon_social=form.instance.cliente_nombre_manual or "CLIENTE MOSTRADOR",
+                            telefono_principal=form.instance.cliente_telefono_manual or "",
+                        )
+                        form.instance.cliente = cliente
+
+                # SI NO HAY OBRA SELECCIONADA (Viene por los campos manuales integrados)
+                if not form.instance.obra:
+                    alias = self.request.POST.get('obra_alias_manual', '').strip()
+                    zona_id = self.request.POST.get('obra_zona_manual')
+                    
+                    if alias and zona_id:
+                        obra = Obra.objects.create(
+                            cliente=form.instance.cliente,
+                            alias=alias,
+                            zona_id=zona_id,
+                            cp=self.request.POST.get('obra_cp_manual'),
+                            colonia=self.request.POST.get('obra_colonia_manual'),
+                            calle_numero=self.request.POST.get('obra_calle_manual'),
+                            referencias=self.request.POST.get('obra_referencias_manual'),
+                            nombre_receptor=self.request.POST.get('obra_receptor_nombre_manual'),
+                            telefono_receptor=self.request.POST.get('obra_receptor_tel_manual'),
+                        )
+                        form.instance.obra = obra
+
+                # Guardar el pedido final
+                messages.success(self.request, f"Pedido {form.instance.folio_sae} registrado correctamente.")
+                return super().form_valid(form)
+        except Exception as e:
+            form.add_error(None, f"Error al procesar el registro triple: {str(e)}")
+            return self.form_invalid(form)
+
+class ClienteSAEBusquedaView(LoginRequiredMixin, View):
+    """Busca cliente por ID SAE directo (Input Mostrador)"""
+    def get(self, request):
+        valor = request.GET.get('id_sae_search', '').strip()
+        if not valor:
+            return HttpResponse('')
+            
+        cliente = Cliente.objects.filter(id_sae=valor).first()
+        
+        if cliente:
+            return render(request, 'dashboard/mostrador/cliente_info_fragment.html', {'cliente': cliente})
+        else:
+            return HttpResponse(f'<div class="text-secondary mt-1 small"><i class="fas fa-info-circle"></i> Nuevo ID SAE: <strong>{valor}</strong>. Llene los datos manuales y se guardará al cerrar el pedido.</div>')
+
+class ClienteBuscadorModalView(LoginRequiredMixin, TemplateView):
+    """Renderiza el modal de búsqueda avanzada (Lupa)"""
+    template_name = 'dashboard/mostrador/modal_buscador_cliente.html'
+
+class ClienteBuscadorAccionView(LoginRequiredMixin, View):
+    """Lógica de búsqueda en el modal (Búsqueda Rápida vs Extendida)"""
+    def get(self, request):
+        query = request.GET.get('q', '').strip()
+        extendida = request.GET.get('extendida') == 'true'
+        
+        if len(query) < 3:
+            return HttpResponse('<div class="p-3 text-muted small">Ingrese al menos 3 caracteres...</div>')
+            
+        q_filter = (models.Q(razon_social__icontains=query) | 
+                    models.Q(id_sae__icontains=query) | 
+                    models.Q(obras__alias__icontains=query))
+        
+        clientes = Cliente.objects.filter(q_filter).prefetch_related('obras').distinct()
+        
+        resultados = []
+        for cliente in clientes:
+            obras = cliente.obras.all()
+            if not extendida:
+                limite = timezone.now() - timedelta(days=365)
+                obras = obras.filter(models.Q(esta_activa=True) & (models.Q(fecha_ultimo_pedido__gte=limite) | models.Q(fecha_ultimo_pedido__isnull=True)))
+
+            for obra in obras:
+                resultados.append({
+                    'cliente': cliente,
+                    'obra': obra,
+                    'activa': obra.es_reciente
+                })
+        
+        return render(request, 'dashboard/mostrador/buscador_resultados_fragment.html', {
+            'resultados': resultados,
+            'query': query,
+            'extendida': extendida
+        })
+
+class ObraSelectFragmentView(LoginRequiredMixin, View):
+    """Devuelve el <select> de obras filtrado por cliente con soporte para pre-selección"""
+    def get(self, request):
+        cliente_id = request.GET.get('cliente_id')
+        selected_obra_id = request.GET.get('obra_id')
+        
+        if not cliente_id or cliente_id == "":
+            return HttpResponse('<select name="obra" class="form-select" disabled required><option value="">-- Complete datos de cliente --</option></select>')
+            
+        # Al buscar, si elegimos una obra inactiva desde la lupa, la reactivamos
+        if selected_obra_id:
+            Obra.objects.filter(pk=selected_obra_id, cliente_id=cliente_id).update(esta_activa=True)
+
+        obras = Obra.objects.filter(cliente_id=cliente_id, esta_activa=True)
+        return render(request, 'dashboard/mostrador/obras_select_options.html', {
+            'obras': obras,
+            'selected_obra_id': selected_obra_id
+        })
+
+class ObraCreateModalView(LoginRequiredMixin, CreateView):
+    model = Obra
+    form_class = ObraForm
+    template_name = 'dashboard/mostrador/modal_obra_form.html'
+
+    def form_valid(self, form):
+        self.object = form.save()
+        # HTMX: Después de guardar, cerramos modal y actualizamos el select de obras
+        if "HX-Request" in self.request.headers:
+            # Devolvemos un trigger para que el select se recargue o simplemente el nuevo select
+            messages.success(self.request, "Nueva obra registrada.")
+            response = HttpResponse(status=204)
+            response["HX-Trigger"] = "obraGuardada"
+            return response
+        return super().form_valid(form)
+
+class PedidoDetailView(LoginRequiredMixin, DetailView):
+    model = Pedido
+    template_name = 'dashboard/mostrador/pedido_detail.html'
+    context_object_name = 'pedido'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Determinar si el pedido ya está en ruta o entregado (Inmutable total)
+        context['es_editable'] = self.object.estado == 'REGISTRADO'
+        return context
+
+class PedidoUnlockView(LoginRequiredMixin, View):
+    """Procesa la contraseña de supervisor para permitir editar un pedido registrado"""
+    def post(self, request, pk):
+        password = request.POST.get('password')
+        pedido = get_object_or_404(Pedido, pk=pk)
+        
+        # Validar contraseña contra cualquier superusuario o admin
+        User = get_user_model()
+        superusers = User.objects.filter(is_superuser=True)
+        staff_admins = User.objects.filter(personal__puesto='ADMIN')
+        potential_admins = set(list(superusers) + list(staff_admins))
+        
+        auth_success = False
+        for admin in potential_admins:
+            if admin.check_password(password):
+                auth_success = True
+                break
+        
+        if auth_success:
+            # Si tiene éxito, redirigimos al update view normal
+            # Pero como es HTMX, mandamos la cabecera de redirección
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = reverse('dashboard:pedido_update', kwargs={'pk': pk})
+            messages.success(request, "Autorización concedida. Puede editar el pedido.")
+            return response
+        else:
+            return HttpResponse('<div class="alert alert-danger py-1 small mt-2">Contraseña incorrecta</div>')
+
+class PedidoUpdateView(LoginRequiredMixin, AjaxSuccessMixin, UpdateView):
+    model = Pedido
+    form_class = PedidoForm
+    template_name = 'dashboard/pedido_form.html'
+    success_url = reverse_lazy('dashboard:mostrador_home')
+    ajax_success_message = "Pedido actualizado correctamente."
+
+class MostradorDashboardView(LoginRequiredMixin, TemplateView):
+    """Resumen estadístico exclusivo para el personal de Mostrador"""
+    template_name = 'dashboard/mostrador/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        hoy = timezone.now().date()
+        
+        # Estadísticas de Pedidos
+        context['pedidos_hoy'] = Pedido.objects.filter(fecha_registro__date=hoy).count()
+        context['pedidos_urgentes'] = Pedido.objects.filter(es_urgente=True, estado='REGISTRADO').count()
+        context['pedidos_cancelados'] = Pedido.objects.filter(estado='CANCELADO').count()
+        context['pedidos_en_espera'] = Pedido.objects.filter(estado='REGISTRADO').count()
+        
+        # Resumen por estado
+        context['resumen_estados'] = [
+            {'label': 'Registrados', 'count': Pedido.objects.filter(estado='REGISTRADO').count(), 'color': 'info'},
+            {'label': 'En Preparación', 'count': Pedido.objects.filter(estado='EN_PREPARACION').count(), 'color': 'warning'},
+            {'label': 'En Ruta', 'count': Pedido.objects.filter(estado='EN_RUTA').count(), 'color': 'primary'},
+            {'label': 'Entregados', 'count': Pedido.objects.filter(estado='ENTREGADO').count(), 'color': 'success'},
+        ]
+        
+        # Últimos movimientos
+        context['pedidos_recientes'] = Pedido.objects.order_by('-fecha_registro')[:10]
+        
+        return context
+
+class PedidoCancelView(LoginRequiredMixin, View):
+    """Permite cancelar un pedido si aún no está en ruta"""
+    def post(self, request, pk):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        if pedido.estado in ['REGISTRADO', 'REPROGRAMADO']:
+            pedido.estado = 'CANCELADO'
+            pedido.save()
+            messages.success(request, f"Pedido {pedido.folio_sae} cancelado correctamente.")
+        else:
+            messages.error(request, "El pedido no se puede cancelar porque ya está en proceso.")
+            
+        if "HX-Request" in request.headers:
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = reverse('dashboard:pedido_detail', kwargs={'pk': pk})
+            return response
+        return redirect('dashboard:pedido_detail', pk=pk)
+
+# --- GESTION DE CLIENTES Y OBRAS ---
+class ClienteListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
+    model = Cliente
+    template_name = "dashboard/clientes/cliente_list.html"
+    context_object_name = "clientes"
+    paginate_by = 30
+
+    def get_queryset(self):
+        queryset = Cliente.objects.all().order_by('razon_social')
+        query = self.request.GET.get('q')
+        tipo = self.request.GET.get('tipo')
+
+        if query:
+            queryset = queryset.filter(
+                Q(razon_social__icontains=query) | Q(id_sae__icontains=query)
+            )
+        
+        if tipo == 'sae':
+            queryset = queryset.filter(es_mostrador=False)
+        elif tipo == 'mostrador':
+            queryset = queryset.filter(es_mostrador=True)
+
+        return queryset
+
+class ClienteCreateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, CreateView):
+    model = Cliente
+    form_class = ClienteForm
+    template_name = "dashboard/clientes/cliente_form.html"
+    success_url = reverse_lazy('dashboard:cliente_list')
+    ajax_success_message = "¡Cliente registrado exitosamente!"
+
+class ClienteUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, UpdateView):
+    model = Cliente
+    form_class = ClienteForm
+    template_name = "dashboard/clientes/cliente_form.html"
+    success_url = reverse_lazy('dashboard:cliente_list')
+    ajax_success_message = "¡Datos del cliente actualizados!"
+
+class ObraListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
+    model = Obra
+    template_name = "dashboard/clientes/obra_list.html"
+    context_object_name = "obras"
+
+    def get_queryset(self):
+        self.cliente = get_object_or_404(Cliente, pk=self.kwargs['cliente_pk'])
+        return Obra.objects.filter(cliente=self.cliente).order_by('alias')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['cliente_obj'] = self.cliente
+        return context
+
+class ObraCreateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, CreateView):
+    model = Obra
+    form_class = ObraForm
+    template_name = "dashboard/clientes/obra_form.html"
+    ajax_success_message = "¡Obra/Dirección creada con éxito!"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['cliente'] = get_object_or_404(Cliente, pk=self.kwargs['cliente_pk'])
+        return initial
+
+    def get_success_url(self):
+        return reverse('dashboard:obra_list', kwargs={'cliente_pk': self.kwargs['cliente_pk']})
+
+class ObraUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, UpdateView):
+    model = Obra
+    form_class = ObraForm
+    template_name = "dashboard/clientes/obra_form.html"
+    ajax_success_message = "¡Obra actualizada con éxito!"
+
+    def get_success_url(self):
+        return reverse('dashboard:obra_list', kwargs={'cliente_pk': self.object.cliente.pk})

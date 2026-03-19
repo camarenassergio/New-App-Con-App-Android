@@ -54,7 +54,7 @@ class Command(BaseCommand):
                     codigo=codigo,
                     asentamiento=asentamiento,
                     tipo_asentamiento=tipo_asentamiento,
-                    municipio=municipio,
+                    municipio=municipio, # Columna D mapeada
                     estado=estado,
                     ciudad=ciudad
                 ))

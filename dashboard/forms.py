@@ -442,6 +442,7 @@ class ZonaEntregaForm(forms.ModelForm):
         model = ZonaEntrega
         fields = [
             'nombre',
+            'municipio',
             'codigos_postales',
             'colonias',
             'tiempo_traslado_minutos',
@@ -453,6 +454,7 @@ class ZonaEntregaForm(forms.ModelForm):
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Zona Norte'}),
+            'municipio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Texcoco, Ecatepec...'}),
             'codigos_postales': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ej. 50000, 50010, 50020 (Separados por coma)'}),
             'colonias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Lista de colonias representativas'}),
             'tiempo_traslado_minutos': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
@@ -468,11 +470,174 @@ from .models import ConfiguracionGeneral
 class ConfiguracionGeneralForm(forms.ModelForm):
     class Meta:
         model = ConfiguracionGeneral
-        fields = ['sueldo_semanal_chofer', 'sueldo_semanal_chalan', 'tiempo_descarga_promedio_min', 'limite_seguridad_llanta_mm', 'vida_util_estimada_llanta_km']
+        fields = [
+            'sueldo_semanal_chofer', 
+            'sueldo_semanal_chalan', 
+            'tiempo_descarga_promedio_min', 
+            'limite_seguridad_llanta_mm', 
+            'vida_util_estimada_llanta_km',
+            'limite_peso_vehiculo_personal_kg',
+            'tolerancia_peso_ruta_kg'
+        ]
         widgets = {
             'sueldo_semanal_chofer': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'sueldo_semanal_chalan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'tiempo_descarga_promedio_min': forms.NumberInput(attrs={'class': 'form-control'}),
             'limite_seguridad_llanta_mm': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
             'vida_util_estimada_llanta_km': forms.NumberInput(attrs={'class': 'form-control'}),
+            'limite_peso_vehiculo_personal_kg': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'tolerancia_peso_ruta_kg': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }
+
+from .models import Cliente, Obra, Pedido, Despacho, ViajeNuevo, MensajeInterno
+
+class ClienteForm(forms.ModelForm):
+    class Meta:
+        model = Cliente
+        fields = ['id_sae', 'razon_social', 'telefono_principal']
+        widgets = {
+            'id_sae': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ID de SAE (opcional)'}),
+            'razon_social': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo o Razón Social'}),
+            'telefono_principal': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 5512345678'}),
+        }
+
+class ObraForm(forms.ModelForm):
+    class Meta:
+        model = Obra
+        fields = [
+            'alias', 'cliente', 'zona', 'cp', 'colonia', 'municipio',
+            'calle_numero', 'entre_calles', 'referencias',
+            'nombre_receptor', 'telefono_receptor', 'esta_activa',
+            # zona_aprobada se gestiona vía <input type="hidden" value="on"> en el template
+        ]
+        widgets = {
+            'alias': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Casa Blanca o Nombre del Despacho'}),
+            'cliente': forms.Select(attrs={'class': 'form-select'}),
+            'zona': forms.Select(attrs={'class': 'form-select'}),
+            'cp': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 56200', 'id': 'id_cp'}),
+            'colonia': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Buscar Colonia...', 'id': 'id_colonia'}),
+            # municipio: el JS lo marca readonly, aquí dejamos sin readonly para que pueda escribirse via JS
+            'municipio': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_municipio'}),
+            'calle_numero': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Benito Juarez #123'}),
+            'entre_calles': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Entre Hidalgo y Morelos'}),
+            'referencias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ej. Portón negro grande, frente a la tienda, etc.'}),
+            'nombre_receptor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de la persona que recibe'}),
+            'telefono_receptor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 5512345678'}),
+            'esta_activa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class PedidoForm(forms.ModelForm):
+    class Meta:
+        model = Pedido
+        fields = [
+            'folio_sae', 'cliente', 'obra', 'peso_total_estimado_kg', 
+            'metodo_pago', 'es_urgente', 'maniobra_aceptada', 
+            'recoleccion_parcial', 'productos_entregados_parcial',
+            'cliente_nombre_manual', 'cliente_telefono_manual', 'cliente_direccion_manual',
+            'observaciones_mostrador', 'evidencia_ticket'
+        ]
+        widgets = {
+            'folio_sae': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Sólo números', 'pattern': '[0-9]*'}),
+            'cliente': forms.Select(attrs={'class': 'form-select'}),
+            'obra': forms.Select(attrs={'class': 'form-select'}),
+            'peso_total_estimado_kg': forms.NumberInput(attrs={'class': 'form-control', 'min': '0.1', 'step': '0.1'}),
+            'metodo_pago': forms.Select(attrs={'class': 'form-select'}),
+            'es_urgente': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'maniobra_aceptada': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'recoleccion_parcial': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'productos_entregados_parcial': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': '¿Qué se lleva el cliente ahora?'}),
+            'cliente_nombre_manual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
+            'cliente_telefono_manual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
+            'cliente_direccion_manual': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Dirección completa'}),
+            'observaciones_mostrador': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Notas adicionales...'}),
+            'evidencia_ticket': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+    def clean_folio_sae(self):
+        folio = self.cleaned_data.get('folio_sae')
+        if folio:
+            import re
+            # Eliminar cualquier cosa que no sea número (puntos, comas, letras)
+            folio_limpio = re.sub(r'\D', '', folio)
+            if not folio_limpio:
+                raise forms.ValidationError("El folio debe contener únicamente números.")
+            return folio_limpio
+        return folio
+
+    def clean_peso_total_estimado_kg(self):
+        peso = self.cleaned_data.get('peso_total_estimado_kg')
+        if peso <= 0:
+            raise forms.ValidationError("El peso debe ser un valor positivo mayor a cero.")
+        return peso
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cliente = cleaned_data.get('cliente')
+        recoleccion_parcial = cleaned_data.get('recoleccion_parcial')
+        productos = cleaned_data.get('productos_entregados_parcial')
+        evidencia = cleaned_data.get('evidencia_ticket')
+
+        # Si no hay cliente SAE, los campos manuales son obligatorios
+        if not cliente:
+            nombre_manual = cleaned_data.get('cliente_nombre_manual')
+            if not nombre_manual:
+                self.add_error('cliente_nombre_manual', "Obligatorio si no se selecciona un cliente del sistema.")
+            else:
+                # Regla del Bisturí: Mínimo 2 palabras (Nombre y Apellido)
+                import re
+                if not re.match(r'^\s*\S+\s+\S+.*$', nombre_manual):
+                    self.add_error('cliente_nombre_manual', "Ingrese el nombre completo (mínimo nombre y un apellido).")
+            
+            if not cleaned_data.get('cliente_direccion_manual'):
+                self.add_error('cliente_direccion_manual', "Obligatorio para entrega en domicilio.")
+
+        # Validación de Entrega Parcial (requiere productos y ticket)
+        if recoleccion_parcial:
+            if not productos:
+                self.add_error('productos_entregados_parcial', "Debe especificar qué productos se están entregando.")
+            if not evidencia and not self.instance.pk: # Obligatorio solo al crear
+                self.add_error('evidencia_ticket', "La foto del ticket es obligatoria para entregas parciales.")
+
+        return cleaned_data
+
+class DespachoForm(forms.ModelForm):
+    class Meta:
+        model = Despacho
+        fields = ['tipo_envio', 'peso_asignado_kg']
+        widgets = {
+            'tipo_envio': forms.Select(attrs={'class': 'form-select'}),
+            'peso_asignado_kg': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+class DespachoEntregaForm(forms.ModelForm):
+    """Formulario para que el chofer cierre la entrega"""
+    class Meta:
+        model = Despacho
+        fields = ['maniobra_especial', 'descripcion_maniobra', 'observaciones_entrega', 'foto_ticket_firmado']
+        widgets = {
+            'maniobra_especial': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'descripcion_maniobra': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'observaciones_entrega': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'foto_ticket_firmado': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+class ViajeNuevoForm(forms.ModelForm):
+    class Meta:
+        model = ViajeNuevo
+        fields = ['unidad', 'vehiculo_personal_info', 'chofer', 'chalan', 'proveedor_externo']
+        widgets = {
+            'unidad': forms.Select(attrs={'class': 'form-select'}),
+            'vehiculo_personal_info': forms.TextInput(attrs={'class': 'form-control'}),
+            'chofer': forms.Select(attrs={'class': 'form-select'}),
+            'chalan': forms.Select(attrs={'class': 'form-select'}),
+            'proveedor_externo': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class MensajeInternoForm(forms.ModelForm):
+    class Meta:
+        model = MensajeInterno
+        fields = ['destinatario', 'contenido']
+        widgets = {
+            'destinatario': forms.Select(attrs={'class': 'form-select'}),
+            'contenido': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Escribe un mensaje...'}),
         }

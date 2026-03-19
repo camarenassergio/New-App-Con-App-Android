@@ -64,7 +64,7 @@
                         <i class="fas fa-layer-group"></i> Catálogo de Zonas
                     </h5>
                     <div class="mt-2 text-muted d-flex justify-content-between align-items-center">
-                        <small>{{ zonas.count }} zonas operativas</small>
+                        <small>{{ zonas_count }} zonas operativas</small>
                     </div>
                     <!-- Buscador Predictivo -->
                     <div class="mt-2 input-group input-group-sm">
@@ -74,10 +74,14 @@
                 </div>
                 <div class="card-body p-0 catalog-body" style="overflow-y: auto;">
                     <ul class="list-group list-group-flush" id="lista-zonas">
+                        {% for municipio, zonas in zonas_agrupadas.items %}
+                        <li class="list-group-item bg-light py-1 fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; color: var(--text-muted);">
+                            <i class="fas fa-city me-1"></i> {{ municipio }}
+                        </li>
                         {% for zona in zonas %}
                         <li class="list-group-item list-group-item-action flex-column align-items-start zona-item" data-zona-id="{{ zona.id }}" style="border-left: 4px solid {{ zona.color_hex|default:'#3388ff' }};">
                             <!-- Data Attributes for Fast Filtering -->
-                            <div class="d-none zona-search-data">{{ zona.nombre }} {{ zona.colonias }} {{ zona.codigos_postales }}</div>
+                            <div class="d-none zona-search-data">{{ zona.nombre }} {{ zona.municipio }} {{ zona.colonias }} {{ zona.codigos_postales }}</div>
                             
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1 zona-title" style="font-weight: 600;">{{ zona.nombre }}</h6>
@@ -92,6 +96,7 @@
                                 {{ zona.colonias|default:"Sin colonias registradas" }}
                             </small>
                         </li>
+                        {% endfor %}
                         {% empty %}
                         <li class="list-group-item text-center text-muted py-4">
                             <i class="fas fa-info-circle fa-2x mb-2 text-light"></i><br>No hay zonas registradas para mostrar.
@@ -225,6 +230,7 @@
                             var popupContent = `
                                 <div style="font-family: Arial, sans-serif; max-height: 220px; overflow-y: auto; padding-right: 8px;">
                                     <h5 style="color: ${p.color}; margin-top:0; border-bottom: 1px solid #eee; padding-bottom: 5px;">${p.nombre}</h5>
+                                    <b>Municipio:</b> ${p.municipio}<br>
                                     <b>Distancia Media:</b> ${p.distancia} Km<br>
                                     <b>Tiempo de Traslado:</b> ${p.tiempo} mins<br>
                                     <b>Tarifa Base:</b> $${p.tarifa}${cpInfo}

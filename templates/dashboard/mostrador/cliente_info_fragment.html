@@ -1,0 +1,8 @@
+<div class="alert alert-success border-0 py-2 px-3 mb-0 d-flex align-items-center" style="border-radius: 8px;">
+    <i class="fas fa-check-circle me-2"></i>
+    <div>
+        <div class="fw-bold small">{{ cliente.razon_social }}</div>
+        <div class="text-muted" style="font-size: 0.75rem;">Cliente vinculado: <strong>{{ cliente.id_sae }}</strong></div>
+    </div>
+    <input type="hidden" id="detected-cliente-id" value="{{ cliente.pk }}">
+</div>

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{% if form.instance.pk %}Editar Registro{% else %}Añadir al Directorio{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="card-header bg-primary py-3 px-4">
+                    <h5 class="card-title mb-0 text-white fw-bold">
+                        <i class="fas fa-address-card me-2"></i> Datos del Directorio
+                    </h5>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" class="needs-validation">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Nombre Completo</label>
+                                {{ form.nombre }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Puesto / Departamento</label>
+                                {{ form.puesto }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Teléfono (WhatsApp)</label>
+                                {{ form.telefono }}
+                                <div class="form-text small text-muted">Incluir clave de país si es necesario.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Correo Electrónico</label>
+                                {{ form.email }}
+                            </div>
+
+                            <hr class="my-4">
+                            <h6 class="fw-bold text-muted text-uppercase small">Solo para Choferes (Opcional)</h6>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">No. de Licencia</label>
+                                {{ form.licencia }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Vigencia</label>
+                                {{ form.vigencia_licencia }}
+                            </div>
+
+                            <hr class="my-4">
+                            <h6 class="fw-bold text-muted text-uppercase small">Configuración de Mensajería</h6>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Usuario Asociado (Sistema)</label>
+                                {{ form.usuario_asociado }}
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center">
+                                <div class="form-check form-switch mt-3">
+                                    {{ form.usa_sistema }}
+                                    <label class="form-check-label" for="{{ form.usa_sistema.id_for_label }}">Usa el sistema regularmente</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-5">
+                            <a href="{% url 'dashboard:operadores_list' %}" class="btn btn-link text-muted">Cancelar</a>
+                            <button type="submit" class="btn btn-primary px-5 rounded-pill fw-bold">Guardar Registro</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input.form-control, select.form-select {
+        border-radius: 8px;
+        padding: 10px 15px;
+        border: 1px solid var(--border-color);
+    }
+    input.form-control:focus {
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    }
+</style>
+{% endblock %}

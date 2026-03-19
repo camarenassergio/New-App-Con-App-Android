@@ -1,0 +1,665 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}{% if object %}Editar Obra: {{ object.alias }}{% else %}Nueva Obra{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow border-0">
+                <div class="card-header bg-dark text-white p-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                        {% if object %}Modificar Dirección de Obra{% else %}Registrar Nueva Dirección{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" hx-post="{{ request.path }}" hx-target="body" hx-swap="outerHTML" id="obra-form">
+                        {% csrf_token %}
+
+                        {# ── zona_aprobada siempre True (invisible) ── #}
+                        <input type="hidden" name="zona_aprobada" value="on">
+
+                        <div class="row g-3">
+
+                            {# ── FILA 1: Cliente + Alias [+ Obra Activa solo en EDICIÓN] ── #}
+                            <div class="col-md-5">
+                                {{ form.cliente|as_crispy_field }}
+                            </div>
+                            <div class="col-md-{% if object %}5{% else %}7{% endif %}">
+                                {{ form.alias|as_crispy_field }}
+                            </div>
+                            {% if object %}
+                            <div class="col-md-2 mt-md-4 pt-md-2">
+                                {{ form.esta_activa|as_crispy_field }}
+                            </div>
+                            {% else %}
+                            <input type="hidden" name="esta_activa" value="true">
+                            {% endif %}
+
+                            {# ── FILA 2: Zona (select) + status ── #}
+                            <div class="col-md-6">
+                                {{ form.zona|as_crispy_field }}
+                                <div id="zona_status" class="mt-1 small"></div>
+                            </div>
+
+                            {# ── ALERTA: zona bloqueada (visible solo cuando no hay zona) ── #}
+                            <div class="col-12 d-none" id="alerta-zona-bloqueada">
+                                <div class="alert alert-danger border-start border-4 border-danger py-2 mb-0 d-flex align-items-center gap-3">
+                                    <i class="fas fa-lock fa-lg text-danger"></i>
+                                    <div class="small">
+                                        <strong>No se puede guardar.</strong> La colonia seleccionada no tiene zona de entrega asignada.
+                                        Debes <strong>solicitar autorización</strong> a Admin/Logística para que registren la nueva zona.
+                                    </div>
+                                    <button type="button" class="btn btn-danger btn-sm ms-auto" id="btn-abrir-modal-auto">
+                                        <i class="fas fa-paper-plane me-1"></i>Solicitar Autorización
+                                    </button>
+                                </div>
+                            </div>
+
+                            {# ── SEPARADOR ── #}
+                            <div class="col-12 mt-4 text-primary border-bottom pb-2">
+                                <i class="fas fa-map-marked-alt"></i> <strong>Detalles de Dirección</strong>
+                            </div>
+
+                            {# ── BUSCADOR INTELIGENTE DE COLONIA ── #}
+                            <div class="col-md-12 position-relative">
+                                <label for="id_colonia" class="form-label fw-semibold">
+                                    Colonia
+                                    <span class="badge bg-primary ms-1 small">
+                                        <i class="fas fa-search me-1"></i>Escribe al menos 3 letras
+                                    </span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary text-primary">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text"
+                                           name="colonia"
+                                           id="id_colonia"
+                                           class="form-control form-control-lg"
+                                           placeholder="Buscar colonia o asentamiento..."
+                                           value="{{ form.colonia.value|default:'' }}"
+                                           autocomplete="off">
+                                </div>
+                                {% if form.colonia.errors %}
+                                <div class="text-danger small mt-1">{{ form.colonia.errors }}</div>
+                                {% endif %}
+
+                                {# Dropdown sugerencias #}
+                                <div id="sugerencias-colonia"
+                                     class="list-group position-absolute shadow-lg"
+                                     style="display:none; z-index:2000; left:0; right:0; margin-top:2px; max-height:300px; overflow-y:auto; border-radius:0 0 .5rem .5rem;">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.municipio|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.cp|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.calle_numero|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.entre_calles|as_crispy_field }}
+                            </div>
+                            <div class="col-md-12">
+                                {{ form.referencias|as_crispy_field }}
+                            </div>
+
+                            {# ── CONTACTO EN SITIO ── #}
+                            <div class="col-12 mt-4 text-primary border-bottom pb-2">
+                                <i class="fas fa-user-hard-hat"></i> <strong>Contacto en Sitio (Opcional)</strong>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.nombre_receptor|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.telefono_receptor|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning mt-4 small shadow-sm border-start border-4 border-warning">
+                            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                            <strong>Atención:</strong> Las referencias son críticas para el chofer. Favor de incluir entre qué calles se encuentra y señas particulares.
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+                            <a href="{% if object %}{% url 'dashboard:obra_list' object.cliente.pk %}{% else %}{% url 'dashboard:obra_list' view.kwargs.cliente_pk %}{% endif %}"
+                               class="btn btn-outline-secondary px-4">
+                                <i class="fas fa-times me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary px-5 btn-lg" id="btn-guardar">
+                                <i class="fas fa-save me-1"></i> Guardar Dirección
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════
+   MODAL DE AUTORIZACIÓN DE ZONA
+   3 estados: 1=Solicitar  2=Esperando  3=¡Zona Asignada!
+   ══════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalZonaNoAsignada" tabindex="-1"
+     aria-labelledby="modalZonaLabel" aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+
+            {# ── Estado 1: Solicitar ── #}
+            <div id="estado-solicitar">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Zona No Asignada — Requiere Autorización
+                    </h5>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-danger border-start border-4 border-danger mb-3">
+                        <strong>⛔ No se puede registrar la obra</strong><br>
+                        <span class="small">
+                            La colonia <strong id="modal-colonia-nombre"></strong>
+                            en <span id="modal-municipio-nombre" class="fw-semibold text-danger"></span>
+                            (CP: <span id="modal-cp-valor" class="fw-semibold"></span>)
+                            no tiene una zona de entrega registrada en el sistema.
+                        </span>
+                    </div>
+                    <div class="card bg-dark border-secondary mb-3">
+                        <div class="card-body py-2 px-3 small text-light">
+                            <p class="mb-1 text-warning fw-semibold">
+                                <i class="fas fa-info-circle me-1"></i>¿Qué sucede al solicitar?
+                            </p>
+                            <ul class="mb-0 ps-3">
+                                <li>Se enviará una notificación interna a <strong>Administración</strong> y <strong>Logística</strong>.</li>
+                                <li>Si aprueban, registrarán la nueva zona en el sistema.</li>
+                                <li>El formulario <strong>detectará la nueva zona automáticamente</strong> y te permitirá guardar sin perder ningún dato.</li>
+                                <li>Si no es viable, recibirás notificación de que no se realizan envíos a ese destino.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-lock me-1 text-warning"></i>
+                        Tus datos capturados <strong>no se perderán</strong> mientras esperas la autorización.
+                    </p>
+                </div>
+                <div class="modal-footer border-secondary d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" id="btn-modal-cambiar-colonia">
+                        <i class="fas fa-arrow-left me-1"></i> Cambiar Colonia
+                    </button>
+                    <button type="button" class="btn btn-danger px-4" id="btn-enviar-solicitud">
+                        <i class="fas fa-paper-plane me-1"></i> Solicitar Autorización
+                    </button>
+                </div>
+            </div>
+
+            {# ── Estado 2: Esperando ── #}
+            <div id="estado-esperando" style="display:none;">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="fas fa-hourglass-half me-2"></i>
+                        Solicitud Enviada — Esperando Autorización
+                    </h5>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-4">
+                        <div class="spinner-border text-warning" role="status" style="width:3rem;height:3rem;">
+                            <span class="visually-hidden">Verificando...</span>
+                        </div>
+                    </div>
+                    <h6 class="fw-semibold text-warning mb-2">Notificación enviada a Admin y Logística</h6>
+                    <p class="text-muted small mb-3">
+                        Estamos verificando cada <strong>5 segundos</strong> si ya se registró la nueva zona.
+                        En cuanto sea aprobada, podrás guardar la obra automáticamente.
+                    </p>
+                    <div class="alert alert-secondary py-2 small">
+                        <i class="fas fa-database me-1"></i>
+                        Todos tus datos capturados están guardados y <strong>no se perderán</strong>.
+                    </div>
+                    <div class="text-muted small mt-2">
+                        Verificaciones realizadas: <strong id="contador-polling">0</strong>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-cancelar-espera">
+                        <i class="fas fa-times me-1"></i> Cancelar y cambiar colonia
+                    </button>
+                </div>
+            </div>
+
+            {# ── Estado 3: ¡Zona asignada! ── #}
+            <div id="estado-autorizado" style="display:none;">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>
+                        ¡Zona Autorizada y Asignada!
+                    </h5>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle text-success" style="font-size:3.5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold text-success mb-1">¡Todo listo!</h5>
+                    <p class="text-muted mb-3">
+                        Admin/Logística registraron la nueva zona. La obra ya puede guardarse.
+                    </p>
+                    <div class="alert alert-success py-2">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        Zona asignada: <strong id="zona-autorizada-nombre" class="ms-1"></strong>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary justify-content-center">
+                    <button type="button" class="btn btn-success btn-lg px-5" id="btn-confirmar-y-cerrar">
+                        <i class="fas fa-save me-1"></i> ¡Guardar Obra Ahora!
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- /.modal-content -->
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // ─── Constantes de URLs de API ─────────────────────────────────────
+    const URL_BUSCAR_COLONIA    = "{% url 'dashboard:buscar_colonia_api' %}";
+    const URL_SOLICITAR_AUTH    = "{% url 'dashboard:solicitar_autorizacion_zona_api' %}";
+    const URL_VERIFICAR_ZONA    = "{% url 'dashboard:verificar_zona_por_cp_api' %}";
+    const CSRF_TOKEN            = "{{ csrf_token }}";
+
+    // ─── Referencias DOM ───────────────────────────────────────────────
+    const inputColonia      = document.getElementById("id_colonia");
+    const sugerenciasDiv    = document.getElementById("sugerencias-colonia");
+    const inputMunicipio    = document.getElementById("id_municipio");
+    const inputCP           = document.getElementById("id_cp");
+    const selectZona        = document.getElementById("id_zona");
+    const zonaStatus        = document.getElementById("zona_status");
+    const alertaBloqueada   = document.getElementById("alerta-zona-bloqueada");
+    const btnGuardar        = document.getElementById("btn-guardar");
+    const obraForm          = document.getElementById("obra-form");
+
+    // Modal
+    const modalEl           = document.getElementById("modalZonaNoAsignada");
+    const bsModal           = new bootstrap.Modal(modalEl);
+    const elEstadoSolicitar = document.getElementById("estado-solicitar");
+    const elEstadoEsperando = document.getElementById("estado-esperando");
+    const elEstadoAuth      = document.getElementById("estado-autorizado");
+    const elModalColonia    = document.getElementById("modal-colonia-nombre");
+    const elModalMunicipio  = document.getElementById("modal-municipio-nombre");
+    const elModalCP         = document.getElementById("modal-cp-valor");
+    const elContadorPoll    = document.getElementById("contador-polling");
+    const elZonaAuthNombre  = document.getElementById("zona-autorizada-nombre");
+
+    // ─── Estado interno ────────────────────────────────────────────────
+    let timeoutBusqueda   = null;
+    let pollingInterval   = null;
+    let coloniaActual     = { colonia: '', cp: '', municipio: '', tiene_zona: false };
+    let zonaDesbloqueada  = false;  // true cuando polling detectó zona
+
+    // ─── Inicializar: si en edición con zona ya asignada, no bloquear ──
+    if (selectZona && selectZona.value) {
+        zonaDesbloqueada = true;
+        btnGuardar.disabled = false;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // BUSCADOR DE COLONIAS
+    // ══════════════════════════════════════════════════════════════════
+    if (inputColonia) {
+        inputColonia.addEventListener("input", function () {
+            const query = this.value.trim();
+            if (query.length < 3) {
+                sugerenciasDiv.style.display = "none";
+                return;
+            }
+            clearTimeout(timeoutBusqueda);
+            timeoutBusqueda = setTimeout(() => buscarColonias(query), 320);
+        });
+
+        document.addEventListener("click", function (e) {
+            if (!inputColonia.contains(e.target) && !sugerenciasDiv.contains(e.target)) {
+                sugerenciasDiv.style.display = "none";
+            }
+        });
+    }
+
+    function buscarColonias(query) {
+        fetch(`${URL_BUSCAR_COLONIA}?q=${encodeURIComponent(query)}`)
+            .then(r => r.json())
+            .then(data => {
+                sugerenciasDiv.innerHTML = "";
+                const resultados = data.resultados || [];
+
+                if (resultados.length === 0) {
+                    sugerenciasDiv.innerHTML =
+                        '<div class="list-group-item text-muted small py-2">' +
+                        '<i class="fas fa-search me-1"></i>Sin resultados. Escríbala manualmente.</div>';
+                    sugerenciasDiv.style.display = "block";
+                    return;
+                }
+
+                const hayConZona  = resultados.some(r => r.tiene_zona);
+                const haySinZona  = resultados.some(r => !r.tiene_zona);
+                let separadorMostrado = false;
+
+                resultados.forEach(res => {
+                    // Separador visual entre secciones
+                    if (hayConZona && haySinZona && !res.tiene_zona && !separadorMostrado) {
+                        separadorMostrado = true;
+                        const sep = document.createElement("div");
+                        sep.className = "list-group-item list-group-item-warning py-1 text-center small fw-semibold";
+                        sep.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Sin zona asignada — requerirá autorización';
+                        sugerenciasDiv.appendChild(sep);
+                    }
+
+                    const a = document.createElement("a");
+                    a.href = "javascript:void(0)";
+
+                    if (res.tiene_zona) {
+                        a.className = "list-group-item list-group-item-action";
+                        a.innerHTML =
+                            `<div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${res.colonia}</strong>
+                                    <small class="text-muted ms-2">CP: ${res.cp} &bull; ${res.municipio}</small>
+                                </div>
+                                <span class="badge rounded-pill text-white ms-2" style="background:${res.zona_color};min-width:100px;">
+                                    <i class="fas fa-check-circle me-1"></i>${res.zona_nombre}
+                                </span>
+                            </div>`;
+                    } else {
+                        a.className = "list-group-item list-group-item-action border-start border-warning border-3";
+                        a.innerHTML =
+                            `<div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${res.colonia}</strong>
+                                    <small class="text-muted ms-2">CP: ${res.cp} &bull; ${res.municipio}</small>
+                                </div>
+                                <span class="badge bg-warning text-dark ms-2" style="min-width:100px;">
+                                    <i class="fas fa-lock me-1"></i>Sin Zona
+                                </span>
+                            </div>`;
+                    }
+
+                    a.addEventListener("click", () => seleccionarColonia(res));
+                    sugerenciasDiv.appendChild(a);
+                });
+
+                sugerenciasDiv.style.display = "block";
+            })
+            .catch(err => console.error("Error buscar colonia:", err));
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // SELECCIONAR COLONIA DEL DROPDOWN
+    // ══════════════════════════════════════════════════════════════════
+    function seleccionarColonia(res) {
+        inputColonia.value   = res.colonia;
+        inputCP.value        = res.cp;
+        inputMunicipio.value = res.municipio;
+        sugerenciasDiv.style.display = "none";
+        coloniaActual = res;
+        zonaDesbloqueada = false;
+
+        // Flash verde en CP/Municipio para UX
+        [inputCP, inputMunicipio].forEach(el => {
+            el.style.transition = "background-color 0.4s";
+            el.style.backgroundColor = "#e8f5e9";
+            setTimeout(() => el.style.backgroundColor = "", 800);
+        });
+
+        if (res.tiene_zona) {
+            // ✅ TIENE ZONA → asignar automáticamente y activar guardado
+            if (selectZona) selectZona.value = res.zona_id;
+            zonaDesbloqueada = true;
+            activarGuardado();
+            ocultarAlertaBloqueada();
+            zonaStatus.innerHTML =
+                `<span class="text-success">
+                    <i class="fas fa-check-circle"></i>
+                    Zona <strong>${res.zona_nombre}</strong> asignada automáticamente.
+                </span>`;
+        } else {
+            // ⛔ SIN ZONA → bloquear y mostrar alerta
+            if (selectZona) selectZona.value = "";
+            bloquearGuardado();
+            mostrarAlertaBloqueada();
+            zonaStatus.innerHTML =
+                `<span class="text-danger">
+                    <i class="fas fa-lock"></i>
+                    Sin zona — necesita autorización de Admin/Logística.
+                </span>`;
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // BLOQUEO / DESBLOQUEO DEL BOTÓN GUARDAR
+    // ══════════════════════════════════════════════════════════════════
+    function bloquearGuardado() {
+        btnGuardar.disabled = true;
+        btnGuardar.classList.replace("btn-primary", "btn-secondary");
+        btnGuardar.innerHTML = '<i class="fas fa-lock me-1"></i> Zona No Asignada';
+    }
+
+    function activarGuardado() {
+        btnGuardar.disabled = false;
+        btnGuardar.classList.replace("btn-secondary", "btn-primary");
+        btnGuardar.innerHTML = '<i class="fas fa-save me-1"></i> Guardar Dirección';
+    }
+
+    function mostrarAlertaBloqueada() {
+        alertaBloqueada && alertaBloqueada.classList.remove("d-none");
+    }
+
+    function ocultarAlertaBloqueada() {
+        alertaBloqueada && alertaBloqueada.classList.add("d-none");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // ABRIR MODAL (desde alerta inline o desde selección)
+    // ══════════════════════════════════════════════════════════════════
+    function abrirModalSolicitar() {
+        elModalColonia.textContent  = `"${coloniaActual.colonia || inputColonia.value}"`;
+        elModalMunicipio.textContent = coloniaActual.municipio || inputMunicipio.value || "No especificado";
+        elModalCP.textContent        = coloniaActual.cp || inputCP.value || "N/A";
+        mostrarEstadoModal("solicitar");
+        bsModal.show();
+    }
+
+    const btnAbrirModalAuto = document.getElementById("btn-abrir-modal-auto");
+    if (btnAbrirModalAuto) {
+        btnAbrirModalAuto.addEventListener("click", abrirModalSolicitar);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // ESTADOS DEL MODAL
+    // ══════════════════════════════════════════════════════════════════
+    function mostrarEstadoModal(estado) {
+        elEstadoSolicitar.style.display = (estado === "solicitar")  ? "" : "none";
+        elEstadoEsperando.style.display = (estado === "esperando")  ? "" : "none";
+        elEstadoAuth.style.display      = (estado === "autorizado") ? "" : "none";
+    }
+
+    // ── Botón "Cambiar Colonia" ──
+    document.getElementById("btn-modal-cambiar-colonia").addEventListener("click", () => {
+        detenerPolling();
+        bsModal.hide();
+        limpiarColonia();
+    });
+
+    // ── Botón "Cancelar y cambiar colonia" (desde estado esperando) ──
+    document.getElementById("btn-cancelar-espera").addEventListener("click", () => {
+        detenerPolling();
+        bsModal.hide();
+        limpiarColonia();
+    });
+
+    function limpiarColonia() {
+        inputColonia.value   = "";
+        inputCP.value        = "";
+        inputMunicipio.value = "";
+        if (selectZona) selectZona.value = "";
+        zonaStatus.innerHTML = "";
+        coloniaActual = { colonia: '', cp: '', municipio: '', tiene_zona: false };
+        ocultarAlertaBloqueada();
+        bloquearGuardado();  // sigue bloqueado hasta nueva selección
+        // Si el campo zona está vacío después de limpiar, liberar el botón
+        // solo si estábamos en modo edición con zona previa
+        if (selectZona && selectZona.value) {
+            activarGuardado();
+        }
+        inputColonia.focus();
+    }
+
+    // ── Botón "Solicitar Autorización" ──
+    document.getElementById("btn-enviar-solicitud").addEventListener("click", enviarSolicitud);
+
+    function enviarSolicitud() {
+        mostrarEstadoModal("esperando");
+        elContadorPoll.textContent = "0";
+
+        const payload = {
+            colonia:   coloniaActual.colonia || inputColonia.value,
+            cp:        coloniaActual.cp || inputCP.value,
+            municipio: coloniaActual.municipio || inputMunicipio.value,
+        };
+
+        fetch(URL_SOLICITAR_AUTH, {
+            method:  "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken":  CSRF_TOKEN,
+            },
+            body: JSON.stringify(payload),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                iniciarPolling(payload.cp, payload.colonia);
+            } else {
+                console.error("Error al enviar solicitud:", data);
+            }
+        })
+        .catch(err => {
+            console.error("Error de red:", err);
+            iniciarPolling(payload.cp, payload.colonia); // igual intentar polling
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // POLLING — verificar cada 5s si ya existe la zona
+    // ══════════════════════════════════════════════════════════════════
+    let contadorPoll = 0;
+
+    function iniciarPolling(cp, colonia) {
+        contadorPoll = 0;
+        detenerPolling(); // limpiar cualquier anterior
+        pollingInterval = setInterval(() => verificarZona(cp, colonia), 5000);
+    }
+
+    function detenerPolling() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+    }
+
+    function verificarZona(cp, colonia) {
+        contadorPoll++;
+        elContadorPoll.textContent = contadorPoll;
+
+        const params = new URLSearchParams({ cp, colonia });
+        fetch(`${URL_VERIFICAR_ZONA}?${params}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.tiene_zona) {
+                    detenerPolling();
+                    zonaEncontrada(data);
+                }
+            })
+            .catch(err => console.error("Error polling:", err));
+    }
+
+    // ── Zona encontrada por polling ──
+    function zonaEncontrada(data) {
+        // Auto-llenar el selector de zona
+        if (selectZona) {
+            // Verificar si la opción ya existe en el select
+            let optionExists = false;
+            for (let opt of selectZona.options) {
+                if (opt.value == data.zona_id) {
+                    optionExists = true;
+                    break;
+                }
+            }
+            // Si no existe, la añadimos dinámicamente
+            if (!optionExists) {
+                const newOpt = document.createElement("option");
+                newOpt.value = data.zona_id;
+                newOpt.textContent = data.zona_nombre;
+                selectZona.appendChild(newOpt);
+            }
+            selectZona.value = data.zona_id;
+        }
+
+        // Actualizar estado visual
+        zonaDesbloqueada = true;
+        elZonaAuthNombre.textContent = data.zona_nombre;
+        mostrarEstadoModal("autorizado");
+
+        zonaStatus.innerHTML =
+            `<span class="text-success fw-semibold">
+                <i class="fas fa-check-circle"></i>
+                Zona <strong>${data.zona_nombre}</strong> asignada. ¡Lista para guardar!
+            </span>`;
+
+        ocultarAlertaBloqueada();
+        activarGuardado();
+    }
+
+    // ── Botón "¡Guardar Obra Ahora!" en estado autorizado ──
+    document.getElementById("btn-confirmar-y-cerrar").addEventListener("click", () => {
+        bsModal.hide();
+        // Pequeño delay para que el modal cierre limpio y luego guardamos
+        setTimeout(() => obraForm.requestSubmit(), 300);
+    });
+
+    // ══════════════════════════════════════════════════════════════════
+    // INTERCEPTAR SUBMIT — última línea de defensa
+    // ══════════════════════════════════════════════════════════════════
+    if (obraForm) {
+        obraForm.addEventListener("submit", function (e) {
+            const zonaSeleccionada = selectZona && selectZona.value;
+            const coloniaValor     = inputColonia && inputColonia.value.trim();
+
+            // Si hay colonia pero no zona y no está desbloqueado → abrir modal
+            if (coloniaValor && !zonaSeleccionada && !zonaDesbloqueada) {
+                e.preventDefault();
+                abrirModalSolicitar();
+                return false;
+            }
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Al cargar en edición, si actualizamos el municipio y ya tiene zona
+    // ══════════════════════════════════════════════════════════════════
+    // Si el inputMunicipio es readonly en el form original pero no lo encontramos limpio
+    const inputMunicipioEl = document.getElementById("id_municipio");
+    if (inputMunicipioEl && !inputMunicipioEl.hasAttribute("readonly")) {
+        inputMunicipioEl.setAttribute("readonly", "readonly");
+    }
+
+});
+</script>
+{% endblock %}
