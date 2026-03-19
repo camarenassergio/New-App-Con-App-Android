@@ -2067,22 +2067,24 @@ class PedidoCreateView(LoginRequiredMixin, CreateView):
                         )
                         form.instance.cliente = cliente
 
-                # SI NO HAY OBRA SELECCIONADA (Viene por los campos manuales integrados)
-                if not form.instance.obra:
-                    alias = self.request.POST.get('obra_alias_manual', '').strip()
-                    zona_id = self.request.POST.get('obra_zona_manual')
+                # SI NO HAY OBRA SELECCIONADA o se marcó usar_obra_manual (Viene por los campos premium integrados)
+                usar_obra_manual = self.request.POST.get('usar_obra_manual') == 'true'
+                if not form.instance.obra or usar_obra_manual:
+                    alias = self.request.POST.get('alias', '').strip()
+                    zona_id = self.request.POST.get('zona')
                     
                     if alias and zona_id:
                         obra = Obra.objects.create(
                             cliente=form.instance.cliente,
                             alias=alias,
                             zona_id=zona_id,
-                            cp=self.request.POST.get('obra_cp_manual'),
-                            colonia=self.request.POST.get('obra_colonia_manual'),
-                            calle_numero=self.request.POST.get('obra_calle_manual'),
-                            referencias=self.request.POST.get('obra_referencias_manual'),
-                            nombre_receptor=self.request.POST.get('obra_receptor_nombre_manual'),
-                            telefono_receptor=self.request.POST.get('obra_receptor_tel_manual'),
+                            cp=self.request.POST.get('cp'),
+                            colonia=self.request.POST.get('colonia'),
+                            calle_numero=self.request.POST.get('calle_numero'),
+                            entre_calles=self.request.POST.get('entre_calles'),
+                            referencias=self.request.POST.get('referencias'),
+                            nombre_receptor=self.request.POST.get('nombre_receptor'),
+                            telefono_receptor=self.request.POST.get('telefono_receptor'),
                         )
                         form.instance.obra = obra
 
@@ -2115,16 +2117,25 @@ class ClienteBuscadorAccionView(LoginRequiredMixin, View):
     """Lógica de búsqueda en el modal (Búsqueda Rápida vs Extendida)"""
     def get(self, request):
         query = request.GET.get('q', '').strip()
-        extendida = request.GET.get('extendida') == 'true'
         
-        if len(query) < 3:
-            return HttpResponse('<div class="p-3 text-muted small">Ingrese al menos 3 caracteres...</div>')
-            
-        q_filter = (models.Q(razon_social__icontains=query) | 
-                    models.Q(id_sae__icontains=query) | 
-                    models.Q(obras__alias__icontains=query))
+        if not query:
+            return HttpResponse('<div class="p-5 text-center text-muted small opacity-50"><i class="fas fa-keyboard fa-2x mb-2"></i><br>Comience a escribir...</div>')
+
+        # Clonamos la lógica de ClienteListView que SÍ funciona:
+        clientes = Cliente.objects.filter(
+            Q(razon_social__icontains=query) | 
+            Q(id_sae__icontains=query)
+        ).distinct()[:30]
         
-        clientes = Cliente.objects.filter(q_filter).prefetch_related('obras').distinct()
+        # Formatear resultados para que el fragmento funcione
+        lista_resultados = []
+        for c in clientes:
+            lista_resultados.append({'cliente': c})
+
+        return render(request, 'dashboard/mostrador/buscador_resultados_fragment.html', {
+            'resultados': lista_resultados,
+            'query': query
+        })
         
         resultados = []
         for cliente in clientes:
@@ -2155,11 +2166,13 @@ class ObraSelectFragmentView(LoginRequiredMixin, View):
         if not cliente_id or cliente_id == "":
             return HttpResponse('<select name="obra" class="form-select" disabled required><option value="">-- Complete datos de cliente --</option></select>')
             
-        # Al buscar, si elegimos una obra inactiva desde la lupa, la reactivamos
+        # Al buscar, si elegimos una obra inactiva desde la lupa o htmx, la reactivamos
         if selected_obra_id:
-            Obra.objects.filter(pk=selected_obra_id, cliente_id=cliente_id).update(esta_activa=True)
+            Obra.objects.filter(pk=selected_obra_id).update(esta_activa=True)
 
-        obras = Obra.objects.filter(cliente_id=cliente_id, esta_activa=True)
+        # Obtenemos todas las obras, pero queremos que las activas salgan primero
+        obras = Obra.objects.filter(cliente_id=cliente_id).order_by('-esta_activa', 'alias')
+        
         return render(request, 'dashboard/mostrador/obras_select_options.html', {
             'obras': obras,
             'selected_obra_id': selected_obra_id
@@ -2170,11 +2183,30 @@ class ObraCreateModalView(LoginRequiredMixin, CreateView):
     form_class = ObraForm
     template_name = 'dashboard/mostrador/modal_obra_form.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pasar el cliente al contexto para que el partial lo muestre y envíe en campo oculto
+        cliente_id = self.request.GET.get('cliente_id') or self.request.POST.get('cliente')
+        if cliente_id:
+            try:
+                context['cliente'] = Cliente.objects.get(pk=cliente_id)
+            except Cliente.DoesNotExist:
+                context['cliente'] = None
+        return context
+
+    def get_initial(self):
+        initial = super().get_initial()
+        cliente_id = self.request.GET.get('cliente_id')
+        if cliente_id:
+            try:
+                initial['cliente'] = Cliente.objects.get(pk=cliente_id)
+            except Cliente.DoesNotExist:
+                pass
+        return initial
+
     def form_valid(self, form):
         self.object = form.save()
-        # HTMX: Después de guardar, cerramos modal y actualizamos el select de obras
         if "HX-Request" in self.request.headers:
-            # Devolvemos un trigger para que el select se recargue o simplemente el nuevo select
             messages.success(self.request, "Nueva obra registrada.")
             response = HttpResponse(status=204)
             response["HX-Trigger"] = "obraGuardada"
@@ -2349,3 +2381,4 @@ class ObraUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixi
 
     def get_success_url(self):
         return reverse('dashboard:obra_list', kwargs={'cliente_pk': self.object.cliente.pk})
+    

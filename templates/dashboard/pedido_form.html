@@ -21,7 +21,7 @@
                     <form method="post" enctype="multipart/form-data" class="needs-validation">
                         {% csrf_token %}
 
-                        <!-- Paso 1: Folio y Cliente -->
+                        <!-- Paso 1: Identificación del Cliente -->
                         <div class="section-title mb-4">
                             <span class="step-badge">1</span>
                             <h6 class="d-inline ms-2 fw-bold text-uppercase">Identificación del Cliente</h6>
@@ -41,7 +41,6 @@
                                     {% if form.folio_sae.errors %}{{ form.folio_sae.errors.0 }}{% endif %}
                                 </div>
                             </div>
-                            
                             <div class="col-md-7">
                                 <label class="form-label fw-semibold">Cliente Registrado (SAE)</label>
                                 <div class="input-group shadow-sm">
@@ -51,22 +50,22 @@
                                            hx-get="{% url 'dashboard:cliente_sae_busqueda' %}"
                                            hx-target="#cliente-info-box"
                                            hx-trigger="keyup changed delay:400ms"
-                                           oninput="this.value = this.value.toUpperCase()">
+                                           oninput="this.value = this.value.toUpperCase()"
+                                           autocomplete="off">
                                     <button type="button" class="btn btn-dark" 
                                             hx-get="{% url 'dashboard:cliente_buscador_modal' %}"
                                             hx-target="#modal-container">
-                                        <i class="fas fa-search me-1"></i> 
+                                        <i class="fas fa-binoculars"></i> 
                                     </button>
                                 </div>
                                 <div id="cliente-info-box" class="mt-2">
-                                    <!-- Aquí se carga el fragmento de info o error -->
-                                    <div class="form-text small">Ingrese ID o use la lupa para buscar por nombre/obra.</div>
+                                    <div class="form-text small"><i class="fas fa-info-circle me-1"></i> Ingrese ID o use los binoculares para búsqueda avanzada.</div>
                                 </div>
                                 <div style="display:none;">{{ form.cliente }}</div>
                             </div>
                         </div>
 
-                        <!-- Panel de Cliente Manual (Mostrador) -->
+                        <!-- Panel de Cliente Manual (Oculto si es SAE) -->
                         <div id="manual-client-panel" class="bg-light p-3 border rounded mb-4 shadow-sm" style="display: none;">
                             <h6 class="fw-bold mb-3 text-primary small"><i class="fas fa-user-edit me-2"></i> DATOS DE CLIENTE MOSTRADOR</h6>
                             <div class="row g-3">
@@ -75,9 +74,6 @@
                                     <input type="text" name="cliente_nombre_manual" id="id_cliente_nombre_manual" class="form-control" 
                                            placeholder="Ej. Juan Pérez o Constructora Alfa"
                                            value="{{ form.cliente_nombre_manual.value|default:'' }}">
-                                    {% if form.cliente_nombre_manual.errors %}
-                                    <div class="text-danger small mt-1">{{ form.cliente_nombre_manual.errors.0 }}</div>
-                                    {% endif %}
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label small fw-bold">Teléfono de Contacto</label>
@@ -87,71 +83,39 @@
                             </div>
                         </div>
 
-                        <!-- Paso 2: Punto de Entrega -->
+                        <!-- Paso 2: Lugar de Entrega (AHORA FUERA DEL PANEL MANUAL) -->
                         <div id="obra-section" class="section-title mb-4">
                             <span class="step-badge">2</span>
                             <h6 class="d-inline ms-2 fw-bold text-uppercase">Lugar de Entrega (Obra)</h6>
                         </div>
 
                         <div class="row g-3 mb-4" id="obra-fields">
-                            <!-- Selector de Obra Existente (Para clientes en DB) -->
                             <div class="col-md-12" id="obra-select-wrapper">
                                 <label class="form-label fw-semibold">Seleccionar Obra / Dirección Registrada</label>
                                 <div class="d-flex gap-2">
                                     <div id="obras-container" class="flex-grow-1">
                                         {{ form.obra }}
                                     </div>
-                                    <button type="button" class="btn btn-outline-primary" 
-                                            id="btn-nueva-obra-modal"
-                                            hx-get="{% url 'dashboard:obra_create_modal' %}"
-                                            hx-target="#modal-container">
-                                        <i class="fas fa-plus"></i>
+                                    <button type="button" class="btn btn-outline-primary" id="btn-nueva-obra-toggle">
+                                        <i class="fas fa-plus me-1"></i> Nueva Dirección
                                     </button>
+                                </div>
+                                <div class="form-text small text-primary mt-1" id="text-obra-hint">
+                                    <i class="fas fa-info-circle me-1"></i> Si la obra no aparece, dale clic a <strong>"Nueva Dirección"</strong>.
                                 </div>
                             </div>
 
-                            <!-- Formulario de Obra Integrado (Para clientes nuevos/mostrador) -->
-                            <div id="obra-manual-fields" class="col-12 bg-white p-3 border rounded shadow-sm" style="display: none;">
-                                <h6 class="fw-bold mb-3 text-primary small"><i class="fas fa-map-marker-alt me-2"></i> DETALLES DEL DESTINO (NUEVA OBRA)</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Alias del Destino</label>
-                                        <input type="text" name="obra_alias_manual" class="form-control" placeholder="Ej. Casa Blanca / Obra Arcos">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Zona de Entrega</label>
-                                        <select name="obra_zona_manual" class="form-select">
-                                            <option value="">-- Seleccionar Zona --</option>
-                                            {% for zona in zonas %}
-                                            <option value="{{ zona.id }}">{{ zona.nombre }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">CP</label>
-                                        <input type="text" name="obra_cp_manual" class="form-control" placeholder="56200">
-                                    </div>
-                                    <div class="col-md-8">
-                                        <label class="form-label small fw-bold">Colonia</label>
-                                        <input type="text" name="obra_colonia_manual" class="form-control" placeholder="Ej. Centro">
-                                    </div>
-                                    <div class="col-MD-12">
-                                        <label class="form-label small fw-bold">Calle y Número</label>
-                                        <input type="text" name="obra_calle_manual" class="form-control" placeholder="Nombre de calle y número ext/int">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label small fw-bold">Referencias Visuales</label>
-                                        <textarea name="obra_referencias_manual" class="form-control" rows="2" placeholder="Color de casa, portón, etc."></textarea>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Nombre del Receptor</label>
-                                        <input type="text" name="obra_receptor_nombre_manual" class="form-control" placeholder="Quien recibe material">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Teléfono Receptor</label>
-                                        <input type="text" name="obra_receptor_tel_manual" class="form-control" placeholder="10 dígitos">
-                                    </div>
+                            <div id="obra-manual-fields" class="col-12 bg-white p-4 border rounded shadow-sm" style="display: none; border-left: 5px solid var(--primary-blue) !important;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h6 class="fw-bold mb-0 text-primary uppercase"><i class="fas fa-map-marker-alt me-2"></i> REGISTRO DE NUEVA DIRECCIÓN</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-danger border-0" id="btn-cancelar-obra-nueva">
+                                        <i class="fas fa-times me-1"></i> Cancelar y volver al selector
+                                    </button>
                                 </div>
+                                <div class="p-3 bg-light rounded border mb-4">
+                                    {% include 'dashboard/clientes/_obra_form_fields.html' with form_id="pedido-nueva-obra" %}
+                                </div>
+                                <input type="hidden" name="usar_obra_manual" id="id_usar_obra_manual" value="false">
                             </div>
                         </div>
 
@@ -168,16 +132,11 @@
                                     {{ form.peso_total_estimado_kg }}
                                     <span class="input-group-text bg-light">KG</span>
                                 </div>
-                                {% if form.peso_total_estimado_kg.errors %}
-                                    <div class="text-danger small mt-1">{{ form.peso_total_estimado_kg.errors.0 }}</div>
-                                {% endif %}
                             </div>
-
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Forma de Pago</label>
                                 {{ form.metodo_pago }}
                             </div>
-
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Ticket SAE (PDF/Foto)</label>
                                 {{ form.evidencia_ticket }}
@@ -219,11 +178,10 @@
                             </div>
                         </div>
 
-                        <!-- Campo de Productos entregados (Visible si es entrega parcial) -->
+                        <!-- Campo de Productos entregados -->
                         <div id="partial-products-panel" class="mb-5" style="display: none;">
                             <label class="form-label fw-bold text-primary small">LISTADO DE PRODUCTOS ENTREGADOS EN MOSTRADOR</label>
                             {{ form.productos_entregados_parcial }}
-                            <div class="form-text small text-warning"><i class="fas fa-exclamation-triangle"></i> La foto del ticket es obligatoria si entrega mercancía ahora.</div>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center bg-light p-4" style="border-radius: 12px; margin: 0 -1.5rem -1.5rem -1.5rem;">
@@ -241,50 +199,65 @@
     </div>
 </div>
 
-<!-- Contenedor para Modales Dinámicos -->
 <div id="modal-container"></div>
 
 <script>
     function toggleManualClient() {
         const clienteSelect = document.querySelector('select[name="cliente"]');
         const manualPanel = document.getElementById('manual-client-panel');
-        const idSaeInput = document.querySelector('[name="id_sae_search"]');
         const obraSelectWrapper = document.getElementById('obra-select-wrapper');
         const obraManualFields = document.getElementById('obra-manual-fields');
+        const inputUsarManual = document.getElementById('id_usar_obra_manual');
 
-        // If a DB client is selected, show the simple selector, hide manual address fields
-        if (clienteSelect && clienteSelect.value) {
+        if (clienteSelect && clienteSelect.value && clienteSelect.value !== "") {
             manualPanel.style.display = 'none';
-            obraSelectWrapper.style.display = 'block';
-            obraManualFields.style.display = 'none';
+            if (inputUsarManual && inputUsarManual.value === "true") {
+                obraSelectWrapper.style.display = 'none';
+                obraManualFields.style.display = 'block';
+            } else {
+                obraSelectWrapper.style.display = 'block';
+                obraManualFields.style.display = 'none';
+            }
         } else {
-            // No DB client selected: either brand new or incomplete
             manualPanel.style.display = 'block';
             obraSelectWrapper.style.display = 'none';
             obraManualFields.style.display = 'block';
+            if (inputUsarManual) inputUsarManual.value = "true";
         }
     }
 
     function togglePartialProducts() {
         const partialSwitch = document.querySelector('input[name="recoleccion_parcial"]');
         const partialPanel = document.getElementById('partial-products-panel');
-        partialPanel.style.display = partialSwitch.checked ? 'block' : 'none';
+        if (partialPanel && partialSwitch) partialPanel.style.display = partialSwitch.checked ? 'block' : 'none';
     }
 
-    // Inicializar
     document.addEventListener('DOMContentLoaded', () => {
         toggleManualClient();
         togglePartialProducts();
         
-        document.querySelector('select[name="cliente"]').addEventListener('change', toggleManualClient);
-        document.querySelector('input[name="recoleccion_parcial"]').addEventListener('change', togglePartialProducts);
-    });
+        const selectCliente = document.querySelector('select[name="cliente"]');
+        if (selectCliente) selectCliente.addEventListener('change', toggleManualClient);
+        
+        const switchParcial = document.querySelector('input[name="recoleccion_parcial"]');
+        if (switchParcial) switchParcial.addEventListener('change', togglePartialProducts);
 
-    document.addEventListener('abrirModalObra', function() {
-        // Trigger the HTMX request for the new obra modal
-        const btnNuevaObra = document.querySelector('[hx-get*="obra_create_modal"]');
-        if (btnNuevaObra) {
-            htmx.trigger(btnNuevaObra, 'click');
+        const btnToggle = document.getElementById('btn-nueva-obra-toggle');
+        const btnCancel = document.getElementById('btn-cancelar-obra-nueva');
+        const inputUsarManual = document.getElementById('id_usar_obra_manual');
+
+        if (btnToggle) {
+            btnToggle.addEventListener('click', function() {
+                if (inputUsarManual) inputUsarManual.value = "true";
+                toggleManualClient();
+                document.getElementById('obra-manual-fields').scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+        if (btnCancel) {
+            btnCancel.addEventListener('click', function() {
+                if (inputUsarManual) inputUsarManual.value = "false";
+                toggleManualClient();
+            });
         }
     });
 
@@ -298,10 +271,10 @@
                 htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + detectedId.value, '#obras-container');
             } else if (evt.detail.xhr.status === 200 && (evt.detail.target.innerHTML.includes('Nuevo ID SAE') || evt.detail.target.innerHTML.includes('No encontrado'))) {
                 if (selectCliente) selectCliente.value = "";
+                const inputUsarManual = document.getElementById('id_usar_obra_manual');
+                if (inputUsarManual) inputUsarManual.value = "true";
                 toggleManualClient();
-                // For new SAE or not found, also clear obras and trigger new obra modal
                 document.getElementById('obras-container').innerHTML = '<select class="form-select" disabled><option>Complete datos de cliente</option></select>';
-                document.dispatchEvent(new Event('abrirModalObra'));
             }
         }
     });
@@ -310,20 +283,14 @@
         const data = evt.detail;
         const selectCliente = document.querySelector('select[name="cliente"]');
         const idSaeInput = document.querySelector('[name="id_sae_search"]');
-        
+        const inputUsarManual = document.getElementById('id_usar_obra_manual');
         if (selectCliente) {
-            // Crear opción temporal si no existe en el select (que es un fragmento HTMX usualmente)
             let option = selectCliente.querySelector(`option[value="${data.clienteId}"]`);
-            if (!option) {
-                option = new Option(data.razonSocial, data.clienteId);
-                selectCliente.add(option);
-            }
+            if (!option) { option = new Option(data.razonSocial, data.clienteId); selectCliente.add(option); }
             selectCliente.value = data.clienteId;
             if (idSaeInput) idSaeInput.value = data.idSae;
-            
+            if (inputUsarManual) inputUsarManual.value = "false";
             toggleManualClient();
-            
-            // Cargar obras del cliente y pre-seleccionar la obra específica
             htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + data.clienteId + '&obra_id=' + data.obraId, '#obras-container');
         }
     });
@@ -333,11 +300,6 @@
         if (selectCliente && selectCliente.value) {
             htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + selectCliente.value, '#obras-container');
         }
-        const modalEl = document.querySelector('.modal.show');
-        if (modalEl) {
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
-        }
     });
 </script>
 
@@ -346,33 +308,12 @@
 {% block extra_css %}
 <style>
     .step-badge {
-        background: var(--primary-blue);
-        color: white;
-        width: 28px;
-        height: 28px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        font-weight: bold;
-        font-size: 0.9rem;
+        background: var(--primary-blue); color: white; width: 28px; height: 28px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 50%; font-weight: bold; font-size: 0.9rem;
     }
-    .section-title {
-        border-bottom: 2px solid var(--border-color);
-        padding-bottom: 0.5rem;
-    }
-    .custom-switch .form-check-input {
-        width: 3rem;
-        height: 1.5rem;
-        cursor: pointer;
-    }
-    .custom-switch .form-check-label {
-        margin-left: 0.5rem;
-        padding-top: 2px;
-        cursor: pointer;
-    }
-    select.form-select {
-        height: 38px;
-    }
+    .section-title { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+    .custom-switch .form-check-input { width: 3rem; height: 1.5rem; cursor: pointer; }
+    .custom-switch .form-check-label { margin-left: 0.5rem; padding-top: 2px; cursor: pointer; }
 </style>
 {% endblock %}

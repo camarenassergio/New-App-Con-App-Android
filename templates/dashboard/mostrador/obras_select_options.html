@@ -1,18 +1,39 @@
 <select name="obra" class="form-select" id="id_obra" required>
     <option value="">-- Seleccionar Destino --</option>
     {% for obra in obras %}
-    <option value="{{ obra.id }}" {% if selected_obra_id|slugify == obra.id|slugify %}selected{% endif %}>
-        {{ obra.alias }} ({{ obra.calle_numero|truncatechars:20 }})
+    <option value="{{ obra.id }}" 
+            data-activa="{{ obra.esta_activa|yesno:'true,false' }}"
+            {% if selected_obra_id|slugify == obra.id|slugify %}selected{% endif %}
+            {% if not obra.esta_activa %}class="text-muted bg-light" style="font-style:italic;"{% endif %}>
+        {% if not obra.esta_activa %}(INACTIVA) {% endif %}{{ obra.alias }} — {{ obra.calle_numero|truncatechars:30 }}
     </option>
     {% endfor %}
 </select>
+
 {% if not obras %}
 <div class="text-warning small mt-1 animate__animated animate__shakeX">
-    <i class="fas fa-exclamation-circle"></i> Este cliente no tiene obras registradas. Cree una nueva.
+    <i class="fas fa-exclamation-circle text-danger"></i> No hay direcciones registradas. Dale al botón <strong>"+"</strong>.
 </div>
-<script>
-    setTimeout(() => {
-        document.dispatchEvent(new Event('abrirModalObra'));
-    }, 200);
-</script>
 {% endif %}
+
+<script>
+    // Si el usuario selecciona una obra inactiva, la activamos automáticamente
+    (function() {
+        const select = document.getElementById('id_obra');
+        if (select) {
+            select.addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                if (opt && opt.dataset.activa === "false") {
+                    if (confirm("Esta dirección de obra está inactiva. ¿Deseas rehabilitarla para usarla en este pedido?")) {
+                        const cliente_id = document.querySelector('select[name="cliente"]').value;
+                        // Reactivamos vía HTMX
+                        htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + cliente_id + '&obra_id=' + opt.value, '#obras-container');
+                    } else {
+                        // Reseteamos si el usuario cancela
+                        this.value = "";
+                    }
+                }
+            });
+        }
+    })();
+</script>

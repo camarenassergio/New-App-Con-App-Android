@@ -1,45 +1,45 @@
 <div class="modal fade" id="buscadorClienteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-            <div class="modal-header bg-dark text-white py-3">
-                <h5 class="modal-title fw-bold"><i class="fas fa-search me-2"></i> Buscador Avanzado de Clientes</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="fas fa-search me-2"></i> BUSCADOR SIMPLE</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="input-group mb-3 shadow-sm">
-                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-filter text-muted"></i></span>
-                    <input type="text" name="q" class="form-control border-start-0 py-2" 
-                           placeholder="Buscar por Nombre, Razón Social, Colonia o Alias de Obra..."
+                
+                {# ── INPUT DE BÚSQUEDA ── #}
+                <div class="input-group mb-4 shadow-sm border rounded">
+                    <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" name="q" id="q-search-direct" class="form-control border-0 py-2 fs-5" 
+                           placeholder="Buscar por Nombre o ID SAE..." 
                            hx-get="{% url 'dashboard:cliente_buscador_accion' %}"
-                           hx-target="#resultados-busqueda"
-                           hx-trigger="keyup changed delay:500ms, search"
-                           hx-include="[name='extendida']">
+                           hx-target="#resultados-simples"
+                           hx-trigger="keyup changed delay:400ms, search"
+                           autocomplete="off">
+                    <button class="btn btn-dark px-4 fw-bold" 
+                            hx-get="{% url 'dashboard:cliente_buscador_accion' %}"
+                            hx-target="#resultados-simples"
+                            hx-include="#q-search-direct">
+                        BUSCAR
+                    </button>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="extendida" id="extendidaCheck" value="true"
-                               hx-get="{% url 'dashboard:cliente_buscador_accion' %}"
-                               hx-target="#resultados-busqueda"
-                               hx-include="[name='q']">
-                        <label class="form-check-label small fw-bold text-muted" for="extendidaCheck">
-                            <i class="fas fa-history me-1"></i> Búsqueda Extendida (Incluir Obras Inactivas > 12 meses)
-                        </label>
-                    </div>
-                    <span class="badge bg-light text-dark border small fw-normal">Filtro: Bisturí (2 palabras min)</span>
-                </div>
-
-                <div id="resultados-busqueda" class="overflow-auto" style="max-height: 400px; border-radius: 8px; border: 1px dashed #dee2e6;">
+                {# ── ZONA DE RESULTADOS ── #}
+                <div id="resultados-simples" class="bg-light border rounded overflow-auto" style="min-height: 300px; max-height: 450px;">
                     <div class="p-5 text-center text-muted">
-                        <i class="fas fa-keyboard fa-3x mb-3 opacity-25"></i>
-                        <p>Escriba para comenzar la búsqueda...</p>
+                        <i class="fas fa-keyboard fa-2x mb-2"></i>
+                        <p>Escriba para ver resultados...</p>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
+    
     <script>
-        var clienteModal = new bootstrap.Modal(document.getElementById('buscadorClienteModal'));
-        clienteModal.show();
+        var modalEl = document.getElementById('buscadorClienteModal');
+        var bsModal = new bootstrap.Modal(modalEl);
+        bsModal.show();
+        setTimeout(() => document.getElementById('q-search-direct').focus(), 300);
     </script>
 </div>

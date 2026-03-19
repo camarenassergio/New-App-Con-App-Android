@@ -1,55 +1,74 @@
-<div class="modal fade" id="obraModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold"><i class="fas fa-map-marker-alt me-2"></i> Registrar Nueva Obra / Destino</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+{% load crispy_forms_tags %}
+
+{#  ══════════════════════════════════════════════════════════════════════════#}
+  {#modal_obra_form.html — Modal para crear nueva obra desde pedido_form#}
+  {#Cargado vía HTMX: hx-get="{% url 'dashboard:obra_create_modal' %}"#}
+    {#                hx-target="#modal-container"#}
+ {# ══════════════════════════════════════════════════════════════════════════#}
+
+<div class="modal fade" id="obraModal" tabindex="-1" aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius:16px;">
+
+            {# ── Header ── #}
+            <div class="modal-header bg-dark text-white py-3 px-4">
+                <h5 class="modal-title mb-0 fw-bold">
+                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                    Registrar Nueva Dirección de Entrega
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
+
+            {# ── Body: formulario completo ── #}
             <div class="modal-body p-4">
-                <form hx-post="{% url 'dashboard:obra_create_modal' %}" hx-target="#modal-container" hx-swap="outerHTML">
+                <form hx-post="{% url 'dashboard:obra_create_modal' %}"
+                      hx-target="#modal-container"
+                      hx-swap="outerHTML"
+                      id="obra-form-modal">
                     {% csrf_token %}
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Alias de la Obra</label>
-                            {{ form.alias }}
-                            <div class="form-text small">Ej. "Construcción Arcos" o "Casa de Campo".</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Cliente</label>
-                            {{ form.cliente }}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Zona de Entrega</label>
-                            {{ form.zona }}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Calle y Número</label>
-                            {{ form.calle_numero }}
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Referencias de Ubicación</label>
-                            {{ form.referencias }}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Nombre de quien recibe</label>
-                            {{ form.nombre_receptor }}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Teléfono del Receptor</label>
-                            {{ form.telefono_receptor }}
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 border-top pt-3 d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar Destino</button>
-                    </div>
+
+                    {# Partial reutilizable — mismo que usa obra_form.html ─────── #}
+                    {% include 'dashboard/clientes/_obra_form_fields.html' with
+                        form_id="obra-form-modal"
+                        btn_guardar_id="btn-guardar-modal"
+                    %}
+
                 </form>
             </div>
+
+            {# ── Footer ── #}
+            <div class="modal-footer border-secondary d-flex justify-content-between px-4 py-3">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancelar
+                </button>
+                <button type="submit"
+                        form="obra-form-modal"
+                        class="btn btn-primary rounded-pill px-5 fw-bold"
+                        id="btn-guardar-modal">
+                    <i class="fas fa-save me-1"></i> Guardar Dirección
+                </button>
+            </div>
+
         </div>
     </div>
-    <script>
-        var obraModal = new bootstrap.Modal(document.getElementById('obraModal'));
-        obraModal.show();
-    </script>
 </div>
+
+<script>
+(function() {
+    // Abrir el modal al inyectarse en el DOM (compatible con HTMX swap)
+    function openObraModal() {
+        const el = document.getElementById('obraModal');
+        if (el) {
+            const modal = new bootstrap.Modal(el);
+            modal.show();
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', openObraModal);
+    } else {
+        openObraModal();
+    }
+})();
+</script>
