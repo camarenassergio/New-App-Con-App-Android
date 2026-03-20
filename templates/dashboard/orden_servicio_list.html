@@ -61,11 +61,13 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="100%" class="text-center py-5">
-                        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
-                            <i class="fas fa-tools mb-3" style="font-size: 5rem;"></i>
-                            <h4 class="fw-bold mb-2">Aún no hay Órdenes de Servicio</h4>
-                            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.1rem;">Registra el mantenimiento y reparaciones de la flotilla aquí.</p>
+                    <td colspan="100%" class="text-center py-5 border-0">
+                        <div class="empty-state d-flex flex-column align-items-center justify-content-center py-5">
+                            <i class="fas fa-tools mb-3 text-secondary opacity-25" style="font-size: 6rem;"></i>
+                            <h4 class="fw-bold mb-2">Sin Órdenes de Servicio</h4>
+                            <p class="text-muted mb-4" style="max-width: 450px; font-size: 1.1rem;">
+                                Aquí podrás gestionar el mantenimiento preventivo y correctivo de toda tu flotilla.
+                            </p>
                             <a href="{% url 'dashboard:orden_servicio_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
                                 <i class="fas fa-plus me-2"></i> Crear Primera Orden
                             </a>

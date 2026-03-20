@@ -120,8 +120,14 @@
             <textarea name="referencias" class="form-control" rows="2" placeholder="Color de fachada, portón, etc." required>{{ form.referencias.value|default:'' }}</textarea></div>
         </div>
 
-        <div class="col-12 mt-4 px-3 py-2 form-section-header">
-            <i class="fas fa-user-hard-hat me-2"></i> Contacto en Sitio
+        <div class="col-12 mt-4 px-3 py-2 form-section-header d-flex justify-content-between align-items-center">
+            <div><i class="fas fa-user-hard-hat me-2"></i> Contacto en Sitio</div>
+            <div class="form-check form-switch custom-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="{{ FID }}-copy-client" 
+                       data-name="{% if cliente %}{{ cliente.razon_social }}{% elif object %}{{ object.cliente.razon_social }}{% endif %}"
+                       data-phone="{% if cliente %}{{ cliente.telefono_principal }}{% elif object %}{{ object.cliente.telefono_principal }}{% endif %}">
+                <label class="form-check-label small fw-bold text-primary" for="{{ FID }}-copy-client" style="font-size: 0.7rem;">¿RECIBE EL CLIENTE?</label>
+            </div>
         </div>
 
         <div class="col-md-6">
@@ -184,13 +190,30 @@
         const alertBlq = container.querySelector(`#${FID}-alerta-bloqueada`);
         const btnSolicitar = container.querySelector(`#${FID}-btn-abrir-modal`);
         const switchActiva = container.querySelector(`#${FID}-esta-activa`);
+        const switchCopy = container.querySelector(`#${FID}-copy-client`);
 
         const modalEl = document.getElementById(`${FID}-modalAuth`);
         const bsModal = new bootstrap.Modal(modalEl);
         let pollingInterval = null;
         let coloniaActual = { colonia: inputColonia.value };
 
-        // 1. SWITCH DINÁMICO
+        // 0. REPLICAR DATOS CLIENTE
+        if (switchCopy) {
+            switchCopy.onchange = function() {
+                if (this.checked) {
+                    inputNom.value = this.dataset.name;
+                    inputTel.value = format(this.dataset.phone);
+                    inputNom.dispatchEvent(new Event('input'));
+                    inputTel.dispatchEvent(new Event('input'));
+                } else {
+                    inputNom.value = "";
+                    inputTel.value = "";
+                    inputTel.dispatchEvent(new Event('input'));
+                }
+            };
+        }
+
+        // 1. SWITCH DINÁMICO ESTADO OBRA
         if (switchActiva) {
             switchActiva.onchange = function() {
                 const label = container.querySelector(`label[for="${this.id}"]`);
@@ -203,9 +226,9 @@
         }
 
         // 2. MÁSCARA TELÉFONO
+        const format = (v) => v.replace(/\D/g, '').slice(0, 10).match(/.{1,2}/g)?.join('-') || v.replace(/\D/g, '');
         if (inputTel) {
             inputTel.setAttribute("maxlength", "14");
-            const format = (v) => v.replace(/\D/g, '').slice(0, 10).match(/.{1,2}/g)?.join('-') || v.replace(/\D/g, '');
             inputTel.addEventListener("input", function() {
                 this.value = format(this.value);
                 const len = this.value.length; this.setSelectionRange(len, len);

@@ -190,8 +190,8 @@
                             <div class="col-md-4">
                                 <div class="form-check form-switch custom-switch">
                                     {{ form.maniobra_aceptada }}
-                                    <label class="form-check-label" for="{{ form.maniobra_aceptada.id_for_label }}">
-                                        Maniobra Aceptada <span class="text-danger">*</span>
+                                    <label class="form-check-label small fw-bold" for="{{ form.maniobra_aceptada.id_for_label }}">
+                                        ¿Maniobra Aceptada? <br><span class="text-muted" style="font-size: 0.65rem;">(Desmarcado = Pie de Carro)</span>
                                     </label>
                                 </div>
                             </div>
@@ -415,6 +415,16 @@
                 selectCliente.value = detectedId.value;
                 toggleManualClient();
                 htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + detectedId.value, '#obras-container');
+                
+                // Actualizar dataset del switch de réplica
+                const switchCopy = document.getElementById('pedido-nueva-obra-copy-client');
+                const detectedName = document.getElementById('detected-cliente-name');
+                const detectedPhone = document.getElementById('detected-cliente-phone');
+                if (switchCopy && detectedName) {
+                    switchCopy.dataset.name = detectedName.value;
+                    switchCopy.dataset.phone = detectedPhone ? detectedPhone.value : "";
+                    if (switchCopy.checked) switchCopy.onchange(); // Refrescar si ya estaba marcado
+                }
             } else if (evt.detail.xhr.status === 200 && (evt.detail.target.innerHTML.includes('Nuevo ID SAE') || evt.detail.target.innerHTML.includes('No encontrado'))) {
                 if (selectCliente) selectCliente.value = "";
                 const inputUsarManual = document.getElementById('id_usar_obra_manual');
@@ -438,6 +448,14 @@
             if (inputUsarManual) inputUsarManual.value = "false";
             toggleManualClient();
             htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + data.clienteId + '&obra_id=' + data.obraId, '#obras-container');
+            
+            // Actualizar dataset del switch de réplica
+            const switchCopy = document.getElementById('pedido-nueva-obra-copy-client');
+            if (switchCopy) {
+                switchCopy.dataset.name = data.razonSocial;
+                switchCopy.dataset.phone = data.telefono || "";
+                if (switchCopy.checked) switchCopy.onchange(); // Refrescar si ya estaba marcado
+            }
         }
     });
 

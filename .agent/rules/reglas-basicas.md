@@ -76,7 +76,8 @@ Step 4 Auditoría de Interacción y Confianza
 Stress Test UX (si aplica a la capa frontend/móvil):
 
     Immediate Feedback (<100ms)
-    System States obligatorios: Cargando, Vacío, Error, Éxito.
+    System States obligatorios: Cargando, Vacío (Empty State premium con Icono + CTA), Error, Éxito.
+    Reglas de Creación: Toda vista de lista debe incluir un botón de creación (CTA) prominente, tanto en la cabecera como en el estado vacío.
     Auditoría Externa: El auditor debe poder conectarse al entorno de desarrollo utilizando la app de Tailscale en su dispositivo. Se puede utilizar Tailsnitch para auditoría automatizada de seguridad si es necesario. 
 
 Step 4 Reporte de Auditoría (output obligatorio)

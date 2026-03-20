@@ -5,4 +5,6 @@
         <div class="text-muted" style="font-size: 0.75rem;">Cliente vinculado: <strong>{{ cliente.id_sae }}</strong></div>
     </div>
     <input type="hidden" id="detected-cliente-id" value="{{ cliente.pk }}">
+    <input type="hidden" id="detected-cliente-name" value="{{ cliente.razon_social }}">
+    <input type="hidden" id="detected-cliente-phone" value="{{ cliente.telefono_principal|default:'' }}">
 </div>

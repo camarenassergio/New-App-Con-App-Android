@@ -488,3 +488,16 @@ Los links `<a href="">` en dark mode son manejados automáticamente:
 - Color hover: `var(--primary-orange)` — refuerza identidad corporativa
 
 > ✅ **Regla de oro:** Si el color está en `innerHTML` o un template literal de JS, **SIEMPRE** usar una clase CSS en lugar de `style=""`.
+
+---
+
+## 16. 🏗️ Reglas de Creación (Creation Rules)
+
+Para garantizar la fluidez del usuario (User Flow), toda vista que gestione una colección de datos debe facilitar la creación de nuevos registros:
+
+1. **CTA en Cabecera**: El `table-header` debe incluir siempre un botón link (`<a>`) con clase `btn-primary` y el icono `fa-plus`.
+2. **CTA en Estado Vacío**: Si la lista está vacía (`{% empty %}`), el componente `empty-state` debe incluir obligatoriamente el mismo CTA en tamaño grande (`btn-lg`) como acción principal.
+3. **Consistencia de URL**: Los botones de creación deben apuntar consistentemente a la vista `..._create` del módulo correspondiente.
+4. **Visibilidad Staff**: Si el botón está restringido por permisos, asegurar que el estado vacío refleje un mensaje adecuado para el usuario sin permisos (p. ej., "Contacta al administrador" en lugar de un botón inútil).
+
+> ✅ **Nota**: El objetivo es que el usuario NUNCA llegue a un "callejón sin salida" visual.
