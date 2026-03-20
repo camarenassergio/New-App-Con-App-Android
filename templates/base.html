@@ -449,7 +449,7 @@
             document.onclick = resetTimer;      // Clics
         })();
     </script>
-    <!-- Global Drag & Drop Upload Handler -->
+    <!-- Global Drag & Drop Upload Handler — Hybrid Desktop/Mobile -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.dnd-upload-zone').forEach(function(zone) {
@@ -460,39 +460,60 @@
 
             if (!input || !preview) return;
 
-            // Drag events
+            // ── Auto-inyectar badge y hints si no existen ya ──────────────
+            if (!zone.querySelector('.dnd-drag-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'dnd-drag-badge';
+                badge.textContent = '¡Suéltalo aquí!';
+                zone.appendChild(badge);
+            }
+            if (!zone.querySelector('.dnd-desktop-hint')) {
+                const hint = document.createElement('div');
+                hint.className = 'dnd-desktop-hint';
+                hint.innerHTML = `
+                    <span><i class="fas fa-mouse-pointer" style="font-size:0.7rem;"></i> Clic para elegir</span>
+                    <span style="opacity:0.5;">o</span>
+                    <span><i class="fas fa-arrow-down" style="font-size:0.7rem;"></i> Arrastra aquí</span>`;
+                zone.appendChild(hint);
+            }
+
+            // ── Drag events ───────────────────────────────────────────────
             zone.addEventListener('dragover', function(e) {
                 e.preventDefault();
                 zone.classList.add('dragover');
             });
-            zone.addEventListener('dragleave', function() {
-                zone.classList.remove('dragover');
+            zone.addEventListener('dragleave', function(e) {
+                // Solo quitar si el cursor sale de la zona real (no de un hijo)
+                if (!zone.contains(e.relatedTarget)) {
+                    zone.classList.remove('dragover');
+                }
             });
             zone.addEventListener('drop', function(e) {
                 e.preventDefault();
                 zone.classList.remove('dragover');
                 if (e.dataTransfer.files.length) {
-                    // Assign dropped files to input
                     const dt = new DataTransfer();
                     Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
                     input.files = dt.files;
-                    renderPreviews(input.files, preview);
+                    renderPreviews(input.files, preview, zone);
                 }
             });
 
-            // Click/change
+            // ── Click / change ────────────────────────────────────────────
             input.addEventListener('change', function() {
-                renderPreviews(input.files, preview);
+                renderPreviews(input.files, preview, zone);
             });
         });
 
-        function renderPreviews(files, container) {
+        // ── Render previews ───────────────────────────────────────────────
+        function renderPreviews(files, container, zone) {
             container.innerHTML = '';
             Array.from(files).forEach(function(file) {
                 const item = document.createElement('div');
-                item.className = 'dnd-preview-item';
 
                 if (file.type.startsWith('image/')) {
+                    // ── Imagen: thumbnail ──────────────────────────────────
+                    item.className = 'dnd-preview-item is-image';
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         const img = document.createElement('img');
@@ -502,24 +523,28 @@
                     };
                     reader.readAsDataURL(file);
                 } else {
-                    // PDF or other — show icon
-                    item.style.display = 'flex';
-                    item.style.alignItems = 'center';
-                    item.style.justifyContent = 'center';
-                    item.style.background = 'var(--bg-body)';
-                    item.innerHTML = '<i class="fas fa-file-pdf" style="font-size:2rem; color: #ef4444;"></i>';
+                    // ── PDF / otro: tarjeta con nombre ─────────────────────
+                    item.className = 'dnd-preview-item is-file';
+                    const isPdf = file.type === 'application/pdf';
+                    const iconClass = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
+                    const iconColor = isPdf ? '#ef4444' : '#6b7280';
+                    const shortName = file.name.length > 20
+                        ? file.name.substring(0, 18) + '…'
+                        : file.name;
+                    item.innerHTML = `
+                        <i class="fas ${iconClass}" style="font-size:2rem; color:${iconColor};"></i>
+                        <span class="dnd-filename">${shortName}</span>`;
                 }
 
-                // Remove button (visual only — clears input)
+                // ── Botón de quitar ────────────────────────────────────────
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'dnd-remove';
                 removeBtn.type = 'button';
                 removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                removeBtn.title = 'Quitar';
-                removeBtn.addEventListener('click', function() {
+                removeBtn.title = 'Quitar archivo';
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     container.innerHTML = '';
-                    // Reset the file input
-                    const zone = document.getElementById(container.id.replace('dndPreview-', 'dndZone-'));
                     if (zone) {
                         const inp = zone.querySelector('input[type="file"]');
                         if (inp) inp.value = '';

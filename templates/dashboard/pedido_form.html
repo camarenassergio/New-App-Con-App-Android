@@ -150,27 +150,23 @@
                             <h6 class="d-inline ms-2 fw-bold text-uppercase">Carga, Pago y Observaciones</h6>
                         </div>
 
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-4">
+                        <div class="row g-3 mb-3 align-items-end">
+                            <div class="col-md-6">
                                 <label class="form-label fw-semibold">Peso Total (kg) <span class="text-danger">*</span></label>
-                                <div class="input-group">
+                                <div class="input-group" style="height:38px;">
                                     {{ form.peso_total_estimado_kg }}
-                                    <span class="input-group-text bg-light">KG</span>
+                                    <span class="input-group-text bg-light" style="height:38px; line-height:1;">KG</span>
                                 </div>
                                 {% if form.peso_total_estimado_kg.errors %}
                                     <div class="text-danger small mt-1"><i class="fas fa-exclamation-triangle me-1"></i> {{ form.peso_total_estimado_kg.errors.0 }}</div>
                                 {% endif %}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label fw-semibold">Forma de Pago <span class="text-danger">*</span></label>
-                                {{ form.metodo_pago }}
+                                <div style="height:38px;">{{ form.metodo_pago }}</div>
                                 {% if form.metodo_pago.errors %}
                                     <div class="text-danger small mt-1"><i class="fas fa-wallet me-1"></i> {{ form.metodo_pago.errors.0 }}</div>
                                 {% endif %}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Ticket SAE (PDF/Foto)</label>
-                                {{ form.evidencia_ticket }}
                             </div>
                         </div>
 
@@ -181,8 +177,8 @@
                             </div>
                         </div>
 
-                        <!-- Switche de Reglas de Negocio -->
-                        <div class="row g-3 mb-4 p-3 border rounded bg-white shadow-sm mx-0">
+                        {# ── Switches de Reglas de Negocio ── #}
+                        <div class="row g-3 mb-3 p-3 border rounded bg-white shadow-sm mx-0" id="switches-negocio">
                             <div class="col-md-4">
                                 <div class="form-check form-switch custom-switch">
                                     {{ form.es_urgente }}
@@ -203,16 +199,55 @@
                                 <div class="form-check form-switch custom-switch">
                                     {{ form.recoleccion_parcial }}
                                     <label class="form-check-label fw-bold text-primary" for="{{ form.recoleccion_parcial.id_for_label }}">
-                                        Entrega Parcial
+                                        <i class="fas fa-layer-group me-1"></i> Entrega Parcial
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Campo de Productos entregados -->
-                        <div id="partial-products-panel" class="mb-5" style="display: none;">
-                            <label class="form-label fw-bold text-primary small">LISTADO DE PRODUCTOS ENTREGADOS EN MOSTRADOR</label>
-                            {{ form.productos_entregados_parcial }}
+                        {# ── Panel Entrega Parcial (Ticket + Productos) ── #}
+                        <div id="partial-products-panel" class="mb-4" style="display: none;">
+                            <div class="border rounded-3 overflow-hidden shadow-sm">
+                                {# Cabecera del panel #}
+                                <div class="d-flex align-items-center gap-2 px-4 py-3" style="background: linear-gradient(135deg, var(--primary-blue), #1e3a5f); color: white;">
+                                    <i class="fas fa-layer-group fa-lg"></i>
+                                    <div>
+                                        <div class="fw-bold">Evidencia de Entrega Parcial</div>
+                                        <div class="small opacity-75">Adjunta el ticket SAE y detalla los productos entregados</div>
+                                    </div>
+                                    <span class="badge bg-warning text-dark ms-auto fw-bold">Obligatorio</span>
+                                </div>
+                                <div class="p-4" style="background: var(--bg-card);">
+                                    <div class="row g-4">
+                                        {# Columna izquierda: Ticket DnD #}
+                                        <div class="col-md-5">
+                                            <label class="form-label fw-bold small text-uppercase mb-2">
+                                                <i class="fas fa-file-invoice me-1 text-primary"></i>
+                                                Ticket SAE <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="dnd-upload-zone" id="dndZone-evidencia_ticket">
+                                                <input type="file" name="evidencia_ticket" id="id_evidencia_ticket" accept="image/*,application/pdf">
+                                                <i class="fas fa-file-invoice dnd-icon"></i>
+                                                <span class="dnd-label">Adjuntar Ticket SAE</span>
+                                                <span class="dnd-sublabel">Foto o PDF del ticket físico</span>
+                                            </div>
+                                            <div class="dnd-preview-container" id="dndPreview-evidencia_ticket"></div>
+                                        </div>
+                                        {# Columna derecha: Productos #}
+                                        <div class="col-md-7">
+                                            <label class="form-label fw-bold small text-uppercase mb-2">
+                                                <i class="fas fa-boxes me-1 text-primary"></i>
+                                                Productos Entregados <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.productos_entregados_parcial }}
+                                            <div class="form-text small mt-1">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Lista los productos que se entregan en esta visita
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center bg-light p-4" style="border-radius: 12px; margin: 0 -1.5rem -1.5rem -1.5rem;">
@@ -305,8 +340,37 @@
 
     function togglePartialProducts() {
         const partialSwitch = document.querySelector('input[name="recoleccion_parcial"]');
-        const partialPanel = document.getElementById('partial-products-panel');
-        if (partialPanel && partialSwitch) partialPanel.style.display = partialSwitch.checked ? 'block' : 'none';
+        const partialPanel  = document.getElementById('partial-products-panel');
+        const ticketInput   = document.getElementById('id_evidencia_ticket');
+        const productosTA   = document.querySelector('textarea[name="productos_entregados_parcial"]');
+
+        if (!partialPanel || !partialSwitch) return;
+
+        const isOn = partialSwitch.checked;
+
+        // Mostrar / ocultar panel con animación suave
+        if (isOn) {
+            partialPanel.style.display = 'block';
+            partialPanel.style.opacity = '0';
+            partialPanel.style.transform = 'translateY(-8px)';
+            requestAnimationFrame(() => {
+                partialPanel.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                partialPanel.style.opacity = '1';
+                partialPanel.style.transform = 'translateY(0)';
+            });
+            partialPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            partialPanel.style.display = 'none';
+            // Limpiar evidencia al desactivar
+            if (ticketInput) ticketInput.value = '';
+            const previewCont = document.getElementById('dndPreview-evidencia_ticket');
+            if (previewCont) previewCont.innerHTML = '';
+            if (productosTA) productosTA.value = '';
+        }
+
+        // Manejar required dinámicamente
+        if (ticketInput) ticketInput.required = isOn;
+        if (productosTA) productosTA.required = isOn;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -397,6 +461,10 @@
         .section-title { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
         .custom-switch .form-check-input { width: 3rem; height: 1.5rem; cursor: pointer; }
         .custom-switch .form-check-label { margin-left: 0.5rem; padding-top: 2px; cursor: pointer; }
+
+        /* Altura uniforme: input-group peso = select pago = 38px */
+        #id_peso_total_estimado_kg { height: 38px; }
+        #id_metodo_pago            { height: 38px; }
     </style>
     {% block scripts %}
     <script>

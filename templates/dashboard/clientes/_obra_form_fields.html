@@ -21,7 +21,7 @@
         <div class="col-md-5">
             <div class="form-group">
                 <label class="form-label fw-semibold text-muted small">Cliente Propietario</label>
-                <div class="form-control-plaintext bg-light px-2 rounded border small" id="{{ FID }}-cliente-display" style="min-height:38px;">
+                <div class="form-control form-control-readonly d-flex align-items-center" id="{{ FID }}-cliente-display">
                     <strong>
                         {% if cliente %}
                             {{ cliente.id_sae }} — {{ cliente.razon_social }}
@@ -57,7 +57,7 @@
         <div class="col-md-12">
             <div class="form-group">
                 <label class="form-label fw-semibold small">Zona de Entrega <span class="badge bg-secondary ms-1">Auto-asignada</span></label>
-                <div id="{{ FID }}-zona-display" class="form-control bg-light text-muted d-flex align-items-center" style="min-height:42px; pointer-events:none;">
+                <div id="{{ FID }}-zona-display" class="form-control form-control-readonly text-muted d-flex align-items-center" style="min-height:42px; pointer-events:none;">
                     {% if object and object.zona %}
                         <span class="badge rounded-pill text-white" style="background:{{ object.zona.color_hex|default:'#6c757d' }};">
                             <i class="fas fa-map-marker-alt me-1"></i>{{ object.zona.nombre }}
@@ -83,27 +83,27 @@
             </div>
         </div>
 
-        <div class="col-12 mt-3 text-primary border-bottom pb-1 small fw-bold text-uppercase">
-            <i class="fas fa-map-marker-alt me-1"></i> Detalles de Dirección
+        <div class="col-12 mt-4 px-3 py-2 form-section-header">
+            <i class="fas fa-map-marker-alt me-2"></i> Detalles de Dirección
         </div>
 
         {# ── COLONIA (Buscador) ── #}
         <div class="col-md-12 position-relative">
             <label class="form-label fw-bold small">Colonia <span class="text-danger">*</span></label>
             <div class="input-group">
-                <span class="input-group-text bg-dark border-secondary text-primary"><i class="fas fa-search"></i></span>
-                <input type="text" name="colonia" id="{{ FID }}-colonia" class="form-control form-control-lg" placeholder="Escribe 3 letras para buscar..." value="{{ form.colonia.value|default:'' }}" autocomplete="off" required>
+                <span class="input-group-text bg-transparent border-end-0 text-primary"><i class="fas fa-search"></i></span>
+                <input type="text" name="colonia" id="{{ FID }}-colonia" class="form-control border-start-0" placeholder="Escribe 3 letras para buscar..." value="{{ form.colonia.value|default:'' }}" autocomplete="off" required>
             </div>
             <div id="{{ FID }}-sugerencias" class="list-group position-absolute shadow-lg w-100" style="display:none; z-index:2000; max-height:250px; overflow-y:auto;"></div>
         </div>
 
         <div class="col-md-6">
             <div class="form-group"><label class="form-label small fw-bold text-muted">Municipio</label>
-            <input type="text" name="municipio" id="{{ FID }}-municipio" class="form-control bg-light" readonly value="{{ form.municipio.value|default:'' }}"></div>
+            <input type="text" name="municipio" id="{{ FID }}-municipio" class="form-control form-control-readonly" readonly value="{{ form.municipio.value|default:'' }}"></div>
         </div>
         <div class="col-md-6">
             <div class="form-group"><label class="form-label small fw-bold text-muted">C.P.</label>
-            <input type="text" name="cp" id="{{ FID }}-cp" class="form-control bg-light" readonly value="{{ form.cp.value|default:'' }}"></div>
+            <input type="text" name="cp" id="{{ FID }}-cp" class="form-control form-control-readonly" readonly value="{{ form.cp.value|default:'' }}"></div>
         </div>
 
         <div class="col-md-6">
@@ -120,8 +120,8 @@
             <textarea name="referencias" class="form-control" rows="2" placeholder="Color de fachada, portón, etc." required>{{ form.referencias.value|default:'' }}</textarea></div>
         </div>
 
-        <div class="col-12 mt-3 text-primary border-bottom pb-1 small fw-bold text-uppercase">
-            <i class="fas fa-user-hard-hat me-1"></i> Contacto en Sitio
+        <div class="col-12 mt-4 px-3 py-2 form-section-header">
+            <i class="fas fa-user-hard-hat me-2"></i> Contacto en Sitio
         </div>
 
         <div class="col-md-6">
@@ -231,7 +231,7 @@
                         sugDiv.innerHTML = '';
                         (data.resultados || []).forEach(res => {
                             const a = document.createElement('a');
-                            a.className = `list-group-item list-group-item-action d-flex justify-content-between align-items-center ${!res.tiene_zona ? 'border-start border-warning border-4' : ''}`;
+                            a.className = `list-group-item list-group-item-action bg-card text-main d-flex justify-content-between align-items-center ${!res.tiene_zona ? 'border-start border-warning border-4' : ''}`;
                             a.innerHTML = `<div><strong>${res.colonia}</strong><div class='small text-muted'>${res.municipio} (CP ${res.cp})</div></div>
                                            <span class="badge rounded-pill text-white" style="background:${res.zona_color || '#ffc107'}">${res.zona_nombre}</span>`;
                             a.onclick = () => {
@@ -305,7 +305,46 @@
 </script>
 
 <style>
-    .custom-switch .form-check-input { width: 3.2rem; height: 1.6rem; cursor: pointer; }
+    .custom-switch .form-check-input { width: 3.2rem; height: 1.6rem; cursor: pointer; border-color: var(--border-color); }
+    .custom-switch .form-check-input:checked { background-color: var(--success); border-color: var(--success); }
     .custom-switch .form-check-label { margin-left: 0.8rem; padding-top: 4px; cursor: pointer; font-size: 0.85rem; }
+    
+    .form-section-header {
+        background: var(--bg-body);
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        border-left: 4px solid var(--primary-orange);
+    }
+
+    body.dark-theme .form-section-header {
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--primary-orange);
+    }
+    
+    .form-control-readonly {
+        background-color: var(--table-row-border) !important;
+        opacity: 0.8;
+        cursor: not-allowed;
+        border-style: dashed;
+    }
+
+    body.dark-theme .form-control-readonly {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: var(--text-muted) !important;
+    }
+
+    .input-group-text {
+        transition: all 0.2s ease-in-out;
+    }
+
+    body.dark-theme .input-group-text {
+        background-color: rgba(15, 23, 42, 0.5) !important;
+        border-color: var(--border-color) !important;
+    }
 </style>
 {% endwith %}

@@ -2090,6 +2090,7 @@ class PedidoCreateView(LoginRequiredMixin, CreateView):
                         form.instance.obra = obra
 
                 # Guardar el pedido final
+                form.instance.registrado_por = self.request.user
                 messages.success(self.request, f"Pedido {form.instance.folio_sae} registrado correctamente.")
                 return super().form_valid(form)
         except Exception as e:
@@ -2268,8 +2269,11 @@ class MostradorDashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         hoy = timezone.now().date()
         
-        # Estadísticas de Pedidos
-        context['pedidos_hoy'] = Pedido.objects.filter(fecha_registro__date=hoy).count()
+        # Estadísticas de Pedidos (Personalizadas por Usuario)
+        context['pedidos_hoy'] = Pedido.objects.filter(
+            fecha_registro__date=hoy, 
+            registrado_por=self.request.user
+        ).count()
         context['pedidos_urgentes'] = Pedido.objects.filter(es_urgente=True, estado='REGISTRADO').count()
         context['pedidos_cancelados'] = Pedido.objects.filter(estado='CANCELADO').count()
         context['pedidos_en_espera'] = Pedido.objects.filter(estado='REGISTRADO').count()

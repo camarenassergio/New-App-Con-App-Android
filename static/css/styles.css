@@ -810,22 +810,60 @@ body.dark-theme .nav-submenu {
   border-radius: 6px;
 }
 
-/* === DRAG & DROP FILE UPLOAD COMPONENT === */
+/* === DRAG & DROP FILE UPLOAD COMPONENT — HYBRID DESKTOP/MOBILE === */
 .dnd-upload-zone {
   border: 2px dashed var(--border-color);
   border-radius: 12px;
   padding: 28px 20px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
   background-color: var(--bg-body);
   position: relative;
+  user-select: none;
 }
 
-.dnd-upload-zone:hover,
+/* Desktop hover — indica que se puede clickear */
+@media (hover: hover) {
+  .dnd-upload-zone:hover {
+    border-color: var(--primary-orange);
+    background-color: rgba(243, 111, 33, 0.05);
+    box-shadow: 0 0 0 4px rgba(243, 111, 33, 0.1);
+  }
+}
+
+/* Estado activo cuando hay archivo siendo arrastrado encima */
 .dnd-upload-zone.dragover {
   border-color: var(--primary-orange);
-  background-color: rgba(243, 111, 33, 0.05);
+  border-style: solid;
+  background-color: rgba(243, 111, 33, 0.08);
+  box-shadow: 0 0 0 5px rgba(243, 111, 33, 0.15);
+  transform: scale(1.01);
+}
+
+/* Badge flotante que aparece solo al arrastrar */
+.dnd-upload-zone .dnd-drag-badge {
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--primary-orange);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  pointer-events: none;
+  animation: dnd-badge-pulse 0.8s ease infinite alternate;
+}
+
+.dnd-upload-zone.dragover .dnd-drag-badge {
+  display: block;
+}
+
+@keyframes dnd-badge-pulse {
+  from { opacity: 0.7; }
+  to   { opacity: 1; }
 }
 
 .dnd-upload-zone .dnd-icon {
@@ -833,6 +871,11 @@ body.dark-theme .nav-submenu {
   color: var(--primary-orange);
   margin-bottom: 10px;
   display: block;
+  transition: transform 0.2s ease;
+}
+
+.dnd-upload-zone.dragover .dnd-icon {
+  transform: scale(1.2) translateY(-4px);
 }
 
 .dnd-upload-zone .dnd-label {
@@ -846,6 +889,35 @@ body.dark-theme .nav-submenu {
 .dnd-upload-zone .dnd-sublabel {
   font-size: 0.8rem;
   color: var(--text-muted);
+  display: block;
+  margin-top: 4px;
+}
+
+/* Hint de acciones — solo visible en desktop con hover */
+.dnd-upload-zone .dnd-desktop-hint {
+  display: none;
+  margin-top: 10px;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+@media (hover: hover) {
+  .dnd-upload-zone .dnd-desktop-hint {
+    display: flex;
+  }
+}
+
+.dnd-upload-zone .dnd-desktop-hint span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,0,0,0.05);
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
 }
 
 .dnd-upload-zone input[type="file"] {
@@ -867,12 +939,36 @@ body.dark-theme .nav-submenu {
 
 .dnd-preview-item {
   position: relative;
-  width: 88px;
-  height: 88px;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   border: 2px solid var(--border-color);
   box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Imagen: thumbnail cuadrado */
+.dnd-preview-item.is-image {
+  width: 96px;
+  height: 96px;
+}
+
+/* PDF / archivo: ancho flexible con nombre */
+.dnd-preview-item.is-file {
+  width: auto;
+  min-width: 120px;
+  height: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--bg-card);
+}
+
+.dnd-preview-item:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .dnd-preview-item img {
@@ -882,14 +978,22 @@ body.dark-theme .nav-submenu {
   display: block;
 }
 
+.dnd-preview-item .dnd-filename {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  word-break: break-all;
+  max-width: 110px;
+}
+
 .dnd-preview-item .dnd-remove {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: rgba(239, 68, 68, 0.9);
+  background: rgba(239, 68, 68, 0.92);
   color: white;
   border: none;
   cursor: pointer;
@@ -898,17 +1002,37 @@ body.dark-theme .nav-submenu {
   justify-content: center;
   font-size: 0.65rem;
   line-height: 1;
+  transition: transform 0.15s ease, background 0.15s ease;
+  z-index: 2;
 }
 
+.dnd-preview-item .dnd-remove:hover {
+  transform: scale(1.2);
+  background: #ef4444;
+}
+
+/* Dark mode */
 body.dark-theme .dnd-upload-zone {
   background-color: rgba(15, 23, 42, 0.5);
   border-color: var(--border-color);
 }
 
-body.dark-theme .dnd-upload-zone:hover,
-body.dark-theme .dnd-upload-zone.dragover {
+body.dark-theme .dnd-upload-zone:hover {
   border-color: var(--primary-orange);
   background-color: rgba(243, 111, 33, 0.08);
+}
+
+body.dark-theme .dnd-upload-zone.dragover {
+  border-color: var(--primary-orange);
+  background-color: rgba(243, 111, 33, 0.12);
+}
+
+body.dark-theme .dnd-upload-zone .dnd-desktop-hint span {
+  background: rgba(255,255,255,0.05);
+}
+
+body.dark-theme .dnd-preview-item.is-file {
+  background: rgba(15, 23, 42, 0.8);
 }
 
 

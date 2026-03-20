@@ -631,6 +631,8 @@ class Pedido(models.Model):
     metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES, default='EFECTIVO', verbose_name="Forma de Pago")
     observaciones_mostrador = models.TextField(null=True, blank=True, verbose_name="Observaciones General / Campo Extra")
     
+    # Metadatos de control
+    registrado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='pedidos_registrados')
     fecha_registro = models.DateTimeField(auto_now_add=True)
     ultima_actualizacion = models.DateTimeField(auto_now=True)
 
