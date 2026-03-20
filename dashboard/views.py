@@ -1678,15 +1678,30 @@ def buscar_colonia_api(request):
             zona_id = z.id
             zona_color = z.color_hex or '#6c757d'
 
-        # 2. Si no hay zona por CP, buscar por nombre de colonia (parcial)
+        # 2. Si no hay zona por CP, buscar por nombre de colonia (más estricto)
         if not zona_match:
             col_norm = row.asentamiento.strip().lower()
+            muni_norm = (row.municipio or row.ciudad or '').strip().lower()
+            
             for col_key, z in zona_por_colonia.items():
+                z_muni = (z.municipio or '').strip().lower()
+                
+                # Coincidencia EXACTA de nombre de colonia
+                if col_norm == col_key:
+                    # Validar municipio si ambos lo tienen (para evitar homónimos en estados/municipios distintos)
+                    if not z_muni or not muni_norm or z_muni == muni_norm:
+                        zona_match = z.nombre
+                        zona_id = z.id
+                        zona_color = z.color_hex or '#6c757d'
+                        break
+                
+                # Coincidencia PARCIAL (Solo si el municipio coincide plenamente)
                 if col_norm in col_key or col_key in col_norm:
-                    zona_match = z.nombre
-                    zona_id = z.id
-                    zona_color = z.color_hex or '#6c757d'
-                    break
+                    if z_muni and muni_norm and z_muni == muni_norm:
+                        zona_match = z.nombre
+                        zona_id = z.id
+                        zona_color = z.color_hex or '#6c757d'
+                        break
 
         item = {
             'colonia': row.asentamiento,
