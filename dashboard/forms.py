@@ -552,14 +552,13 @@ class ObraForm(forms.ModelForm):
 
     def clean_telefono_receptor(self):
         import re
-        telefono = self.cleaned_data.get('telefono_receptor', '').strip()
+        val = self.cleaned_data.get('telefono_receptor') or ''
+        telefono = val.strip()
         if telefono:
-            # Eliminar guiones y espacios para guardarlo limpio
-            solo_digitos = re.sub(r'[\-\s]', '', telefono)
-            if not re.match(r'^\d+$', solo_digitos):
-                raise forms.ValidationError("El teléfono solo puede contener números.")
-            if len(solo_digitos) < 10:
-                raise forms.ValidationError("El teléfono debe tener al menos 10 dígitos.")
+            # Quitamos cualquier cosa que no sea número
+            solo_digitos = re.sub(r'\D', '', telefono)
+            if len(solo_digitos) != 10:
+                raise forms.ValidationError("El teléfono debe tener exactamente 10 números.")
             return solo_digitos
         return telefono
 
@@ -577,10 +576,10 @@ class PedidoForm(forms.ModelForm):
             'folio_sae': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Sólo números', 'pattern': '[0-9]*'}),
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'obra': forms.Select(attrs={'class': 'form-select'}),
-            'peso_total_estimado_kg': forms.NumberInput(attrs={'class': 'form-control', 'min': '0.1', 'step': '0.1'}),
-            'metodo_pago': forms.Select(attrs={'class': 'form-select'}),
+            'peso_total_estimado_kg': forms.NumberInput(attrs={'class': 'form-control', 'min': '0.1', 'step': '0.1', 'required': 'required'}),
+            'metodo_pago': forms.Select(attrs={'class': 'form-select', 'required': 'required'}),
             'es_urgente': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'maniobra_aceptada': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'maniobra_aceptada': forms.CheckboxInput(attrs={'class': 'form-check-input', 'required': 'required'}),
             'recoleccion_parcial': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'productos_entregados_parcial': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': '¿Qué se lleva el cliente ahora?'}),
             'cliente_nombre_manual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
@@ -589,6 +588,82 @@ class PedidoForm(forms.ModelForm):
             'observaciones_mostrador': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Notas adicionales...'}),
             'evidencia_ticket': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
+    
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Campos obligatorios obligatorios para todos los casos
+        self.fields['folio_sae'].required = True
+        self.fields['peso_total_estimado_kg'].required = True
+        self.fields['metodo_pago'].required = True
+        
+        # Cliente y Obra deben ser opcionales inicialmente porque 
+        # pueden crearse manualmente sobre la marcha (Mostrador/Nuevo SAE)
+        self.fields['cliente'].required = False
+        self.fields['obra'].required = False
+        self.fields['maniobra_aceptada'].required = False
+        
+        # Campos manuales para Mostrador
+        self.fields['cliente_nombre_manual'].required = False
+        self.fields['cliente_telefono_manual'].required = False
+        self.fields['cliente_direccion_manual'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cliente = cleaned_data.get('cliente')
+        obra = cleaned_data.get('obra')
+        recoleccion_parcial = cleaned_data.get('recoleccion_parcial')
+        productos = cleaned_data.get('productos_entregados_parcial')
+        evidencia = cleaned_data.get('evidencia_ticket')
+        
+        # Nombre y Teléfonos manuales
+        nombre = cleaned_data.get('cliente_nombre_manual')
+        telefono = cleaned_data.get('cliente_telefono_manual')
+        direccion_manual = cleaned_data.get('cliente_direccion_manual')
+        
+        # Datos de la "Nueva Dirección" (desde el POST raw)
+        alias_obra = self.data.get('alias', '').strip()
+        colonia_obra = self.data.get('colonia', '').strip()
+
+        # 1. VALIDACIÓN DE CLIENTE (Si no hay SAE)
+        if not cliente:
+            id_sae_search = self.data.get('id_sae_search', '').strip()
+            if not nombre and not id_sae_search:
+                self.add_error('cliente_nombre_manual', "Este campo es obligatorio para el modo Mostrador.")
+            elif nombre:
+                # Mínimo 2 palabras si se escribe nombre
+                import re
+                if not re.match(r'^\s*\S+\s+\S+.*$', nombre):
+                    self.add_error('cliente_nombre_manual', "Ingrese el nombre completo (mínimo nombre y un apellido).")
+            
+            if not telefono and not id_sae_search:
+                self.add_error('cliente_telefono_manual', "El teléfono es obligatorio para clientes de Mostrador.")
+
+        # 2. VALIDACIÓN DE OBRA / DIRECCIÓN
+        # Permitimos: Una obra del catálogo O un alias de nueva obra O una dirección manual genérica
+        if not obra and not alias_obra and not direccion_manual:
+            self.add_error('obra', "Debes elegir una dirección, registrar una nueva obra o escribir la dirección manual.")
+
+        # 3. VALIDACIÓN DE ENTREGA PARCIAL
+        if recoleccion_parcial:
+            if not productos:
+                self.add_error('productos_entregados_parcial', "Debe especificar qué productos se están entregando.")
+            if not evidencia and not self.instance.pk:
+                self.add_error('evidencia_ticket', "La foto del ticket es obligatoria para entregas parciales.")
+
+        return cleaned_data
+
+    def clean_cliente_telefono_manual(self):
+        import re
+        val = self.cleaned_data.get('cliente_telefono_manual') or ''
+        tel = val.strip()
+        if tel:
+            # Quitamos guiones y espacios
+            solo_numeros = re.sub(r'\D', '', tel)
+            if len(solo_numeros) != 10:
+                raise forms.ValidationError("El teléfono debe tener exactamente 10 dígitos.")
+            return solo_numeros
+        return tel
 
     def clean_folio_sae(self):
         folio = self.cleaned_data.get('folio_sae')
@@ -607,35 +682,6 @@ class PedidoForm(forms.ModelForm):
             raise forms.ValidationError("El peso debe ser un valor positivo mayor a cero.")
         return peso
 
-    def clean(self):
-        cleaned_data = super().clean()
-        cliente = cleaned_data.get('cliente')
-        recoleccion_parcial = cleaned_data.get('recoleccion_parcial')
-        productos = cleaned_data.get('productos_entregados_parcial')
-        evidencia = cleaned_data.get('evidencia_ticket')
-
-        # Si no hay cliente SAE, los campos manuales son obligatorios
-        if not cliente:
-            nombre_manual = cleaned_data.get('cliente_nombre_manual')
-            if not nombre_manual:
-                self.add_error('cliente_nombre_manual', "Obligatorio si no se selecciona un cliente del sistema.")
-            else:
-                # Regla del Bisturí: Mínimo 2 palabras (Nombre y Apellido)
-                import re
-                if not re.match(r'^\s*\S+\s+\S+.*$', nombre_manual):
-                    self.add_error('cliente_nombre_manual', "Ingrese el nombre completo (mínimo nombre y un apellido).")
-            
-            if not cleaned_data.get('cliente_direccion_manual'):
-                self.add_error('cliente_direccion_manual', "Obligatorio para entrega en domicilio.")
-
-        # Validación de Entrega Parcial (requiere productos y ticket)
-        if recoleccion_parcial:
-            if not productos:
-                self.add_error('productos_entregados_parcial', "Debe especificar qué productos se están entregando.")
-            if not evidencia and not self.instance.pk: # Obligatorio solo al crear
-                self.add_error('evidencia_ticket', "La foto del ticket es obligatoria para entregas parciales.")
-
-        return cleaned_data
 
 class DespachoForm(forms.ModelForm):
     class Meta:

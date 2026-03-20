@@ -20,6 +20,17 @@
                 <div class="card-body p-4 p-md-5">
                     <form method="post" enctype="multipart/form-data" class="needs-validation">
                         {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger shadow-sm border-start border-4 border-danger animate__animated animate__shakeX">
+                            <h6 class="fw-bold mb-1"><i class="fas fa-exclamation-circle me-2"></i> Errores al registrar:</h6>
+                            <ul class="mb-0 small">
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
 
                         <!-- Paso 1: Identificación del Cliente -->
                         <div class="section-title mb-4">
@@ -29,7 +40,7 @@
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-5">
-                                <label class="form-label fw-semibold">Folio de Origen (Ticket)</label>
+                                <label class="form-label fw-semibold">Folio de Origen (Ticket) <span class="text-danger">*</span></label>
                                 <div class="input-group shadow-sm">
                                     <span class="input-group-text bg-white border-end-0"><i class="fas fa-hashtag text-muted"></i></span>
                                     <input type="text" name="folio_sae" id="id_folio_sae" class="form-control border-start-0 py-2" 
@@ -37,12 +48,15 @@
                                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                            value="{{ form.folio_sae.value|default:'' }}">
                                 </div>
+                                {% if form.folio_sae.errors %}
+                                    <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle me-2"></i> {{ form.folio_sae.errors.0 }}</div>
+                                {% endif %}
                                 <div id="folio-error" class="mt-1 text-danger small">
                                     {% if form.folio_sae.errors %}{{ form.folio_sae.errors.0 }}{% endif %}
                                 </div>
                             </div>
                             <div class="col-md-7">
-                                <label class="form-label fw-semibold">Cliente Registrado (SAE)</label>
+                                <label class="form-label fw-semibold">Cliente Registrado (SAE) </label>
                                 <div class="input-group shadow-sm">
                                     <span class="input-group-text bg-white border-end-0"><i class="fas fa-user-tag text-muted"></i></span>
                                     <input type="text" name="id_sae_search" class="form-control border-x-0" 
@@ -58,9 +72,11 @@
                                         <i class="fas fa-binoculars"></i> 
                                     </button>
                                 </div>
-                                <div id="cliente-info-box" class="mt-2">
-                                    <div class="form-text small"><i class="fas fa-info-circle me-1"></i> Ingrese ID o use los binoculares para búsqueda avanzada.</div>
-                                </div>
+                                <div id="cliente-info-box" class="mt-2"></div>
+                                {% if form.cliente.errors %}
+                                    <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle me-1"></i> {{ form.cliente.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small"><i class="fas fa-info-circle me-1"></i> Ingrese ID o use los binoculares para búsqueda avanzada.</div>
                                 <div style="display:none;">{{ form.cliente }}</div>
                             </div>
                         </div>
@@ -70,15 +86,21 @@
                             <h6 class="fw-bold mb-3 text-primary small"><i class="fas fa-user-edit me-2"></i> DATOS DE CLIENTE MOSTRADOR</h6>
                             <div class="row g-3">
                                 <div class="col-md-12">
-                                    <label class="form-label small fw-bold">Nombre Completo (Bisturí: 2 palabras mín.)</label>
+                                    <label class="form-label small fw-bold">Nombre Completo <span class="text-danger">*</span></label>
                                     <input type="text" name="cliente_nombre_manual" id="id_cliente_nombre_manual" class="form-control" 
-                                           placeholder="Ej. Juan Pérez o Constructora Alfa"
+                                           placeholder="Ej. Juan Pérez o Constructora Alfa" required
                                            value="{{ form.cliente_nombre_manual.value|default:'' }}">
+                                    {% if form.cliente_nombre_manual.errors %}
+                                        <div class="text-danger small mt-1">{{ form.cliente_nombre_manual.errors.0 }}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label small fw-bold">Teléfono de Contacto</label>
+                                    <label class="form-label small fw-bold">Teléfono de Contacto <span class="text-danger">*</span></label>
                                     <input type="text" name="cliente_telefono_manual" id="id_cliente_telefono_manual" class="form-control" 
-                                           placeholder="10 dígitos" value="{{ form.cliente_telefono_manual.value|default:'' }}">
+                                           placeholder="10 dígitos" required value="{{ form.cliente_telefono_manual.value|default:'' }}">
+                                    {% if form.cliente_telefono_manual.errors %}
+                                        <div class="text-danger small mt-1">{{ form.cliente_telefono_manual.errors.0 }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -91,10 +113,13 @@
 
                         <div class="row g-3 mb-4" id="obra-fields">
                             <div class="col-md-12" id="obra-select-wrapper">
-                                <label class="form-label fw-semibold">Seleccionar Obra / Dirección Registrada</label>
+                                <label class="form-label fw-semibold">Seleccionar Obra / Dirección Registrada <span class="text-danger">*</span></label>
                                 <div class="d-flex gap-2">
                                     <div id="obras-container" class="flex-grow-1">
                                         {{ form.obra }}
+                                        {% if form.obra.errors %}
+                                            <div class="text-danger small mt-1"><i class="fas fa-exclamation-triangle me-1"></i> {{ form.obra.errors.0 }}</div>
+                                        {% endif %}
                                     </div>
                                     <button type="button" class="btn btn-outline-primary" id="btn-nueva-obra-toggle">
                                         <i class="fas fa-plus me-1"></i> Nueva Dirección
@@ -113,7 +138,7 @@
                                     </button>
                                 </div>
                                 <div class="p-3 bg-light rounded border mb-4">
-                                    {% include 'dashboard/clientes/_obra_form_fields.html' with form_id="pedido-nueva-obra" %}
+                                    {% include 'dashboard/clientes/_obra_form_fields.html' with form_id="pedido-nueva-obra" es_subform=True %}
                                 </div>
                                 <input type="hidden" name="usar_obra_manual" id="id_usar_obra_manual" value="false">
                             </div>
@@ -127,15 +152,21 @@
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Peso Total (kg)</label>
+                                <label class="form-label fw-semibold">Peso Total (kg) <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     {{ form.peso_total_estimado_kg }}
                                     <span class="input-group-text bg-light">KG</span>
                                 </div>
+                                {% if form.peso_total_estimado_kg.errors %}
+                                    <div class="text-danger small mt-1"><i class="fas fa-exclamation-triangle me-1"></i> {{ form.peso_total_estimado_kg.errors.0 }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Forma de Pago</label>
+                                <label class="form-label fw-semibold">Forma de Pago <span class="text-danger">*</span></label>
                                 {{ form.metodo_pago }}
+                                {% if form.metodo_pago.errors %}
+                                    <div class="text-danger small mt-1"><i class="fas fa-wallet me-1"></i> {{ form.metodo_pago.errors.0 }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Ticket SAE (PDF/Foto)</label>
@@ -164,7 +195,7 @@
                                 <div class="form-check form-switch custom-switch">
                                     {{ form.maniobra_aceptada }}
                                     <label class="form-check-label" for="{{ form.maniobra_aceptada.id_for_label }}">
-                                        Maniobra Aceptada
+                                        Maniobra Aceptada <span class="text-danger">*</span>
                                     </label>
                                 </div>
                             </div>
@@ -188,7 +219,7 @@
                             <a href="{% url 'dashboard:mostrador_home' %}" class="btn btn-link text-muted text-decoration-none fw-semibold">
                                 <i class="fas fa-arrow-left me-1"></i> Volver
                             </a>
-                            <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm rounded-pill">
+                            <button type="submit" id="btn-guardar-pedido" class="btn btn-primary px-5 py-2 fw-bold shadow-sm rounded-pill">
                                 Guardar Pedido <i class="fas fa-check-circle ms-2"></i>
                             </button>
                         </div>
@@ -208,21 +239,67 @@
         const obraSelectWrapper = document.getElementById('obra-select-wrapper');
         const obraManualFields = document.getElementById('obra-manual-fields');
         const inputUsarManual = document.getElementById('id_usar_obra_manual');
+        
+        // Función auxiliar para activar/desactivar required en un contenedor
+        const setRequired = (container, state) => {
+            if (!container) return;
+            container.querySelectorAll('input, select, textarea').forEach(el => {
+                // Solo afectamos a los que originalmente eran obligatorios (tienen clase o atributo previo)
+                // O mejor, a todos los que no sean opcionales por lógica de negocio
+                if (state) {
+                    if (el.hasAttribute('data-was-required')) el.required = true;
+                } else {
+                    if (el.required) {
+                        el.setAttribute('data-was-required', 'true');
+                        el.required = false;
+                    }
+                }
+            });
+        };
 
         if (clienteSelect && clienteSelect.value && clienteSelect.value !== "") {
             manualPanel.style.display = 'none';
+            setRequired(manualPanel, false);
+
             if (inputUsarManual && inputUsarManual.value === "true") {
                 obraSelectWrapper.style.display = 'none';
                 obraManualFields.style.display = 'block';
+                setRequired(obraManualFields, true);
             } else {
                 obraSelectWrapper.style.display = 'block';
                 obraManualFields.style.display = 'none';
+                setRequired(obraManualFields, false);
             }
         } else {
             manualPanel.style.display = 'block';
+            setRequired(manualPanel, true);
+
             obraSelectWrapper.style.display = 'none';
             obraManualFields.style.display = 'block';
+            setRequired(obraManualFields, true);
             if (inputUsarManual) inputUsarManual.value = "true";
+        }
+    }
+
+    // Definición global para que el fragmento pueda usarla
+    window.validarZonaObra = function(select) {
+        const btnGuardar = document.getElementById('btn-guardar-pedido');
+        const errorDiv = document.getElementById('zona-error');
+        if (!select) return;
+        const selected = select.options[select.selectedIndex];
+        
+        if (selected && selected.value !== "" && selected.dataset.hasZona === "false") {
+            if (errorDiv) errorDiv.style.display = 'block';
+            if (btnGuardar) {
+                btnGuardar.disabled = true;
+                btnGuardar.classList.add('opacity-50');
+            }
+        } else {
+            if (errorDiv) errorDiv.style.display = 'none';
+            if (btnGuardar) {
+                btnGuardar.disabled = false;
+                btnGuardar.classList.remove('opacity-50');
+            }
         }
     }
 
@@ -233,6 +310,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Inicializar marcas de required
+        document.querySelectorAll('input[required], select[required], textarea[required]').forEach(el => {
+            el.setAttribute('data-was-required', 'true');
+        });
+
         toggleManualClient();
         togglePartialProducts();
         
@@ -306,14 +388,36 @@
 {% endblock %}
 
 {% block extra_css %}
-<style>
-    .step-badge {
-        background: var(--primary-blue); color: white; width: 28px; height: 28px;
-        display: inline-flex; align-items: center; justify-content: center;
-        border-radius: 50%; font-weight: bold; font-size: 0.9rem;
-    }
-    .section-title { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
-    .custom-switch .form-check-input { width: 3rem; height: 1.5rem; cursor: pointer; }
-    .custom-switch .form-check-label { margin-left: 0.5rem; padding-top: 2px; cursor: pointer; }
-</style>
+    <style>
+        .step-badge {
+            background: var(--primary-blue); color: white; width: 28px; height: 28px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 50%; font-weight: bold; font-size: 0.9rem;
+        }
+        .section-title { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+        .custom-switch .form-check-input { width: 3rem; height: 1.5rem; cursor: pointer; }
+        .custom-switch .form-check-label { margin-left: 0.5rem; padding-top: 2px; cursor: pointer; }
+    </style>
+    {% block scripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const formatPhone = (input) => {
+            let val = input.value.replace(/\D/g, '').substring(0, 10);
+            let sections = [];
+            for (let i = 0; i < val.length; i += 2) {
+                sections.push(val.substring(i, i + 2));
+            }
+            input.value = sections.join('-');
+        };
+
+        // Aplicar a los teléfonos ya presentes
+        const telInputs = document.querySelectorAll('input[name*="telefono"]');
+        telInputs.forEach(input => {
+            input.addEventListener('input', function() { formatPhone(this); });
+            // Formatear valor inicial si existe
+            if (this.value) formatPhone(this);
+        });
+    });
+    </script>
+    {% endblock %}
 {% endblock %}

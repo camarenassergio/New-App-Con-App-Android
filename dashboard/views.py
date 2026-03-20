@@ -2080,6 +2080,7 @@ class PedidoCreateView(LoginRequiredMixin, CreateView):
                             zona_id=zona_id,
                             cp=self.request.POST.get('cp'),
                             colonia=self.request.POST.get('colonia'),
+                            municipio=self.request.POST.get('municipio'),
                             calle_numero=self.request.POST.get('calle_numero'),
                             entre_calles=self.request.POST.get('entre_calles'),
                             referencias=self.request.POST.get('referencias'),

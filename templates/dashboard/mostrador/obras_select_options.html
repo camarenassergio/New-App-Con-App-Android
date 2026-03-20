@@ -1,14 +1,20 @@
-<select name="obra" class="form-select" id="id_obra" required>
+<select name="obra" class="form-select" id="id_obra" onchange="validarZonaObra(this)">
     <option value="">-- Seleccionar Destino --</option>
     {% for obra in obras %}
     <option value="{{ obra.id }}" 
             data-activa="{{ obra.esta_activa|yesno:'true,false' }}"
+            data-has-zona="{% if obra.zona %}true{% else %}false{% endif %}"
             {% if selected_obra_id|slugify == obra.id|slugify %}selected{% endif %}
             {% if not obra.esta_activa %}class="text-muted bg-light" style="font-style:italic;"{% endif %}>
         {% if not obra.esta_activa %}(INACTIVA) {% endif %}{{ obra.alias }} — {{ obra.calle_numero|truncatechars:30 }}
+        {% if not obra.zona %}(SIN ZONA){% endif %}
     </option>
     {% endfor %}
 </select>
+
+<div id="zona-error" class="text-danger small mt-1" style="display: none;">
+    <i class="fas fa-exclamation-triangle"></i> Esta obra no tiene zona asignada. Debe editarla antes de continuar.
+</div>
 
 {% if not obras %}
 <div class="text-warning small mt-1 animate__animated animate__shakeX">
@@ -17,6 +23,32 @@
 {% endif %}
 
 <script>
+    function validarZonaObra(select) {
+        const btnGuardar = document.querySelector('button[type="submit"]');
+        const errorDiv = document.getElementById('zona-error');
+        const selected = select.options[select.selectedIndex];
+        
+        if (selected && selected.value !== "" && selected.dataset.hasZona === "false") {
+            if (errorDiv) errorDiv.style.display = 'block';
+            if (btnGuardar) {
+                btnGuardar.disabled = true;
+                btnGuardar.classList.add('opacity-50');
+            }
+        } else {
+            if (errorDiv) errorDiv.style.display = 'none';
+            if (btnGuardar) {
+                btnGuardar.disabled = false;
+                btnGuardar.classList.remove('opacity-50');
+            }
+        }
+    }
+
+    // Al cargar, si ya hay una seleccionada
+    setTimeout(() => {
+        const select = document.getElementById('id_obra');
+        if (select) validarZonaObra(select);
+    }, 100);
+
     // Si el usuario selecciona una obra inactiva, la activamos automáticamente
     (function() {
         const select = document.getElementById('id_obra');
@@ -26,11 +58,10 @@
                 if (opt && opt.dataset.activa === "false") {
                     if (confirm("Esta dirección de obra está inactiva. ¿Deseas rehabilitarla para usarla en este pedido?")) {
                         const cliente_id = document.querySelector('select[name="cliente"]').value;
-                        // Reactivamos vía HTMX
                         htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + cliente_id + '&obra_id=' + opt.value, '#obras-container');
                     } else {
-                        // Reseteamos si el usuario cancela
                         this.value = "";
+                        validarZonaObra(this);
                     }
                 }
             });

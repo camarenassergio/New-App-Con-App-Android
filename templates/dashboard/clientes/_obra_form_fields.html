@@ -21,19 +21,21 @@
         <div class="col-md-5">
             <div class="form-group">
                 <label class="form-label fw-semibold text-muted small">Cliente Propietario</label>
-                <div class="form-control-plaintext bg-light px-2 rounded border small" style="min-height:38px;">
+                <div class="form-control-plaintext bg-light px-2 rounded border small" id="{{ FID }}-cliente-display" style="min-height:38px;">
                     <strong>
                         {% if cliente %}
                             {{ cliente.id_sae }} — {{ cliente.razon_social }}
                         {% elif object and object.cliente %}
                             {{ object.cliente.id_sae }} — {{ object.cliente.razon_social }}
                         {% else %}
-                            <span class="text-muted">Cliente no especificado</span>
+                            <span class="text-muted small">Se asignará al pedido</span>
                         {% endif %}
                     </strong>
                 </div>
-                {# Input oculto para que el form de Django reciba el ID del cliente #}
-                <input type="hidden" name="cliente" value="{% if cliente %}{{ cliente.id }}{% elif object %}{{ object.cliente.id }}{% endif %}">
+                {# Solo incluimos el input oculto si NO es un subformulario de pedido #}
+                {% if not es_subform %}
+                    <input type="hidden" name="cliente" value="{% if cliente %}{{ cliente.id }}{% elif object %}{{ object.cliente.id }}{% endif %}">
+                {% endif %}
             </div>
         </div>
 
