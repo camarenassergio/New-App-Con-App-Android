@@ -477,9 +477,11 @@ class ConfiguracionGeneralForm(forms.ModelForm):
             'limite_seguridad_llanta_mm', 
             'vida_util_estimada_llanta_km',
             'limite_peso_vehiculo_personal_kg',
-            'tolerancia_peso_ruta_kg'
+            'tolerancia_peso_ruta_kg',
+            'tipos_ticket_json'
         ]
         widgets = {
+            'tipos_ticket_json': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Ej: [{"nombre": "Remisión", "prefijo": "R"}]'}),
             'sueldo_semanal_chofer': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'sueldo_semanal_chalan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'tiempo_descarga_promedio_min': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -563,17 +565,23 @@ class ObraForm(forms.ModelForm):
         return telefono
 
 class PedidoForm(forms.ModelForm):
+    tipo_ticket = forms.ChoiceField(
+        label="Tipo", 
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_tipo_ticket'})
+    )
+
     class Meta:
         model = Pedido
         fields = [
-            'folio_sae', 'cliente', 'obra', 'peso_total_estimado_kg', 
+            'tipo_ticket', 'folio_sae', 'cliente', 'obra', 'peso_total_estimado_kg', 
             'metodo_pago', 'es_urgente', 'maniobra_aceptada', 
             'recoleccion_parcial', 'productos_entregados_parcial',
             'cliente_nombre_manual', 'cliente_telefono_manual', 'cliente_direccion_manual',
             'observaciones_mostrador', 'evidencia_ticket'
         ]
         widgets = {
-            'folio_sae': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Sólo números', 'pattern': '[0-9]*'}),
+            'folio_sae': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de folio', 'pattern': '[0-9]*'}),
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'obra': forms.Select(attrs={'class': 'form-select'}),
             'peso_total_estimado_kg': forms.NumberInput(attrs={'class': 'form-control', 'min': '0.1', 'step': '0.1', 'required': 'required'}),
@@ -589,9 +597,21 @@ class PedidoForm(forms.ModelForm):
             'evidencia_ticket': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
     
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Cargar Tipos de Ticket desde Configuración General
+        from .models import ConfiguracionGeneral
+        config = ConfiguracionGeneral.get_solo()
+        tipos = config.tipos_ticket_json or [
+            {"nombre": "Remisión", "prefijo": "R"},
+            {"nombre": "Nota de Venta", "prefijo": "N"},
+            {"nombre": "Factura", "prefijo": "F"},
+            {"nombre": "Cotización", "prefijo": "C"},
+            {"nombre": "Nota de Block", "prefijo": "NB"},
+            {"nombre": "Sin Prefijo", "prefijo": ""}
+        ]
+        self.fields['tipo_ticket'].choices = [(t['prefijo'], t['nombre']) for t in tipos]
+
         # Campos obligatorios obligatorios para todos los casos
         self.fields['folio_sae'].required = True
         self.fields['peso_total_estimado_kg'].required = True
@@ -667,13 +687,16 @@ class PedidoForm(forms.ModelForm):
 
     def clean_folio_sae(self):
         folio = self.cleaned_data.get('folio_sae')
+        prefijo = self.cleaned_data.get('tipo_ticket', '')
         if folio:
             import re
-            # Eliminar cualquier cosa que no sea número (puntos, comas, letras)
-            folio_limpio = re.sub(r'\D', '', folio)
-            if not folio_limpio:
+            # El usuario ingresa solo la parte numérica, nosotros concatenamos el prefijo inteligente
+            folio_num = re.sub(r'\D', '', folio)
+            if not folio_num:
                 raise forms.ValidationError("El folio debe contener únicamente números.")
-            return folio_limpio
+            
+            # Concatenamos prefijo + número (Ej: R + 1234 = R1234)
+            return f"{prefijo}{folio_num}"
         return folio
 
     def clean_peso_total_estimado_kg(self):

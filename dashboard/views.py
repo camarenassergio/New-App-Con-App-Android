@@ -1889,7 +1889,7 @@ class ConfiguracionGeneralUpdateView(LoginRequiredMixin, NonChoferRequiredMixin,
     model = ConfiguracionGeneral
     form_class = ConfiguracionGeneralForm
     template_name = 'dashboard/configuracion_general.html'
-    success_url = reverse_lazy('dashboard:home')
+    success_url = reverse_lazy('dashboard:configuracion_general')
     ajax_success_message = "Configuración general actualizada correctamente."
     
     def get_object(self, queryset=None):
@@ -2047,9 +2047,10 @@ class CalcularFleteAccionView(LoginRequiredMixin, View):
 
 from django.db import transaction
 
-class PedidoCreateView(LoginRequiredMixin, CreateView):
+class PedidoCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     model = Pedido
     form_class = PedidoForm
+    ajax_success_message = "¡Pedido registrado correctamente!"
     template_name = 'dashboard/pedido_form.html'
     success_url = reverse_lazy('dashboard:mostrador_home')
 

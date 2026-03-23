@@ -18,8 +18,19 @@
                     </button>
                 </div>
                 <div class="card-body p-4 p-md-5">
-                    <form method="post" enctype="multipart/form-data" class="needs-validation">
+                    <form hx-post="." 
+                          hx-encoding="multipart/form-data" 
+                          hx-indicator="#pedido-spinner"
+                          class="needs-validation">
                         {% csrf_token %}
+                        <div id="pedido-spinner" class="htmx-indicator" style="display: none;">
+                            <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+                                 style="background: rgba(255,255,255,0.7); z-index: 9999;">
+                                <div class="spinner-border text-primary" style="width: 3.5rem; height: 3.5rem;" role="status">
+                                    <span class="visually-hidden">Procesando...</span>
+                                </div>
+                            </div>
+                        </div>
                         
                         {% if form.non_field_errors %}
                         <div class="alert alert-danger shadow-sm border-start border-4 border-danger animate__animated animate__shakeX">
@@ -39,23 +50,24 @@
                         </div>
 
                         <div class="row g-3 mb-4">
-                            <div class="col-md-5">
+                            <div class="col-md-6">
                                 <label class="form-label fw-semibold">Folio de Origen (Ticket) <span class="text-danger">*</span></label>
                                 <div class="input-group shadow-sm">
                                     <span class="input-group-text bg-white border-end-0"><i class="fas fa-hashtag text-muted"></i></span>
-                                    <input type="text" name="folio_sae" id="id_folio_sae" class="form-control border-start-0 py-2" 
-                                           placeholder="Ticket físico" required
+                                    <div style="flex: 0 0 40%;">
+                                        {{ form.tipo_ticket }}
+                                    </div>
+                                    <input type="text" name="folio_sae" id="id_folio_sae" class="form-control py-2" 
+                                           placeholder="Folio" required
                                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                            value="{{ form.folio_sae.value|default:'' }}">
                                 </div>
                                 {% if form.folio_sae.errors %}
                                     <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle me-2"></i> {{ form.folio_sae.errors.0 }}</div>
                                 {% endif %}
-                                <div id="folio-error" class="mt-1 text-danger small">
-                                    {% if form.folio_sae.errors %}{{ form.folio_sae.errors.0 }}{% endif %}
-                                </div>
+                                <div id="folio-error" class="mt-1 text-danger small"></div>
                             </div>
-                            <div class="col-md-7">
+                            <div class="col-md-6">
                                 <label class="form-label fw-semibold">Cliente Registrado (SAE) </label>
                                 <div class="input-group shadow-sm">
                                     <span class="input-group-text bg-white border-end-0"><i class="fas fa-user-tag text-muted"></i></span>
@@ -191,7 +203,7 @@
                                 <div class="form-check form-switch custom-switch">
                                     {{ form.maniobra_aceptada }}
                                     <label class="form-check-label small fw-bold" for="{{ form.maniobra_aceptada.id_for_label }}">
-                                        ¿Maniobra Aceptada? <br><span class="text-muted" style="font-size: 0.65rem;">(Desmarcado = Pie de Carro)</span>
+                                        ¿Maniobra Explicada? <br><span class="text-muted" style="font-size: 0.65rem;">(Marcado = Pie de Carro)</span>
                                     </label>
                                 </div>
                             </div>
@@ -471,6 +483,10 @@
 
 {% block extra_css %}
     <style>
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: block !important; }
+        .htmx-request.htmx-indicator { display: block !important; }
+
         .step-badge {
             background: var(--primary-blue); color: white; width: 28px; height: 28px;
             display: inline-flex; align-items: center; justify-content: center;

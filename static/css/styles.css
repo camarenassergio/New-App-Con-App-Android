@@ -1665,3 +1665,11 @@ body.dark-theme a[href]:hover {
   border-color: var(--border-color);
   margin: 20px 0;
 }
+/* --- HTMX Global Indicators --- */
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    display: block !important;
+}

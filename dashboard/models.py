@@ -1353,6 +1353,15 @@ class ConfiguracionGeneral(models.Model):
     limite_peso_vehiculo_personal_kg = models.DecimalField(max_digits=10, decimal_places=2, default=200.00, verbose_name="Límite Peso Vehículo Personal (kg)")
     tolerancia_peso_ruta_kg = models.DecimalField(max_digits=10, decimal_places=2, default=50.00, verbose_name="Tolerancia de Peso en Ruta (kg)")
     
+    # Prefijos de Ticket (Fase 2+: Configuración Mostrador)
+    tipos_ticket_json = models.JSONField(
+        default=list, 
+        blank=True, 
+        null=True, 
+        verbose_name="Tipos de Ticket (Prefijos)",
+        help_text="Formato: [{'nombre': '...', 'prefijo': '...'}, ...]"
+    )
+    
     @property
     def costo_minuto_chofer(self):
         # 53 hrs a la semana = 3180 minutos a la semana laborables
