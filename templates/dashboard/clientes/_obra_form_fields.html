@@ -278,7 +278,9 @@
         // 5. POLLING
         if (btnSolicitar) {
             btnSolicitar.onclick = () => {
-                document.getElementById(`${FID}-m-col`).textContent = inputColonia.value;
+                const elCol = document.getElementById(`${FID}-m-col`);
+                if (elCol) elCol.textContent = inputColonia.value;
+                
                 document.getElementById(`${FID}-st-solicitar`).style.display = "";
                 document.getElementById(`${FID}-st-esperando`).style.display = "none";
                 document.getElementById(`${FID}-st-autorizado`).style.display = "none";
@@ -286,37 +288,65 @@
             };
         }
 
-        container.querySelector(`#${FID}-btn-enviar-solicitud`).onclick = function() {
-            document.getElementById(`${FID}-st-solicitar`).style.display = "none";
-            document.getElementById(`${FID}-st-esperando`).style.display = "";
-            let contador = 0;
-            const elContador = document.getElementById(`${FID}-contador-poll`);
-            
-            fetch("{% url 'dashboard:solicitar_autorizacion_zona_api' %}", {
-                method: "POST", headers: {"Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}"},
-                body: JSON.stringify({colonia: inputColonia.value, cp: inputCP.value, municipio: inputMunicipio.value})
-            });
+        const btnEnviarSolicitud = document.getElementById(`${FID}-btn-enviar-solicitud`);
+        if (btnEnviarSolicitud) {
+            btnEnviarSolicitud.onclick = function() {
+                const stSolicitar = document.getElementById(`${FID}-st-solicitar`);
+                const stEsperando = document.getElementById(`${FID}-st-esperando`);
+                if (stSolicitar) stSolicitar.style.display = "none";
+                if (stEsperando) stEsperando.style.display = "";
+                
+                let contador = 0;
+                const elContador = document.getElementById(`${FID}-contador-poll`);
+                
+                console.log("Enviando solicitud de autorización para colonia:", inputColonia.value);
 
-            clearInterval(pollingInterval);
-            pollingInterval = setInterval(() => {
-                contador++; elContador.textContent = contador;
-                fetch(`{% url 'dashboard:verificar_zona_por_cp_api' %}?cp=${inputCP.value}&colonia=${encodeURIComponent(inputColonia.value)}`)
-                    .then(r => r.json()).then(data => {
-                        if (data.tiene_zona) {
-                            clearInterval(pollingInterval);
-                            zonaHid.value = data.zona_id;
-                            zonaDisp.innerHTML = `<span class="badge rounded-pill text-white" style="background:${data.zona_color};"><i class="fas fa-check-circle me-1"></i>${data.zona_nombre}</span>`;
-                            document.getElementById(`${FID}-z-ok-name`).textContent = data.zona_nombre;
-                            document.getElementById(`${FID}-st-esperando`).style.display = "none";
-                            document.getElementById(`${FID}-st-autorizado`).style.display = "";
-                            alertBlq.classList.add('d-none');
-                        }
-                    });
-            }, 5000);
-        };
+                fetch("{% url 'dashboard:solicitar_autorizacion_zona_api' %}", {
+                    method: "POST", headers: {"Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}"},
+                    body: JSON.stringify({colonia: inputColonia.value, cp: inputCP.value, municipio: inputMunicipio.value})
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error("Fallo en la respuesta del servidor");
+                    return r.json();
+                })
+                .then(res => {
+                    console.log("Solicitud enviada con éxito:", res);
+                    // Iniciar polling
+                    clearInterval(pollingInterval);
+                    pollingInterval = setInterval(() => {
+                        contador++; if(elContador) elContador.textContent = contador;
+                        fetch(`{% url 'dashboard:verificar_zona_por_cp_api' %}?cp=${inputCP.value}&colonia=${encodeURIComponent(inputColonia.value)}`)
+                            .then(r => r.json()).then(data => {
+                                if (data.tiene_zona) {
+                                    clearInterval(pollingInterval);
+                                    zonaHid.value = data.zona_id;
+                                    zonaDisp.innerHTML = `<span class="badge rounded-pill text-white" style="background:${data.zona_color};"><i class="fas fa-check-circle me-1"></i>${data.zona_nombre}</span>`;
+                                    
+                                    const zName = document.getElementById(`${FID}-z-ok-name`);
+                                    const stAut = document.getElementById(`${FID}-st-autorizado`);
+                                    if (zName) zName.textContent = data.zona_nombre;
+                                    if (stEsperando) stEsperando.style.display = "none";
+                                    if (stAut) stAut.style.display = "";
+                                    
+                                    alertBlq.classList.add('d-none');
+                                }
+                            });
+                    }, 5000);
+                })
+                .catch(err => {
+                    console.error("Error al enviar solicitud:", err);
+                    alert("Error al enviar la solicitud. Revisa tu conexión.");
+                    if (stSolicitar) stSolicitar.style.display = "";
+                    if (stEsperando) stEsperando.style.display = "none";
+                });
+            };
+        }
 
-        container.querySelector(`#${FID}-btn-cancelar-espera`).onclick = () => { clearInterval(pollingInterval); bsModal.hide(); };
-        container.querySelector(`#${FID}-btn-cambiar-col`).onclick = () => { bsModal.hide(); inputColonia.value = ""; inputColonia.focus(); };
+        const btnCancelarEspera = document.getElementById(`${FID}-btn-cancelar-espera`);
+        if (btnCancelarEspera) btnCancelarEspera.onclick = () => { clearInterval(pollingInterval); bsModal.hide(); };
+
+        const btnCambiarCol = document.getElementById(`${FID}-btn-cambiar-col`);
+        if (btnCambiarCol) btnCambiarCol.onclick = () => { bsModal.hide(); inputColonia.value = ""; inputColonia.focus(); };
     }
 
     if (document.readyState === 'loading') {

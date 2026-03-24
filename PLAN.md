@@ -47,6 +47,8 @@
 | Antigravity | HTMX Audit: convertidos configuracion_general, usuario_cambiar_password, unidad_list toggle | Verificado y Pulido |
 | Antigravity | UX: Redirección de ConfiguracionGeneral a Dashboard Home post-guardado | Verificado y Pulido |
 | Antigravity | Paso 1 (Fase 2): Mostrador — Registro, Cotizador, SAE Sync y Bloqueo de Edición | Verificado y Pulido |
+| Antigravity | Notificaciones: Campana, Badge HTMX y Autorización de Zonas | Verificado y Pulido |
+| Antigravity | UX Mapas: Previsualización de Ruta OSRM, Pin Centroide y Geo-Dissolve | Verificado [AUTO-HEALED] |
 | Antigravity | Fix: Búsqueda de Colonia Estricta (Municipio) — Evita zonas incorrectas en CPs ajenos | Verificado [AUTO-HEALED] |
 
 ## Reglas del Proyecto

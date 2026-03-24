@@ -451,6 +451,8 @@ class ZonaEntregaForm(forms.ModelForm):
             'costo_maniobra',
             'color_hex',
             'geojson_data',
+            'route_geojson',
+            'route_waypoints',
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Zona Norte'}),
@@ -463,6 +465,8 @@ class ZonaEntregaForm(forms.ModelForm):
             'costo_maniobra': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0}),
             'color_hex': forms.TextInput(attrs={'class': 'form-control form-control-color', 'type': 'color'}),
             'geojson_data': forms.HiddenInput(attrs={'id': 'id_geojson_data'}),
+            'route_geojson': forms.HiddenInput(attrs={'id': 'id_route_geojson'}),
+            'route_waypoints': forms.HiddenInput(attrs={'id': 'id_route_waypoints'}),
         }
 
 from .models import ConfiguracionGeneral

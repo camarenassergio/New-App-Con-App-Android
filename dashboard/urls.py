@@ -92,4 +92,11 @@ urlpatterns = [
     path('clientes/<int:cliente_pk>/obras/', views.ObraListView.as_view(), name='obra_list'),
     path('clientes/<int:cliente_pk>/obras/nueva/', views.ObraCreateView.as_view(), name='obra_create'),
     path('obras/<int:pk>/editar/', views.ObraUpdateView.as_view(), name='obra_update'),
+
+    # --- NOTIFICACIONES ---
+    path('notificaciones/', views.NotificacionListView.as_view(), name='notificaciones_list'),
+    path('notificaciones/dropdown/', views.NotificacionesDropdownView.as_view(), name='notificaciones_dropdown'),
+    path('notificaciones/<int:pk>/marcar-leida/', views.NotificacionMarcarLeidaView.as_view(), name='notificacion_marcar_leida'),
+    path('notificaciones/marcar-todas-leidas/', views.marcar_todas_leidas, name='notificaciones_marcar_todas_leidas'),
+    path('notificaciones/count/', views.notificaciones_count_ajax, name='notificaciones_count'),
 ]

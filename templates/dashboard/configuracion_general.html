@@ -36,9 +36,9 @@
             {% endif %}
 
             <div class="border-bottom pb-2 mb-4">
-                <h5 class="fw-bold mb-0"><i class="fas fa-money-bill-wave me-2 text-success"></i> Sueldos Base Semanales</h5>
+                <h5 class="fw-bold mb-0 text-success"><i class="fas fa-money-bill-wave me-2"></i> Sueldos Base Semanales</h5>
             </div>
-            <div class="row">
+            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-success shadow-sm">
                 <div class="col-md-6 mb-3">
                     {{ form.sueldo_semanal_chofer|as_crispy_field }}
                 </div>
@@ -48,42 +48,52 @@
             </div>
 
             <div class="border-bottom pb-2 mb-4 mt-4">
-                <h5 class="fw-bold mb-0"><i class="fas fa-truck-loading me-2 text-info"></i> Operación y Seguridad</h5>
+                <h5 class="fw-bold mb-0 text-info"><i class="fas fa-truck-loading me-2"></i> Operación y Tiempos</h5>
             </div>
-            <div class="row">
+            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-info shadow-sm">
                 <div class="col-md-6 mb-3">
                     {{ form.tiempo_descarga_promedio_min|as_crispy_field }}
-                </div>
-                <div class="col-md-3 mb-3">
-                    {{ form.limite_seguridad_llanta_mm|as_crispy_field }}
-                </div>
-                <div class="col-md-3 mb-3">
-                    {{ form.vida_util_estimada_llanta_km|as_crispy_field }}
+                    <small class="text-muted d-block mt-1">Tiempo fijo estimado para cada parada de entrega (min).</small>
                 </div>
             </div>
 
             <div class="border-bottom pb-2 mb-4 mt-4">
-                <h5 class="fw-bold mb-0"><i class="fas fa-weight-hanging me-2 text-primary"></i> Pesos y Tolerancias</h5>
+                <h5 class="fw-bold mb-0 text-warning"><i class="fas fa-tools me-2"></i> Control de Neumáticos (Seguridad)</h5>
             </div>
-            <div class="row">
+            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-warning shadow-sm">
+                <div class="col-md-6 mb-3">
+                    {{ form.limite_seguridad_llanta_mm|as_crispy_field }}
+                    <small class="text-muted d-block mt-1">Grosor mínimo permitido antes de marcar cambio obligatorio (mm).</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.vida_util_estimada_llanta_km|as_crispy_field }}
+                    <small class="text-muted d-block mt-1">Kilometraje promedio esperado para un neumático nuevo (km).</small>
+                </div>
+            </div>
+
+            <div class="border-bottom pb-2 mb-4 mt-4">
+                <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-weight-hanging me-2"></i> Pesos y Tolerancias</h5>
+            </div>
+            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-primary shadow-sm">
                 <div class="col-md-6 mb-3">
                     {{ form.limite_peso_vehiculo_personal_kg|as_crispy_field }}
+                    <small class="text-muted d-block mt-1">Carga máxima permitida para vehículos livianos (kg).</small>
                 </div>
                 <div class="col-md-6 mb-3">
                     {{ form.tolerancia_peso_ruta_kg|as_crispy_field }}
+                    <small class="text-muted d-block mt-1">Margen de peso extra permitido antes de bloquear un viaje (kg).</small>
                 </div>
             </div>
 
             <div class="border-bottom pb-2 mb-4 mt-4">
-                <h5 class="fw-bold mb-0"><i class="fas fa-ticket-alt me-2 text-danger"></i> Prefijos de Folios (Mostrador)</h5>
+                <h5 class="fw-bold mb-0 text-danger"><i class="fas fa-ticket-alt me-2"></i> Prefijos de Folios (Mostrador)</h5>
             </div>
-            <div class="row">
+            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-danger shadow-sm">
                 <div class="col-12 mb-3">
-                    <!-- Campo oculto para almacenar el JSON -->
                     <!-- Campo único de Django para tipos_ticket_json -->
                     <div style="display: none;">{{ form.tipos_ticket_json }}</div>
                     
-                    <div id="tipos-ticket-manager" class="card border-0 bg-light p-3">
+                    <div id="tipos-ticket-manager">
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm align-middle mb-2 bg-white shadow-sm" style="table-layout: fixed;">
                                 <thead class="table-dark small opacity-75">
@@ -102,14 +112,11 @@
                             <button type="button" class="btn btn-outline-success btn-sm px-3 rounded-pill" onclick="addTicketRow()">
                                 <i class="fas fa-plus-circle me-1"></i> Agregar Nuevo Tipo
                             </button>
-                            <span class="text-muted small"><i class="fas fa-info-circle me-1"></i> Los cambios se guardan al pulsar "Guardar Cambios" abajo.</span>
                         </div>
                     </div>
 
-                    <!-- (Eliminado el duplicado de aquí) -->
-
                     <div class="alert alert-info py-2 px-3 small mt-3 mb-0">
-                        <i class="fas fa-info-circle me-1"></i> Define el nombre que verá el usuario y el prefijo con el que se concatenará el folio en el ERP.
+                        <i class="fas fa-info-circle me-1"></i> El prefijo se concatenará al número de folio capturado automáticamente.
                     </div>
                 </div>
             </div>

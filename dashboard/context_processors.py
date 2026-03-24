@@ -1,4 +1,4 @@
-from dashboard.models import ConfiguracionLogistica
+from dashboard.models import ConfiguracionLogistica, Notificacion
 
 def contingencia_processor(request):
     """
@@ -20,3 +20,15 @@ def contingencia_processor(request):
         'estado_contingencia': 'NORMAL',
         'mensaje_contingencia': '',
     }
+
+def notificaciones_processor(request):
+    """
+    Context processor para inyectar el contador de notificaciones no leídas.
+    """
+    if request.user.is_authenticated:
+        try:
+            count = Notificacion.objects.filter(usuario=request.user, leido=False).count()
+            return {'notificaciones_unread_count': count}
+        except Exception:
+            pass
+    return {'notificaciones_unread_count': 0}

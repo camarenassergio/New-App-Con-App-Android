@@ -238,6 +238,34 @@
                                 </div>
                             `;
                             layer.bindPopup(popupContent);
+                            // Añadir PIN (Marker) en el centroide de la zona
+                            var layerCenter = layer.getBounds().getCenter();
+                            var markerIcon = L.divIcon({
+                                html: `<i class="fas fa-map-marker-alt" style="color: ${p.color}; font-size: 1.2rem; text-shadow: 0 0 5px white;"></i>`,
+                                className: 'custom-div-icon',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 20]
+                            });
+                            
+                            var zoneMarker = L.marker(layerCenter, {icon: markerIcon}).addTo(map);
+                            zoneMarker.bindPopup(popupContent);
+
+                            // DIBUJAR RUTA SI EXISTE
+                            if (p.route_geojson) {
+                                try {
+                                    var routeGeom = (typeof p.route_geojson === 'string') ? JSON.parse(p.route_geojson) : p.route_geojson;
+                                    L.geoJSON(routeGeom, {
+                                        style: {
+                                            color: p.color,
+                                            weight: 4,
+                                            opacity: 0.6,
+                                            dashArray: '5, 10'
+                                        }
+                                    }).addTo(map);
+                                } catch(e) { console.error("Error parsing route for zone " + p.nombre, e); }
+                            }
+                            
+                            // Tooltip permanente solo en el Marker si se desea, o mantener en el Layer
                             layer.bindTooltip(p.nombre + (p.d_cp ? ' (' + p.d_cp + ')' : ''), {permanent: false, direction: "center"});
                             
                             // Prepare Legend Items

@@ -1413,6 +1413,7 @@ class ZonasGeoJSONView(LoginRequiredMixin, View):
                             "distancia": float(zona.distancia_km),
                             "tarifa": float(zona.tarifa_flete),
                             "colonias": str(zona.colonias or 'No hay colonias asignadas.'),
+                            "route_geojson": zona.route_geojson, # Send the route geometry
                             "d_cp": feature.get('properties', {}).get('d_cp', ''), # Re-attach CP
                         }
                         feature_collection["features"].append(feature)
@@ -1744,9 +1745,13 @@ def solicitar_autorizacion_zona_api(request):
     cp       = data.get('cp', 'No especificado')
 
     from dashboard.models import Personal, MensajeInterno
+    from dashboard.utils import crear_notificacion
 
     solicitante = request.user.get_full_name() or request.user.username
 
+    titulo_notif = "Nueva Zona Solicitada"
+    descripcion_notif = f"El usuario {solicitante} solicita autorizar la colonia {colonia} (CP: {cp})."
+    
     contenido = (
         f"🚨 SOLICITUD DE AUTORIZACIÓN – ZONA NO REGISTRADA\n\n"
         f"El usuario {solicitante} intentó registrar una nueva obra en una colonia "
@@ -1768,20 +1773,41 @@ def solicitar_autorizacion_zona_api(request):
 
     enviados = 0
     for personal in destinatarios:
+        # 1. Mensaje Interno (Legacy/Detallado)
         MensajeInterno.objects.create(
             remitente=request.user,
             destinatario=personal.usuario,
             contenido=contenido,
         )
+        # 2. Notificación (Campana - Sistema)
+        crear_notificacion(
+            usuario=personal.usuario,
+            titulo=titulo_notif,
+            descripcion=descripcion_notif,
+            tipo='ALERTA',
+            link=reverse('dashboard:zona_entrega_list')
+        )
         enviados += 1
 
-    # Fallback: mensaje global si no hay destinatarios configurados
+    # Fallback: mensaje global y notificación a superusuarios si no hay destinatarios específicos
     if enviados == 0:
         MensajeInterno.objects.create(
             remitente=request.user,
             destinatario=None,
             contenido=contenido,
         )
+        # Enviar a superusuarios como prioridad
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        supers = User.objects.filter(is_superuser=True)
+        for s in supers:
+            crear_notificacion(
+                usuario=s,
+                titulo=titulo_notif,
+                descripcion=descripcion_notif,
+                tipo='ALERTA',
+                link=reverse('dashboard:zona_entrega_list')
+            )
 
     return JsonResponse({'ok': True, 'enviados': enviados})
 
@@ -2402,4 +2428,74 @@ class ObraUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixi
 
     def get_success_url(self):
         return reverse('dashboard:obra_list', kwargs={'cliente_pk': self.object.cliente.pk})
+
+# --- NOTIFICACIONES ---
+from .models import Notificacion
+
+class NotificacionListView(LoginRequiredMixin, ListView):
+    """
+    Historial completo de notificaciones del usuario.
+    """
+    model = Notificacion
+    template_name = "dashboard/notificaciones_list.html"
+    context_object_name = "notificaciones"
+    paginate_by = 30
+
+    def get_queryset(self):
+        return Notificacion.objects.filter(usuario=self.request.user).order_by('-fecha_creacion')
+
+class NotificacionesDropdownView(LoginRequiredMixin, TemplateView):
+    """
+    Renderiza el contenido del dropdown de notificaciones pendientes (HTMX).
+    """
+    template_name = "dashboard/fragments/notificaciones_dropdown.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Traer solo las no leídas (máximo 10 para el dropdown)
+        context['notificaciones'] = Notificacion.objects.filter(
+            usuario=self.request.user,
+            leido=False
+        ).order_by('-fecha_creacion')[:10]
+        return context
+
+class NotificacionMarcarLeidaView(LoginRequiredMixin, View):
+    """
+    Marca una notificación como leída mediante HTMX.
+    """
+    def post(self, request, pk):
+        notificacion = get_object_or_404(Notificacion, pk=pk, usuario=request.user)
+        notificacion.leido = True
+        notificacion.save()
+        
+        if request.headers.get('HX-Request'):
+            from django.http import HttpResponse
+            response = HttpResponse(status=204)
+            response["HX-Trigger"] = "notifActualizada"
+            return response
+            
+        return redirect(notificacion.link or 'dashboard:home')
+
+@login_required
+def marcar_todas_leidas(request):
+    """
+    Marca todas las notificaciones del usuario como leídas.
+    """
+    Notificacion.objects.filter(usuario=request.user, leido=False).update(leido=True)
+    if request.headers.get('HX-Request'):
+         from django.http import HttpResponse
+         response = HttpResponse(status=204)
+         response["HX-Trigger"] = "notifActualizada"
+         return response
+    return redirect('dashboard:home')
+
+@login_required
+def notificaciones_count_ajax(request):
+    """
+    Retorna solo el número de notificaciones no leídas para el badge (HTMX).
+    """
+    count = Notificacion.objects.filter(usuario=request.user, leido=False).count()
+    if count > 0:
+        return HttpResponse(f'<span class="position-absolute translate-middle badge rounded-pill bg-danger" id="notif-badge" style="top: 10px; right: -5px; font-size: 0.65rem; padding: 2px 6px; border: 2px solid var(--bg-card); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);">{count}</span>')
+    return HttpResponse("")
     

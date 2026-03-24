@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Historial de Notificaciones — Casa Lupita{% endblock %}
+{% block page_title %}Historial de Notificaciones{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border-radius: 16px; background: var(--bg-card);">
+                <div class="card-header bg-transparent border-0 p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0 fw-bold" style="color: var(--text-main);">Todas tus Notificaciones</h4>
+                        <p class="text-muted small mb-0">Revisa la actividad reciente y el historial de avisos del sistema.</p>
+                    </div>
+                    {% if notificaciones %}
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3"
+                            hx-post="{% url 'dashboard:notificaciones_marcar_todas_leidas' %}"
+                            hx-confirm="¿Marcar todas como leídas?"
+                            hx-on::after-request="if(event.detail.successful) window.location.reload()"
+                            hx-swap="none">
+                        <i class="fas fa-check-double me-2"></i> Marcar todas como leídas
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead style="background: rgba(var(--primary-rgb), 0.03);">
+                                <tr>
+                                    <th class="ps-4 border-0 text-muted small text-uppercase fw-bold" style="width: 60px;">Tipo</th>
+                                    <th class="border-0 text-muted small text-uppercase fw-bold">Notificación</th>
+                                    <th class="border-0 text-muted small text-uppercase fw-bold text-center" style="width: 150px;">Fecha</th>
+                                    <th class="border-0 text-muted small text-uppercase fw-bold text-end pe-4" style="width: 150px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for n in notificaciones %}
+                                <tr class="{% if not n.leido %}table-primary-light{% endif %}" id="notif-row-{{ n.pk }}">
+                                    <td class="ps-4">
+                                        <div class="notif-icon-circle d-flex align-items-center justify-content-center rounded-circle" 
+                                             style="width: 40px; height: 40px; background: {% if n.tipo == 'ALERTA' %}rgba(239, 68, 68, 0.1){% else %}rgba(var(--primary-rgb), 0.1){% endif %}; 
+                                                    color: {% if n.tipo == 'ALERTA' %}#ef4444{% else %}var(--primary-blue){% endif %};">
+                                            <i class="{{ n.icono|default:'fas fa-bell' }}"></i>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-semibold text-dark">{{ n.titulo }}</span>
+                                            <p class="text-muted small mb-0">{{ n.descripcion }}</p>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="text-muted small">{{ n.fecha_creacion|date:"d M Y" }}</span><br>
+                                        <span class="text-muted smaller" style="font-size: 0.75rem;">{{ n.fecha_creacion|time:"H:i" }}</span>
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            {% if n.link %}
+                                            <a href="{{ n.link }}" class="btn btn-sm btn-light rounded-pill px-3" title="Ir al enlace">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                            {% endif %}
+                                            
+                                            {% if not n.leido %}
+                                            <button class="btn btn-sm btn-outline-success rounded-pill px-3" 
+                                                    hx-post="{% url 'dashboard:notificacion_marcar_leida' n.pk %}"
+                                                    hx-swap="none"
+                                                    hx-on::after-request="if(event.detail.successful) { let row = this.closest('tr'); row.classList.remove('table-primary-light'); this.outerHTML = '<span class=\'badge bg-light text-success border px-3 py-2 rounded-pill anim-pop\'><i class=\'fas fa-check-circle me-1\'></i> Leída</span>' }"
+                                                    title="Marcar como leída">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            {% else %}
+                                            <span class="badge bg-light text-success border px-3 py-2 rounded-pill"><i class="fas fa-check-circle me-1"></i> Leída</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="p-5 text-center">
+                                        <div class="py-5">
+                                            <i class="fas fa-bell-slash fa-4x text-muted mb-4 opacity-25"></i>
+                                            <h5 class="text-muted">No hay notificaciones en tu historial</h5>
+                                            <p class="text-muted small">Cualquier aviso nuevo aparecerá aquí.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {% if is_paginated %}
+                <div class="card-footer bg-transparent border-0 p-4">
+                    <nav aria-label="Navegación de notificaciones">
+                        <ul class="pagination pagination-sm justify-content-center mb-0 gap-1">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link rounded-pill border-0 px-3" href="?page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for i in paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                <li class="page-item active"><span class="page-link rounded-pill border-0 px-3">{{ i }}</span></li>
+                                {% else %}
+                                <li class="page-item"><a class="page-link rounded-pill border-0 px-3" href="?page={{ i }}">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link rounded-pill border-0 px-3" href="?page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-primary-light {
+        background-color: rgba(var(--primary-rgb), 0.04);
+    }
+    .table-primary-light td {
+        border-left: 4px solid var(--primary-blue);
+    }
+    .smaller {
+        font-size: 0.75rem;
+    }
+    .anim-pop {
+        animation: anim-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes anim-pop {
+        0% { transform: scale(0.5); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.body.addEventListener('notifActualizada', function() {
+        // Si estamos en la lista, podrías querer recargarla, pero por ahora HTMX ya lo hace fila por fila.
+        // Lo que sí queremos es que el banner de campana se actualice.
+        const badgeContainer = document.getElementById('notif-badge-container');
+        if (badgeContainer) {
+            htmx.ajax('GET', '{% url "dashboard:notificaciones_count" %}', {target: '#notif-badge-container', swap: 'innerHTML'});
+        }
+    });
+</script>
+{% endblock %}

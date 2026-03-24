@@ -168,3 +168,16 @@ def sincronizar_contingencia_automatica():
         return True
         
     return False
+
+def crear_notificacion(usuario, titulo, descripcion, tipo='SISTEMA', link=None):
+    """
+    Utilidad para crear una notificación para un usuario.
+    """
+    from dashboard.models import Notificacion
+    return Notificacion.objects.create(
+        usuario=usuario,
+        titulo=titulo,
+        descripcion=descripcion,
+        tipo=tipo,
+        link=link
+    )

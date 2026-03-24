@@ -114,6 +114,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'config.context_processors.environment_context',
                 'dashboard.context_processors.contingencia_processor',
+                'dashboard.context_processors.notificaciones_processor',
             ],
         },
     },

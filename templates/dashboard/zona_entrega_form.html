@@ -3,11 +3,32 @@
 
 {% block page_title %}{% if object %}Editar Zona: {{ object.nombre }}{% else %}Nueva Zona de Entrega{% endif %}{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #preview-map {
+        width: 100%;
+        height: 350px;
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+        margin-bottom: 20px;
+        z-index: 10;
+    }
+    .form-control-color { height: 40px; padding: 0.375rem 0.75rem; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="form-container" style="max-width: 800px; margin: 0 auto;">
     <div class="form-header">
         <h3><i class="fas fa-map-marked-alt me-2"></i> Detalles de la Zona</h3>
         <p class="text-muted mb-0">Agrega los Códigos Postales separados por comas para agrupar destinos automáticamente.</p>
+    </div>
+
+    <!-- Mapa de Previsualización -->
+    <div id="preview-map-container" class="mt-3 px-3" style="display: none;">
+        <label class="form-label fw-bold small text-primary"><i class="fas fa-eye me-1"></i> Previsualización Geográfica & Ruta Sugerida</label>
+        <div id="preview-map"></div>
     </div>
 
     <div id="formContainer">
@@ -85,212 +106,163 @@
     </form>
 </div>
 </div>
-<style>
-    /* Asegurar que la paleta de color no esté fea */
-    .form-control-color { height: 40px; padding: 0.375rem 0.75rem; }
-</style>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const cpInput = document.getElementById("id_codigos_postales");
     const municipioInput = document.getElementById("id_municipio");
     const coloniasInput = document.getElementById("id_colonias");
+    const colorInput = document.getElementById("id_color_hex");
+    const routeGeojsonInput = document.getElementById("id_route_geojson");
+    const routeWaypointsInput = document.getElementById("id_route_waypoints");
     
+    let map = null, centerMarker = null, routeLayer = null;
+    const CEDIS_COORDS = [19.4638, -98.8835];
+
+    function initMap() {
+        if (map) return;
+        const container = document.getElementById('preview-map-container');
+        if (container) container.style.display = 'block';
+        
+        map = L.map('preview-map').setView(CEDIS_COORDS, 11);
+        setTimeout(() => map.invalidateSize(), 200);
+        
+        const isDark = document.body.classList.contains('dark-theme');
+        const tileUrl = isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+        L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(map);
+        
+        const cedisIcon = L.divIcon({
+            html: '<i class="fas fa-warehouse" style="color: #d9534f; font-size: 1.5rem;"></i>',
+            className: 'custom-div-icon', iconSize: [24, 24], iconAnchor: [12, 12]
+        });
+        L.marker(CEDIS_COORDS, {icon: cedisIcon}).addTo(map).bindPopup("CEDIS Casa Lupita");
+        
+        // Cargar ruta existente si existe
+        if (routeGeojsonInput && routeGeojsonInput.value) {
+            try {
+                const geom = JSON.parse(routeGeojsonInput.value);
+                const zCol = colorInput.value || '#3388ff';
+                routeLayer = L.geoJSON(geom, { style: { color: zCol, weight: 6, opacity: 0.6 } }).addTo(map);
+                
+                // También necesitamos el marcador del destino
+                if (routeWaypointsInput.value) {
+                    const wps = JSON.parse(routeWaypointsInput.value);
+                    const dest = wps[wps.length - 1];
+                    if (dest) {
+                        centerMarker = L.marker([dest.lat, dest.lng], {
+                            icon: L.divIcon({
+                                html: `<i class="fas fa-map-marker-alt" style="color: ${zCol}; font-size: 1.8rem; text-shadow: 0 0 10px white;"></i>`,
+                                className: 'custom-div-icon', iconSize: [30, 42], iconAnchor: [15, 42]
+                            })
+                        }).addTo(map);
+                        map.fitBounds(routeLayer.getBounds());
+                    }
+                }
+            } catch(e) { console.error("Error al cargar ruta guardada", e); }
+        }
+    }
+
+    function showRoute(destLatLng) {
+        const zCol = (colorInput && colorInput.value) ? colorInput.value : '#3388ff';
+        
+        // Marcador de destino
+        if (centerMarker) map.removeLayer(centerMarker);
+        centerMarker = L.marker([destLatLng.lat, destLatLng.lng], {
+            icon: L.divIcon({
+                html: `<i class="fas fa-map-marker-alt" style="color: ${zCol}; font-size: 1.8rem; text-shadow: 0 0 10px white;"></i>`,
+                className: 'custom-div-icon', iconSize: [30, 42], iconAnchor: [15, 42]
+            })
+        }).addTo(map);
+
+        const urlOSRM = `https://router.project-osrm.org/route/v1/driving/${CEDIS_COORDS[1]},${CEDIS_COORDS[0]};${destLatLng.lng},${destLatLng.lat}?overview=full&geometries=geojson`;
+        
+        fetch(urlOSRM).then(r => r.json()).then(data => {
+            if (data.routes && data.routes.length > 0) {
+                const route = data.routes[0];
+                if (routeLayer) map.removeLayer(routeLayer);
+                
+                routeLayer = L.geoJSON(route.geometry, {
+                    style: { color: zCol, weight: 6, opacity: 0.6 }
+                }).addTo(map);
+
+                const tMin = Math.round((route.duration * 1.45) / 60); 
+                const dKm = (route.distance / 1000).toFixed(1);
+                
+                document.getElementById('id_tiempo_traslado_minutos').value = tMin;
+                document.getElementById('id_distancia_km').value = dKm;
+                
+                // Guardar para la DB
+                routeGeojsonInput.value = JSON.stringify(route.geometry);
+                routeWaypointsInput.value = JSON.stringify([
+                    {lat: CEDIS_COORDS[0], lng: CEDIS_COORDS[1]},
+                    {lat: destLatLng.lat, lng: destLatLng.lng}
+                ]);
+                
+                updateFlete(dKm, tMin);
+            }
+        }).catch(err => console.error("Error en OSRM:", err));
+    }
+
+    function updateFlete(dKm, tMin) {
+        fetch('{% url "dashboard:calcular_flete_api" %}', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+            body: JSON.stringify({ distancia_km: parseFloat(dKm), tiempo_minutos: parseFloat(tMin) })
+        }).then(r => r.json()).then(fData => {
+            if(fData.status === 'ok' && fData.cotizaciones.length > 0) {
+                document.getElementById('cotizaciones-container').style.display = 'block';
+                const bDiv = document.getElementById('cotizaciones-badges');
+                const dDiv = document.getElementById('cotizacion-desglose');
+                bDiv.innerHTML = '';
+                const renderD = (c) => `<strong>Analizado en: ${c.ejemplo_unidad}</strong><br>- Distancia: ${c.desglose.km_totales.toFixed(1)} km ($${c.desglose.subtotal_km.toFixed(2)})<br>- Tiempo: ${c.desglose.tiempo_total_mins} min ($${c.desglose.subtotal_tiempo.toFixed(2)})<br><strong>Costo: $${c.costo.toFixed(2)}</strong>`;
+                const pEsc = fData.cotizaciones[0];
+                const tF = document.getElementById('id_tarifa_flete');
+                if (tF) tF.value = pEsc.costo.toFixed(2);
+                dDiv.innerHTML = renderD(pEsc);
+                fData.cotizaciones.forEach((c, i) => {
+                    const btn = document.createElement('button'); btn.type = 'button';
+                    btn.className = i === 0 ? 'btn btn-primary btn-sm rounded-pill fw-bold' : 'btn btn-outline-secondary btn-sm rounded-pill';
+                    btn.innerHTML = `🚚 ${c.tipo}: $${c.costo.toFixed(2)}`;
+                    btn.onclick = () => { Array.from(bDiv.children).forEach(b => b.className = 'btn btn-outline-secondary btn-sm rounded-pill'); btn.className = 'btn btn-primary btn-sm rounded-pill fw-bold'; if (tF) tF.value = c.costo.toFixed(2); dDiv.innerHTML = renderD(c); };
+                    bDiv.appendChild(btn);
+                });
+            }
+        });
+    }
+
+    if (cpInput && cpInput.value.trim()) { initMap(); }
+
     if (cpInput && coloniasInput) {
         let debounceTimer;
-        
         cpInput.addEventListener("input", function() {
             let cps = cpInput.value;
-            
             clearTimeout(debounceTimer);
-            
-            // Si está vacío, limpiar colonias y salir
             if (!cps.trim()) {
                 coloniasInput.value = '';
+                document.getElementById('preview-map-container').style.display = 'none';
                 return;
             }
-            
-            // Petición asíncrona tras 600ms de no teclear
             debounceTimer = setTimeout(function() {
-                // 1. Llenar colonias
+                initMap();
                 fetch(`{% url 'dashboard:colonias_por_cp_api' %}?cps=${encodeURIComponent(cps)}`)
-                .then(response => response.json())
-                .then(data => {
+                .then(r => r.json()).then(data => {
                     if (data.colonias && data.colonias.length > 0) {
                         coloniasInput.value = data.colonias.join(', ');
+                        if (data.municipio && municipioInput && !municipioInput.value.trim()) municipioInput.value = data.municipio;
                         
-                        // Llenar municipio si viene en la respuesta y el campo está vacío
-                        if (data.municipio && municipioInput && !municipioInput.value.trim()) {
-                            municipioInput.value = data.municipio;
-                            municipioInput.style.transition = 'background-color 0.3s ease';
-                            municipioInput.style.backgroundColor = '#e8f5e9';
-                            setTimeout(() => { municipioInput.style.backgroundColor = ''; }, 800);
-                        }
-                        
-                        // Efecto visual sutil
-                        coloniasInput.style.transition = 'background-color 0.3s ease';
-                        coloniasInput.style.backgroundColor = '#e8f5e9';
-                        setTimeout(() => { coloniasInput.style.backgroundColor = ''; }, 800);
-                        
-                        // 2. Calcular Centroide y Enrutamiento (OSRM)
                         fetch(`{% url 'dashboard:calcular_centroide_api' %}?cps=${encodeURIComponent(cps)}`)
-                        .then(res => res.json())
-                        .then(centroid => {
+                        .then(r => r.json()).then(centroid => {
                             if (centroid.lat && centroid.lon) {
-                                const lon_cedis = -98.8835;
-                                const lat_cedis = 19.4638;
-                                const urlOSRM = `https://router.project-osrm.org/route/v1/driving/${lon_cedis},${lat_cedis};${centroid.lon},${centroid.lat}?overview=false`;
-                                
-                                fetch(urlOSRM)
-                                .then(r => r.json())
-                                .then(osrmData => {
-                                    if(osrmData.routes && osrmData.routes.length > 0) {
-                                        // OSRM devuelve tiempo ideal sin tráfico.
-                                        // Multiplicamos por 1.45 (45% más) para simular Hora Pico realista
-                                        const tiempoSegundosBase = osrmData.routes[0].duration;
-                                        const tiempoHoraPicoMinutos = Math.round((tiempoSegundosBase * 1.45) / 60);
-                                        
-                                        // Distancia a 1 solo decimal
-                                        const distanciaKm = (osrmData.routes[0].distance / 1000).toFixed(1);
-                                        
-                                        const tiempoInput = document.getElementById('id_tiempo_traslado_minutos');
-                                        const distInput = document.getElementById('id_distancia_km');
-                                        
-                                        if (tiempoInput && distInput) {
-                                            tiempoInput.value = tiempoHoraPicoMinutos;
-                                            distInput.value = distanciaKm;
-                                            
-                                            // Efecto visual en ambos (color anaranjado suave indicando tráfico)
-                                            tiempoInput.style.transition = 'background-color 0.3s ease';
-                                            distInput.style.transition = 'background-color 0.3s ease';
-                                            tiempoInput.style.backgroundColor = '#fff3e0'; // Naranja suave (alerta de hora pico)
-                                            distInput.style.backgroundColor = '#e8f5e9';   // Verde suave normal
-                                            
-                                            setTimeout(() => { 
-                                                tiempoInput.style.backgroundColor = ''; 
-                                                distInput.style.backgroundColor = ''; 
-                                            }, 1000);
-
-                                            // 3. CONSULTAR COTIZACIÓN DE FLETE SUGERIDO (NUEVO endpoint)
-                                            console.log("Llamando a API de flete sugerido...");
-                                            fetch('{% url "dashboard:calcular_flete_api" %}', {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                                                },
-                                                body: JSON.stringify({
-                                                    distancia_km: parseFloat(distanciaKm),
-                                                    tiempo_minutos: parseFloat(tiempoHoraPicoMinutos)
-                                                })
-                                            })
-                                            .then(resp => {
-                                                console.log("HTTP status de Flete API:", resp.status);
-                                                if (!resp.ok) {
-                                                    console.error("La API de flete devolvió un error:", resp.status);
-                                                    return resp.text().then(text => { throw new Error(text) });
-                                                }
-                                                return resp.json();
-                                            })
-                                            .then(fleteData => {
-                                                console.log("Datos recibidos de Flete API:", fleteData);
-                                                if(fleteData.status === 'ok' && fleteData.cotizaciones && fleteData.cotizaciones.length > 0) {
-                                                    const container = document.getElementById('cotizaciones-container');
-                                                    const badgesDiv = document.getElementById('cotizaciones-badges');
-                                                    const desgloseDiv = document.getElementById('cotizacion-desglose');
-                                                    const tarifaInput = document.getElementById('id_tarifa_flete');
-                                                    
-                                                    container.style.display = 'block';
-                                                    badgesDiv.innerHTML = ''; // Limpiar anteriores
-                                                    
-                                                    // Tomar el más costoso (el de índice 0 por como viene ordenado del backend)
-                                                    const peorEscenario = fleteData.cotizaciones[0];
-                                                    
-                                                    // Funcion helper para renderizar desglose
-                                                    const renderDesglose = (cot) => {
-                                                        const d = cot.desglose;
-                                                        return `
-                                                            <strong>Ejemplo de análisis basado en: ${cot.ejemplo_unidad}</strong><br>
-                                                            - Distancia Redonda: ${d.km_totales.toFixed(1)} km 
-                                                            (Operación: $${d.costo_operativo_km.toFixed(2)}/km) = <strong>$${d.subtotal_km.toFixed(2)}</strong><br>
-                                                            - Tiempo Estimado c/Descarga: ${d.tiempo_total_mins} min
-                                                            (Personal: $${d.costo_minuto_personal.toFixed(2)}/min) = <strong>$${d.subtotal_tiempo.toFixed(2)}</strong><br>
-                                                            <strong class="costo-base-total" style="font-size: 1.1em; display: inline-block; margin-top: 5px;">
-                                                              COSTO BASE TOTAL: $${cot.costo.toFixed(2)}
-                                                            </strong>
-                                                        `;
-                                                    };
-                                                    
-                                                    // Llenar por defecto con el más caro SIEMPRE O SOBREESCRIBIR
-                                                    if (tarifaInput) {
-                                                        tarifaInput.value = peorEscenario.costo.toFixed(2);
-                                                        // Animación color
-                                                        const isDark = document.body.classList.contains('dark-theme');
-                                                        tarifaInput.style.transition = 'background-color 0.3s ease';
-                                                        tarifaInput.style.backgroundColor = isDark ? 'rgba(255,118,6,0.15)' : '#e3f2fd';
-                                                        setTimeout(() => { tarifaInput.style.backgroundColor = ''; }, 1000);
-                                                    }
-                                                    
-                                                    desgloseDiv.innerHTML = renderDesglose(peorEscenario);
-
-                                                    // Crear Pills con botones interactivos
-                                                    fleteData.cotizaciones.forEach((cot, index) => {
-                                                        const btn = document.createElement('button');
-                                                        btn.type = 'button';
-                                                        // El más caro (index 0) inicia activo
-                                                        if (index === 0) {
-                                                            btn.className = 'btn btn-primary btn-sm rounded-pill fw-bold';
-                                                        } else {
-                                                            btn.className = 'btn btn-outline-secondary btn-sm rounded-pill';
-                                                        }
-                                                        
-                                                        btn.innerHTML = `🚚 ${cot.tipo}: <strong>$${cot.costo.toFixed(2)}</strong>`;
-                                                        
-                                                        // Evento click
-                                                        btn.onclick = () => {
-                                                            // Quitar clase active de todos
-                                                            Array.from(badgesDiv.children).forEach(b => {
-                                                                b.className = 'btn btn-outline-secondary btn-sm rounded-pill';
-                                                            });
-                                                            // Activar este
-                                                            btn.className = 'btn btn-primary btn-sm rounded-pill fw-bold';
-                                                            
-                                                            // Actualizar Input y Desglose
-                                                            if (tarifaInput) {
-                                                                tarifaInput.value = cot.costo.toFixed(2);
-                                                                tarifaInput.style.backgroundColor = '#e3f2fd';
-                                                                setTimeout(() => { tarifaInput.style.backgroundColor = ''; }, 800);
-                                                            }
-                                                            desgloseDiv.innerHTML = renderDesglose(cot);
-                                                        };
-                                                        
-                                                        badgesDiv.appendChild(btn);
-                                                    });
-                                                } else {
-                                                    console.warn("La API devolvió status ok, pero no hay cotizaciones en el array.");
-                                                }
-                                            })
-                                            .catch(err => {
-                                                console.error("Error al calcular Flete Sugerido:", err);
-                                                alert("Ocurrió un error consultando el costo base sugerido. Por favor, revisa la consola.");
-                                            });
-                                        }
-                                    }
-                                });
+                                map.setView([centroid.lat, centroid.lon], 12);
+                                showRoute({lat: centroid.lat, lng: centroid.lon});
                             }
-                        })
-                        .catch(err => console.error("Error al calcular ruta OSRM:", err));
-
-                    } else {
-                        coloniasInput.value = "No se encontraron colonias para estos CP";
+                        });
                     }
-                })
-                .catch(error => {
-                    console.error("Error al buscar las colonias:", error);
                 });
-            }, 600);
+            }, 800);
         });
     }
 });

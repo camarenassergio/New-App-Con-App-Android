@@ -397,6 +397,8 @@ class ZonaEntrega(models.Model):
     costo_maniobra = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Costo Maniobra Adicional ($)", default=0.00)
     color_hex = models.CharField(max_length=7, default="#3388ff", verbose_name="Color en Mapa", help_text="Color para identificar la zona en el mapa")
     geojson_data = models.TextField(blank=True, null=True, verbose_name="Polígonos de la Zona (GeoJSON)", help_text="Información geográfica de la zona")
+    route_geojson = models.TextField(blank=True, null=True, verbose_name="Ruta Oficial (GeoJSON)")
+    route_waypoints = models.TextField(blank=True, null=True, verbose_name="Waypoints de la Ruta (JSON)")
 
     class Meta:
         verbose_name = "Zona de Entrega"
@@ -477,12 +479,32 @@ class ZonaEntrega(models.Model):
                             continue
                             
                 if features:
-                    # Package them into a FeatureCollection for this specific zone
-                    geo_collection = {
-                        "type": "FeatureCollection",
-                        "features": features
-                    }
-                    self.geojson_data = json.dumps(geo_collection)
+                    # Dissolve geometries to remove internal lines
+                    from shapely.geometry import shape, mapping
+                    from shapely.ops import unary_union
+                    
+                    try:
+                        # buffer(0) fixes minor topology errors before union
+                        polygons = [shape(f['geometry']).buffer(0) for f in features]
+                        unified_geom = unary_union(polygons)
+                        
+                        # Package as a single feature with the unioned geometry
+                        geo_collection = {
+                            "type": "FeatureCollection",
+                            "features": [{
+                                "type": "Feature",
+                                "geometry": mapping(unified_geom),
+                                "properties": {"nombre": self.nombre}
+                            }]
+                        }
+                        self.geojson_data = json.dumps(geo_collection)
+                    except Exception as geo_err:
+                        # Fallback to multiple features if union fails
+                        print(f"Geo-union failed for {self.nombre}: {geo_err}")
+                        self.geojson_data = json.dumps({
+                            "type": "FeatureCollection",
+                            "features": features
+                        })
                 else:
                      self.geojson_data = "" # No features matched
                      
@@ -723,6 +745,40 @@ class MensajeInterno(models.Model):
 
     def __str__(self):
         return f"De: {self.remitente} - {self.fecha_envio.strftime('%d/%m %H:%M')}"
+
+class Notificacion(models.Model):
+    TIPOS = [
+        ('SISTEMA', 'Sistema'),
+        ('PEDIDO', 'Pedido'),
+        ('MANTENIMIENTO', 'Mantenimiento'),
+        ('ALERTA', 'Alerta / Urgente'),
+    ]
+    ICONOS = {
+        'SISTEMA': 'fas fa-cog',
+        'PEDIDO': 'fas fa-shopping-cart',
+        'MANTENIMIENTO': 'fas fa-tools',
+        'ALERTA': 'fas fa-exclamation-triangle',
+    }
+    
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notificaciones')
+    tipo = models.CharField(max_length=20, choices=TIPOS, default='SISTEMA')
+    titulo = models.CharField(max_length=150)
+    descripcion = models.TextField()
+    link = models.CharField(max_length=255, null=True, blank=True)
+    leido = models.BooleanField(default=False)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Notificación"
+        verbose_name_plural = "Notificaciones"
+        ordering = ['-fecha_creacion']
+
+    @property
+    def icono(self):
+        return self.ICONOS.get(self.tipo, 'fas fa-bell')
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.titulo} ({self.tipo})"
 
 
 
