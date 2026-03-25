@@ -4,104 +4,138 @@
 {% block page_title %}Administración de Clientes{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-4 align-items-center">
-        <div class="col">
-            <h2 class="texto-azul-corporativo mb-0">
-                <i class="fas fa-users me-2"></i> Clientes
-            </h2>
-            <p class="text-muted small">Gestión de cartera de clientes y obras registradas.</p>
-        </div>
-        <div class="col-auto">
-            <a href="{% url 'dashboard:cliente_create' %}" class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i> Nuevo Cliente
-            </a>
+<div class="container-fluid py-4 px-md-5">
+    
+    <!-- HEADER PREMIUM -->
+    <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+        <div class="card-body p-0">
+            <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="header-icon-box me-3">
+                        <i class="fas fa-users fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">Cartera de Clientes</h4>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Gestión de Cuentas & Puntos de Entrega</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="bg-white bg-opacity-10 rounded-pill px-4 py-2 border border-white border-opacity-10 d-flex align-items-center">
+                        <span class="fw-bold me-2">{{ clientes.count|default:"0" }}</span>
+                        <span class="x-small text-uppercase opacity-75">Registros</span>
+                    </div>
+                    <a href="{% url 'dashboard:cliente_create' %}" class="btn btn-white rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fas fa-plus-circle me-2 text-primary"></i>Nuevo Cliente
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Buscador -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-2">
-                <div class="col-md-7">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="fas fa-search text-muted"></i>
+    <!-- SEARCH & FILTER CARD -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px;">
+        <div class="card-body p-4">
+            <h6 class="fw-bold text-muted mb-3 x-small text-uppercase tracking-widest"><i class="fas fa-filter me-2"></i>Herramientas de Búsqueda</h6>
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label x-small fw-bold text-muted text-uppercase px-1">Buscar por SAE ID / Nombre</label>
+                    <div class="input-group bg-light rounded-pill px-3 py-1 shadow-xs overflow-hidden">
+                        <span class="input-group-text bg-transparent border-0 opacity-25">
+                            <i class="fas fa-search"></i>
                         </span>
-                        <input type="text" name="q" class="form-control border-start-0 ps-0" 
-                               placeholder="Buscar por ID SAE o Nombre..." value="{{ request.GET.q }}">
+                        <input type="text" name="q" class="form-control border-0 bg-transparent ps-0" 
+                               placeholder="Escribe para buscar..." value="{{ request.GET.q|default:'' }}" style="font-size: 0.95rem;">
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <select name="tipo" class="form-select">
-                        <option value="">-- Todos los Tipos --</option>
-                        <option value="sae" {% if request.GET.tipo == 'sae' %}selected{% endif %}>Clientes SAE (ERP)</option>
-                        <option value="mostrador" {% if request.GET.tipo == 'mostrador' %}selected{% endif %}>Clientes Mostrador (Locales)</option>
+                    <label class="form-label x-small fw-bold text-muted text-uppercase px-1">Origen Cuenta</label>
+                    <select name="tipo" class="form-select border-0 bg-light rounded-pill px-3 py-2 shadow-xs" style="font-size: 0.9rem;">
+                        <option value="">AQUÍ TODOS</option>
+                        <option value="sae" {% if request.GET.tipo == 'sae' %}selected{% endif %}>SINCRO SAE (ERP)</option>
+                        <option value="mostrador" {% if request.GET.tipo == 'mostrador' %}selected{% endif %}>MOSTRADOR (LOCAL)</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-dark w-100">Filtrar</button>
+                <div class="col-md-3">
+                    <div class="d-grid shadow-xs rounded-pill overflow-hidden">
+                        <button type="submit" class="btn btn-dark fw-bold py-2">EJECUTAR FILTRO</button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Listado -->
-    <div class="card shadow-sm">
+    <!-- MAIN TABLE CARD -->
+    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table  align-middle mb-0 premium-table">
                     <thead class="bg-light">
                         <tr>
-                            <th class="ps-3" style="width: 120px;">ID SAE</th>
-                            <th>Razón Social / Nombre</th>
-                            <th>Teléfono</th>
-                            <th class="text-center">Obras</th>
-                            <th class="text-end pe-3">Acciones</th>
+                            <th class="ps-4">Código / Origen</th>
+                            <th>Razón Social / Identidad</th>
+                            <th>Medios de Contacto</th>
+                            <th class="text-center">Alcance (Obras)</th>
+                            <th class="text-center pe-4">Acción</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for cliente in clientes %}
-                        <tr>
-                            <td class="ps-3 font-monospace small">
-                                {% if cliente.id_sae %}
-                                    <span class="badge bg-secondary">{{ cliente.id_sae }}</span>
-                                {% else %}
-                                    <span class="badge bg-light text-dark">--</span>
-                                {% endif %}
+                        <tr class="animate__animated animate__fadeIn">
+                            <td class="ps-4">
+                                <div class="d-flex flex-column gap-1">
+                                    {% if cliente.id_sae %}
+                                        <div class="badge bg-primary-subtle text-primary border-0 rounded-4 px-3 py-1 fw-bold fs-7 shadow-xs">
+                                            SAE {{ cliente.id_sae }}
+                                        </div>
+                                    {% else %}
+                                        <div class="badge bg-light text-muted border-0 rounded-pill px-3 py-1 x-small fw-bold shadow-xs">
+                                            MOSTRADOR
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td>
-                                <div class="fw-bold">{{ cliente.razon_social }}</div>
-                                {% if cliente.es_mostrador %}
-                                    <span class="badge bg-warning text-dark px-2" style="font-size: 0.7em;">MOSTRADOR</span>
-                                {% endif %}
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark fs-6">{{ cliente.razon_social|upper }}</span>
+                                    {% if cliente.es_mostrador %}
+                                        <span class="x-small text-warning fw-bold text-uppercase tracking-wider mt-1"><i class="fas fa-id-badge me-1"></i>Cliente Local</span>
+                                    {% endif %}
+                                </div>
                             </td>
-                            <td>{{ cliente.telefono_principal|default:"--" }}</td>
+                            <td>
+                                <div class="d-flex flex-column x-small fw-bold text-muted">
+                                    <div class="mb-1"><i class="fas fa-phone-alt text-primary me-2 opacity-50"></i>{{ cliente.telefono_principal|default:"S/TEL" }}</div>
+                                    <div><i class="fas fa-envelope text-primary me-2 opacity-50"></i>{{ cliente.email|default:"S/CORREO" }}</div>
+                                </div>
+                            </td>
                             <td class="text-center">
-                                <span class="badge rounded-pill bg-info text-dark">
-                                    {{ cliente.obras.count }}
-                                </span>
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <div class="badge rounded-circle bg-light text-primary border shadow-xs d-flex align-items-center justify-content-center fw-bold" 
+                                         style="width: 36px; height: 36px; font-size: 0.85rem;">
+                                        {{ cliente.obras.count }}
+                                    </div>
+                                </div>
                             </td>
-                            <td class="text-end pe-3">
-                                <a href="{% url 'dashboard:obra_list' cliente.pk %}" class="btn btn-sm btn-outline-info me-1" title="Ver Obras">
-                                    <i class="fas fa-map-marker-alt"></i> Obras
-                                </a>
-                                <a href="{% url 'dashboard:cliente_update' cliente.pk %}" class="btn btn-sm btn-outline-primary" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </a>
+                            <td class="text-center pe-4">
+                                <div class="btn-group shadow-xs rounded-pill bg-light p-1">
+                                    <a href="{% url 'dashboard:obra_list' cliente.pk %}" class="btn btn-white btn-sm rounded-circle border-0 text-info hover-scale" title="Ver Obras">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </a>
+                                    <a href="{% url 'dashboard:cliente_update' cliente.pk %}" class="btn btn-white btn-sm rounded-circle border-0 text-primary hover-scale" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="py-5 text-center">
-                                <div class="empty-state d-flex flex-column align-items-center justify-content-center py-5">
-                                    <i class="fas fa-users-slash mb-3 text-secondary opacity-25" style="font-size: 6rem;"></i>
-                                    <h4 class="fw-bold mb-2">No se encontraron Clientes</h4>
-                                    <p class="text-muted mb-4" style="max-width: 450px; font-size: 1.1rem;">
-                                        Parece que aún no hay clientes registrados o que no coinciden con tu búsqueda actual.
-                                    </p>
-                                    <a href="{% url 'dashboard:cliente_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
-                                        <i class="fas fa-plus me-2"></i> Registrar Primer Cliente
+                            <td colspan="5" class="text-center py-5">
+                                <div class="py-5">
+                                    <i class="fas fa-users-slash fa-4x text-muted opacity-25 mb-4"></i>
+                                    <h5 class="fw-bold text-muted">No se encontraron Clientes</h5>
+                                    <p class="text-muted small">Registra nuevos clientes para habilitar la logística por obra.</p>
+                                    <a href="{% url 'dashboard:cliente_create' %}" class="btn btn-primary rounded-pill px-5 py-3 mt-3 fw-bold shadow-lg">
+                                        <i class="fas fa-plus me-2"></i>REGISTRAR PRIMER CLIENTE
                                     </a>
                                 </div>
                             </td>
@@ -113,23 +147,58 @@
         </div>
     </div>
 
-    <!-- Paginación -->
+    <!-- PAGINATION -->
     {% if is_paginated %}
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-                <li class="page-item"><a class="page-link text-dark" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}"><i class="fas fa-step-backward"></i></a></li>
-                <li class="page-item"><a class="page-link text-dark" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">Anterior</a></li>
-            {% endif %}
-            
-            <li class="page-item active"><span class="page-link bg-dark border-dark">{{ page_obj.number }}</span></li>
-            
-            {% if page_obj.has_next %}
-                <li class="page-item"><a class="page-link text-dark" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">Siguiente</a></li>
-                <li class="page-item"><a class="page-link text-dark" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}"><i class="fas fa-step-forward"></i></a></li>
-            {% endif %}
-        </ul>
-    </nav>
+    <div class="d-flex justify-content-center mt-5">
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-modern shadow-sm rounded-pill p-1 bg-white">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link border-0 rounded-pill text-primary mx-1" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="page-item active px-3 d-flex align-items-center">
+                    <span class="x-small fw-bold text-muted text-uppercase tracking-wider">PÁGINA {{ page_obj.number }} DE {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link border-0 rounded-pill text-primary mx-1" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
     {% endif %}
 </div>
+
+<style>
+    .grad-primary { background: linear-gradient(135deg, var(--primary-blue), #1e3c72) !important; }
+    .btn-white { background: white; color: var(--primary-blue); }
+    .btn-white:hover { background: #f8f9fa; color: #1e3c72; }
+
+    .premium-table thead th { 
+        font-weight: 700; font-size: 0.75rem; color: #7c8db5; text-transform: uppercase; 
+        letter-spacing: 1px; padding: 1.25rem 1rem; border: 0;
+    }
+    .premium-table tbody td { padding: 1.25rem 1rem; border-color: #f8f9fa; font-size: 0.9rem; }
+    
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.15); }
+    
+    .fs-7 { font-size: 0.8rem; }
+    .x-small { font-size: 0.72rem; }
+    .tracking-widest { letter-spacing: 0.2em; }
+    
+    .pagination-modern .page-link { 
+        width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+</style>
 {% endblock %}

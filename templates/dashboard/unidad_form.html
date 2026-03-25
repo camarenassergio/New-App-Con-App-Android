@@ -1,80 +1,112 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block page_title %}Registrar Nueva Unidad{% endblock %}
+{% block page_title %}{% if form.instance.pk %}Editar Unidad{% else %}Registrar Nueva Unidad{% endif %}{% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <div class="form-header">
-        <h3>Datos del Vehículo</h3>
-        <p class="text-muted mb-0">Ingrese la información normalizada para la gestión de su flotilla.</p>
-    </div>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px; transition: all 0.3s ease;">
+                <!-- Header Premium -->
+                <div class="card-header border-0 py-4 px-4 bg-primary position-relative overflow-hidden">
+                    <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 8rem; transform: translate(30%, -20%);">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div class="d-flex align-items-center position-relative">
+                        <div class="bg-white rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 56px; height: 56px; background-color: rgba(255,255,255,0.2) !important;">
+                            <i class="fas fa-truck-loading text-white fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1 text-white fw-bold">
+                                {% if form.instance.pk %}Actualizar Unidad {{ form.instance.nUnidad }}{% else %}Alta de Vehículo{% endif %}
+                            </h5>
+                            <p class="text-white-50 small mb-0">Gestión centralizada de activos de flotilla</p>
+                        </div>
+                    </div>
+                </div>
 
-    <div id="formContainer" style="padding: 24px;">
-        <form method="post" id="unidadForm" enctype="multipart/form-data" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML" hx-encoding="multipart/form-data">
-            {% csrf_token %}
-            
-            <div class="row">
-                <div class="col-12">
-                    {{ form|crispy }}
+                <div class="card-body p-4 p-md-5">
+                    <form hx-post="{{ request.path }}" 
+                          hx-indicator="#form-indicator" 
+                          hx-swap="none"
+                          id="unidadForm"
+                          enctype="multipart/form-data" 
+                          class="needs-validation">
+                        {% csrf_token %}
+                        
+                        <!-- Contenido dinámico del formulario (Crispy) -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="premium-form-grid">
+                                    {{ form|crispy }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                            <a href="{% url 'dashboard:unidades_list' %}" class="btn btn-link text-muted text-decoration-none">
+                                <i class="fas fa-arrow-left me-2"></i>Regresar a la lista
+                            </a>
+                            <div class="d-flex align-items-center gap-3">
+                                <div id="form-indicator" class="htmx-indicator spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Procesando...</span>
+                                </div>
+                                <button type="button" id="btnGuardar" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-sm" style="min-width: 220px;">
+                                    <i class="fas fa-save me-2"></i>Guardar Unidad
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-            
-            <div class="mt-4 d-flex gap-3">
-                <button type="button" id="btnGuardar" class="btn btn-primary px-5">
-                    <i class="fas fa-save me-2"></i> Guardar Unidad
-                </button>
-                <a href="{% url 'dashboard:unidades_list' %}" class="btn btn-outline-secondary px-4">
-                    Cancelar
-                </a>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
+<style>
+    /* Estilos estandarizados para formularios premium */
+    .premium-form-grid .form-group { margin-bottom: 1.5rem; }
+    .premium-form-grid label { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .premium-form-grid .form-control, .premium-form-grid .form-select { border-radius: 12px; padding: 0.75rem 1rem; border-color: var(--border-color); }
+    .premium-form-grid .form-control:focus { box-shadow: 0 4px 12px rgba(0, 59, 112, 0.1); transform: translateY(-1px); }
+    
+    body.dark-theme .bg-light-subtle { background-color: rgba(255, 255, 255, 0.05) !important; }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- Lógica de Combustible Dinámico ---
         const tipoSelect = document.getElementById('id_tipo');
         const combustibleSelect = document.getElementById('id_tipo_combustible_unidad');
         
         function updateFuelOptions() {
+            if (!tipoSelect || !combustibleSelect) return;
             const tipo = tipoSelect.value;
-            // Get options
             const dieselOption = combustibleSelect.querySelector("option[value='DIESEL']");
             const magnaOption = combustibleSelect.querySelector("option[value='MAGNA']");
             const premiumOption = combustibleSelect.querySelector("option[value='PREMIUM']");
             
             if (tipo === 'CAMION') {
-                // Select Diesel
                 combustibleSelect.value = 'DIESEL';
-                // Disable others
                 if (magnaOption) magnaOption.disabled = true;
                 if (premiumOption) premiumOption.disabled = true;
                 if (dieselOption) dieselOption.disabled = false;
-            } else if (tipo === 'CAMIONETA') {
-                // Enable all
+            } else {
                 if (magnaOption) magnaOption.disabled = false;
                 if (premiumOption) premiumOption.disabled = false;
                 if (dieselOption) dieselOption.disabled = false;
             }
         }
         
-        // Listen for change
-        if (tipoSelect && combustibleSelect) {
-            tipoSelect.addEventListener('change', function() {
-                const tipo = tipoSelect.value;
-                if (tipo === 'CAMIONETA') {
-                    // When explicitly switching TO Camioneta, set default to Premium
-                    combustibleSelect.value = 'PREMIUM';
-                }
-                updateFuelOptions();
-            });
-            // Initial run
+        if (tipoSelect) {
+            tipoSelect.addEventListener('change', updateFuelOptions);
             updateFuelOptions();
         }
 
-        // --- SUPERVISOR MODAL LOGIC FOR KILOMETRAJE ---
-        const form = document.getElementById('unidadForm'); // Use explicit ID
+        // --- Lógica de Autorización de Kilometraje ---
+        const form = document.getElementById('unidadForm');
         const kmInput = document.getElementById('id_kilometraje_actual');
         const authInputHidden = document.getElementById('id_supervisor_auth');
         const modalElement = document.getElementById('supervisorModal');
@@ -87,75 +119,42 @@
              supervisorModal = new bootstrap.Modal(modalElement);
         }
 
-        // Capture initial value on load
         let initialKm = kmInput ? String(kmInput.value).trim() : null;
-        console.log("Initial KM:", initialKm);
 
         if (kmInput && form && btnGuardar) {
-            
             btnGuardar.addEventListener('click', function(e) {
-                // 1. HTML5 Validation first
                 if (!form.checkValidity()) {
                     form.reportValidity();
                     return;
                 }
 
                 const currentKm = String(kmInput.value).trim();
-                console.log("Click Guardar. Current KM:", currentKm, "Initial KM:", initialKm);
-
-                // 2. Check if KM changed
-                if (initialKm !== null && currentKm !== initialKm) {
-                    // Check if auth is already filled (retry)
-                    if (authInputHidden.value) {
-                         form.requestSubmit();
-                         return;
-                    }
-                    
-                    // Show Modal
-                    console.log("KM Change detected! Showing modal.");
+                
+                // Si el KM cambió y no hay una autorización previa ya escrita
+                if (initialKm !== null && currentKm !== initialKm && !authInputHidden.value) {
                     if (supervisorModal) {
-                        modalAuthInput.value = ''; // Clear previous attempts
+                        modalAuthInput.value = '';
                         supervisorModal.show();
-                        
                         modalElement.addEventListener('shown.bs.modal', function () {
                             modalAuthInput.focus();
                         }, {once: true});
                     } else {
-                        alert("Error: Modal de supervisor no cargado. Contacte soporte.");
+                        alert("Error: Requerida autorización de supervisor pero el modal no está disponible.");
                     }
                 } else {
-                    // No change in KM, submit directly
-                    console.log("No KM change, submitting...");
-                    form.requestSubmit();
+                    // Envío vía HTMX usando el método nativo compatible con hx-post
+                    htmx.trigger(form, 'submit');
                 }
             });
 
-            // Modal Confirm Button
             if (confirmBtn) {
                 confirmBtn.addEventListener('click', function() {
                     const pass = modalAuthInput.value.trim();
                     if (pass) {
                         authInputHidden.value = pass;
                         if (supervisorModal) supervisorModal.hide();
-                        
-                        // Submit form after small delay
-                        setTimeout(() => {
-                            console.log("Submitting with Auth...");
-                            form.requestSubmit();
-                        }, 200);
-                    } else {
-                        alert("Debe ingresar la contraseña del supervisor.");
-                        modalAuthInput.focus();
-                    }
-                });
-            }
-            
-            // Allow Enter key in modal input
-            if (modalAuthInput) {
-                modalAuthInput.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault(); 
-                        confirmBtn.click();
+                        // Pequeño delay para que el modal cierre antes del trigger HTMX
+                        setTimeout(() => htmx.trigger(form, 'submit'), 300);
                     }
                 });
             }
@@ -163,26 +162,35 @@
     });
 </script>
 
-<!-- Supervisor Auth Modal -->
+<!-- Supervisor Auth Modal (Premium Style) -->
 <div class="modal fade" id="supervisorModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-warning text-dark">
-        <h5 class="modal-title fw-bold">⚠️ Autorización Requerida</h5>
+    <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius: 20px;">
+      <div class="modal-header bg-warning py-3 px-4 border-0">
+        <h5 class="modal-title fw-bold text-dark">
+            <i class="fas fa-shield-alt me-2"></i> Autorización de Seguridad
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <p class="mb-3">Se ha detectado un cambio en el <strong>Kilometraje</strong> de la unidad.</p>
-        <p class="mb-3 text-muted small">Esta acción requiere autorización de un Supervisor.</p>
+      <div class="modal-body p-4 text-center">
+        <div class="mb-4">
+            <div class="bg-warning-subtle rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <i class="fas fa-tachometer-alt text-warning fs-1"></i>
+            </div>
+            <h6 class="fw-bold">Cambio de Kilometraje Detectado</h6>
+            <p class="text-muted small">Para registrar un ajuste en el odómetro de la unidad, un supervisor debe autorizar la operación con su contraseña física.</p>
+        </div>
         
-        <div class="mb-3">
-            <label for="modalAuthInput" class="form-label fw-bold">Contraseña de Supervisor:</label>
-            <input type="password" class="form-control form-control-lg text-center" id="modalAuthInput" placeholder="******" autocomplete="new-password">
+        <div class="mb-3 text-start">
+            <label class="form-label fw-bold small text-muted text-uppercase">Contraseña de Supervisor</label>
+            <input type="password" class="form-control form-control-lg text-center bg-light border-2" id="modalAuthInput" placeholder="••••••" style="letter-spacing: 0.5em;">
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="confirmAuthBtn">Autorizar Cambio</button>
+      <div class="modal-footer bg-light border-0 p-3">
+        <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary px-4 rounded-pill" id="confirmAuthBtn">
+            <i class="fas fa-check-circle me-1"></i> Validar y Guardar
+        </button>
       </div>
     </div>
   </div>

@@ -3,111 +3,173 @@
 {% block page_title %}Gestión de Unidades{% endblock %} 
 
 {% block content %}
-<div class="table-container">
-    <div class="table-header d-flex justify-content-between align-items-center">
-        <h3 class="mb-0">Flotilla Registrada</h3>
-        <a href="{% url 'dashboard:unidad_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i> Nueva Unidad
-        </a>
+<div class="container-fluid py-4 px-md-5">
+    
+    <!-- HEADER PREMIUM -->
+    <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+        <div class="card-body p-0">
+            <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="header-icon-box me-3">
+                        <i class="fas fa-truck-moving fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">Gestión de Flotilla</h4>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Control de Unidades y Restricciones</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-3">
+                    <div class="bg-white bg-opacity-10 rounded-pill px-4 py-2 border border-white border-opacity-10 d-flex align-items-center">
+                        <span class="fw-bold me-2">{{ unidades.count|default:"0" }}</span>
+                        <span class="x-small text-uppercase opacity-75">Unidades</span>
+                    </div>
+                    <a href="{% url 'dashboard:unidad_create' %}" class="btn btn-white rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fas fa-plus-circle me-2 text-primary"></i>Nueva Unidad
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th class="ps-4">Unidad</th>
-                    <th>Marca/Submarca</th>
-                    <th>Placas</th>
-                    <th>Modelo</th>
-                    <th>Estatus</th>
-                    <th>Semáforo</th>
-                    <th class="pe-4 text-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for unidad in unidades %}
-                <tr>
-                    <td class="ps-4 fw-bold">
-                        <span class="text-primary">{{ unidad.nUnidad }}</span>
-                    </td>
-                    <td>{{ unidad.marca }} {{ unidad.submarca }}</td>
-                    <td>
-                        <span class="placa-badge" style="border-left: 5px solid {{ unidad.color_engomado_hex|default:'#ccc' }};">
-                            {{ unidad.placas }}
-                        </span>
-                        <div class="mt-1">
-                            <small class="text-muted">
-                                Holo: <strong>{{ unidad.holograma }}</strong> | {{ unidad.color_engomado }}
-                            </small>
-                        </div>
-                    </td>
-                    <td>{{ unidad.modelo_anio }}</td>
-                    <td>
-                        <form class="m-0">
-                            {% csrf_token %}
-                            {% if unidad.en_servicio %}
-                            <button type="button"
-                                    class="badge bg-success border-0 px-3 py-2 rounded-pill"
-                                    title="En servicio. Clic para dar de baja temporal"
-                                    aria-label="Dar de baja temporal a {{ unidad.nombre_corto|default:unidad.nUnidad }}"
-                                    hx-post="{% url 'dashboard:unidad_toggle' unidad.pk %}"
-                                    hx-target="closest tr"
-                                    hx-swap="outerHTML"
-                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                    hx-confirm="Dar de BAJA TEMPORAL / TALLER a {{ unidad.nombre_corto|default:unidad.nUnidad }}. ¿Continuar?">
-                                <i class="fas fa-toggle-on me-1"></i> Activa
-                            </button>
-                            {% else %}
-                            <button type="button"
-                                    class="badge bg-danger border-0 px-3 py-2 rounded-pill"
-                                    title="En taller. Clic para reactivar"
-                                    aria-label="Reactivar unidad {{ unidad.nombre_corto|default:unidad.nUnidad }}"
-                                    hx-post="{% url 'dashboard:unidad_toggle' unidad.pk %}"
-                                    hx-target="closest tr"
-                                    hx-swap="outerHTML"
-                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                    hx-confirm="REACTIVAR la unidad {{ unidad.nombre_corto|default:unidad.nUnidad }}. ¿Continuar?">
-                                <i class="fas fa-toggle-off me-1"></i> Inactiva
-                            </button>
-                            {% endif %}
-                        </form>
-                    </td>
-                    <td>
-                        {% if '✅' in unidad.alerta_circulacion %}
-                        <span class="badge bg-success px-3 py-2 rounded-pill" title="{{ unidad.alerta_circulacion }}">Circula</span>
-                        {% else %}
-                        <span class="badge bg-danger px-3 py-2 rounded-pill" title="{{ unidad.alerta_circulacion }}">No Circula</span>
-                        {% endif %}
-                    </td>
-                    <td class="pe-4 text-center">
-                        <div class="d-flex gap-2 justify-content-center">
-                            <a href="{% url 'dashboard:unidad_update' unidad.pk %}" class="btn btn-sm btn-outline-primary"
-                               title="Editar" aria-label="Editar unidad {{ unidad.nUnidad }}">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'dashboard:unidad_detail' unidad.pk %}" class="btn btn-sm btn-outline-info"
-                               title="Ver detalle" aria-label="Ver detalle de unidad {{ unidad.nUnidad }}">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="100%" class="text-center py-5">
-                        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
-                            <i class="fas fa-truck mb-3" style="font-size: 5rem;"></i>
-                            <h4 class="fw-bold mb-2">Aún no hay registros de Unidades</h4>
-                            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.1rem;">Comienza creando el primer registro para gestionar tu flotilla.</p>
-                            <a href="{% url 'dashboard:unidad_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
-                                <i class="fas fa-plus me-2"></i> Dar de Alta Unidad
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- MAIN TABLE CARD -->
+    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 premium-table">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Identificador</th>
+                            <th>Vehículo</th>
+                            <th>Placas & Engomado</th>
+                            <th>Semaforización</th>
+                            <th>Operativa</th>
+                            <th class="text-center pe-4">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for unidad in unidades %}
+                        <tr class="animate__animated animate__fadeIn">
+                            <td class="ps-4">
+                                <div class="badge bg-primary-subtle text-primary border-0 rounded-4 px-3 py-2 fw-800 fs-6">
+                                    {{ unidad.nUnidad }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">{{ unidad.marca }} {{ unidad.submarca }}</span>
+                                    <span class="x-small text-muted text-uppercase fw-bold">{{ unidad.modelo_anio|default:"S/M" }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="placa-badge shadow-xs me-3" style="border-left: 5px solid {{ unidad.color_engomado_hex|default:'#ccc' }};">
+                                        {{ unidad.placas }}
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <span class="x-small fw-bold text-muted text-uppercase">{{ unidad.color_engomado|default:"N/A" }}</span>
+                                        <span class="badge bg-light text-dark border-0 x-small rounded-pill py-1">Holo: {{ unidad.holograma }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if '✅' in unidad.alerta_circulacion %}
+                                <div class="d-flex align-items-center text-success fw-bold x-small">
+                                    <div class="status-pulse bg-success me-2"></div> CIRCULA HOY
+                                </div>
+                                {% else %}
+                                <div class="d-flex align-items-center text-danger fw-bold x-small">
+                                    <div class="status-pulse bg-danger me-2"></div> NO CIRCULA
+                                </div>
+                                {% endif %}
+                                <div class="x-small text-muted mt-1 opacity-75">{{ unidad.alerta_circulacion|slice:":30" }}...</div>
+                            </td>
+                            <td>
+                                <form class="m-0">
+                                    {% csrf_token %}
+                                    <div class="form-check form-switch p-0 d-flex align-items-center">
+                                        <input class="form-check-input ms-0 me-2" type="checkbox" role="switch"
+                                               {% if unidad.en_servicio %}checked{% endif %}
+                                               hx-post="{% url 'dashboard:unidad_toggle' unidad.pk %}"
+                                               hx-target="closest tr"
+                                               hx-swap="outerHTML"
+                                               hx-confirm="¿Cambiar estado operativo de la unidad {{ unidad.nUnidad }}?"
+                                               style="width: 2.5rem; height: 1.25rem; cursor: pointer;">
+                                        <span class="badge rounded-pill {% if unidad.en_servicio %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %} x-small fw-bold">
+                                            {% if unidad.en_servicio %}ACTIVA{% else %}TALLER{% endif %}
+                                        </span>
+                                    </div>
+                                </form>
+                            </td>
+                            <td class="text-center pe-4">
+                                <div class="btn-group shadow-xs rounded-pill bg-light p-1">
+                                    <a href="{% url 'dashboard:unidad_update' unidad.pk %}" class="btn btn-white btn-sm rounded-circle border-0 text-primary hover-scale" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'dashboard:unidad_detail' unidad.pk %}" class="btn btn-white btn-sm rounded-circle border-0 text-info hover-scale" title="Detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="py-5">
+                                    <i class="fas fa-truck-loading fa-4x text-muted opacity-25 mb-4"></i>
+                                    <h5 class="fw-bold text-muted">Aún no hay unidades registradas</h5>
+                                    <p class="text-muted small">Comienza dando de alta el primer vehículo de tu flotilla.</p>
+                                    <a href="{% url 'dashboard:unidad_create' %}" class="btn btn-primary rounded-pill px-5 py-3 mt-3 fw-bold shadow-lg">
+                                        <i class="fas fa-plus me-2"></i>DE ALTA LA PRIMERA UNIDAD
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    .grad-primary { background: linear-gradient(135deg, var(--primary-blue), #1e3c72) !important; }
+    .btn-white { background: white; color: var(--primary-blue); }
+    .btn-white:hover { background: #f8f9fa; color: #1e3c72; }
+
+    .premium-table thead th { 
+        font-weight: 700; font-size: 0.75rem; color: #7c8db5; text-transform: uppercase; 
+        letter-spacing: 1px; padding: 1.25rem 1rem; border: 0;
+    }
+    .premium-table tbody td { 
+        padding: 1.25rem 1rem; 
+        border-color: var(--premium-table-border); 
+        font-size: 0.9rem; 
+    }
+    
+    .placa-badge {
+        background: #fdfdfd; padding: 4px 12px; border: 1px solid #ddd; border-radius: 6px;
+        font-family: 'Monospace', 'Courier New', Courier, monospace; font-weight: 800;
+        font-size: 0.95rem; color: #333; letter-spacing: 1px; min-width: 100px; text-align: center;
+    }
+
+    .status-pulse {
+        width: 10px; height: 10px; border-radius: 50%;
+        display: inline-block; position: relative;
+    }
+    .status-pulse::after {
+        content: ''; width: 100%; height: 100%; border-radius: 50%;
+        position: absolute; top: 0; left: 0; animation: pulse-anim 2s infinite; background: inherit; opacity: 0.5;
+    }
+    @keyframes pulse-anim {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(3); opacity: 0; }
+    }
+
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.2); }
+    .fw-800 { font-weight: 800; }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .x-small { font-size: 0.72rem; }
+</style>
 {% endblock %}

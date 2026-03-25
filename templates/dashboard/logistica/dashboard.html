@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Command Center - Logística{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kanban-board {
+        display: flex;
+        gap: 1.5rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        min-height: 70vh;
+        align-items: flex-start;
+    }
+    
+    .kanban-column {
+        flex: 0 0 320px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 150px);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .kanban-header {
+        padding: 1rem;
+        border-bottom: 2px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--bg-card);
+        border-radius: 12px 12px 0 0;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+    
+    .kanban-header.column-registrado { border-bottom-color: var(--info); }
+    .kanban-header.column-preparacion { border-bottom-color: var(--warning); }
+    .kanban-header.column-asignado { border-bottom-color: var(--primary-blue); }
+    .kanban-header.column-ruta { border-bottom-color: var(--primary-orange); }
+    
+    .kanban-body {
+        padding: 1rem;
+        overflow-y: auto;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background-color: var(--bg-body);
+        border-radius: 0 0 12px 12px;
+        min-height: 150px;
+    }
+    
+    .kanban-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-left: 4px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: grab;
+    }
+    
+    .kanban-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .kanban-card.urgente {
+        border-left-color: var(--danger);
+    }
+    
+    .kanban-card.normal {
+        border-left-color: var(--border-color);
+    }
+    
+    .card-meta {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .card-actions {
+        margin-top: 1rem;
+        padding-top: 0.5rem;
+        border-top: 1px dashed var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <p class="text-muted"><i class="fas fa-layer-group me-2" style="color: var(--primary-orange);"></i> Arrastra los pedidos entre columnas o usa las acciones en cada tarjeta para avanzar el flujo.</p>
+</div>
+
+<!-- Kanban Board Container -->
+<div class="kanban-board" id="kanban-board" hx-get="{{ request.path }}" hx-trigger="boardChanged from:body" hx-select="#kanban-board" hx-swap="outerHTML">
+    
+    <!-- 1. REGISTRADOS -->
+    <div class="kanban-column">
+        <div class="kanban-header column-registrado">
+            <h6 class="mb-0 fw-bold"><i class="fas fa-inbox me-2" style="color: var(--info);"></i> Registrados</h6>
+            <span class="badge bg-secondary rounded-pill">{{ pedidos_registrados.count }}</span>
+        </div>
+        <div class="kanban-body sortable-list" data-estado="REGISTRADO">
+            {% for pedido in pedidos_registrados %}
+                {% include 'dashboard/logistica/kanban_card.html' with pedido=pedido %}
+            {% empty %}
+                <div class="text-center p-3 text-muted small empty-indicator" style="pointer-events: none;">
+                    <i class="fas fa-check-circle d-block mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                    Sin pedidos registrados
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- 2. EN PREPARACIÓN -->
+    <div class="kanban-column">
+        <div class="kanban-header column-preparacion">
+            <h6 class="mb-0 fw-bold"><i class="fas fa-box-open me-2" style="color: var(--warning);"></i> Preparación</h6>
+            <span class="badge bg-secondary rounded-pill">{{ pedidos_preparacion.count }}</span>
+        </div>
+        <div class="kanban-body sortable-list" data-estado="EN_PREPARACION">
+            {% for pedido in pedidos_preparacion %}
+                {% include 'dashboard/logistica/kanban_card.html' with pedido=pedido %}
+            {% empty %}
+                <div class="text-center p-3 text-muted small empty-indicator" style="pointer-events: none;">
+                    <i class="fas fa-box d-block mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                    Nada en preparación
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- 3. ASIGNADOS (Esperando despacho) -->
+    <div class="kanban-column">
+        <div class="kanban-header column-asignado">
+            <h6 class="mb-0 fw-bold"><i class="fas fa-clipboard-list me-2" style="color: var(--primary-blue);"></i> Asignados a Ruta</h6>
+            <span class="badge bg-secondary rounded-pill">{{ pedidos_asignados.count }}</span>
+        </div>
+        <div class="kanban-body sortable-list" data-estado="ASIGNADO_A_RUTA" style="padding-bottom: 0;">
+            {% for pedido in pedidos_asignados %}
+                {% include 'dashboard/logistica/kanban_card.html' with pedido=pedido %}
+            {% empty %}
+                <div class="text-center p-3 text-muted small empty-indicator" style="pointer-events: none;">
+                    <i class="fas fa-truck-loading d-block mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                    Sin asignar
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- BOTÓN ARMAR VIAJE STICKY -->
+        <div class="p-3 bg-white" style="border-radius: 0 0 12px 12px; border-top: 2px solid var(--border-color); position: sticky; bottom: 0; z-index: 2;">
+            <button class="btn w-100 fw-bold shadow-sm text-white" 
+                    style="background-color: var(--primary-blue);"
+                    hx-get="{% url 'dashboard:logistica_armar_viaje' %}" 
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML"
+                    hx-on::after-swap="var m = new bootstrap.Modal(document.getElementById('modalArmarViaje')); m.show();">
+                <i class="fas fa-clipboard-check me-2"></i> Armar Ruta ({% if pedidos_asignados %}{{ pedidos_asignados.count }}{% else %}0{% endif %})
+            </button>
+        </div>
+    </div>
+    
+    <!-- 4. EN RUTA -->
+    <div class="kanban-column">
+        <div class="kanban-header column-ruta">
+            <h6 class="mb-0 fw-bold"><i class="fas fa-truck-moving me-2" style="color: var(--primary-orange);"></i> En Ruta</h6>
+            <span class="badge bg-secondary rounded-pill">{{ pedidos_ruta.count }}</span>
+        </div>
+        <div class="kanban-body sortable-list" data-estado="EN_RUTA">
+            {% for pedido in pedidos_ruta %}
+                {% include 'dashboard/logistica/kanban_card.html' with pedido=pedido %}
+            {% empty %}
+                <div class="text-center p-3 text-muted small empty-indicator" style="pointer-events: none;">
+                    <i class="fas fa-road d-block mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                    Vía libre
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+        
+</div>
+
+<!-- Contenedor dinámico HTMX para los modales (ej. Armar Viaje) -->
+<div id="modal-container"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+    htmx.onLoad(function(content) {
+        // Initialize Sortable on elements with class 'sortable-list'
+        var sortables = content.querySelectorAll(".sortable-list");
+        sortables.forEach(function(sortableEl) {
+            new Sortable(sortableEl, {
+                group: 'kanban', // set both lists to same group
+                animation: 150,
+                ghostClass: 'bg-light',
+                filter: '.empty-indicator', // Do not allow dragging empty indicators
+                onEnd: function (evt) {
+                    var itemEl = evt.item;  // dragged HTMLElement
+                    var toEl = evt.to;    // target list
+                    var fromEl = evt.from;  // previous list
+                    
+                    if(toEl !== fromEl) {
+                        var nuevoEstado = toEl.dataset.estado;
+                        // Extract ID from kanban-card (e.g. data-id="5" or id="pedido-5")
+                        var pedidoId = itemEl.getAttribute('data-id');
+                        
+                        // Send POST request via htmx.ajax to trigger view Logic and send "boardChanged"
+                        htmx.ajax('POST', '/dashboard/pedido/' + pedidoId + '/cambiar-estado/', {
+                            values: {'estado': nuevoEstado},
+                            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                            target: '#kanban-board', // No es estrictamente necesario ya que la vista no retorna HTML, retorna 204.
+                            swap: 'none'
+                        });
+                        
+                        // Opcional: remover empty-indicator de destination
+                        var emptyIndicator = toEl.querySelector('.empty-indicator');
+                        if (emptyIndicator) { emptyIndicator.style.display = 'none'; }
+                    }
+                },
+            });
+        });
+    });
+</script>
+{% endblock %}

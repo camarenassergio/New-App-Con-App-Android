@@ -32,3 +32,28 @@ def notificaciones_processor(request):
         except Exception:
             pass
     return {'notificaciones_unread_count': 0}
+
+def modos_vista_processor(request):
+    """
+    Provee los modos de vista permitidos para el Workspace Switcher.
+    """
+    if request.user.is_authenticated and hasattr(request.user, 'personal'):
+        # Usar la base de datos real para evadir manipulaciones del middleware
+        real_personal = request.user.personal.__class__.objects.get(pk=request.user.personal.pk)
+        puesto_base = request.session.get('puesto_base', real_personal.puesto)
+        
+        opciones = [puesto_base]
+        
+        if request.user.is_superuser:
+            opciones = ['ADMIN', 'MOSTRADOR', 'LOGISTICA', 'RUTAS', 'ALMACEN', 'CHOFER', 'CAJA']
+        elif real_personal.roles_secundarios:
+            opciones.extend([r.strip() for r in real_personal.roles_secundarios.split(',') if r.strip()])
+        
+        # Eliminar duplicados manteniendo orden
+        vistos = set()
+        opciones_finales = [x for x in opciones if not (x in vistos or vistos.add(x))]
+        
+        if len(opciones_finales) > 1:
+            return {'modos_vista_permitidos': opciones_finales, 'modo_vista_actual': request.user.personal.puesto}
+            
+    return {}

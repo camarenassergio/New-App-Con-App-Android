@@ -4,133 +4,209 @@
 {% block page_title %}Zonas de Entrega{% endblock %}
 
 {% block content %}
-<div class="table-container">
-    <div class="table-header d-flex justify-content-between align-items-center">
-        <h3>Administrar Zonas de Entrega</h3>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importExcelModal"
-                    aria-label="Importar zonas desde archivo CSV">
-                <i class="fas fa-file-excel"></i> Importar CSV
-            </button>
-            <a href="{% url 'dashboard:zona_entrega_map' %}" class="btn btn-info text-white"
-               aria-label="Ver mapa de zonas de entrega">
-                <i class="fas fa-map"></i> Ver Mapa
-            </a>
-            <a href="{% url 'dashboard:zona_entrega_create' %}" class="btn btn-primary"
-               aria-label="Crear nueva zona de entrega">
-                <i class="fas fa-plus"></i> Nueva Zona
-            </a>
+<div class="container-fluid py-4 px-md-5">
+    
+    <!-- HEADER PREMIUM -->
+    <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+        <div class="card-body p-0">
+            <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="header-icon-box me-3">
+                        <i class="fas fa-map-marked-alt fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">Zonas de Entrega</h4>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Configuración de Logística & Tarifas</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap justify-content-md-end">
+                    <button type="button" class="btn btn-glass-success rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+                        <i class="fas fa-file-excel me-2"></i>Importar CSV
+                    </button>
+                    <a href="{% url 'dashboard:zona_entrega_map' %}" class="btn btn-glass-info rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fas fa-map me-2"></i>Ver Mapa
+                    </a>
+                    <a href="{% url 'dashboard:zona_entrega_create' %}" class="btn btn-white rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fas fa-plus-circle me-2 text-primary"></i>Nueva Zona
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Códigos Postales</th>
-                    <th>Colonias</th>
-                    <th>Tiempo Mins.</th>
-                    <th>Distancia Km.</th>
-                    <th>Tarifa Flete</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for zona in zonas %}
-                <tr>
-                    <td>
-                        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:{{ zona.color_hex|default:'#3388ff' }}; margin-right:5px;"></span>
-                        <strong>{{ zona.nombre }}</strong>
-                    </td>
-                    <td>
-                        {% if zona.codigos_postales %}
-                            {% for cp in zona.codigos_postales.split %}
-                                <span class="badge" 
-                                      style="margin-right: 4px; background-color: {{ zona.color_hex|default:'#3388ff' }}; color: {{ zona.text_color }}; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-weight: 600;">
-                                    {{ cp|cut:"," }}
-                                </span>
-                            {% endfor %}
-                        {% else %}
-                            <span class="text-muted small"><i>No hay CPs registrados</i></span>
-                        {% endif %}
-                    </td>
-                    <td><small>{{ zona.colonias }}</small></td>
-                    <td>{{ zona.tiempo_traslado_minutos }} min</td>
-                    <td>{{ zona.distancia_km }} km</td>
-                    <td>${{ zona.tarifa_flete }}</td>
-                    <td>
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'dashboard:zona_entrega_update' zona.pk %}" class="btn btn-sm btn-outline-primary"
-                               title="Editar" aria-label="Editar zona {{ zona.nombre }}">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'dashboard:zona_entrega_delete' zona.pk %}" class="btn btn-sm btn-outline-danger"
-                               title="Eliminar" aria-label="Eliminar zona {{ zona.nombre }}">
-                                <i class="fas fa-trash"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="100%" class="text-center py-5 border-0">
-                        <div class="empty-state d-flex flex-column align-items-center justify-content-center py-5">
-                            <i class="fas fa-map-marked-alt mb-3 text-secondary opacity-25" style="font-size: 6rem;"></i>
-                            <h4 class="fw-bold mb-2">Sin Zonas de Entrega</h4>
-                            <p class="text-muted mb-4" style="max-width: 450px; font-size: 1.1rem;">
-                                Las zonas de entrega son fundamentales para calcular fletes y logística. 
-                                Puedes crear una manualmente o importar el catálogo completo.
-                            </p>
-                            <div class="d-flex gap-3">
-                                <a href="{% url 'dashboard:zona_entrega_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
-                                    <i class="fas fa-plus me-2"></i> Crear Primera Zona
-                                </a>
-                                <button type="button" class="btn btn-outline-success btn-lg shadow-sm px-4" style="border-radius: 50px;" data-bs-toggle="modal" data-bs-target="#importExcelModal">
-                                    <i class="fas fa-file-excel me-2"></i> Importar CSV
-                                </button>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- MAIN TABLE CARD -->
+    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table  align-middle mb-0 premium-table">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Identificador</th>
+                            <th>Área de Cobertura (CPs)</th>
+                            <th>Colonias Principales</th>
+                            <th>Métricas Rama</th>
+                            <th>Tarifa</th>
+                            <th class="text-center pe-4">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for zona in zonas %}
+                        <tr class="animate__animated animate__fadeIn">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="zone-dot me-3 shadow-sm" style="background-color: {{ zona.color_hex|default:'#3388ff' }};"></div>
+                                    <span class="fw-bold text-dark fs-6">{{ zona.nombre }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-2" style="max-width: 300px;">
+                                    {% if zona.codigos_postales %}
+                                        {% for cp in zona.codigos_postales.split %}
+                                            <span class="badge border-0 rounded-pill px-2 py-1 x-small fw-bold shadow-xs" 
+                                                  style="background-color: {{ zona.color_hex|default:'#3388ff' }}; color: #fff; filter: brightness(0.95);">
+                                                {{ cp|cut:"," }}
+                                            </span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted x-small italic">Sin CPs registrados</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <p class="mb-0 x-small text-muted text-truncate" style="max-width: 200px;" title="{{ zona.colonias }}">
+                                    {{ zona.colonias|default:"No especificado" }}
+                                </p>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="d-flex align-items-center x-small fw-bold">
+                                        <i class="fas fa-clock text-primary me-2 opacity-50"></i>{{ zona.tiempo_traslado_minutos }} MIN
+                                    </div>
+                                    <div class="d-flex align-items-center x-small fw-bold">
+                                        <i class="fas fa-route text-success me-2 opacity-50"></i>{{ zona.distancia_km }} KM
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark fs-6">${{ zona.tarifa_flete }}</div>
+                                <span class="x-small text-muted text-uppercase tracking-wider">Costo Base</span>
+                            </td>
+                            <td class="text-center pe-4">
+                                <div class="btn-group shadow-xs rounded-pill bg-light p-1">
+                                    <a href="{% url 'dashboard:zona_entrega_update' zona.pk %}" class="btn btn-white btn-sm rounded-circle border-0 text-primary hover-scale" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'dashboard:zona_entrega_delete' zona.pk %}" class="btn btn-white btn-sm rounded-circle border-0 text-danger hover-scale" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="py-5">
+                                    <i class="fas fa-map-marked-alt fa-4x text-muted opacity-25 mb-4"></i>
+                                    <h5 class="fw-bold text-muted">Sin Zonas de Entrega</h5>
+                                    <p class="text-muted small">Crea zonas geográficas para automatizar el cálculo de fletes logísticos.</p>
+                                    <div class="d-flex justify-content-center gap-3 mt-4">
+                                        <a href="{% url 'dashboard:zona_entrega_create' %}" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-lg">
+                                            <i class="fas fa-plus me-2"></i>CREAR PRIMERA ZONA
+                                        </a>
+                                        <button class="btn btn-outline-success rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+                                            <i class="fas fa-file-excel me-2"></i>IMPORTAR CATÁLOGO
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
 <!-- Modal for CSV/Excel Import -->
-<div class="modal fade" id="importExcelModal" tabindex="-1" aria-labelledby="importExcelModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content" style="background-color: var(--bg-card); color: var(--text-main); border-color: var(--border-color);">
-      <form action="{% url 'dashboard:zona_entrega_import' %}" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="modal-header" style="border-bottom-color: var(--border-color);">
-          <h5 class="modal-title" id="importExcelModalLabel"><i class="fas fa-file-import"></i> Importar Zonas desde CSV</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: var(--invert-close-btn);"></button>
+<div class="modal fade" id="importExcelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius: 28px;">
+            <div class="p-4 d-flex align-items-center text-white grad-success">
+                <i class="fas fa-file-import fa-2x me-3 opacity-50"></i>
+                <div>
+                    <h5 class="mb-0 fw-bold">Importar Catálogo Logístico</h5>
+                    <p class="x-small mb-0 opacity-75">Sincronización masiva vía CSV</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'dashboard:zona_entrega_import' %}" method="post" enctype="multipart/form-data" class="p-4">
+                {% csrf_token %}
+                <div class="alert alert-premium-success border-0 rounded-4 p-3 mb-4">
+                    <h6 class="fw-bold mb-2 small"><i class="fas fa-info-circle me-2"></i>Requerimientos de Archivo:</h6>
+                    <p class="x-small mb-0 opacity-75">
+                        El archivo CSV debe contener: <strong>CP, Colonia, Zona, Distancia, Tiempo, Costo Base</strong>.
+                    </p>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label x-small fw-bold text-uppercase text-muted px-2">Seleccionar Archivo</label>
+                    <div class="dnd-upload-zone border-dashed rounded-4 p-4 text-center bg-light" style="cursor: pointer;">
+                        <input type="file" name="csv_file" accept=".csv" required class="form-control d-none" id="csv_input">
+                        <label for="csv_input" class="mb-0 cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-success opacity-25 mb-3"></i>
+                            <p class="small fw-bold mb-0 text-dark">Haz clic para subir o arrastra el archivo</p>
+                            <span class="x-small text-muted">Solo archivos .CSV son permitidos</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success btn-lg rounded-pill fw-bold py-3 shadow-lg">
+                        <i class="fas fa-check-circle me-2"></i>INICIAR IMPORTACIÓN
+                    </button>
+                </div>
+            </form>
         </div>
-        <div class="modal-body">
-          <p>Sube un archivo CSV delimitado por comas con los campos extraídos del Excel. Asegúrate de que existan al menos las siguientes columnas (el orden no importa):</p>
-          <ul>
-            <li><strong>Código Postal</strong> (o CÓDIGO POSTAL)</li>
-            <li><strong>Asentamiento</strong> (o COLONIA)</li>
-            <li><strong>Zona</strong> (ej. NORTE, SUR)</li>
-            <li><strong>Distancia Media</strong></li>
-            <li><strong>Tiempo Medio de Traslado</strong></li>
-            <li><strong>Costo Base</strong></li>
-            <li><strong>Costo Maniobra adicional</strong></li>
-          </ul>
-          <div class="mb-3">
-            <label for="csv_file" class="form-label">Archivo CSV</label>
-            <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required>
-          </div>
-        </div>
-        <div class="modal-footer" style="border-top-color: var(--border-color);">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-success">Importar Datos</button>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
 
+<style>
+    .grad-primary { background: linear-gradient(135deg, var(--primary-blue), #1e3c72) !important; }
+    .grad-success { background: linear-gradient(135deg, var(--success), #065f46) !important; }
+    
+    .btn-glass-success { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; }
+    .btn-glass-success:hover { background: rgba(255,255,255,0.25); color: white; transform: translateY(-2px); }
+    .btn-glass-info { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; }
+    .btn-glass-info:hover { background: rgba(255,255,255,0.25); color: white; transform: translateY(-2px); }
+    .btn-white { background: white; color: var(--primary-blue); }
+
+    .premium-table thead th { 
+        font-weight: 700; font-size: 0.75rem; color: #7c8db5; text-transform: uppercase; 
+        letter-spacing: 1px; padding: 1.25rem 1rem; border: 0;
+    }
+    .premium-table tbody td { 
+        padding: 1.25rem 1rem; 
+        border-bottom: 1px solid var(--premium-table-border); 
+        font-size: 0.9rem; 
+    }
+    
+    .zone-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.15); }
+    
+    .x-small { font-size: 0.72rem; }
+    .tracking-wider { letter-spacing: 0.1em; }
+    .border-dashed { border: 2px dashed var(--border-color) !important; }
+</style>
+<script>
+    document.getElementById('csv_input')?.addEventListener('change', function(e) {
+        let fileName = e.target.files[0]?.name;
+        if (fileName) {
+            this.parentElement.querySelector('p').innerText = fileName;
+            this.parentElement.querySelector('span').innerText = "Listo para importar";
+        }
+    });
+</script>
 {% endblock %}

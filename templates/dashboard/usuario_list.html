@@ -3,81 +3,162 @@
 {% block page_title %}Administración de Usuarios{% endblock %}
 
 {% block content %}
-<div class="table-container">
-    <div class="table-header d-flex justify-content-between align-items-center">
-        <h3 class="mb-0">Usuarios del Sistema</h3>
-        <a href="{% url 'dashboard:usuario_create' %}" class="btn btn-primary">
-            <i class="fas fa-user-plus me-2"></i> Nuevo Usuario
-        </a>
+<div class="container-fluid py-4 px-md-5">
+    
+    <!-- HEADER PREMIUM -->
+    <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+        <div class="card-body p-0">
+            <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="header-icon-box me-3">
+                        <i class="fas fa-users-cog fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">Gestión de Accesos</h4>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Administración de Usuarios & Seguridad</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="bg-white bg-opacity-10 rounded-pill px-4 py-2 border border-white border-opacity-10 d-flex align-items-center">
+                        <span class="fw-bold me-2">{{ usuarios.count|default:"0" }}</span>
+                        <span class="x-small text-uppercase opacity-75">Usuarios</span>
+                    </div>
+                    <a href="{% url 'dashboard:usuario_create' %}" class="btn btn-white rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fas fa-plus-circle me-2 text-primary"></i>Nuevo Acceso
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th class="ps-4">Usuario</th>
-                    <th>Nombre Completo</th>
-                    <th>Rol / Puesto</th>
-                    <th>Último Acceso</th>
-                    <th class="pe-4">Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in usuarios %}
-                <tr>
-                    <td class="ps-4">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="avatar" style="width: 36px; height: 36px; font-size: 0.85rem; flex-shrink:0;">{{ user.username|first|upper }}</div>
-                            <span class="fw-500">{{ user.username }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        {{ user.personal.nombre }} {{ user.personal.apellido_paterno }} {{ user.personal.apellido_materno|default:"" }}
-                    </td>
-                    <td>
-                        {% if user.is_superuser %}
-                            <span class="badge bg-danger px-3 py-2 rounded-pill">Super Admin</span>
-                        {% elif user.personal %}
-                            {% if user.personal.puesto == 'ADMIN' %}
-                                <span class="badge bg-primary px-3 py-2 rounded-pill">Administrador</span>
-                            {% elif user.personal.puesto == 'CHOFER' %}
-                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Chofer</span>
-                            {% elif user.personal.puesto == 'LOGISTICA' %}
-                                <span class="badge bg-info text-dark px-3 py-2 rounded-pill">Logística</span>
-                            {% else %}
-                                <span class="badge bg-secondary px-3 py-2 rounded-pill">{{ user.personal.get_puesto_display }}</span>
-                            {% endif %}
-                        {% else %}
-                            <span class="badge bg-secondary px-3 py-2 rounded-pill">Sin Perfil</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <small class="text-muted">{{ user.last_login|default:"Nunca" }}</small>
-                    </td>
-                    <td class="pe-4">
-                        {% if user.is_active %}
-                            <span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> Activo</span>
-                        {% else %}
-                            <span class="text-muted"><i class="fas fa-ban me-1"></i> Inactivo</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="100%" class="text-center py-5">
-                        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
-                            <i class="fas fa-users mb-3" style="font-size: 5rem;"></i>
-                            <h4 class="fw-bold mb-2">Aún no hay usuarios registrados</h4>
-                            <p class="text-muted mb-4" style="max-width: 400px; font-size: 1.1rem;">Crea el primer acceso al sistema para el equipo operativo.</p>
-                            <a href="{% url 'dashboard:usuario_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
-                                <i class="fas fa-user-plus me-2"></i> Crear Primer Usuario
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- MAIN TABLE CARD -->
+    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table  align-middle mb-0 premium-table">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Identidad & Usuario</th>
+                            <th>Nombre del Colaborador</th>
+                            <th>Nivel de Acceso (RBAC)</th>
+                            <th>Última Conexión</th>
+                            <th>Estatus Sistema</th>
+                            <th class="text-center pe-4">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in usuarios %}
+                        <tr class="animate__animated animate__fadeIn">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold text-primary shadow-xs">
+                                        {{ user.username|slice:":2"|upper }}
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold text-dark fs-6">{{ user.username }}</span>
+                                        <span class="x-small text-muted fw-bold">ID: #0{{ user.id }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="small fw-bold text-dark">{{ user.personal.nombre }} {{ user.personal.apellido_paterno }}</span>
+                                    <span class="x-small text-muted">{{ user.personal.email|default:user.email|default:"Sin correo asignado" }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if user.is_superuser %}
+                                    <span class="badge bg-danger shadow-xs rounded-pill px-3 py-2 x-small fw-bold">SUPER ADMINISTRADOR</span>
+                                {% elif user.personal %}
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="badge rounded-pill px-3 py-2 shadow-xs x-small fw-bold border-0
+                                            {% if user.personal.puesto == 'ADMIN' %}bg-primary-subtle text-primary
+                                            {% elif user.personal.puesto == 'CHOFER' %}bg-warning-subtle text-warning
+                                            {% elif user.personal.puesto == 'LOGISTICA' %}bg-info-subtle text-info
+                                            {% else %}bg-light text-muted{% endif %}">
+                                            {{ user.personal.get_puesto_display|upper }}
+                                        </span>
+                                        {% if user.personal.roles_secundarios %}
+                                        <span class="x-small text-muted fw-bold px-2 mt-1"><i class="fas fa-layer-group me-1 opacity-50"></i>{{ user.personal.roles_secundarios|truncatechars:30 }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-muted shadow-xs rounded-pill px-3 py-2 x-small">SIN PERFIL ASIGNADO</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center x-small text-muted fw-bold">
+                                    <i class="fas fa-history me-2 opacity-50"></i>
+                                    {{ user.last_login|date:"d M, H:i"|default:"SIN REGISTRO" }}
+                                </div>
+                            </td>
+                            <td>
+                                <form class="m-0">
+                                    {% csrf_token %}
+                                    {% if request.user != user %}
+                                    <div class="form-check form-switch p-0 d-flex align-items-center">
+                                        <input class="form-check-input ms-0 me-2" type="checkbox" role="switch"
+                                               {% if user.is_active %}checked{% endif %}
+                                               hx-post="{% url 'dashboard:usuario_toggle_estado' user.pk %}"
+                                               hx-target="closest tr"
+                                               hx-swap="outerHTML"
+                                               hx-confirm="¿Cambiar estado de acceso para {{ user.username }}?"
+                                               style="width: 2.5rem; height: 1.25rem; cursor: pointer;">
+                                        <span class="badge rounded-pill {% if user.is_active %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %} x-small fw-bold">
+                                            {% if user.is_active %}ACTIVO{% else %}INACTIVO{% endif %}
+                                        </span>
+                                    </div>
+                                    {% else %}
+                                    <span class="badge bg-success shadow-xs rounded-pill px-3 py-2 x-small fw-bold">TU SESIÓN</span>
+                                    {% endif %}
+                                </form>
+                            </td>
+                            <td class="text-center pe-4">
+                                <div class="btn-group shadow-xs rounded-pill bg-light p-1">
+                                    <a href="{% url 'dashboard:usuario_update' user.pk %}" class="btn btn-white btn-sm rounded-circle border-0 text-primary hover-scale" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="py-5">
+                                    <i class="fas fa-user-shield fa-4x text-muted opacity-25 mb-4"></i>
+                                    <h5 class="fw-bold text-muted">Bóveda de Usuarios Vacía</h5>
+                                    <p class="text-muted small">Registra accesos para el equipo de administración y logística.</p>
+                                    <a href="{% url 'dashboard:usuario_create' %}" class="btn btn-primary rounded-pill px-5 py-3 mt-3 fw-bold shadow-lg">
+                                        <i class="fas fa-user-plus me-2"></i>CREAR ACCESO INICIAL
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    .grad-primary { background: linear-gradient(135deg, var(--primary-blue), #1e3c72) !important; }
+    .btn-white { background: white; color: var(--primary-blue); }
+    .btn-white:hover { background: #f8f9fa; color: #1e3c72; }
+
+    .premium-table thead th { 
+        font-weight: 700; font-size: 0.75rem; color: #7c8db5; text-transform: uppercase; 
+        letter-spacing: 1px; padding: 1.25rem 1rem; border: 0;
+    }
+    .premium-table tbody td { padding: 1.25rem 1rem; border-color: #f8f9fa; font-size: 0.9rem; }
+    
+    .avatar-sm { width: 36px; height: 36px; flex-shrink: 0; font-size: 0.8rem; }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.15); }
+    
+    .x-small { font-size: 0.72rem; }
+    .tracking-wider { letter-spacing: 0.1em; }
+</style>
 {% endblock %}

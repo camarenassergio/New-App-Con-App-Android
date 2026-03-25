@@ -1,0 +1,53 @@
+<div class="kanban-card {% if pedido.es_urgente %}urgente{% else %}normal{% endif %} bg-card text-main" id="pedido-{{ pedido.id }}" data-id="{{ pedido.id }}">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h6 class="mb-0 fw-bold">{{ pedido.folio_sae }}</h6>
+        {% if pedido.es_urgente %}
+            <span class="badge bg-danger">Urgente</span>
+        {% else %}
+            <span class="badge bg-light text-dark border">{{ pedido.get_metodo_pago_display }}</span>
+        {% endif %}
+    </div>
+    
+    <div class="small fw-500 mb-1" style="color: var(--primary-blue);">
+        <i class="fas fa-user-circle me-1"></i>
+        {{ pedido.cliente.razon_social|default:pedido.cliente_nombre_manual|truncatechars:25 }}
+    </div>
+    
+    <div class="small text-muted mb-2">
+        <i class="fas fa-map-marker-alt me-1 text-danger"></i>
+        {% if pedido.obra %}
+            {{ pedido.obra.alias|truncatechars:20 }} - {{ pedido.obra.zona.nombre }}
+        {% else %}
+            {{ pedido.cliente_direccion_manual|truncatechars:20|default:"Mostrador" }}
+        {% endif %}
+    </div>
+
+    <!-- Acciones (HTMX ready) -->
+    <div class="card-actions mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+        <div class="small fw-bold">
+            <span class="badge rounded-pill" style="background-color: var(--bg-body); color: var(--text-main); border: 1px solid var(--border-color);">
+                <i class="fas fa-weight-hanging me-1" style="color: var(--text-muted);"></i> {{ pedido.peso_total_estimado_kg }} kg
+            </span>
+        </div>
+        
+        <div class="btn-group">
+            <a href="{% url 'dashboard:pedido_detail' pedido.pk %}" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Ver Detalle" aria-label="Ver detalle del pedido {{ pedido.folio_sae }}">
+                <i class="fas fa-eye" style="font-size: 0.8rem;"></i>
+            </a>
+            
+            {% if pedido.estado == 'REGISTRADO' %}
+                <button type="button" class="btn btn-sm btn-outline-warning py-0 px-2" title="Mover a Preparación" aria-label="Avanzar a En Preparación" hx-post="{% url 'dashboard:pedido_cambiar_estado' pedido.pk %}" hx-vals='{"estado": "EN_PREPARACION"}' hx-confirm="¿Mover a Preparación?">
+                    <i class="fas fa-arrow-right" style="font-size: 0.8rem;"></i>
+                </button>
+            {% elif pedido.estado == 'EN_PREPARACION' %}
+                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" title="Asignar a Ruta" aria-label="Avanzar a Asignado a Ruta" hx-post="{% url 'dashboard:pedido_cambiar_estado' pedido.pk %}" hx-vals='{"estado": "ASIGNADO_A_RUTA"}' hx-confirm="¿Mover a Asignado a Ruta?">
+                    <i class="fas fa-truck" style="font-size: 0.8rem;"></i>
+                </button>
+            {% elif pedido.estado == 'ASIGNADO_A_RUTA' %}
+                <button type="button" class="btn btn-sm btn-outline-info py-0 px-2" title="Iniciar Ruta" aria-label="Avanzar a En Ruta" hx-post="{% url 'dashboard:pedido_cambiar_estado' pedido.pk %}" hx-vals='{"estado": "EN_RUTA"}' hx-confirm="¿Iniciar Ruta?">
+                    <i class="fas fa-play" style="font-size: 0.8rem;"></i>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>

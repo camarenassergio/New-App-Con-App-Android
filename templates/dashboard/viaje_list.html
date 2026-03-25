@@ -3,92 +3,155 @@
 {% block page_title %}Bitácora de Viajes{% endblock %}
 
 {% block content %}
-<div class="table-container">
-    <div class="table-header d-flex justify-content-between align-items-center">
-        <h3 class="mb-0">Historial de Rutas</h3>
-        <a href="{% url 'dashboard:viaje_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i> Asignar Viaje
-        </a>
-    </div>
+<div class="container-fluid py-4 px-md-5">
     
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th class="ps-4">Folio</th>
-                    <th>Fecha</th>
-                    <th>Unidad</th>
-                    <th>Operador</th>
-                    <th>Zona de Entrega</th>
-                    <th>Tipo</th>
-                    <th>Estado</th>
-                    <th class="pe-4 text-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for viaje in viajes %}
-                <tr>
-                    <td class="ps-4"><strong>#{{ viaje.n_viaje }}</strong></td>
-                    <td>{{ viaje.fecha|date:"d M Y" }}</td>
-                    <td><span class="badge bg-light text-dark border">{{ viaje.unidad.nUnidad }}</span></td>
-                    <td>{{ viaje.operador.nombre }}</td>
-                    <td>
-                        {% if viaje.zona %}
-                            <span class="badge bg-secondary"><i class="fas fa-map-marker-alt me-1"></i> {{ viaje.zona.nombre }}</span>
-                        {% else %}
-                            <span class="text-muted small">-</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ viaje.get_tipo_viaje_display }}</td>
-                    <td>
-                        {% if viaje.estado_actual == 'ESPERA' %}
-                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">{{ viaje.get_estado_actual_display }}</span>
-                        {% elif viaje.estado_actual == 'TRANSITO' %}
-                            <span class="badge bg-success px-3 py-2 rounded-pill">{{ viaje.get_estado_actual_display }}</span>
-                        {% elif viaje.estado_actual == 'FINALIZADO' %}
-                            <span class="badge bg-primary px-3 py-2 rounded-pill">{{ viaje.get_estado_actual_display }}</span>
-                        {% else %}
-                            <span class="badge bg-secondary px-3 py-2 rounded-pill">{{ viaje.get_estado_actual_display }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="pe-4 text-center">
-                        <div class="d-flex gap-2 justify-content-center">
-                            <a href="{% url 'dashboard:viaje_update' viaje.pk %}" class="btn btn-sm btn-outline-primary"
-                               title="Editar" aria-label="Editar viaje {{ viaje.folio|default:viaje.pk }}">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            {% if viaje.tiene_evaluacion %}
-                                <a href="{% url 'dashboard:evaluacion_entrega_update' viaje.evaluacion.pk %}" class="btn btn-sm btn-outline-success"
-                                   title="Ver Evaluación" aria-label="Ver evaluación del viaje {{ viaje.folio|default:viaje.pk }}">
-                                    <i class="fas fa-star"></i>
-                                </a>
-                            {% elif viaje.estado_actual == 'FINALIZADO' or viaje.estado_actual == 'TRANSITO' %}
-                                <a href="{% url 'dashboard:evaluacion_entrega_create' viaje.id %}" class="btn btn-sm btn-warning"
-                                   title="Evaluar" aria-label="Evaluar viaje {{ viaje.folio|default:viaje.pk }}">
-                                    <i class="far fa-star me-1"></i> Evaluar
-                                </a>
-                            {% endif %}
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="100%" class="text-center py-5 border-0">
-                        <div class="empty-state d-flex flex-column align-items-center justify-content-center py-5">
-                            <i class="fas fa-truck-moving mb-3 text-secondary opacity-25" style="font-size: 6rem;"></i>
-                            <h4 class="fw-bold mb-2">Bitácora Vacía</h4>
-                            <p class="text-muted mb-4" style="max-width: 450px; font-size: 1.1rem;">
-                                Comienza asignando rutas a tus operadores para llevar un control detallado de las entregas.
-                            </p>
-                            <a href="{% url 'dashboard:viaje_create' %}" class="btn btn-primary btn-lg shadow-sm px-5" style="border-radius: 50px;">
-                                <i class="fas fa-plus me-2"></i> Programar Primer Viaje
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- HEADER PREMIUM -->
+    <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+        <div class="card-body p-0">
+            <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="header-icon-box me-3">
+                        <i class="fas fa-route fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">Bitácora de Viajes</h4>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Seguimiento de Rutas & Entregas</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="bg-white bg-opacity-10 rounded-pill px-4 py-2 border border-white border-opacity-10 d-flex align-items-center">
+                        <span class="fw-bold me-2">{{ viajes.count|default:"0" }}</span>
+                        <span class="x-small text-uppercase opacity-75">Servicios</span>
+                    </div>
+                    <a href="{% url 'dashboard:viaje_create' %}" class="btn btn-white rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fas fa-plus-circle me-2 text-primary"></i>Programar Viaje
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN TABLE CARD -->
+    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table  align-middle mb-0 premium-table">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Folio Viaje</th>
+                            <th>Fecha de Ejecución</th>
+                            <th>Equipo (Unidad/Operador)</th>
+                            <th>Zona Destino</th>
+                            <th>Estatus Operativo</th>
+                            <th class="text-center pe-4">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for viaje in viajes %}
+                        <tr class="animate__animated animate__fadeIn">
+                            <td class="ps-4">
+                                <div class="badge bg-primary-subtle text-primary border-0 rounded-4 px-3 py-2 fw-800 fs-6 shadow-xs">
+                                    #{{ viaje.n_viaje|default:viaje.id }}
+                                </div>
+                                <div class="mt-1 x-small text-muted text-uppercase tracking-wider fw-bold opacity-75">{{ viaje.get_tipo_viaje_display }}</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-day bg-light rounded-3 p-2 text-center me-3 shadow-xs" style="min-width: 45px;">
+                                        <div class="x-small text-muted text-uppercase fw-bold">{{ viaje.fecha|date:"M" }}</div>
+                                        <div class="fs-5 fw-bold text-dark">{{ viaje.fecha|date:"d" }}</div>
+                                    </div>
+                                    <span class="small fw-semibold text-muted">{{ viaje.fecha|date:"Y" }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="badge bg-dark rounded-pill px-2 py-1 x-small me-2">{{ viaje.unidad.nUnidad }}</span>
+                                        <span class="small fw-bold text-dark">{{ viaje.operador.nombre }}</span>
+                                    </div>
+                                    <span class="x-small text-muted"><i class="fas fa-id-card me-1"></i>{{ viaje.operador.puesto|default:"OPERADOR" }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if viaje.zona %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="zone-pill py-1 px-3 rounded-pill bg-light border-0 shadow-xs d-flex align-items-center">
+                                            <i class="fas fa-map-marker-alt text-primary me-2 x-small"></i>
+                                            <span class="small fw-bold text-dark">{{ viaje.zona.nombre }}</span>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted italic x-small">No asignada</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill px-3 py-2 fw-bold x-small shadow-xs border-0
+                                    {% if viaje.estado_actual == 'ESPERA' %}bg-warning-subtle text-warning
+                                    {% elif viaje.estado_actual == 'TRANSITO' %}bg-success-subtle text-success
+                                    {% elif viaje.estado_actual == 'FINALIZADO' %}bg-primary-subtle text-primary
+                                    {% else %}bg-secondary-subtle text-muted{% endif %}">
+                                    <i class="fas fa-circle me-1 x-small opacity-50"></i>{{ viaje.get_estado_actual_display|upper }}
+                                </span>
+                            </td>
+                            <td class="text-center pe-4">
+                                <div class="btn-group shadow-xs rounded-pill bg-light p-1">
+                                    <a href="{% url 'dashboard:viaje_update' viaje.pk %}" class="btn btn-white btn-sm rounded-circle border-0 text-primary hover-scale" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if viaje.tiene_evaluacion %}
+                                        <a href="{% url 'dashboard:evaluacion_entrega_update' viaje.evaluacion.pk %}" class="btn btn-white btn-sm rounded-circle border-0 text-success hover-scale animate__animated animate__pulse animate__infinite" title="Ver Evaluación">
+                                            <i class="fas fa-star"></i>
+                                        </a>
+                                    {% elif viaje.estado_actual == 'FINALIZADO' or viaje.estado_actual == 'TRANSITO' %}
+                                        <a href="{% url 'dashboard:evaluacion_entrega_create' viaje.id %}" class="btn btn-white btn-sm rounded-circle border-0 text-warning hover-scale" title="Evaluar">
+                                            <i class="far fa-star"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="py-5">
+                                    <i class="fas fa-truck-loading fa-4x text-muted opacity-25 mb-4"></i>
+                                    <h5 class="fw-bold text-muted">Aún no hay rutas programadas</h5>
+                                    <p class="text-muted small">Comienza programando el primer viaje para llevar el control logístico.</p>
+                                    <a href="{% url 'dashboard:viaje_create' %}" class="btn btn-primary rounded-pill px-5 py-3 mt-3 fw-bold shadow-lg">
+                                        <i class="fas fa-plus me-2"></i>PROGRAMAR PRIMER VIAJE
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    .grad-primary { background: linear-gradient(135deg, var(--primary-blue), #1e3c72) !important; }
+    .btn-white { background: white; color: var(--primary-blue); }
+    .btn-white:hover { background: #f8f9fa; color: #1e3c72; }
+
+    .premium-table thead th { 
+        font-weight: 700; font-size: 0.75rem; color: #7c8db5; text-transform: uppercase; 
+        letter-spacing: 1px; padding: 1.25rem 1rem; border: 0;
+    }
+    .premium-table tbody td { padding: 1.25rem 1rem; border-color: #f8f9fa; font-size: 0.9rem; }
+    
+    .avatar-day { border: 1px solid rgba(0,0,0,0.05); }
+    .zone-pill { border: 1px solid rgba(0,0,0,0.02) !important; }
+    
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.15); }
+    
+    .x-small { font-size: 0.72rem; }
+    .fw-800 { font-weight: 800; }
+    .tracking-wider { letter-spacing: 0.1em; }
+</style>
 {% endblock %}

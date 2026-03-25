@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}Editar Usuario: {{ object.usuario.username }}{% endblock %}
+
+{% block content %}
+<div class="form-container" style="max-width: 680px; margin: 0 auto;">
+    <div class="form-header">
+        <h3><i class="fas fa-user-edit me-2" style="color: var(--primary-blue);"></i> Editar Personal</h3>
+        <p class="text-muted mb-0">Actualiza los datos y permisos de {{ object.nombre }} {{ object.apellido_paterno }}.</p>
+    </div>
+
+    <div class="card-body p-4">
+        <div id="formContainer">
+            <form method="post" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
+                {% csrf_token %}
+                {{ form|crispy }}
+
+                <div class="d-flex gap-3 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="fas fa-save me-2"></i> Guardar Cambios
+                    </button>
+                    <a href="{% url 'dashboard:usuarios_list' %}" class="btn btn-outline-secondary px-4">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function initRoleSync() {
+    const puestoSelect = document.getElementById('id_puesto');
+    if(!puestoSelect) return;
+    
+    function syncRoles() {
+        const selectedPuesto = puestoSelect.value;
+        const checkboxes = document.querySelectorAll('input[name="roles_secundarios"]');
+        
+        checkboxes.forEach(cb => {
+            const wrapper = cb.closest('.form-check');
+            const label = wrapper ? wrapper.querySelector('label') : null;
+            
+            // Restablecer estilos
+            cb.disabled = false;
+            if(wrapper) wrapper.style.opacity = '1';
+            if(label && label.innerHTML.includes('(Principal)')) {
+                label.innerHTML = label.innerHTML.replace(/<span.*?>\(Principal\)<\/span>/, '');
+            }
+            
+            // Aplicar estilo al que coincide con el puesto
+            if(cb.value === selectedPuesto) {
+                cb.checked = true;
+                cb.disabled = true;
+                if(wrapper) wrapper.style.opacity = '0.6';
+                if(label) label.innerHTML += ' <span class="badge bg-primary ms-1" style="font-size:0.7em;">(Principal)</span>';
+            }
+        });
+    }
+    
+    // Escuchar el evento de cambio
+    puestoSelect.addEventListener('change', syncRoles);
+    
+    // Ejecutar inmediatamente
+    syncRoles();
+}
+
+// Ejecutar al cargar la página
+document.addEventListener('DOMContentLoaded', initRoleSync);
+
+// Ejecutar si HTMX recarga el formulario por errores de validación
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if(evt.detail.target.id === 'formContainer') {
+        initRoleSync();
+    }
+});
+</script>
+{% endblock %}

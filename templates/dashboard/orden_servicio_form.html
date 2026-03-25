@@ -112,291 +112,289 @@
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <div class="form-header">
-        <h3><i class="fas fa-clipboard-list me-2"></i> Nueva Orden de Servicio</h3>
-        <p class="text-muted mb-0">Registra el mantenimiento y revisiones de la unidad conforme a los lineamientos SDC.</p>
-    </div>
-    <div style="padding: 24px;">
-
-<div id="formContainer">
-<form method="post" id="ordenServicioForm" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
-    {% csrf_token %}
-    
-    {% for hidden in form.hidden_fields %}
-        {{ hidden }}
-    {% endfor %}
-
-    <!-- 1. Datos Principales -->
-    <div class="os-section">
-        <div class="os-section-title">
-            <i class="fas fa-truck"></i> Datos del Servicio
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-            {{ form.fecha|as_crispy_field }}
-            {{ form.unidad|as_crispy_field }}
-            {{ form.kilometraje|as_crispy_field }}
-        </div>
-        
-        <label class="form-label" style="margin-top: 15px; font-weight: bold;">Nivel de Gasolina Actual:</label>
-        <div class="gas-level-container">
-            <div class="gas-btn" data-level="25">
-                <i class="fas fa-battery-quarter gas-icon" style="color: #dc3545;"></i>
-                <span>25%</span>
-            </div>
-            <div class="gas-btn" data-level="50">
-                <i class="fas fa-battery-half gas-icon" style="color: #ffc107;"></i>
-                <span>50%</span>
-            </div>
-            <div class="gas-btn" data-level="75">
-                <i class="fas fa-battery-three-quarters gas-icon" style="color: #28a745;"></i>
-                <span>75%</span>
-            </div>
-            <div class="gas-btn" data-level="100">
-                <i class="fas fa-battery-full gas-icon" style="color: #28a745;"></i>
-                <span>100%</span>
-            </div>
-        </div>
-        {% if form.nivel_gasolina.errors %}
-            <div class="invalid-feedback" style="display:block;">Selecciona un nivel de gasolina.</div>
-        {% endif %}
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
-            {{ form.hora_entrada|as_crispy_field }}
-            {{ form.hora_salida|as_crispy_field }}
-        </div>
-    </div>
-
-    <!-- 2. Descripción y Mantenimiento -->
-    <div class="os-section">
-        <div class="os-section-title">
-            <i class="fas fa-tools"></i> Detalle de Mantenimiento
-        </div>
-        
-        <div class="mb-3">
-            {{ form.tipo_mantenimiento|as_crispy_field }}
-        </div>
-        
-        {{ form.descripcion_detallada|as_crispy_field }}
-        
-        <label class="form-label" style="margin-top: 15px; font-weight: bold;">Responsable de realizar mantenimiento:</label>
-        <div class="resp-container">
-            <div class="resp-btn" data-resp="INTERNO">Taller Interno</div>
-            <div class="resp-btn" data-resp="EXTERNO">Taller Externo</div>
-        </div>
-        {% if form.responsable_mantenimiento.errors %}
-            <div class="invalid-feedback" style="display:block;">Selecciona un responsable.</div>
-        {% endif %}
-        
-        <div id="externo_container" style="display: none;">
-            {{ form.nombre_responsable_externo|as_crispy_field }}
-        </div>
-    </div>
-
-    <!-- 3. Firmas Digitales -->
-    <div class="os-section" style="border-left-color: #e65100;">
-        <div class="os-section-title" style="color: #e65100;">
-            <i class="fas fa-signature"></i> Autorización (Firmas Táctiles)
-        </div>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-            
-            <!-- Firma Solicitante -->
-            <div>
-                {{ form.nombre_solicitante|as_crispy_field }}
-                <label class="form-label font-weight-bold">Firma de Solicitante:</label>
-                <div class="signature-wrapper">
-                    <canvas id="pad_solicitante" class="signature-pad"></canvas>
-                    <div class="sig-controls">
-                        <button type="button" class="sig-btn" onclick="sigSolicitante.clear()">
-                            <i class="fas fa-eraser"></i> Limpiar
-                        </button>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 24px;">
+                <!-- Header Premium con Estilo Instrumental -->
+                <div class="card-header border-0 py-4 px-5 bg-primary position-relative overflow-hidden">
+                    <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 10rem; transform: translate(25%, -20%);">
+                        <i class="fas fa-tools text-white"></i>
+                    </div>
+                    <div class="d-flex align-items-center position-relative">
+                        <div class="bg-white rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px; background-color: rgba(255,255,255,0.2) !important;">
+                            <i class="fas fa-clipboard-check text-white fs-3"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0 text-white fw-bold">Orden de Servicio & Mantenimiento</h4>
+                            <p class="text-white-50 small mb-0">Control de integridad mecánica según lineamientos SDC</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Firma Autorizante -->
-            <div>
-                {{ form.nombre_autorizante|as_crispy_field }}
-                <label class="form-label font-weight-bold">Firma de Autorizante (Opcional):</label>
-                <div class="signature-wrapper">
-                    <canvas id="pad_autorizante" class="signature-pad"></canvas>
-                    <div class="sig-controls">
-                        <button type="button" class="sig-btn" onclick="sigAutorizante.clear()">
-                            <i class="fas fa-eraser"></i> Limpiar
-                        </button>
-                    </div>
+                <div class="card-body p-4 p-md-5">
+                    <form hx-post="{{ request.path }}" 
+                          hx-indicator="#form-indicator"
+                          id="ordenServicioForm"
+                          class="needs-validation">
+                        {% csrf_token %}
+                        
+                        <!-- Overlay Spinner Premium -->
+                        <div id="form-indicator" class="htmx-indicator">
+                            <div class="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center" 
+                                 style="background: rgba(var(--bg-card-rgb), 0.85); backdrop-filter: blur(4px); z-index: 9999;">
+                                <div class="spinner-grow text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+                                <h6 class="mt-3 fw-bold text-primary tracking-widest text-uppercase">Registrando Orden...</h6>
+                            </div>
+                        </div>
+
+                        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+                        <div class="row g-5">
+                            <!-- BLOQUE 1: DATOS OPERATIVOS -->
+                            <div class="col-lg-7">
+                                <div class="premium-step mb-5">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <span class="step-num shadow-sm me-3">1</span>
+                                        <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Información General</h5>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">{{ form.fecha|as_crispy_field }}</div>
+                                        <div class="col-md-6">{{ form.unidad|as_crispy_field }}</div>
+                                        <div class="col-md-6">{{ form.kilometraje|as_crispy_field }}</div>
+                                        <div class="col-md-6">{{ form.tipo_mantenimiento|as_crispy_field }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="premium-step mb-5">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <span class="step-num shadow-sm me-3">2</span>
+                                        <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Estado de la Unidad</h5>
+                                    </div>
+                                    
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-3">Nivel de Combustible Actual</label>
+                                    <div class="gas-level-container mb-4">
+                                        <div class="gas-btn" data-level="25">
+                                            <i class="fas fa-battery-quarter gas-icon"></i><span>25%</span>
+                                        </div>
+                                        <div class="gas-btn" data-level="50">
+                                            <i class="fas fa-battery-half gas-icon"></i><span>50%</span>
+                                        </div>
+                                        <div class="gas-btn" data-level="75">
+                                            <i class="fas fa-battery-three-quarters gas-icon"></i><span>75%</span>
+                                        </div>
+                                        <div class="gas-btn" data-level="100">
+                                            <i class="fas fa-battery-full gas-icon"></i><span>100%</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">{{ form.hora_entrada|as_crispy_field }}</div>
+                                        <div class="col-md-6">{{ form.hora_salida|as_crispy_field }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="premium-step mb-5">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <span class="step-num shadow-sm me-3">3</span>
+                                        <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Responsable y Detalle</h5>
+                                    </div>
+                                    
+                                    <div class="resp-container mb-4">
+                                        <div class="resp-btn" data-resp="INTERNO">Taller Interno</div>
+                                        <div class="resp-btn" data-resp="EXTERNO">Servicio Externo</div>
+                                    </div>
+                                    
+                                    <div id="externo_container" class="mb-4 animate__animated animate__fadeIn" style="display: none;">
+                                        {{ form.nombre_responsable_externo|as_crispy_field }}
+                                    </div>
+
+                                    {{ form.descripcion_detallada|as_crispy_field }}
+                                    {{ form.comentarios|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- BLOQUE 2: AUTORIZACIÓN Y PRÓXIMOS PASOS -->
+                            <div class="col-lg-5">
+                                <div class="premium-step mb-5">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <span class="step-num shadow-sm me-3">4</span>
+                                        <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Autorización Digital</h5>
+                                    </div>
+                                    
+                                    <!-- Firma Solicitante -->
+                                    <div class="mb-4">
+                                        {{ form.nombre_solicitante|as_crispy_field }}
+                                        <div class="signature-card p-3 rounded-4 border bg-white shadow-sm mt-2">
+                                            <p class="x-small fw-bold text-muted mb-2 text-uppercase">Firma Táctil Solicitante</p>
+                                            <div class="signature-wrapper rounded-3 overflow-hidden">
+                                                <canvas id="pad_solicitante" class="signature-pad"></canvas>
+                                                <button type="button" class="btn btn-sm btn-light position-absolute bottom-0 end-0 m-2 opacity-75" onclick="sigSolicitante.clear()">
+                                                    <i class="fas fa-eraser me-1"></i>Limpiar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Firma Autorizante -->
+                                    <div class="mb-4">
+                                        {{ form.nombre_autorizante|as_crispy_field }}
+                                        <div class="signature-card p-3 rounded-4 border bg-white shadow-sm mt-2">
+                                            <p class="x-small fw-bold text-muted mb-2 text-uppercase">Firma Táctil Autorizante (Opcional)</p>
+                                            <div class="signature-wrapper rounded-3 overflow-hidden">
+                                                <canvas id="pad_autorizante" class="signature-pad"></canvas>
+                                                <button type="button" class="btn btn-sm btn-light position-absolute bottom-0 end-0 m-2 opacity-75" onclick="sigAutorizante.clear()">
+                                                    <i class="fas fa-eraser me-1"></i>Limpiar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="premium-step">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <span class="step-num shadow-sm me-3" style="background: var(--primary-green);">5</span>
+                                        <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Próximo Mantenimiento</h5>
+                                    </div>
+                                    <div class="p-4 rounded-4 bg-success bg-opacity-10 border border-success border-opacity-10">
+                                        <div class="row g-3">
+                                            <div class="col-12">{{ form.proximo_servicio_km|as_crispy_field }}</div>
+                                            <div class="col-12">{{ form.proximo_servicio_fecha|as_crispy_field }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-4 mt-5 pt-4 border-top">
+                            <a href="{% url 'dashboard:orden_servicio_list' %}" class="btn btn-link text-muted text-decoration-none fw-bold">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar y Volver
+                            </a>
+                            <button type="button" id="btnGuardar" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-lg fs-5" style="min-width: 250px;">
+                                GUARDAR ORDEN<i class="fas fa-check-circle ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-
         </div>
     </div>
-
-    <!-- 4. Próximos Servicios SDC 3.5.1 -->
-    <div class="os-section" style="border-left-color: #28a745;">
-        <div class="os-section-title" style="color: #28a745;">
-            <i class="fas fa-calendar-check"></i> Programación Próximo Servicio Preventivo (Opcional)
-        </div>
-        <p class="text-muted small mb-3">Establezca cuándo se debe volver a revisar la unidad para cumplir con los lineamientos SDC.</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            {{ form.proximo_servicio_km|as_crispy_field }}
-            {{ form.proximo_servicio_fecha|as_crispy_field }}
-        </div>
-    </div>
-
-    <!-- 5. Comentarios Finales -->
-    <div class="os-section">
-        {{ form.comentarios|as_crispy_field }}
-    </div>
-
-    <!-- Submit -->
-    <div style="padding: 20px; border-top: 1px solid var(--border-color); margin-top: 12px; display: flex; gap: 16px; justify-content: flex-end;">
-        <a href="{% url 'dashboard:orden_servicio_list' %}" class="btn btn-outline-secondary px-4">Cancelar</a>
-        <button type="button" id="btnGuardar" class="btn btn-primary btn-lg px-5">
-            <i class="fas fa-save me-2"></i> Guardar Orden de Servicio
-        </button>
-    </div>
-
-</form>
 </div>
 
-    </div><!-- end padding -->
-</div><!-- end form-container -->
+<style>
+    .premium-step .step-num {
+        background: var(--primary-blue); color: white;
+        width: 32px; height: 32px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 10px; font-weight: 800; font-size: 0.9rem;
+        box-shadow: 0 4px 12px rgba(var(--primary-blue-rgb), 0.2);
+    }
+    
+    .gas-level-container { display: flex; gap: 12px; margin-bottom: 2rem; }
+    .gas-btn {
+        flex: 1; padding: 16px 8px; background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 16px;
+        cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-align: center;
+        display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 700;
+        color: var(--text-main);
+    }
+    .gas-btn .gas-icon { font-size: 1.6rem; transition: transform 0.2s; }
+    
+    /* Level Colors (Light Mode) */
+    .gas-btn[data-level="25"] .gas-icon { color: #f43f5e; }     /* Rose-500 */
+    .gas-btn[data-level="50"] .gas-icon { color: #f59e0b; }     /* Amber-500 */
+    .gas-btn[data-level="75"] .gas-icon { color: #3b82f6; }     /* Blue-500 */
+    .gas-btn[data-level="100"] .gas-icon { color: #10b981; }    /* Emerald-500 */
+
+    .gas-btn:hover { border-color: var(--primary-blue); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .gas-btn.active { background: var(--primary-blue); border-color: var(--primary-blue); color: white !important; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 59, 112, 0.3); }
+    .gas-btn.active .gas-icon { color: white !important; transform: scale(1.1); }
+
+    /* Dark Mode specific Fixes */
+    body.dark-theme .gas-btn { background: #1e293b; border-color: #334155; }
+    body.dark-theme .gas-btn.active { background: var(--primary-blue); }
+
+    /* Responsable Toggle */
+    .resp-container { display: flex; gap: 12px; }
+    .resp-btn {
+        flex: 1; padding: 12px; border: 2px solid #eee; border-radius: 12px; text-align: center;
+        cursor: pointer; font-weight: bold; transition: all 0.2s ease;
+    }
+    .resp-btn.active { background: var(--primary-orange); border-color: var(--primary-orange); color: white; }
+
+    /* Signature */
+    .signature-wrapper { position: relative; background: #fafafa; border: 1px inset #eee; min-height: 180px; }
+    .signature-pad { width: 100%; height: 180px; touch-action: none; cursor: crosshair; }
+    
+    .form-control, .form-select { border-radius: 12px; }
+    textarea.form-control { border-radius: 16px; min-height: 120px; }
+    
+    .htmx-indicator { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .htmx-request .htmx-indicator { opacity: 1; pointer-events: auto; }
+</style>
 {% endblock %}
 
 {% block extra_js %}
-<!-- Incluir Signature Pad Library CDN -->
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // --- LÓGICA DE BOTONES: NIVEL DE GASOLINA ---
+    // --- GAS ---
     const gasInput = document.getElementById('id_nivel_gasolina');
     const gasBtns = document.querySelectorAll('.gas-btn');
-
     gasBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            // Remove active from all
             gasBtns.forEach(b => b.classList.remove('active'));
-            // Add to clicked
             btn.classList.add('active');
-            // Update hidden input
             gasInput.value = btn.dataset.level;
         });
     });
-    
-    // Pre-seleccionar si hay error de validación
-    if(gasInput.value) {
-        let matchingBtn = document.querySelector(`.gas-btn[data-level="${gasInput.value}"]`);
-        if(matchingBtn) matchingBtn.classList.add('active');
-    }
+    if(gasInput.value) document.querySelector(`.gas-btn[data-level="${gasInput.value}"]`)?.classList.add('active');
 
-    // --- LÓGICA DE BOTONES: RESPONSABLE ---
+    // --- RESP ---
     const respInput = document.getElementById('id_responsable_mantenimiento');
     const respBtns = document.querySelectorAll('.resp-btn');
-    const externoContainer = document.getElementById('externo_container');
-
+    const extCont = document.getElementById('externo_container');
     respBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             respBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             respInput.value = btn.dataset.resp;
-            
-            // Toggle externo name field
-            if(respInput.value === 'EXTERNO') {
-                externoContainer.style.display = 'block';
-            } else {
-                externoContainer.style.display = 'none';
-                document.getElementById('id_nombre_responsable_externo').value = '';
-            }
+            extCont.style.display = (respInput.value === 'EXTERNO') ? 'block' : 'none';
         });
     });
-
     if(respInput.value) {
-        let matchingBtn = document.querySelector(`.resp-btn[data-resp="${respInput.value}"]`);
-        if(matchingBtn) {
-            matchingBtn.classList.add('active');
-            if(respInput.value === 'EXTERNO') externoContainer.style.display = 'block';
-        }
+        document.querySelector(`.resp-btn[data-resp="${respInput.value}"]`)?.classList.add('active');
+        if(respInput.value === 'EXTERNO') extCont.style.display = 'block';
     }
 
-    // --- LÓGICA DE FIRMAS (SIGNATURE PAD) ---
-    
-    // Helper para redimensionar el canvas (necesario para dispositivos high-DPI)
-    function resizeCanvas(canvas) {
-        var ratio =  Math.max(window.devicePixelRatio || 1, 1);
+    // --- SIGNATURES ---
+    function initPad(id, color) {
+        const canvas = document.getElementById(id);
+        const ratio =  Math.max(window.devicePixelRatio || 1, 1);
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
         canvas.getContext("2d").scale(ratio, ratio);
+        return new SignaturePad(canvas, { penColor: color });
     }
+    window.sigSolicitante = initPad('pad_solicitante', "rgb(0, 0, 128)");
+    window.sigAutorizante = initPad('pad_autorizante', "rgb(0, 0, 128)");
 
-    // Solicitante
-    const canvasSolicitante = document.getElementById('pad_solicitante');
-    window.sigSolicitante = new SignaturePad(canvasSolicitante, {
-        penColor: "rgb(0, 0, 128)", // Blue ink
-        backgroundColor: "rgb(250, 250, 250)" // Light background
-    });
-    resizeCanvas(canvasSolicitante);
-
-    // Autorizante
-    const canvasAutorizante = document.getElementById('pad_autorizante');
-    window.sigAutorizante = new SignaturePad(canvasAutorizante, {
-        penColor: "rgb(0, 0, 128)",
-        backgroundColor: "rgb(250, 250, 250)"
-    });
-    resizeCanvas(canvasAutorizante);
-
-    // Re-adjust canvas on window resize
-    window.addEventListener("resize", function() {
-        if(!window.sigSolicitante.isEmpty()) {
-            // Un resize destructivo borra la firma nativamente, idealmente guardamos el data y reescribimos
-            // Por simplicidad, resize() sin restore:
-            resizeCanvas(canvasSolicitante);
-        } else {
-            resizeCanvas(canvasSolicitante);
-        }
-        
-        if(!window.sigAutorizante.isEmpty()) {
-            resizeCanvas(canvasAutorizante);
-        } else {
-            resizeCanvas(canvasAutorizante);
-        }
-    });
-
-    // --- PRE-SUBMIT: EXTRAER BASE64 ---
-    const form = document.getElementById('ordenServicioForm');
+    // --- SUBMIT ---
     const btnGuardar = document.getElementById('btnGuardar');
-    
-    const hiddenSigSol = document.getElementById('id_firma_solicitante_base64');
-    const hiddenSigAut = document.getElementById('id_firma_autorizante_base64');
-
     btnGuardar.addEventListener('click', function() {
-        // Validar campos de UI invisibles
-        if(!gasInput.value) {
-            alert('Por favor selecciona el Nivel de Gasolina.');
+        if(!gasInput.value || !respInput.value) {
+            alert('Por favor complete nivel de gasolina y responsable.');
             return;
         }
-        if(!respInput.value) {
-            alert('Por favor selecciona el Responsable del Mantenimiento.');
-            return;
-        }
+        const hS = document.getElementById('id_firma_solicitante_base64');
+        const hA = document.getElementById('id_firma_autorizante_base64');
+        if (!sigSolicitante.isEmpty()) hS.value = sigSolicitante.toDataURL();
+        if (!sigAutorizante.isEmpty()) hA.value = sigAutorizante.toDataURL();
 
-        // Extraer Firmas si no están vacías
-        if (!window.sigSolicitante.isEmpty()) {
-            hiddenSigSol.value = window.sigSolicitante.toDataURL("image/png");
-        }
-        if (!window.sigAutorizante.isEmpty()) {
-            hiddenSigAut.value = window.sigAutorizante.toDataURL("image/png");
-        }
-
-        // Change button state
-        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Guardando...';
         btnGuardar.disabled = true;
-
-        // Submit The Form
-        form.requestSubmit();
+        document.getElementById('ordenServicioForm').requestSubmit();
     });
-
 });
 </script>
 {% endblock %}

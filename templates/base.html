@@ -19,7 +19,7 @@
       rel="stylesheet"
     />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.30" />
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.60" />
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     {% block extra_css %}{% endblock %}
@@ -84,12 +84,14 @@
         <!-- === SECCIÓN: OPERACIONES === -->
         <li class="nav-section-label">Operaciones</li>
 
+        {% if request.user.is_superuser or request.user.personal.puesto == 'MOSTRADOR' %}
         <li class="nav-item">
           <a href="{% url 'dashboard:mostrador_home' %}" class="nav-link {% if 'mostrador' in request.path %}active{% endif %}">
             <i class="fas fa-cash-register nav-icon"></i>
             <span>Mostrador</span>
           </a>
         </li>
+        {% endif %}
 
         {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' and request.user.personal.puesto != 'MOSTRADOR' %}
         <li class="nav-item">
@@ -100,65 +102,67 @@
         </li>
         {% endif %}
 
-        {% if request.user.personal.puesto == 'MOSTRADOR' %}
-        <li class="nav-item">
-          <a href="{% url 'dashboard:zona_entrega_map' %}" class="nav-link {% if 'mapa' in request.path %}active{% endif %}">
-            <i class="fas fa-globe-americas nav-icon"></i>
-            <span>Mapa de Zonas</span>
-          </a>
-        </li>
-        {% endif %}
-
-        <!-- === SECCIÓN: LOGÍSTICA === -->
-        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' and request.user.personal.puesto != 'MOSTRADOR' %}
-        <li class="nav-section-label">Logística</li>
-        {% endif %}
-
-        <!-- Rutas y Viajes Dropdown -->
-        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' and request.user.personal.puesto != 'MOSTRADOR' %}
+        {% if request.user.is_superuser or request.user.personal.puesto == 'MOSTRADOR' or request.user.personal.puesto == 'ADMIN' or request.user.personal.puesto == 'LOGISTICA' or request.user.personal.puesto == 'RUTAS' %}
+        <!-- Zonas de Entrega y Mapa disponibles para todos menos chofer -->
         <li class="nav-item">
           <a class="nav-link collapsed"
             data-bs-toggle="collapse"
-            href="#rutasSubmenu"
+            href="#zonasSubmenu"
             role="button"
-            aria-expanded="{% if 'viajes' in request.path or 'zonas' in request.path %}true{% else %}false{% endif %}"
-            aria-controls="rutasSubmenu"
+            aria-expanded="{% if 'zonas' in request.path or 'mapa' in request.path %}true{% else %}false{% endif %}"
+            aria-controls="zonasSubmenu"
             style="display: flex; justify-content: space-between; align-items: center;"
           >
             <div style="display: flex; align-items: center;">
               <i class="fas fa-map-marked-alt nav-icon"></i>
-              <span>Rutas y Viajes</span>
+              <span>Zonas de Entrega</span>
             </div>
             <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.7;"></i>
           </a>
-          <div class="collapse {% if 'viajes' in request.path or 'zonas' in request.path %}show{% endif %}" id="rutasSubmenu">
+          <div class="collapse {% if 'zonas' in request.path or 'mapa' in request.path %}show{% endif %}" id="zonasSubmenu">
             <ul class="nav-submenu">
               <li class="nav-item">
-                <a href="{% url 'dashboard:viajes_list' %}" class="nav-link nav-sub-link {% if 'viajes' in request.path %}active{% endif %}">
-                  <i class="fas fa-route nav-icon"></i>
-                  <span>Historial de Viajes</span>
-                </a>
-              </li>
-              {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' %}
-              <li class="nav-item">
                 <a href="{% url 'dashboard:zona_entrega_list' %}" class="nav-link nav-sub-link {% if 'zonas' in request.path and 'mapa' not in request.path %}active{% endif %}">
-                  <i class="fas fa-map-pin nav-icon"></i>
-                  <span>Zonas de Entrega</span>
+                  <i class="fas fa-list-ol nav-icon"></i>
+                  <span>Lista y Registro</span>
                 </a>
               </li>
               <li class="nav-item">
                 <a href="{% url 'dashboard:zona_entrega_map' %}" class="nav-link nav-sub-link {% if 'mapa' in request.path %}active{% endif %}">
                   <i class="fas fa-globe-americas nav-icon"></i>
-                  <span>Mapa de Zonas</span>
+                  <span>Mapa Interactivo</span>
                 </a>
               </li>
-              {% endif %}
             </ul>
           </div>
         </li>
         {% endif %}
 
-        {% if request.user.is_superuser or request.user.personal.puesto != 'CHOFER' and request.user.personal.puesto != 'MOSTRADOR' %}
+        <!-- === SECCIÓN: LOGÍSTICA === -->
+        {% if request.user.is_superuser or request.user.personal.puesto == 'LOGISTICA' or request.user.personal.puesto == 'RUTAS' or request.user.personal.puesto == 'ADMIN' %}
+        <li class="nav-section-label">Logística</li>
+        {% endif %}
+        
+        {% if request.user.is_superuser or request.user.personal.puesto == 'LOGISTICA' %}
+        <li class="nav-item">
+          <a href="{% url 'dashboard:logistica_dashboard' %}" class="nav-link {% if 'logistica' in request.path %}active{% endif %}">
+            <i class="fas fa-layer-group nav-icon"></i>
+            <span>Command Center</span>
+          </a>
+        </li>
+        {% endif %}
+
+        <!-- Historial de Viajes (Ya no es dropdown porque es un solo elemento) -->
+        {% if request.user.is_superuser or request.user.personal.puesto == 'LOGISTICA' or request.user.personal.puesto == 'RUTAS' or request.user.personal.puesto == 'ADMIN' %}
+        <li class="nav-item">
+          <a href="{% url 'dashboard:viajes_list' %}" class="nav-link {% if 'viajes' in request.path %}active{% endif %}">
+            <i class="fas fa-route nav-icon"></i>
+            <span>Historial de Viajes</span>
+          </a>
+        </li>
+        {% endif %}
+
+        {% if request.user.is_superuser or request.user.personal.puesto == 'ADMIN' or request.user.personal.puesto == 'LOGISTICA' %}
         <!-- Control de Gastos Dropdown -->
         <li class="nav-item">
           <a class="nav-link collapsed"
@@ -267,6 +271,34 @@
         </div>
 
         <div class="user-profile dropdown" style="display: flex; align-items: center; gap: 15px;">
+          
+          <!-- Workspace Switcher (Modo de Vista) -->
+          {% if modos_vista_permitidos %}
+          <div class="dropdown me-2">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; font-weight: 500;">
+              {% if modo_vista_actual == 'RUTAS' or modo_vista_actual == 'LOGISTICA' %}<i class="fas fa-truck-moving me-1"></i>
+              {% elif modo_vista_actual == 'MOSTRADOR' %}<i class="fas fa-cash-register me-1"></i>
+              {% elif modo_vista_actual == 'ADMIN' %}<i class="fas fa-crown me-1 text-warning"></i>
+              {% else %}<i class="fas fa-briefcase me-1"></i>{% endif %}
+              {{ modo_vista_actual }}
+            </button>
+            <ul class="dropdown-menu shadow">
+              <li><h6 class="dropdown-header">Cambiar Entorno</h6></li>
+              {% for modo in modos_vista_permitidos %}
+              <li>
+                <form action="{% url 'dashboard:cambiar_modo' %}" method="POST" style="margin: 0;">
+                  {% csrf_token %}
+                  <input type="hidden" name="modo_vista" value="{{ modo }}">
+                  <button type="submit" class="dropdown-item {% if modo == modo_vista_actual %}active{% endif %}" style="cursor: pointer;">
+                    Modo {{ modo }}
+                  </button>
+                </form>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
           <!-- Switch Dark Mode Premium -->
           <button id="themeToggle" class="btn btn-outline-secondary" style="border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.3s;" title="Cambiar Tema">
               <i class="fas fa-moon" id="themeIcon" style="font-size: 1.2rem;"></i>

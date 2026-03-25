@@ -545,6 +545,48 @@ class UsuarioListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
     template_name = "dashboard/usuario_list.html"
     context_object_name = "usuarios"
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
+from .forms import PersonalUpdateForm
+
+class UsuarioUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, UpdateView):
+    model = Personal
+    form_class = PersonalUpdateForm
+    template_name = "dashboard/usuario_update_form.html"
+    success_url = reverse_lazy('dashboard:usuarios_list')
+    ajax_success_message = "¡Usuario actualizado correctamente!"
+    
+    def get_object(self, queryset=None):
+        # El PK viene del User, encontramos el Personal relacionado
+        user_id = self.kwargs.get('pk')
+        user = get_object_or_404(User, pk=user_id)
+        return get_object_or_404(Personal, usuario=user)
+
+class UsuarioToggleActiveView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """(Soft Delete) Activa/Desactiva un usuario sin eliminarlo permanentemente"""
+    def post(self, request, pk):
+        if not (request.user.is_superuser or request.user.personal.puesto == 'ADMIN'):
+            messages.error(request, "Solo administradores pueden realizar esta acción.")
+            return redirect('dashboard:usuarios_list')
+        
+        user = get_object_or_404(User, pk=pk)
+        
+        # Evitar auto-bloqueo
+        if user == request.user:
+            messages.error(request, "No puedes deshabilitar tu propio usuario.")
+        else:
+            user.is_active = not user.is_active
+            user.save()
+            estado = "habilitado" if user.is_active else "deshabilitado"
+            messages.success(request, f"El usuario {user.username} ha sido {estado} exitosamente.")
+        
+        if "HX-Request" in request.headers:
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = reverse('dashboard:usuarios_list')
+            return response
+            
+        return redirect('dashboard:usuarios_list')
+
 class CombustibleGeneralView(LoginRequiredMixin, NonChoferRequiredMixin, TemplateView):
     template_name = "dashboard/combustible_general.html"
 
@@ -1387,7 +1429,8 @@ import json
 
 class ZonasGeoJSONView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        zonas = ZonaEntrega.objects.exclude(geojson_data__isnull=True).exclude(geojson_data__exact='')
+        # Aseguramos que traemos todas las zonas
+        zonas = ZonaEntrega.objects.all()
         
         feature_collection = {
             "type": "FeatureCollection",
@@ -1396,31 +1439,35 @@ class ZonasGeoJSONView(LoginRequiredMixin, View):
         
         for zona in zonas:
             try:
-                # Load the geometry collection saved during model save
-                zone_geo = json.loads(zona.geojson_data)
+                # El campo geojson_data puede ser un dict (JSONField) o un string 
+                zone_geo = zona.geojson_data
+                if not zone_geo:
+                    continue
+                    
+                if isinstance(zone_geo, str):
+                    zone_geo = json.loads(zone_geo)
                 
-                # Each zone might have multiple features, we want to flatten them into the main collection
-                # and attach the zone properties to each feature
                 if "features" in zone_geo:
                     for feature in zone_geo["features"]:
-                        # Decorate the feature with our custom zone data for the frontend
+                        # Combinar propiedades originales con las del modelo
                         feature['properties'] = {
                             "nombre": zona.nombre,
                             "municipio": zona.municipio or "Sin Municipio",
-                            "color": zona.color_hex,
+                            "color": zona.color_hex or "#3388ff",
                             "id": zona.id,
-                            "tiempo": zona.tiempo_traslado_minutos,
-                            "distancia": float(zona.distancia_km),
-                            "tarifa": float(zona.tarifa_flete),
+                            "tiempo": zona.tiempo_traslado_minutos or 0,
+                            "distancia": float(zona.distancia_km or 0),
+                            "tarifa": float(zona.tarifa_flete or 0),
                             "colonias": str(zona.colonias or 'No hay colonias asignadas.'),
-                            "route_geojson": zona.route_geojson, # Send the route geometry
-                            "d_cp": feature.get('properties', {}).get('d_cp', ''), # Re-attach CP
+                            "route_geojson": zona.route_geojson,
+                            "d_cp": feature.get('properties', {}).get('d_cp', ''),
                         }
                         feature_collection["features"].append(feature)
-            except json.JSONDecodeError:
+            except Exception as e:
+                print(f"Error procesando GeoJSON para zona {zona.id}: {e}")
                 continue
                 
-        return JsonResponse(feature_collection)
+        return JsonResponse(feature_collection, safe=False)
 
 
 class ZonaEntregaCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
@@ -2333,6 +2380,28 @@ class MostradorDashboardView(LoginRequiredMixin, TemplateView):
         
         return context
 
+class LogisticaDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, TemplateView):
+    """Command Center (Kanban) para el personal de Logística"""
+    template_name = 'dashboard/logistica/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Traemos todos los pedidos activos (no entregados ni cancelados) para el Kanban
+        pedidos_activos = Pedido.objects.exclude(estado__in=['ENTREGADO', 'CANCELADO']).order_by('-fecha_registro')
+        
+        # Agrupamos por estado para las columnas del Kanban
+        context['pedidos_registrados'] = pedidos_activos.filter(estado='REGISTRADO')
+        context['pedidos_preparacion'] = pedidos_activos.filter(estado='EN_PREPARACION')
+        context['pedidos_asignados'] = pedidos_activos.filter(estado='ASIGNADO_A_RUTA')
+        context['pedidos_ruta'] = pedidos_activos.filter(estado='EN_RUTA')
+        
+        # Opciones para despachar
+        context['unidades_disponibles'] = Unidad.objects.filter(en_servicio=True)
+        # Operadores
+        context['choferes'] = Operador.objects.filter(activo=True, puesto='CHOFER')
+        
+        return context
+
 class PedidoCancelView(LoginRequiredMixin, View):
     """Permite cancelar un pedido si aún no está en ruta"""
     def post(self, request, pk):
@@ -2350,10 +2419,103 @@ class PedidoCancelView(LoginRequiredMixin, View):
             return response
         return redirect('dashboard:pedido_detail', pk=pk)
 
+class PedidoCambiarEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """View para mover el estado de un pedido en el Kanban (HTMX)"""
+    def post(self, request, pk):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        nuevo_estado = request.POST.get('estado')
+        
+        estados_validos = [e[0] for e in Pedido.ESTADO_CHOICES]
+        if nuevo_estado in estados_validos:
+            pedido.estado = nuevo_estado
+            pedido.save()
+            messages.success(request, f"Estado del {pedido.folio_sae} actualizado a {pedido.get_estado_display()}")
+        
+        response = HttpResponse(status=204)
+        # Trigger an event to refresh the board smoothly
+        response["HX-Trigger"] = "boardChanged"
+        return response
+
+from .forms import ViajeNuevoForm
+from .models import ViajeNuevo, Despacho
+
+class LogisticaArmarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """
+    Endpoint (HTMX) para mostrar modal y procesar asignación múltiple de pedidos a un viaje.
+    """
+    def get(self, request):
+        form = ViajeNuevoForm()
+        # Filtramos pedidos listos para armar ruta pero que no tengan despacho activo
+        pedidos_disponibles = Pedido.objects.filter(estado='ASIGNADO_A_RUTA')
+        
+        return render(request, 'dashboard/logistica/modal_armar_viaje.html', {
+            'form': form,
+            'pedidos_disponibles': pedidos_disponibles
+        })
+
+    def post(self, request):
+        form = ViajeNuevoForm(request.POST)
+        pedido_ids = request.POST.getlist('pedidos_seleccionados')
+        
+        if form.is_valid() and pedido_ids:
+            viaje = form.save()
+            pedidos = Pedido.objects.filter(id__in=pedido_ids)
+            
+            # Crear los despachos para cada pedido y ponerlos En Ruta
+            for pedido in pedidos:
+                Despacho.objects.create(
+                    pedido=pedido,
+                    viaje=viaje,
+                    tipo_envio='INTERNO_FLOTILLA',
+                    estado='PENDIENTE',  # Pendiente de entrega por el chofer
+                    peso_asignado_kg=pedido.peso_total_estimado_kg
+                )
+                pedido.estado = 'EN_RUTA'
+                pedido.save()
+                
+            messages.success(request, f"¡Viaje armado exitosamente! {pedidos.count()} pedidos asignados al chofer {viaje.chofer.personal.nombre}.")
+            response = HttpResponse(status=204)
+            response['HX-Trigger'] = 'boardChanged'  # Refrescar Kanban
+            return response
+            
+        if not pedido_ids:
+            messages.error(request, "Debes seleccionar al menos un pedido para armar el viaje.")
+            
+        pedidos_disponibles = Pedido.objects.filter(estado='ASIGNADO_A_RUTA')
+        return render(request, 'dashboard/logistica/modal_armar_viaje.html', {
+            'form': form,
+            'pedidos_disponibles': pedidos_disponibles
+        })
+
 # --- GESTION DE CLIENTES Y OBRAS ---
 class ClienteListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
     model = Cliente
     template_name = "dashboard/clientes/cliente_list.html"
+
+class CambiarModoVista(LoginRequiredMixin, View):
+    """Permite intercambiar el rol o modo de vista activo en la sesión del usuario"""
+    def post(self, request):
+        nuevo_modo = request.POST.get('modo_vista')
+        
+        # Validar desde la base de datos real para evitar la trampa del middleware
+        real_personal = request.user.personal.__class__.objects.get(pk=request.user.personal.pk)
+        
+        modos_permitidos = [real_personal.puesto]
+        if real_personal.roles_secundarios:
+            modos_permitidos.extend([r.strip() for r in real_personal.roles_secundarios.split(',') if r.strip()])
+            
+        # Si es superuser tiene todo
+        if request.user.is_superuser:
+            request.session['modo_vista'] = nuevo_modo
+            messages.success(request, f"Entorno cambiado a {nuevo_modo} (Admin Total)")
+        elif nuevo_modo in modos_permitidos:
+            request.session['modo_vista'] = nuevo_modo
+            messages.success(request, f"Entorno cambiado exitosamente a {nuevo_modo}")
+        else:
+            messages.error(request, f"No tienes permiso para operar como {nuevo_modo}.")
+            
+        # Recargar la página completa con un Redireccionamiento Real (no silencioso)
+        return redirect(request.META.get('HTTP_REFERER', reverse('dashboard:home')))
     context_object_name = "clientes"
     paginate_by = 30
 

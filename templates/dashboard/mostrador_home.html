@@ -5,57 +5,69 @@
 {% block page_title %}Atención a Mostrador{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header de Acciones Rápidas -->
-    <div class="row g-3 mb-4">
+<div class="container-fluid py-4 px-md-5">
+    
+    <!-- HEADER & QUICK ACTIONS -->
+    <div class="row g-4 mb-5">
+        <!-- Card: Nuevo Registro -->
         <div class="col-md-6 col-lg-4">
-            <div class="card border-0 shadow-sm h-100 overflow-hidden" style="border-radius: 12px;">
-                <div class="card-body d-flex align-items-center p-0">
-                    <div class="bg-primary p-4 d-flex align-items-center justify-content-center" style="width: 80px;">
-                        <i class="fas fa-plus-circle text-white fa-2x"></i>
+            <div class="card border-0 shadow-lg premium-action-card h-100 overflow-hidden" style="border-radius: 24px;">
+                <div class="card-body p-0 d-flex flex-column">
+                    <div class="bg-primary p-4 d-flex align-items-center justify-content-between text-white grad-primary">
+                        <div>
+                            <h5 class="fw-bold mb-0">Nueva Carga</h5>
+                            <p class="x-small mb-0 opacity-75">Sincronización SAE</p>
+                        </div>
+                        <i class="fas fa-file-invoice fa-2x opacity-25"></i>
                     </div>
-                    <div class="p-3">
-                        <h5 class="card-title mb-1">Nueva Entrega</h5>
-                        <p class="text-muted small mb-3">Registrar un nuevo folio de venta SAE.</p>
-                        <a href="{% url 'dashboard:pedido_create' %}" class="btn btn-primary btn-sm rounded-pill px-3">
-                            <i class="fas fa-file-invoice me-1"></i> Registrar
+                    <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between">
+                        <p class="text-muted small">Registra pedidos de venta para programación logística inmediata.</p>
+                        <a href="{% url 'dashboard:pedido_create' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm mt-2">
+                            <i class="fas fa-plus-circle me-2"></i>Registrar Pedido
                         </a>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Card: Cotizador -->
         <div class="col-md-6 col-lg-4">
-            <div class="card border-0 shadow-sm h-100 overflow-hidden" style="border-radius: 12px;">
-                <div class="card-body d-flex align-items-center p-0">
-                    <div class="bg-success p-4 d-flex align-items-center justify-content-center" style="width: 80px;">
-                        <i class="fas fa-calculator text-white fa-2x"></i>
+            <div class="card border-0 shadow-lg premium-action-card h-100 overflow-hidden" style="border-radius: 24px;">
+                <div class="card-body p-0 d-flex flex-column">
+                    <div class="bg-success p-4 d-flex align-items-center justify-content-between text-white grad-success">
+                        <div>
+                            <h5 class="fw-bold mb-0">Cotizar Flete</h5>
+                            <p class="x-small mb-0 opacity-75">Herramienta de Precios</p>
+                        </div>
+                        <i class="fas fa-calculator fa-2x opacity-25"></i>
                     </div>
-                    <div class="p-3">
-                        <h5 class="card-title mb-1">Cotizar Flete</h5>
-                        <p class="text-muted small mb-3">Cálculo rápido para cobro en mostrador.</p>
-                        <button class="btn btn-success btn-sm rounded-pill px-3" 
+                    <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between">
+                        <p class="text-muted small">Cálculo rápido de fletes basado en distancia y tiempo real.</p>
+                        <button class="btn btn-success rounded-pill px-4 fw-bold shadow-sm mt-2" 
                                 hx-get="{% url 'dashboard:cotizador_modal' %}" 
-                                hx-target="#modal-container" 
-                                hx-trigger="click">
-                            <i class="fas fa-search-dollar me-1"></i> Cotizar
+                                hx-target="#modal-container">
+                            <i class="fas fa-search-dollar me-2"></i>Calcular Tarifa
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Card: Estadísticas -->
         <div class="col-md-6 col-lg-4">
-            <div class="card border-0 shadow-sm h-100 overflow-hidden" style="border-radius: 12px;">
-                <div class="card-body d-flex align-items-center p-0">
-                    <div class="bg-info p-4 d-flex align-items-center justify-content-center" style="width: 80px;">
-                        <i class="fas fa-chart-line text-white fa-2x"></i>
+            <div class="card border-0 shadow-lg premium-action-card h-100 overflow-hidden" style="border-radius: 24px;">
+                <div class="card-body p-0 d-flex flex-column">
+                    <div class="bg-info p-4 d-flex align-items-center justify-content-between text-white grad-info">
+                        <div>
+                            <h5 class="fw-bold mb-0">Rendimiento</h5>
+                            <p class="x-small mb-0 opacity-75">Indicadores de Mostrador</p>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-25"></i>
                     </div>
-                    <div class="p-3">
-                        <h5 class="card-title mb-1">Indicadores</h5>
-                        <p class="text-muted small mb-3">Ver resumen, urgentes y cancelados.</p>
-                        <a href="{% url 'dashboard:mostrador_dashboard' %}" class="btn btn-info btn-sm text-white rounded-pill px-3">
-                            <i class="fas fa-eye me-1"></i> Ver Dashboard
+                    <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between">
+                        <p class="text-muted small">Consulta el resumen de operaciones, urgencias y cancelaciones.</p>
+                        <a href="{% url 'dashboard:mostrador_dashboard' %}" class="btn btn-info text-white rounded-pill px-4 fw-bold shadow-sm mt-2">
+                            <i class="fas fa-tachometer-alt me-2"></i>Ver Dashboard
                         </a>
                     </div>
                 </div>
@@ -63,62 +75,105 @@
         </div>
     </div>
 
-    <!-- Cola de Pedidos Recientes -->
-    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-        <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold">Pedidos Registrados (Pendientes de Ruta)</h5>
-            <div class="badge bg-light text-primary border rounded-pill px-3 py-2">
-                <i class="fas fa-sync-alt fa-spin me-2"></i> Actualizando en vivo
+    <!-- MAIN LISTING CARD -->
+    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
+        <div class="card-header border-0 py-4 px-4 bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex align-items-center">
+                <div class="bg-primary-subtle p-3 rounded-4 me-3">
+                    <i class="fas fa-stream text-primary fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">Pedidos Registrados</h5>
+                    <p class="text-muted small mb-0">Pendientes de asignación a ruta logística</p>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="badge bg-light text-primary border rounded-pill px-4 py-3 shadow-xs d-flex align-items-center">
+                    <span class="pulsating-dot me-2"></span>
+                    <span class="fw-bold x-small text-uppercase tracking-wider">Live Updates Enabled</span>
+                </div>
             </div>
         </div>
-        <div class="card-body p-4">
+
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle custom-table">
-                    <thead>
+                <table class="table table-hover align-middle mb-0 premium-table">
+                    <thead class="bg-light">
                         <tr>
-                            <th>Folio SAE</th>
+                            <th class="ps-4">Folio & Prioridad</th>
                             <th>Cliente</th>
-                            <th>Obra / Destino</th>
-                            <th>Peso Est.</th>
-                            <th>Fecha Registro</th>
-                            <th>Estado</th>
-                            <th class="text-center">Acciones</th>
+                            <th>Destino Final</th>
+                            <th>Logística</th>
+                            <th>Fecha</th>
+                            <th>Estatus</th>
+                            <th class="text-center pe-4">Acción</th>
                         </tr>
                     </thead>
-                    <tbody hx-get="{% url 'dashboard:mostrador_home' %}" hx-trigger="every 30s" hx-select="tbody">
+                    <tbody hx-get="{% url 'dashboard:mostrador_home' %}" hx-trigger="every 45s" hx-select="tbody" hx-swap="outerHTML">
                         {% for pedido in pedidos %}
-                        <tr>
-                            <td>
-                                <span class="fw-bold text-primary">{{ pedido.folio_sae }}</span>
-                                {% if pedido.es_urgente %}
-                                <span class="badge bg-danger ms-1" title="Prioritario"><i class="fas fa-bolt"></i></span>
-                                {% endif %}
+                        <tr class="animate__animated animate__fadeIn">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="fw-bold text-primary fs-6">#{{ pedido.folio_sae }}</div>
+                                    {% if pedido.es_urgente %}
+                                    <span class="ms-2 px-2 py-1 bg-danger text-white rounded-pill x-small fw-bold animate__animated animate__pulse animate__infinite">
+                                        <i class="fas fa-bolt me-1"></i>URGENTE
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <span class="x-small text-muted text-uppercase fw-bold">{{ pedido.tipo_ticket|default:"PEDIDO" }}</span>
                             </td>
-                            <td>{{ pedido.cliente.razon_social }}</td>
                             <td>
-                                <div class="d-flex flex-column">
-                                    <span class="small fw-bold">{{ pedido.obra.alias }}</span>
-                                    <span class="text-muted small">{{ pedido.obra.calle_numero }}</span>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-2 text-muted fw-bold x-small">
+                                        {{ pedido.cliente.razon_social|slice:":2"|upper }}
+                                    </div>
+                                    <span class="fw-semibold text-truncate" style="max-width: 200px;">{{ pedido.cliente.razon_social }}</span>
                                 </div>
                             </td>
-                            <td>{{ pedido.peso_total_estimado_kg }} kg</td>
-                            <td class="small">{{ pedido.fecha_registro|date:"d/m/Y H:i" }}</td>
                             <td>
-                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">
-                                    {{ pedido.get_estado_display }}
+                                <div class="d-flex flex-column">
+                                    <span class="small fw-bold text-dark">{{ pedido.obra.alias }}</span>
+                                    <span class="text-muted x-small text-truncate" style="max-width: 250px;">
+                                        <i class="fas fa-map-marker-alt me-1 opacity-50"></i>{{ pedido.obra.calle_numero }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="small fw-bold"><i class="fas fa-weight-hanging me-1 text-muted"></i>{{ pedido.peso_total_estimado_kg }} KG</span>
+                                    {% if pedido.recoleccion_parcial %}<span class="badge bg-warning-subtle text-warning x-small rounded-pill py-1 px-2 border-0 mt-1">CARGA PARCIAL</span>{% endif %}
+                                </div>
+                            </td>
+                            <td class="small">{{ pedido.fecha_registro|date:"d M, H:i" }}</td>
+                            <td>
+                                <span class="badge rounded-pill px-3 py-2 fw-bold x-small 
+                                    {% if pedido.estado == 'PENDIENTE' %}bg-warning-subtle text-warning
+                                    {% elif pedido.estado == 'EN_RUTA' %}bg-primary-subtle text-primary
+                                    {% elif pedido.estado == 'ENTREGADO' %}bg-success-subtle text-success
+                                    {% else %}bg-secondary-subtle text-muted{% endif %} shadow-xs border-0">
+                                    <i class="fas fa-circle me-1 x-small opacity-50"></i>{{ pedido.get_estado_display|upper }}
                                 </span>
                             </td>
-                            <td class="text-center">
-                                <a href="{% url 'dashboard:pedido_detail' pedido.pk %}" class="btn btn-sm btn-outline-secondary rounded-circle" title="Ver Detalles">
-                                    <i class="fas fa-eye"></i>
+                            <td class="text-center pe-4">
+                                <a href="{% url 'dashboard:pedido_detail' pedido.pk %}" class="btn btn-light rounded-circle p-2 shadow-xs hover-primary" title="Ver Detalles">
+                                    <i class="fas fa-chevron-right text-primary"></i>
                                 </a>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
-                                No hay pedidos registrados pendientes de asignación.
+                            <td colspan="7" class="text-center py-5">
+                                <div class="py-5">
+                                    <div class="mb-4">
+                                        <i class="fas fa-inbox fa-4x text-muted opacity-25"></i>
+                                    </div>
+                                    <h5 class="fw-bold text-muted">Bandeja de Entrada Vacía</h5>
+                                    <p class="text-muted small">No hay pedidos pendientes de asignación en este momento.</p>
+                                    <a href="{% url 'dashboard:pedido_create' %}" class="btn btn-outline-primary rounded-pill px-4 mt-2">
+                                        <i class="fas fa-plus me-2"></i>Registrar el Primero
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -127,44 +182,69 @@
             </div>
             
             {% if is_paginated %}
-            <nav class="mt-4">
-                <ul class="pagination pagination-sm justify-content-center">
-                    {% if page_obj.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
-                    {% endif %}
-                    <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
-                    {% if page_obj.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
+            <div class="card-footer bg-white border-0 py-4 px-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-md justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link border-0 rounded-circle shadow-xs me-2" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link border-0 rounded-circle shadow-sm px-3 fw-bold">{{ page_obj.number }}</span></li>
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link border-0 rounded-circle shadow-xs ms-2" href="?page={{ page_obj.next_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
             {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Contenedor para Modales Dinámicos -->
+<!-- Modales -->
 <div id="modal-container"></div>
 
-{% endblock %}
-
-{% block extra_css %}
 <style>
-    .custom-table thead th {
-        background: var(--bg-card);
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        color: var(--text-muted);
-        border-bottom: 2px solid var(--border-color);
-        padding: 1rem;
+    .grad-primary { background: linear-gradient(45deg, var(--primary-blue), #1e3c72) !important; }
+    .grad-success { background: linear-gradient(45deg, var(--primary-green), #0a504a) !important; }
+    .grad-info { background: linear-gradient(45deg, #0dcaf0, #0aa2bd) !important; }
+
+    .premium-action-card { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; border: 1px solid rgba(0,0,0,0.02) !important; }
+    .premium-action-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+    
+    .premium-table thead th { 
+        font-weight: 700; font-size: 0.75rem; color: #7c8db5; text-transform: uppercase; 
+        letter-spacing: 1px; padding: 1.25rem 1rem; border: 0;
     }
-    .custom-table tbody td {
-        padding: 1rem;
-        border-bottom: 1px solid var(--border-color);
+    .premium-table tbody td { padding: 1.25rem 1rem; border-color: #f8f9fa; font-size: 0.9rem; }
+    .premium-table tbody tr:hover { background-color: #fcfdfe; }
+    
+    .avatar-sm { width: 32px; height: 32px; flex-shrink: 0; }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .hover-primary:hover { background: var(--primary-blue) !important; color: white !important; }
+    .hover-primary:hover i { color: white !important; }
+    
+    .x-small { font-size: 0.7rem; }
+    .tracking-wider { letter-spacing: 0.1em; }
+
+    .pulsating-dot { 
+        width: 8px; height: 8px; background: #00ff00; border-radius: 50%;
+        display: inline-block; position: relative;
     }
-    .bg-info-subtle { background-color: rgba(13, 202, 240, 0.1) !important; }
-    .text-info { color: #0dcaf0 !important; }
-    .border-info-subtle { border-color: rgba(13, 202, 240, 0.3) !important; }
+    .pulsating-dot::after {
+        content: ''; width: 100%; height: 100%; background: #00ff00; border-radius: 50%;
+        position: absolute; top: 0; left: 0; animation: pulse-green 2s infinite; opacity: 0.5;
+    }
+    @keyframes pulse-green {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(3); opacity: 0; }
+    }
 </style>
 {% endblock %}

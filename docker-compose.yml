@@ -14,6 +14,12 @@ services:
     security_opt:
       - no-new-privileges=false
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
   web-dev:
     build: .
@@ -24,7 +30,9 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db-dev
+      db-dev:
+        condition: service_healthy
+
     environment:
       - DB_HOST=db-dev
       - DB_NAME=lupita_dev
@@ -47,6 +55,12 @@ services:
     security_opt:
       - no-new-privileges=false
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
   web-qa:
     build: .
@@ -57,7 +71,9 @@ services:
     ports:
       - "10000:10000"
     depends_on:
-      - db-qa
+      db-qa:
+        condition: service_healthy
+
     environment:
       - DB_HOST=db-qa
       - DB_NAME=lupita_qa

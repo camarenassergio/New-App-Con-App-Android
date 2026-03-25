@@ -14,12 +14,14 @@
         border: 2px solid #ddd;
     }
     .legend {
-        background: white;
-        padding: 10px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        background: var(--bg-card);
+        color: var(--text-main);
+        padding: 12px;
+        border-radius: 12px;
+        box-shadow: var(--shadow-md);
         max-height: 300px;
         overflow-y: auto;
+        border: 1px solid var(--border-color);
     }
     .legend h5 {
         margin-top: 0;
@@ -204,7 +206,9 @@
         var legendItems = '';
         var colorMap = new Map(); // to avoid duplicates in legend
         var layerMap = {}; // Diccionario para vincular IDs con Layers de Leaflet
+        var routeLayers = {}; // Guardará las capas de ruta por ID de zona
         var activeLayer = null; // Guardará el polígono actualmente resaltado
+        var activeRouteLayer = null; // Guardará la ruta actualmente visible
         
         // Fetch GeoJSON data from the API dynamically 
         fetch('{% url "dashboard:zonas_geojson_api" %}')
@@ -220,9 +224,8 @@
                             };
                         },
                         onEachFeature: function(feature, layer) {
-                            // Extract custom properties injected by the backend
                             var p = feature.properties;
-                            layerMap[p.id] = layer; // Vincular ID de base de datos con objeto layer
+                            layerMap[p.id] = layer; 
                             
                             var cpInfo = p.d_cp ? `<br><b>Código Postal:</b> ${p.d_cp}` : '';
                             var coloniasInfo = p.colonias ? `<hr style="margin: 5px 0;"><small><b>Colonias Asignadas:</b><br>${p.colonias}</small>` : '';
@@ -250,20 +253,8 @@
                             var zoneMarker = L.marker(layerCenter, {icon: markerIcon}).addTo(map);
                             zoneMarker.bindPopup(popupContent);
 
-                            // DIBUJAR RUTA SI EXISTE
-                            if (p.route_geojson) {
-                                try {
-                                    var routeGeom = (typeof p.route_geojson === 'string') ? JSON.parse(p.route_geojson) : p.route_geojson;
-                                    L.geoJSON(routeGeom, {
-                                        style: {
-                                            color: p.color,
-                                            weight: 4,
-                                            opacity: 0.6,
-                                            dashArray: '5, 10'
-                                        }
-                                    }).addTo(map);
-                                } catch(e) { console.error("Error parsing route for zone " + p.nombre, e); }
-                            }
+                            // NO DIBUJAR RUTA POR DEFECTO - SE HARÁ AL SELECCIONAR
+                             /* if (p.route_geojson) { ... } */
                             
                             // Tooltip permanente solo en el Marker si se desea, o mantener en el Layer
                             layer.bindTooltip(p.nombre + (p.d_cp ? ' (' + p.d_cp + ')' : ''), {permanent: false, direction: "center"});
@@ -300,19 +291,42 @@
                 console.error("Error fetching geojson data:", error);
             });
             
-        // FUNCIÓN PARA RESALTAR POLÍGONO EN EL MAPA
+        // FUNCIÓN PARA RESALTAR POLÍGONO Y MOSTRAR RUTA EN EL MAPA
         function resaltarZonaEnMapa(zonaId) {
             var layer = layerMap[zonaId];
             if (layer) {
-                // Restaurar el polígono previamente activo a su opacidad base
+                // Restaurar el polígono previamente activo
                 if (activeLayer && activeLayer !== layer) {
                     activeLayer.setStyle({ fillOpacity: 0.1, weight: 2 });
                 }
-                // Resaltar el nuevo polígono sumando +20% de opacidad (Total: 0.3) y borde grueso
+                
+                // Limpiar ruta activa anterior
+                if (activeRouteLayer) {
+                    map.removeLayer(activeRouteLayer);
+                    activeRouteLayer = null;
+                }
+
+                // Resaltar el nuevo polígono
                 layer.setStyle({ fillOpacity: 0.3, weight: 4 });
                 layer.bringToFront();
                 activeLayer = layer;
                 
+                // Dibujar ruta de la zona seleccionada si existe
+                const p = layer.feature.properties;
+                if (p.route_geojson) {
+                    try {
+                        var routeGeom = (typeof p.route_geojson === 'string') ? JSON.parse(p.route_geojson) : p.route_geojson;
+                        activeRouteLayer = L.geoJSON(routeGeom, {
+                            style: {
+                                color: p.color,
+                                weight: 5,
+                                opacity: 0.8,
+                                dashArray: '8, 12'
+                            }
+                        }).addTo(map);
+                    } catch(e) { console.error("Error parsing route", e); }
+                }
+
                 // Centrar el mapa con animación fluida
                 map.flyToBounds(layer.getBounds(), {padding: [50, 50], duration: 1.5});
             }

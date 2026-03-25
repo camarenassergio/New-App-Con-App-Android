@@ -3,69 +3,140 @@
 {% block page_title %}{% if form.instance.pk %}Editar Registro{% else %}Añadir al Directorio{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container-fluid py-4 px-md-5">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-lg" style="border-radius: 16px;">
-                <div class="card-header bg-primary py-3 px-4">
-                    <h5 class="card-title mb-0 text-white fw-bold">
-                        <i class="fas fa-address-card me-2"></i> Datos del Directorio
-                    </h5>
+        <div class="col-lg-9 col-xl-8">
+            
+            <!-- HEADER PREMIUM -->
+            <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+                <div class="card-body p-0">
+                    <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
+                        <div class="d-flex align-items-center mb-3 mb-md-0">
+                            <div class="header-icon-box me-3">
+                                <i class="fas fa-address-card fs-3"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold mb-0">{% if form.instance.pk %}Perfil de Colaborador{% else %}Registro de Operador{% endif %}</h4>
+                                <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Estructura Organizacional & Gestión Operativa</p>
+                            </div>
+                        </div>
+                        <a href="{% url 'dashboard:operadores_list' %}" class="btn btn-glass-white rounded-pill px-4 fw-bold shadow-sm">
+                            <i class="fas fa-arrow-left me-2"></i>Volver al Directorio
+                        </a>
+                    </div>
                 </div>
+            </div>
+
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
                 <div class="card-body p-4 p-md-5">
-                    <form method="post" class="needs-validation">
+                    <form hx-post="{{ request.path }}" 
+                          hx-indicator="#form-indicator" 
+                          hx-swap="none"
+                          class="needs-validation">
                         {% csrf_token %}
                         
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Nombre Completo</label>
-                                {{ form.nombre }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Puesto / Departamento</label>
-                                {{ form.puesto }}
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Teléfono (WhatsApp)</label>
-                                {{ form.telefono }}
-                                <div class="form-text small text-muted">Incluir clave de país si es necesario.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Correo Electrónico</label>
-                                {{ form.email }}
-                            </div>
+                        <!-- Sección 1: Información Personal -->
+                        <div class="section-badge mb-4">
+                            <span class="badge rounded-pill bg-light text-primary border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                                <i class="fas fa-user-edit me-2"></i>INFORMACIÓN PRIMARIA
+                            </span>
+                        </div>
 
-                            <hr class="my-4">
-                            <h6 class="fw-bold text-muted text-uppercase small">Solo para Choferes (Opcional)</h6>
+                        <div class="row g-4 mb-5 p-3 rounded-4 bg-light bg-opacity-50 border shadow-xs">
+                            <div class="col-md-7">
+                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Nombre Completo</label>
+                                <div class="input-group-premium">
+                                    <span class="icon"><i class="fas fa-user"></i></span>
+                                    {{ form.nombre }}
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Puesto / Depto.</label>
+                                <div class="input-group-premium">
+                                    <span class="icon"><i class="fas fa-briefcase"></i></span>
+                                    {{ form.puesto }}
+                                </div>
+                            </div>
                             
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">No. de Licencia</label>
-                                {{ form.licencia }}
+                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">WhatsApp</label>
+                                <div class="input-group-premium">
+                                    <span class="icon text-success"><i class="fab fa-whatsapp"></i></span>
+                                    {{ form.telefono }}
+                                </div>
+                                <div class="form-text x-small mt-2 px-1 text-muted opacity-75">Sincronización de rutas y geolocalización activa.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Vigencia</label>
-                                {{ form.vigencia_licencia }}
-                            </div>
-
-                            <hr class="my-4">
-                            <h6 class="fw-bold text-muted text-uppercase small">Configuración de Mensajería</h6>
-                            
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Usuario Asociado (Sistema)</label>
-                                {{ form.usuario_asociado }}
-                            </div>
-                            <div class="col-md-6 d-flex align-items-center">
-                                <div class="form-check form-switch mt-3">
-                                    {{ form.usa_sistema }}
-                                    <label class="form-check-label" for="{{ form.usa_sistema.id_for_label }}">Usa el sistema regularmente</label>
+                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Email Empresarial</label>
+                                <div class="input-group-premium">
+                                    <span class="icon"><i class="fas fa-envelope"></i></span>
+                                    {{ form.email }}
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center mt-5">
-                            <a href="{% url 'dashboard:operadores_list' %}" class="btn btn-link text-muted">Cancelar</a>
-                            <button type="submit" class="btn btn-primary px-5 rounded-pill fw-bold">Guardar Registro</button>
+                        <!-- Sección 2: Choferes (Contextual) -->
+                        <div id="chofer-section" class="mb-5 animate__animated animate__fadeIn" style="display: none;">
+                            <div class="section-badge mb-4">
+                                <span class="badge rounded-pill bg-warning-subtle text-warning border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                                    <i class="fas fa-truck-moving me-2"></i>COMPLEMENTO DE SEGURIDAD VIAL
+                                </span>
+                            </div>
+                            
+                            <div class="row g-4 p-3 rounded-4 bg-warning bg-opacity-5 border border-warning border-opacity-10 shadow-xs">
+                                <div class="col-md-6">
+                                    <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">No. de Licencia</label>
+                                    <div class="input-group-premium">
+                                        {{ form.licencia }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Vigencia Federal / Estatal</label>
+                                    <div class="input-group-premium">
+                                        {{ form.vigencia_licencia }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección 3: Acceso -->
+                        <div class="section-badge mb-4">
+                            <span class="badge rounded-pill bg-dark bg-opacity-10 text-dark border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                                <i class="fas fa-shield-alt me-2"></i>CREDENCIALES Y ACCESO
+                            </span>
+                        </div>
+                        
+                        <div class="row g-4 align-items-center mb-5 p-3 rounded-4 bg-light border shadow-xs">
+                            <div class="col-md-7">
+                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Cuenta de Usuario Vinculada</label>
+                                <div class="input-group-premium">
+                                    {{ form.usuario_asociado }}
+                                </div>
+                                <div class="form-text x-small mt-2 px-1 text-muted">Asegura que el perfil de login coincida con el registro.</div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="card border-0 bg-white p-3 rounded-4 shadow-sm border">
+                                    <div class="form-check form-switch mb-0 d-flex align-items-center justify-content-between">
+                                        <label class="form-check-label fw-800 small text-dark" for="{{ form.usa_sistema.id_for_label }}">HABILITAR APP / LOGIN</label>
+                                        {{ form.usa_sistema }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ACTIONS -->
+                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                            <a href="{% url 'dashboard:operadores_list' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <div class="d-flex align-items-center gap-4">
+                                <div id="form-indicator" class="htmx-indicator">
+                                    <div class="spinner-grow spinner-grow-sm text-primary" role="status"></div>
+                                </div>
+                                <button type="submit" class="btn btn-dark rounded-pill px-5 py-3 fw-bold grad-dark shadow-lg border-0">
+                                    <i class="fas fa-save me-2"></i>GUARDAR EXPEDIENTE
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -75,14 +146,74 @@
 </div>
 
 <style>
-    input.form-control, select.form-select {
-        border-radius: 8px;
-        padding: 10px 15px;
-        border: 1px solid var(--border-color);
+    .grad-primary { background: linear-gradient(135deg, #003b70, #005aab) !important; }
+    .grad-dark { background: linear-gradient(135deg, #141e30, #243b55) !important; }
+    .btn-glass-white { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; }
+    .btn-glass-white:hover { background: rgba(255,255,255,0.25); color: white; }
+    
+    .input-group-premium {
+        position: relative; border-radius: 12px; overflow: hidden;
+        border: 1px solid #e9ecef; background: white; transition: all 0.2s;
     }
-    input.form-control:focus {
-        border-color: var(--primary-blue);
-        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    .input-group-premium:focus-within {
+        border-color: #003b70; box-shadow: 0 4px 12px rgba(0,59,112,0.1);
+        transform: translateY(-1px);
     }
+    .input-group-premium .icon {
+        position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+        color: #7c8db5; font-size: 0.9rem; z-index: 5;
+    }
+    .input-group-premium .form-control, 
+    .input-group-premium .form-select {
+        border: 0; padding: 0.8rem 1rem 0.8rem 2.8rem; font-size: 0.95rem;
+        background: transparent; border-radius: 0;
+    }
+    .input-group-premium .form-control:focus,
+    .input-group-premium .form-select:focus { box-shadow: none; }
+    
+    /* For selects/inputs without icons */
+    .input-group-premium:not(:has(.icon)) .form-control,
+    .input-group-premium:not(:has(.icon)) .form-select { padding-left: 1rem; }
+
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .x-small { font-size: 0.72rem; }
+    .fw-800 { font-weight: 800; }
+    .tracking-widest { letter-spacing: 0.15em; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    
+    .form-check-input { width: 3em; height: 1.5em; cursor: pointer; }
+    .form-check-input:checked { background-color: #003b70; border-color: #003b70; }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const puestoInput = document.querySelector('[name="puesto"]');
+        const choferSection = document.getElementById('chofer-section');
+
+        function toggleChoferSection() {
+            if (!puestoInput) return;
+            const val = (puestoInput.value || '').toUpperCase();
+            if (val.includes('CHOFER') || val.includes('OPERADOR')) {
+                choferSection.style.display = 'block';
+                choferSection.classList.add('animate__fadeIn');
+            } else {
+                choferSection.style.display = 'none';
+            }
+        }
+
+        if (puestoInput) {
+            puestoInput.addEventListener('change', toggleChoferSection);
+            puestoInput.addEventListener('input', toggleChoferSection);
+            toggleChoferSection();
+        }
+    });
+
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.successful) {
+            // Toast notification could go here
+            console.log("Success");
+        }
+    });
+</script>
 {% endblock %}
+

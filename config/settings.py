@@ -96,6 +96,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Workspace/Role Switcher
+    'dashboard.middleware.RoleSwitchMiddleware',
     # Custom Rate Limiter for DoS protection
     'config.middleware.SimpleRateLimitMiddleware',
 ]
@@ -115,6 +117,7 @@ TEMPLATES = [
                 'config.context_processors.environment_context',
                 'dashboard.context_processors.contingencia_processor',
                 'dashboard.context_processors.notificaciones_processor',
+                'dashboard.context_processors.modos_vista_processor',
             ],
         },
     },

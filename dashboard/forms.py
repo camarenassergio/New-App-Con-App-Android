@@ -5,34 +5,106 @@ from .models import Unidad, RegistroCombustible, Personal
 
 User = get_user_model()
 
+ROLES_SECUNDARIOS_CHOICES = [
+    ('ADMIN', 'Administrador'),
+    ('MOSTRADOR', 'Mostrador'),
+    ('RUTAS', 'Rutas / Logística'),
+    ('ALMACEN', 'Almacén'),
+    ('CHOFER', 'Chofer'),
+]
+
 class PersonalCreationForm(UserCreationForm):
     # Campos adicionales de Personal
     nombre = forms.CharField(max_length=100, label="Nombre(s)")
     apellido_paterno = forms.CharField(max_length=100, label="Apellido Paterno")
     apellido_materno = forms.CharField(max_length=100, label="Apellido Materno", required=False)
-    puesto = forms.ChoiceField(choices=Personal.PUESTO_CHOICES, label="Puesto / Rol")
+    puesto = forms.ChoiceField(choices=Personal.PUESTO_CHOICES, label="Puesto / Rol Principal")
+    roles_secundarios = forms.MultipleChoiceField(
+        choices=ROLES_SECUNDARIOS_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Roles Secundarios (Workspace Switcher)"
+    )
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = UserCreationForm.Meta.fields + ('nombre', 'apellido_paterno', 'apellido_materno', 'puesto',)
+        fields = UserCreationForm.Meta.fields + ('nombre', 'apellido_paterno', 'apellido_materno', 'puesto', 'roles_secundarios')
+
+    def clean_roles_secundarios(self):
+        data = self.cleaned_data.get('roles_secundarios')
+        puesto_principal = self.cleaned_data.get('puesto')
+        
+        if data:
+            if puesto_principal in data:
+                data.remove(puesto_principal)
+            return ",".join(data)
+        return ""
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        # Populate User fields for better compatibility
         user.first_name = self.cleaned_data['nombre']
         user.last_name = f"{self.cleaned_data['apellido_paterno']} {self.cleaned_data.get('apellido_materno', '')}".strip()
         
         if commit:
             user.save()
-            # Crear perfil Personal
             Personal.objects.create(
                 usuario=user,
                 nombre=self.cleaned_data['nombre'],
                 apellido_paterno=self.cleaned_data['apellido_paterno'],
                 apellido_materno=self.cleaned_data.get('apellido_materno', ''),
-                puesto=self.cleaned_data['puesto']
+                puesto=self.cleaned_data['puesto'],
+                roles_secundarios=self.cleaned_data['roles_secundarios']
             )
         return user
+
+class PersonalUpdateForm(forms.ModelForm):
+    # Campos que van directo al User
+    username = forms.CharField(max_length=150, label="Nombre de Usuario")
+    nombre = forms.CharField(max_length=100, label="Nombre(s)")
+    apellido_paterno = forms.CharField(max_length=100, label="Apellido Paterno")
+    apellido_materno = forms.CharField(max_length=100, label="Apellido Materno", required=False)
+
+    roles_secundarios = forms.MultipleChoiceField(
+        choices=ROLES_SECUNDARIOS_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Roles Secundarios (Workspace Switcher)"
+    )
+
+    class Meta:
+        model = Personal
+        fields = ['nombre', 'apellido_paterno', 'apellido_materno', 'puesto', 'roles_secundarios']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and hasattr(self.instance, 'usuario'):
+            self.initial['username'] = self.instance.usuario.username
+        if self.instance and getattr(self.instance, 'roles_secundarios', None):
+            self.initial['roles_secundarios'] = [r.strip() for r in self.instance.roles_secundarios.split(',') if r.strip()]
+
+    def clean_roles_secundarios(self):
+        data = self.cleaned_data.get('roles_secundarios')
+        puesto_principal = self.cleaned_data.get('puesto')
+        
+        if data:
+            # Eliminar el puesto principal de los secundarios si se seleccionó por error
+            if puesto_principal in data:
+                data.remove(puesto_principal)
+            return ",".join(data)
+        return ""
+            
+    def save(self, commit=True):
+        personal = super().save(commit=False)
+        user = personal.usuario
+        
+        user.username = self.cleaned_data['username']
+        user.first_name = self.cleaned_data['nombre']
+        user.last_name = f"{self.cleaned_data['apellido_paterno']} {self.cleaned_data.get('apellido_materno', '')}".strip()
+        
+        if commit:
+            user.save()
+            personal.save()
+        return personal
 
 class UnidadForm(forms.ModelForm):
     supervisor_auth = forms.CharField(

@@ -3,10 +3,12 @@ description: Design System & UI/UX Rulebook — Casa Lupita Logística
 ---
 
 # 🎨 Design System Rulebook — Casa Lupita Logística
-**Versión 2.0 | Aprobado: Marzo 2026**
+
+**Versión 2.1 | Aprobado: Marzo 2026**
 
 > Este documento es la referencia obligatoria para TODA nueva vista, componente o template.
-> Cualquier violación a estas reglas = Auditoría < 9/10 automáticamente.
+> 
+> **ACTUALIZACIÓN 2.1:** Los patrones "Premium High-Fidelity" são ahora el estándar mandatorio.
 
 ---
 
@@ -39,6 +41,13 @@ description: Design System & UI/UX Rulebook — Casa Lupita Logística
 /* Sombras */
 --shadow-sm: 0 2px 4px rgba(0,0,0,0.05)
 --shadow-md: 0 4px 12px rgba(0,0,0,0.08)
+--shadow-premium: 0 20px 40px rgba(0,0,0,0.1)
+
+/* Gradientes Premium */
+--grad-primary: linear-gradient(135deg, #003b70, #005aab)
+--grad-info:    linear-gradient(135deg, #00d2ff, #3a7bd5)
+--grad-success: linear-gradient(135deg, #10b981, #0a504a)
+--grad-dark:    linear-gradient(135deg, #141e30, #243b55)
 ```
 
 ### ❌ PROHIBIDO
@@ -89,46 +98,81 @@ page_title (h1 via base.html — ya está renderizado)
 
 ---
 
-## 3. 📋 Componentes de Lista (table-container)
+## 3. 📋 Componentes de Lista (Premium List v2.0)
 
-### Estructura Completa Estándar
+### Regla de Oro
+Toda vista de lista debe utilizar el contenedor `container-fluid py-4 px-md-5` y la clase `premium-table`.
+
+### Estructura Mandatoria (Header + Table)
 
 ```html
-<div class="table-container">
-    <div class="table-header d-flex justify-content-between align-items-center">
-        <h3>[Título de la sección]</h3>
-        <a href="{% url 'dashboard:..._create' %}" class="btn btn-primary"
-           aria-label="Crear nuevo [elemento]">
-            <i class="fas fa-plus me-2"></i> Nuevo [Elemento]
-        </a>
-    </div>
-
-    <div class="table-responsive">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>[Columna]</th>
-                    ...
-                    <th class="text-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td>...</td>
-                    <td class="text-center pe-4">
-                        <div class="d-flex gap-2 justify-content-center">
-                            <!-- BOTONES — ver sección 4 -->
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <!-- Empty State — ver sección 5 -->
-                {% endfor %}
-            </tbody>
-        </table>
+<!-- HEADER PREMIUM -->
+<div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+    <div class="card-body p-0">
+        <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
+            <div class="d-flex align-items-center mb-3 mb-md-0">
+                <!-- ✅ USAR SIEMPRE .header-icon-box para garantizar contraste del icono -->
+                <div class="header-icon-box me-3">
+                    <i class="fas fa-[ICONO] fs-3"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0">[Título del Módulo]</h4>
+                    <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">[Subtítulo Descriptivo]</p>
+                </div>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+                <a href="{% url 'dashboard:..._create' %}" class="btn btn-white rounded-pill px-4 fw-bold shadow-sm">
+                    <i class="fas fa-plus-circle me-2"></i>[Acción Principal]
+                </a>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- MAIN TABLE CARD -->
+<div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 premium-table">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Folio / ID</th>
+                        <th>Columna 1</th>
+                        <th>Columna 2</th>
+                        <th class="pe-4 text-center">Gestión</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr class="animate__animated animate__fadeIn">
+                        <td class="ps-4">...</td>
+                        <td>...</td>
+                        <td>...</td>
+                        <td class="pe-4 text-center">
+                            <!-- ACCIONES PREMIUM -->
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <!-- Ver Sección 5 -->
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+### 3.1. Reglas de Oro del Hover y Contraste
+
+Para garantizar la legibilidad en ambos temas (Light/Dark):
+
+1. **Hover en Modo Dark**: El fondo de la fila al pasar el mouse **NUNCA** debe ser blanco o gris muy claro. Esto causa "ceguera" temporal al usuario y oculta el texto claro.
+2. **Variable Mandatoria**: Usar exclusivamente `var(--premium-table-hover)` para fondos de hover.
+3. **Contraste de Texto**: En modo Dark, se recomienda forzar `color: #fff !important;` en el estado `:hover` de la fila para asegurar que el texto destaque sobre el fondo resaltado.
+4. **Badges en Hover**: Los badges internos (como `placa-badge`) deben tener estilos específicos para modo dark que mantengan su contraste incluso cuando la fila cambie de color.
+
+```css
+.premium-table tbody tr:hover td {
+    background-color: var(--premium-table-hover) !important;
+}
+/* En styles.css ya existe el override para modo dark */
 ```
 
 ---
@@ -224,42 +268,108 @@ page_title (h1 via base.html — ya está renderizado)
 
 ---
 
-## 6. 📝 Formularios (form-container)
+## 6. 📝 Formularios (Premium Form v2.0)
 
-### Estructura Obligatoria
+### Estructura Mandatoria (Standard Layout)
 
 ```html
-<div class="form-container">
-    <div class="form-section">
-        <h5 class="form-section-title">
-            <i class="fas fa-[icono] me-2"></i>[Título de Sección]
-        </h5>
-        <div class="form-row">
-            <div class="form-group">
-                <label class="form-label">Campo</label>
-                {{ form.campo }}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                <!-- Header Premium -->
+                <div class="card-header border-0 py-4 px-4 bg-primary position-relative overflow-hidden">
+                    <!-- Icono decorativo de fondo -->
+                    <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 8rem; transform: translate(30%, -20%);">
+                        <i class="fas fa-[ICONO-MODULO]"></i>
+                    </div>
+                    <div class="d-flex align-items-center position-relative">
+                        <div class="bg-white rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 56px; height: 56px; background-color: rgba(255,255,255,0.2) !important;">
+                            <i class="fas fa-[ICONO-ACCION] text-white fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1 text-white fw-bold">
+                                [Título de Acción: Ej. Alta de Vehículo]
+                            </h5>
+                            <p class="text-white-50 small mb-0">[Subtítulo Descriptivo]</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form metod="POST" enctype="multipart/form-data" class="needs-validation">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="premium-form-grid">
+                                    {{ form|crispy }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                            <a href="..." class="btn btn-link text-muted text-decoration-none">
+                                <i class="fas fa-arrow-left me-2"></i>Regresar a la lista
+                            </a>
+                            <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-sm" style="min-width: 220px;">
+                                <i class="fas fa-save me-2"></i>GUARDAR REGISTRO
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- Botones SIEMPRE al final -->
-    <div class="d-flex gap-3 mt-4 justify-content-end">
-        <a href="{% url 'dashboard:..._list' %}"
-           class="btn btn-outline-secondary"
-           aria-label="Cancelar y volver al listado">
-            <i class="fas fa-times me-2"></i> Cancelar
-        </a>
-        <button type="submit" class="btn btn-primary"
-                aria-label="Guardar [nombre del formulario]">
-            <i class="fas fa-save me-2"></i> Guardar
-        </button>
     </div>
 </div>
 ```
 
-### Upload de Archivos / Evidencias
+### Clase `.premium-form-grid` (CSS Obligatorio)
+Debe implementarse en el bloque `<style>` del template o globalmente:
 
-**SIEMPRE usar el componente DnD global:**
+```css
+.premium-form-grid .form-group { margin-bottom: 1.5rem; }
+.premium-form-grid label { 
+    font-weight: 600; font-size: 0.85rem; color: var(--text-muted); 
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; 
+}
+.premium-form-grid .form-control, .premium-form-grid .form-select { 
+    border-radius: 12px; padding: 0.75rem 1rem; border-color: var(--border-color); 
+}
+.premium-form-grid .form-control:focus { 
+    box-shadow: 0 4px 12px rgba(0, 59, 112, 0.1); transform: translateY(-1px); 
+}
+```
+
+### 6.2. 🚫 Reglas de Oro del Layout (Evitar Deuda Técnica)
+
+Para asegurar la consistencia, se prohíbe el uso de layouts antiguos o manuales:
+
+1. **NUNCA** usar las clases `.form-container` o `.form-header` manuales. Estas son legado y deben ser reemplazadas por la estructura `card` + `card-header bg-primary` definida arriba.
+2. **SIEMPRE** envolver el formulario en `container py-4` (para forms) o `container-fluid py-4` (para listas/dashboards).
+3. **NUNCA** usar `style="max-width: ..."` en contenedores de primer nivel; usar las clases de grid de Bootstrap (`col-lg-10`, `col-xl-8`).
+
+### 6.3. 🗂️ Secciones Especiales y Checklists
+
+Si un formulario es extenso o requiere secciones funcionales (como el Checklist de Unidad):
+
+1. **Secciones Internas**: Usar la clase `.premium-form-grid` para los campos estándar.
+2. **Badge de Título**: Cada sección debe iniciar con un badge indicativo:
+
+   ```html
+   <div class="section-badge mb-4">
+       <span class="badge rounded-pill bg-primary-subtle text-primary border-0 px-3 py-2 x-small fw-bold shadow-xs">
+           <i class="fas fa-[ICONO] me-2"></i>TÍTULO SECCIÓN
+       </span>
+   </div>
+   ```
+
+3. **Componentes Custom**: Toggles y selectores de nivel (como gasolina) deben usar estados `:active` con colores corporativos y sombras `shadow-sm`.
+
+### 6.4. 📁 Upload de Archivos / Evidencias (DnD v2.0)
+
+**SIEMPRE usar el componente DnD global para campos de archivo:**
 
 ```html
 <!-- Zona DnD -->

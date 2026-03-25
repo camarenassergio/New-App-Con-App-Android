@@ -459,31 +459,48 @@ class ZonaEntrega(models.Model):
         if cps_limpios:
             try:
                 # Get path to the local data 
-                # According to logs, the file is at: /home/sscamarenas/Proyectos/Logistica Casa Lupita/App_Stealth/dashboard/data/zonas_texcoco.json
                 data_path = os.path.join(settings.BASE_DIR, 'dashboard', 'data', 'zonas_texcoco.json')
                 
+                if not os.path.exists(data_path):
+                    print(f"CRITICAL: GeoJSON source file not found at {data_path}")
+                
                 features = []
+                # Pre-clean search CPs to ensure exact matching with strings in JSON
+                search_cps = [str(cp).strip().zfill(5) for cp in cps_limpios]
+                
+                detect_municipio = None
+                
                 with open(data_path, 'r', encoding='utf-8') as f:
                     for line in f:
                         line = line.strip()
-                        if not line:
-                            continue
+                        if not line: continue
                         try:
                             feature = json.loads(line)
-                            # the json property is "d_cp" based on the uploaded file
-                            cp_value = feature.get('properties', {}).get('d_cp', '').strip()
-                            if cp_value in cps_limpios:
-                                # We keep the raw geometry
+                            # The json property is "d_cp" based on the uploaded file
+                            # It might be in properties or directly in the feature
+                            props = feature.get('properties', {})
+                            cp_value = str(props.get('d_cp', '')).strip().zfill(5)
+                            
+                            if cp_value in search_cps:
                                 features.append(feature)
+                                # Try to detect municipio if not already detected
+                                if not detect_municipio:
+                                    detect_municipio = props.get('D_mnpio') or props.get('municipio')
                         except json.JSONDecodeError:
                             continue
+                
+                # Update municipio if detected and NOT already set manually
+                if detect_municipio and not self.municipio:
+                    self.municipio = detect_municipio
+                    print(f"Detected municipio for {self.nombre}: {detect_municipio}")
                             
                 if features:
+                    print(f"Found {len(features)} polygons for zone {self.nombre} (CPs: {search_cps})")
                     # Dissolve geometries to remove internal lines
-                    from shapely.geometry import shape, mapping
-                    from shapely.ops import unary_union
-                    
                     try:
+                        from shapely.geometry import shape, mapping
+                        from shapely.ops import unary_union
+                        
                         # buffer(0) fixes minor topology errors before union
                         polygons = [shape(f['geometry']).buffer(0) for f in features]
                         unified_geom = unary_union(polygons)
@@ -494,22 +511,24 @@ class ZonaEntrega(models.Model):
                             "features": [{
                                 "type": "Feature",
                                 "geometry": mapping(unified_geom),
-                                "properties": {"nombre": self.nombre}
+                                "properties": {"nombre": self.nombre, "municipio": self.municipio}
                             }]
                         }
                         self.geojson_data = json.dumps(geo_collection)
                     except Exception as geo_err:
-                        # Fallback to multiple features if union fails
-                        print(f"Geo-union failed for {self.nombre}: {geo_err}")
+                        # Fallback to multiple features if union fails or shapely missing
+                        print(f"Geo-union fallback for {self.nombre}: {geo_err}")
                         self.geojson_data = json.dumps({
                             "type": "FeatureCollection",
                             "features": features
                         })
                 else:
-                     self.geojson_data = "" # No features matched
+                     print(f"WARNING: No polygons matched CPs {search_cps} for zone {self.nombre}")
+                     # Do not overwrite if we already have data, but if it was a new save and failed, leave empty
+                     if not self.geojson_data:
+                         self.geojson_data = "" 
                      
             except Exception as e:
-                # We catch exceptions to prevent preventing save on missing file
                 print(f"Error loading GeoJSON for zone {self.nombre}: {e}")
                 
         super().save(*args, **kwargs)
@@ -932,6 +951,8 @@ class Personal(models.Model):
     
     usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     puesto = models.CharField(max_length=20, choices=PUESTO_CHOICES)
+    roles_secundarios = models.CharField(max_length=255, blank=True, null=True, help_text="Separados por coma (Ej. MOSTRADOR,CAJA,LOGISTICA)")
+    
     
     nombre = models.CharField(max_length=100, verbose_name="Nombre(s)")
     apellido_paterno = models.CharField(max_length=100, verbose_name="Apellido Paterno")

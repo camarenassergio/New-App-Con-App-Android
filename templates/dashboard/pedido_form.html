@@ -7,254 +7,255 @@
 {% block content %}
 <div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-                <div class="card-header bg-primary py-3 px-4 d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0 text-white fw-bold"><i class="fas fa-file-invoice me-2"></i> Captura de Datos (SAE)</h5>
-                    <button type="button" class="btn btn-sm btn-light rounded-pill fw-bold"
-                            hx-get="{% url 'dashboard:cotizador_modal' %}"
-                            hx-target="#modal-container">
-                        <i class="fas fa-calculator me-1"></i> Cotizar Flete
-                    </button>
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 24px;">
+                <!-- Header Estilo Glassmorphism -->
+                <div class="card-header border-0 py-4 px-5 bg-primary position-relative overflow-hidden">
+                    <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 10rem; transform: translate(25%, -20%);">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between position-relative gap-4">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-white rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px; background-color: rgba(255,255,255,0.2) !important;">
+                                <i class="fas fa-shipping-fast text-white fs-3"></i>
+                            </div>
+                            <div>
+                                <h4 class="mb-0 text-white fw-bold">Captura de Pedido</h4>
+                                <p class="text-white-50 small mb-0">Sincronización directa con sistema SAE</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-primary shadow-sm"
+                                hx-get="{% url 'dashboard:cotizador_modal' %}"
+                                hx-target="#modal-container">
+                            <i class="fas fa-calculator me-2"></i>Cotizar Flete
+                        </button>
+                    </div>
                 </div>
+
                 <div class="card-body p-4 p-md-5">
                     <form hx-post="." 
                           hx-encoding="multipart/form-data" 
-                          hx-indicator="#pedido-spinner"
+                          hx-indicator="#form-indicator"
                           class="needs-validation">
                         {% csrf_token %}
-                        <div id="pedido-spinner" class="htmx-indicator" style="display: none;">
-                            <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
-                                 style="background: rgba(255,255,255,0.7); z-index: 9999;">
-                                <div class="spinner-border text-primary" style="width: 3.5rem; height: 3.5rem;" role="status">
-                                    <span class="visually-hidden">Procesando...</span>
-                                </div>
+                        
+                        <!-- Overlay Spinner Premium -->
+                        <div id="form-indicator" class="htmx-indicator">
+                            <div class="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center" 
+                                 style="background: rgba(var(--bg-card-rgb), 0.85); backdrop-filter: blur(4px); z-index: 9999;">
+                                <div class="spinner-grow text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+                                <h6 class="mt-3 fw-bold text-primary tracking-widest text-uppercase">Procesando Registro...</h6>
                             </div>
                         </div>
                         
                         {% if form.non_field_errors %}
-                        <div class="alert alert-danger shadow-sm border-start border-4 border-danger animate__animated animate__shakeX">
-                            <h6 class="fw-bold mb-1"><i class="fas fa-exclamation-circle me-2"></i> Errores al registrar:</h6>
-                            <ul class="mb-0 small">
-                                {% for error in form.non_field_errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
+                        <div class="alert alert-danger border-0 shadow-sm rounded-4 p-4 mb-5 animate__animated animate__shakeX">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-exclamation-triangle fs-4 me-3"></i>
+                                <h6 class="mb-0 fw-bold">Atención: Errores en el registro</h6>
+                            </div>
+                            <ul class="mb-0 small ps-5">
+                                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
                             </ul>
                         </div>
                         {% endif %}
 
-                        <!-- Paso 1: Identificación del Cliente -->
-                        <div class="section-title mb-4">
-                            <span class="step-badge">1</span>
-                            <h6 class="d-inline ms-2 fw-bold text-uppercase">Identificación del Cliente</h6>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Folio de Origen (Ticket) <span class="text-danger">*</span></label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-hashtag text-muted"></i></span>
-                                    <div style="flex: 0 0 40%;">
-                                        {{ form.tipo_ticket }}
-                                    </div>
-                                    <input type="text" name="folio_sae" id="id_folio_sae" class="form-control py-2" 
-                                           placeholder="Folio" required
-                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                                           value="{{ form.folio_sae.value|default:'' }}">
-                                </div>
-                                {% if form.folio_sae.errors %}
-                                    <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle me-2"></i> {{ form.folio_sae.errors.0 }}</div>
-                                {% endif %}
-                                <div id="folio-error" class="mt-1 text-danger small"></div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Cliente Registrado (SAE) </label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-user-tag text-muted"></i></span>
-                                    <input type="text" name="id_sae_search" class="form-control border-x-0" 
-                                           placeholder="ID SAE..."
-                                           hx-get="{% url 'dashboard:cliente_sae_busqueda' %}"
-                                           hx-target="#cliente-info-box"
-                                           hx-trigger="keyup changed delay:400ms"
-                                           oninput="this.value = this.value.toUpperCase()"
-                                           autocomplete="off">
-                                    <button type="button" class="btn btn-dark" 
-                                            hx-get="{% url 'dashboard:cliente_buscador_modal' %}"
-                                            hx-target="#modal-container">
-                                        <i class="fas fa-binoculars"></i> 
-                                    </button>
-                                </div>
-                                <div id="cliente-info-box" class="mt-2"></div>
-                                {% if form.cliente.errors %}
-                                    <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle me-1"></i> {{ form.cliente.errors.0 }}</div>
-                                {% endif %}
-                                <div class="form-text small"><i class="fas fa-info-circle me-1"></i> Ingrese ID o use los binoculares para búsqueda avanzada.</div>
-                                <div style="display:none;">{{ form.cliente }}</div>
-                            </div>
-                        </div>
-
-                        <!-- Panel de Cliente Manual (Oculto si es SAE) -->
-                        <div id="manual-client-panel" class="bg-light p-3 border rounded mb-4 shadow-sm" style="display: none;">
-                            <h6 class="fw-bold mb-3 text-primary small"><i class="fas fa-user-edit me-2"></i> DATOS DE CLIENTE MOSTRADOR</h6>
-                            <div class="row g-3">
-                                <div class="col-md-12">
-                                    <label class="form-label small fw-bold">Nombre Completo <span class="text-danger">*</span></label>
-                                    <input type="text" name="cliente_nombre_manual" id="id_cliente_nombre_manual" class="form-control" 
-                                           placeholder="Ej. Juan Pérez o Constructora Alfa" required
-                                           value="{{ form.cliente_nombre_manual.value|default:'' }}">
-                                    {% if form.cliente_nombre_manual.errors %}
-                                        <div class="text-danger small mt-1">{{ form.cliente_nombre_manual.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold">Teléfono de Contacto <span class="text-danger">*</span></label>
-                                    <input type="text" name="cliente_telefono_manual" id="id_cliente_telefono_manual" class="form-control" 
-                                           placeholder="10 dígitos" required value="{{ form.cliente_telefono_manual.value|default:'' }}">
-                                    {% if form.cliente_telefono_manual.errors %}
-                                        <div class="text-danger small mt-1">{{ form.cliente_telefono_manual.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Paso 2: Lugar de Entrega (AHORA FUERA DEL PANEL MANUAL) -->
-                        <div id="obra-section" class="section-title mb-4">
-                            <span class="step-badge">2</span>
-                            <h6 class="d-inline ms-2 fw-bold text-uppercase">Lugar de Entrega (Obra)</h6>
-                        </div>
-
-                        <div class="row g-3 mb-4" id="obra-fields">
-                            <div class="col-md-12" id="obra-select-wrapper">
-                                <label class="form-label fw-semibold">Seleccionar Obra / Dirección Registrada <span class="text-danger">*</span></label>
-                                <div class="d-flex gap-2">
-                                    <div id="obras-container" class="flex-grow-1">
-                                        {{ form.obra }}
-                                        {% if form.obra.errors %}
-                                            <div class="text-danger small mt-1"><i class="fas fa-exclamation-triangle me-1"></i> {{ form.obra.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <button type="button" class="btn btn-outline-primary" id="btn-nueva-obra-toggle">
-                                        <i class="fas fa-plus me-1"></i> Nueva Dirección
-                                    </button>
-                                </div>
-                                <div class="form-text small text-primary mt-1" id="text-obra-hint">
-                                    <i class="fas fa-info-circle me-1"></i> Si la obra no aparece, dale clic a <strong>"Nueva Dirección"</strong>.
-                                </div>
+                        <!-- PASO 1: CLIENTE -->
+                        <div class="premium-step mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num shadow-sm me-3">1</span>
+                                <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Identificación del Cliente</h5>
                             </div>
 
-                            <div id="obra-manual-fields" class="col-12 bg-white p-4 border rounded shadow-sm" style="display: none; border-left: 5px solid var(--primary-blue) !important;">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <h6 class="fw-bold mb-0 text-primary uppercase"><i class="fas fa-map-marker-alt me-2"></i> REGISTRO DE NUEVA DIRECCIÓN</h6>
-                                    <button type="button" class="btn btn-sm btn-outline-danger border-0" id="btn-cancelar-obra-nueva">
-                                        <i class="fas fa-times me-1"></i> Cancelar y volver al selector
-                                    </button>
-                                </div>
-                                <div class="p-3 bg-light rounded border mb-4">
-                                    {% include 'dashboard/clientes/_obra_form_fields.html' with form_id="pedido-nueva-obra" es_subform=True %}
-                                </div>
-                                <input type="hidden" name="usar_obra_manual" id="id_usar_obra_manual" value="false">
-                            </div>
-                        </div>
-
-                        <!-- Paso 3: Detalles de Carga y Pago -->
-                        <div class="section-title mb-4">
-                            <span class="step-badge">3</span>
-                            <h6 class="d-inline ms-2 fw-bold text-uppercase">Carga, Pago y Observaciones</h6>
-                        </div>
-
-                        <div class="row g-3 mb-3 align-items-end">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Peso Total (kg) <span class="text-danger">*</span></label>
-                                <div class="input-group" style="height:38px;">
-                                    {{ form.peso_total_estimado_kg }}
-                                    <span class="input-group-text bg-light" style="height:38px; line-height:1;">KG</span>
-                                </div>
-                                {% if form.peso_total_estimado_kg.errors %}
-                                    <div class="text-danger small mt-1"><i class="fas fa-exclamation-triangle me-1"></i> {{ form.peso_total_estimado_kg.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Forma de Pago <span class="text-danger">*</span></label>
-                                <div style="height:38px;">{{ form.metodo_pago }}</div>
-                                {% if form.metodo_pago.errors %}
-                                    <div class="text-danger small mt-1"><i class="fas fa-wallet me-1"></i> {{ form.metodo_pago.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">Observaciones Generales</label>
-                                {{ form.observaciones_mostrador }}
-                            </div>
-                        </div>
-
-                        {# ── Switches de Reglas de Negocio ── #}
-                        <div class="row g-3 mb-3 p-3 border rounded bg-white shadow-sm mx-0" id="switches-negocio">
-                            <div class="col-md-4">
-                                <div class="form-check form-switch custom-switch">
-                                    {{ form.es_urgente }}
-                                    <label class="form-check-label fw-bold text-danger" for="{{ form.es_urgente.id_for_label }}">
-                                        <i class="fas fa-bolt me-1"></i> ¿Urgente?
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-check form-switch custom-switch">
-                                    {{ form.maniobra_aceptada }}
-                                    <label class="form-check-label small fw-bold" for="{{ form.maniobra_aceptada.id_for_label }}">
-                                        ¿Maniobra Explicada? <br><span class="text-muted" style="font-size: 0.65rem;">(Marcado = Pie de Carro)</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-check form-switch custom-switch">
-                                    {{ form.recoleccion_parcial }}
-                                    <label class="form-check-label fw-bold text-primary" for="{{ form.recoleccion_parcial.id_for_label }}">
-                                        <i class="fas fa-layer-group me-1"></i> Entrega Parcial
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        {# ── Panel Entrega Parcial (Ticket + Productos) ── #}
-                        <div id="partial-products-panel" class="mb-4" style="display: none;">
-                            <div class="border rounded-3 overflow-hidden shadow-sm">
-                                {# Cabecera del panel #}
-                                <div class="d-flex align-items-center gap-2 px-4 py-3" style="background: linear-gradient(135deg, var(--primary-blue), #1e3a5f); color: white;">
-                                    <i class="fas fa-layer-group fa-lg"></i>
-                                    <div>
-                                        <div class="fw-bold">Evidencia de Entrega Parcial</div>
-                                        <div class="small opacity-75">Adjunta el ticket SAE y detalla los productos entregados</div>
-                                    </div>
-                                    <span class="badge bg-warning text-dark ms-auto fw-bold">Obligatorio</span>
-                                </div>
-                                <div class="p-4" style="background: var(--bg-card);">
-                                    <div class="row g-4">
-                                        {# Columna izquierda: Ticket DnD #}
-                                        <div class="col-md-5">
-                                            <label class="form-label fw-bold small text-uppercase mb-2">
-                                                <i class="fas fa-file-invoice me-1 text-primary"></i>
-                                                Ticket SAE <span class="text-danger">*</span>
-                                            </label>
-                                            <div class="dnd-upload-zone" id="dndZone-evidencia_ticket">
-                                                <input type="file" name="evidencia_ticket" id="id_evidencia_ticket" accept="image/*,application/pdf">
-                                                <i class="fas fa-file-invoice dnd-icon"></i>
-                                                <span class="dnd-label">Adjuntar Ticket SAE</span>
-                                                <span class="dnd-sublabel">Foto o PDF del ticket físico</span>
-                                            </div>
-                                            <div class="dnd-preview-container" id="dndPreview-evidencia_ticket"></div>
+                            <div class="row g-4">
+                                <!-- Folio Origen -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Folio de Origen / Ticket</label>
+                                    <div class="input-group shadow-sm border rounded-pill overflow-hidden bg-white">
+                                        <span class="input-group-text bg-light border-0 px-3">
+                                            <i class="fas fa-hashtag text-primary"></i>
+                                        </span>
+                                        <div style="flex: 0 0 30%;">
+                                            {{ form.tipo_ticket }}
                                         </div>
-                                        {# Columna derecha: Productos #}
-                                        <div class="col-md-7">
-                                            <label class="form-label fw-bold small text-uppercase mb-2">
-                                                <i class="fas fa-boxes me-1 text-primary"></i>
-                                                Productos Entregados <span class="text-danger">*</span>
-                                            </label>
-                                            {{ form.productos_entregados_parcial }}
-                                            <div class="form-text small mt-1">
-                                                <i class="fas fa-info-circle me-1"></i>
-                                                Lista los productos que se entregan en esta visita
+                                        <input type="text" name="folio_sae" id="id_folio_sae" class="form-control border-0 py-2" 
+                                               placeholder="Folio" required
+                                               oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                               value="{{ form.folio_sae.value|default:'' }}">
+                                    </div>
+                                    <div id="folio-error" class="mt-2 text-danger x-small fw-bold"></div>
+                                </div>
+
+                                <!-- Buscador SAE -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Cliente Registrado (SAE)</label>
+                                    <div class="input-group shadow-sm border rounded-pill overflow-hidden bg-white">
+                                        <span class="input-group-text bg-light border-0 px-3">
+                                            <i class="fas fa-search text-primary"></i>
+                                        </span>
+                                        <input type="text" name="id_sae_search" class="form-control border-0 py-2" 
+                                               placeholder="Ingrese ID SAE..."
+                                               hx-get="{% url 'dashboard:cliente_sae_busqueda' %}"
+                                               hx-target="#cliente-info-box"
+                                               hx-trigger="keyup changed delay:400ms"
+                                               oninput="this.value = this.value.toUpperCase()"
+                                               autocomplete="off">
+                                        <button type="button" class="btn btn-primary px-3" 
+                                                hx-get="{% url 'dashboard:cliente_buscador_modal' %}"
+                                                hx-target="#modal-container">
+                                            <i class="fas fa-binoculars"></i> 
+                                        </button>
+                                    </div>
+                                    <div id="cliente-info-box" class="mt-2 animate__animated animate__fadeIn"></div>
+                                    <div style="display:none;">{{ form.cliente }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Panel Cliente Manual -->
+                            <div id="manual-client-panel" class="mt-4 p-4 rounded-4 border bg-light-subtle shadow-sm animate__animated animate__fadeIn" style="display: none; border-style: dashed !important;">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-user-edit text-primary me-2"></i>
+                                    <h6 class="mb-0 fw-bold small text-uppercase">Datos de Cliente Mostrador</h6>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label class="form-label x-small fw-bold text-muted">Nombre Completo</label>
+                                        <input type="text" name="cliente_nombre_manual" id="id_cliente_nombre_manual" class="form-control rounded-3" 
+                                               placeholder="Ej. Juan Pérez" value="{{ form.cliente_nombre_manual.value|default:'' }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label x-small fw-bold text-muted">Teléfono</label>
+                                        <input type="text" name="cliente_telefono_manual" id="id_cliente_telefono_manual" class="form-control rounded-3" 
+                                               placeholder="10 dígitos" value="{{ form.cliente_telefono_manual.value|default:'' }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PASO 2: OBRA -->
+                        <div id="obra-section" class="premium-step mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num shadow-sm me-3">2</span>
+                                <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Lugar de Entrega</h5>
+                            </div>
+
+                            <div class="row g-4" id="obra-fields">
+                                <div class="col-12" id="obra-select-wrapper">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Ubicación de Destino</label>
+                                    <div class="d-flex flex-column flex-md-row gap-3">
+                                        <div id="obras-container" class="flex-grow-1">
+                                            {{ form.obra }}
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm" id="btn-nueva-obra-toggle" style="white-space: nowrap;">
+                                            <i class="fas fa-plus me-2"></i>Nueva Dirección
+                                        </button>
+                                    </div>
+                                    <div class="form-text x-small text-info mt-2">
+                                        <i class="fas fa-info-circle me-1"></i>Seleccione una dirección existente o registre una nueva para este cliente.
+                                    </div>
+                                </div>
+
+                                <div id="obra-manual-fields" class="col-12 animate__animated animate__fadeInUp" style="display: none;">
+                                    <div class="card border border-primary border-opacity-25 rounded-4 shadow-sm">
+                                        <div class="card-header bg-primary bg-opacity-10 border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0 fw-bold text-primary small text-uppercase"><i class="fas fa-map-marker-alt me-2"></i>Registro de Nueva Dirección</h6>
+                                            <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-pill" id="btn-cancelar-obra-nueva">
+                                                <i class="fas fa-times me-1"></i>Cerrar
+                                            </button>
+                                        </div>
+                                        <div class="card-body p-4">
+                                            {% include 'dashboard/clientes/_obra_form_fields.html' with form_id="pedido-nueva-obra" es_subform=True %}
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="usar_obra_manual" id="id_usar_obra_manual" value="false">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PASO 3: DETALLES -->
+                        <div class="premium-step mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num shadow-sm me-3">3</span>
+                                <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Detalles de la Carga</h5>
+                            </div>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Peso Total de Carga</label>
+                                    <div class="input-group shadow-sm border rounded-pill overflow-hidden bg-white">
+                                        <input type="number" step="0.01" name="peso_total_estimado_kg" id="id_peso_total_estimado_kg" class="form-control border-0 py-2 ps-4" 
+                                               placeholder="Total KG" required value="{{ form.peso_total_estimado_kg.value|default:'' }}">
+                                        <span class="input-group-text bg-light border-0 px-3 fw-bold text-muted small">KG</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Método de Pago</label>
+                                    <div class="shadow-sm border rounded-pill overflow-hidden">
+                                        {{ form.metodo_pago }}
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Observaciones y Referencias</label>
+                                    <div class="shadow-sm">
+                                        {{ form.observaciones_mostrador }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reglas de Negocio (Switches Premium) -->
+                            <div class="row g-3 p-4 rounded-4 bg-light-subtle border mb-5 mx-0 shadow-sm">
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch premium-switch">
+                                        {{ form.es_urgente }}
+                                        <label class="form-check-label ms-2 fw-bold text-danger" for="{{ form.es_urgente.id_for_label }}">
+                                            <i class="fas fa-bolt me-1"></i>¿PRIORIDAD URGENTE?
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch premium-switch">
+                                        {{ form.maniobra_aceptada }}
+                                        <label class="form-check-label ms-2 fw-bold text-primary" for="{{ form.maniobra_aceptada.id_for_label }}">
+                                            <i class="fas fa-walking me-1"></i>PIE DE CARRO / MANIOBRA
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch premium-switch">
+                                        {{ form.recoleccion_parcial }}
+                                        <label class="form-check-label ms-2 fw-bold text-success" for="{{ form.recoleccion_parcial.id_for_label }}">
+                                            <i class="fas fa-layer-group me-1"></i>ENTREGA PARCIAL
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Panel Entrega Parcial -->
+                            <div id="partial-products-panel" class="mb-5 animate__animated animate__fadeIn" style="display: none;">
+                                <div class="card border-info border-opacity-25 rounded-4 shadow-lg overflow-hidden">
+                                    <div class="card-header bg-info py-3 px-4 d-flex align-items-center text-white">
+                                        <i class="fas fa-camera-retro fs-4 me-3"></i>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">Evidencia de Carga Parcial</h6>
+                                            <p class="x-small mb-0 opacity-75">Requerido para tickets divididos</p>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-4 bg-body">
+                                        <div class="row g-4">
+                                            <div class="col-md-5">
+                                                <label class="form-label fw-bold small text-uppercase mb-3">Escaneo de Ticket SAE</label>
+                                                <div class="dnd-upload-zone rounded-4" id="dndZone-evidencia_ticket">
+                                                    <input type="file" name="evidencia_ticket" id="id_evidencia_ticket" accept="image/*,application/pdf">
+                                                    <i class="fas fa-cloud-upload-alt dnd-icon text-info"></i>
+                                                    <span class="dnd-label fw-bold">Subir Ticket</span>
+                                                    <span class="dnd-sublabel">PDF o Foto legible</span>
+                                                </div>
+                                                <div class="dnd-preview-container mt-3" id="dndPreview-evidencia_ticket"></div>
+                                            </div>
+                                            <div class="col-md-7">
+                                                <label class="form-label fw-bold small text-uppercase mb-3">Detalle de Mercancía</label>
+                                                {{ form.productos_entregados_parcial }}
+                                                <div class="form-text x-small mt-2"><i class="fas fa-info-circle me-1"></i>Especifique cantidades y códigos de producto.</div>
                                             </div>
                                         </div>
                                     </div>
@@ -262,12 +263,13 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center bg-light p-4" style="border-radius: 12px; margin: 0 -1.5rem -1.5rem -1.5rem;">
-                            <a href="{% url 'dashboard:mostrador_home' %}" class="btn btn-link text-muted text-decoration-none fw-semibold">
-                                <i class="fas fa-arrow-left me-1"></i> Volver
+                        <!-- Botones de Acción Final -->
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-4 mt-5 pt-4 border-top">
+                            <a href="{% url 'dashboard:mostrador_home' %}" class="btn btn-link text-muted text-decoration-none fw-bold">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar y Volver
                             </a>
-                            <button type="submit" id="btn-guardar-pedido" class="btn btn-primary px-5 py-2 fw-bold shadow-sm rounded-pill">
-                                Guardar Pedido <i class="fas fa-check-circle ms-2"></i>
+                            <button type="submit" id="btn-guardar-pedido" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-lg fs-5" style="min-width: 250px;">
+                                REGISTRAR PEDIDO<i class="fas fa-check-circle ms-2"></i>
                             </button>
                         </div>
                     </form>
@@ -279,6 +281,44 @@
 
 <div id="modal-container"></div>
 
+<style>
+    .premium-step .step-num {
+        background: var(--primary-blue); color: white;
+        width: 38px; height: 38px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 12px; font-weight: 800; font-size: 1rem;
+        box-shadow: 0 4px 12px rgba(var(--primary-blue-rgb), 0.2);
+    }
+    
+    .bg-light-subtle { background-color: rgba(var(--primary-blue-rgb), 0.03) !important; }
+    body.dark-theme .bg-light-subtle { background-color: rgba(255, 255, 255, 0.02) !important; }
+
+    .premium-switch .form-check-input { width: 3.5rem; height: 1.75rem; cursor: pointer; border-color: rgba(0,0,0,0.1); transition: all 0.3s ease; }
+    .premium-switch .form-check-input:checked { background-color: var(--primary-blue); border-color: var(--primary-blue); }
+    
+    .x-small { font-size: 0.75rem; }
+    .tracking-widest { letter-spacing: 0.15em; }
+    
+    .form-control, .form-select { border-radius: 14px; border: 1px solid rgba(0,0,0,0.1); padding: 0.65rem 1rem; transition: all 0.3s ease; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(var(--primary-blue-rgb), 0.1); }
+    
+    textarea.form-control { border-radius: 20px; padding: 1.5rem; }
+    
+    #id_tipo_ticket { border: 0 !important; background: transparent; font-weight: bold; padding-left: 1rem; cursor: pointer; color: var(--primary-blue); }
+    
+    .dnd-upload-zone {
+        border: 2px dashed rgba(var(--primary-blue-rgb), 0.2);
+        background: rgba(var(--primary-blue-rgb), 0.02);
+        padding: 3rem 1.5rem;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+    }
+    .dnd-upload-zone:hover { border-color: var(--primary-blue); background: rgba(var(--primary-blue-rgb), 0.05); }
+
+    .htmx-indicator { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .htmx-request .htmx-indicator { opacity: 1; pointer-events: auto; }
+</style>
+
 <script>
     function toggleManualClient() {
         const clienteSelect = document.querySelector('select[name="cliente"]');
@@ -287,12 +327,9 @@
         const obraManualFields = document.getElementById('obra-manual-fields');
         const inputUsarManual = document.getElementById('id_usar_obra_manual');
         
-        // Función auxiliar para activar/desactivar required en un contenedor
         const setRequired = (container, state) => {
             if (!container) return;
             container.querySelectorAll('input, select, textarea').forEach(el => {
-                // Solo afectamos a los que originalmente eran obligatorios (tienen clase o atributo previo)
-                // O mejor, a todos los que no sean opcionales por lógica de negocio
                 if (state) {
                     if (el.hasAttribute('data-was-required')) el.required = true;
                 } else {
@@ -307,7 +344,6 @@
         if (clienteSelect && clienteSelect.value && clienteSelect.value !== "") {
             manualPanel.style.display = 'none';
             setRequired(manualPanel, false);
-
             if (inputUsarManual && inputUsarManual.value === "true") {
                 obraSelectWrapper.style.display = 'none';
                 obraManualFields.style.display = 'block';
@@ -320,7 +356,6 @@
         } else {
             manualPanel.style.display = 'block';
             setRequired(manualPanel, true);
-
             obraSelectWrapper.style.display = 'none';
             obraManualFields.style.display = 'block';
             setRequired(obraManualFields, true);
@@ -328,69 +363,25 @@
         }
     }
 
-    // Definición global para que el fragmento pueda usarla
-    window.validarZonaObra = function(select) {
-        const btnGuardar = document.getElementById('btn-guardar-pedido');
-        const errorDiv = document.getElementById('zona-error');
-        if (!select) return;
-        const selected = select.options[select.selectedIndex];
-        
-        if (selected && selected.value !== "" && selected.dataset.hasZona === "false") {
-            if (errorDiv) errorDiv.style.display = 'block';
-            if (btnGuardar) {
-                btnGuardar.disabled = true;
-                btnGuardar.classList.add('opacity-50');
-            }
-        } else {
-            if (errorDiv) errorDiv.style.display = 'none';
-            if (btnGuardar) {
-                btnGuardar.disabled = false;
-                btnGuardar.classList.remove('opacity-50');
-            }
-        }
-    }
-
     function togglePartialProducts() {
         const partialSwitch = document.querySelector('input[name="recoleccion_parcial"]');
         const partialPanel  = document.getElementById('partial-products-panel');
-        const ticketInput   = document.getElementById('id_evidencia_ticket');
-        const productosTA   = document.querySelector('textarea[name="productos_entregados_parcial"]');
-
         if (!partialPanel || !partialSwitch) return;
-
+        
         const isOn = partialSwitch.checked;
-
-        // Mostrar / ocultar panel con animación suave
-        if (isOn) {
-            partialPanel.style.display = 'block';
-            partialPanel.style.opacity = '0';
-            partialPanel.style.transform = 'translateY(-8px)';
-            requestAnimationFrame(() => {
-                partialPanel.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                partialPanel.style.opacity = '1';
-                partialPanel.style.transform = 'translateY(0)';
-            });
-            partialPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        } else {
-            partialPanel.style.display = 'none';
-            // Limpiar evidencia al desactivar
-            if (ticketInput) ticketInput.value = '';
-            const previewCont = document.getElementById('dndPreview-evidencia_ticket');
-            if (previewCont) previewCont.innerHTML = '';
-            if (productosTA) productosTA.value = '';
-        }
-
-        // Manejar required dinámicamente
+        partialPanel.style.display = isOn ? 'block' : 'none';
+        
+        const ticketInput = document.getElementById('id_evidencia_ticket');
+        const productosTA = document.querySelector('textarea[name="productos_entregados_parcial"]');
         if (ticketInput) ticketInput.required = isOn;
         if (productosTA) productosTA.required = isOn;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Inicializar marcas de required
         document.querySelectorAll('input[required], select[required], textarea[required]').forEach(el => {
             el.setAttribute('data-was-required', 'true');
         });
-
+        
         toggleManualClient();
         togglePartialProducts();
         
@@ -405,14 +396,15 @@
         const inputUsarManual = document.getElementById('id_usar_obra_manual');
 
         if (btnToggle) {
-            btnToggle.addEventListener('click', function() {
+            btnToggle.addEventListener('click', () => {
                 if (inputUsarManual) inputUsarManual.value = "true";
                 toggleManualClient();
-                document.getElementById('obra-manual-fields').scrollIntoView({ behavior: 'smooth' });
+                const target = document.getElementById('obra-manual-fields');
+                if(target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
             });
         }
         if (btnCancel) {
-            btnCancel.addEventListener('click', function() {
+            btnCancel.addEventListener('click', () => {
                 if (inputUsarManual) inputUsarManual.value = "false";
                 toggleManualClient();
             });
@@ -427,22 +419,6 @@
                 selectCliente.value = detectedId.value;
                 toggleManualClient();
                 htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + detectedId.value, '#obras-container');
-                
-                // Actualizar dataset del switch de réplica
-                const switchCopy = document.getElementById('pedido-nueva-obra-copy-client');
-                const detectedName = document.getElementById('detected-cliente-name');
-                const detectedPhone = document.getElementById('detected-cliente-phone');
-                if (switchCopy && detectedName) {
-                    switchCopy.dataset.name = detectedName.value;
-                    switchCopy.dataset.phone = detectedPhone ? detectedPhone.value : "";
-                    if (switchCopy.checked) switchCopy.onchange(); // Refrescar si ya estaba marcado
-                }
-            } else if (evt.detail.xhr.status === 200 && (evt.detail.target.innerHTML.includes('Nuevo ID SAE') || evt.detail.target.innerHTML.includes('No encontrado'))) {
-                if (selectCliente) selectCliente.value = "";
-                const inputUsarManual = document.getElementById('id_usar_obra_manual');
-                if (inputUsarManual) inputUsarManual.value = "true";
-                toggleManualClient();
-                document.getElementById('obras-container').innerHTML = '<select class="form-select" disabled><option>Complete datos de cliente</option></select>';
             }
         }
     });
@@ -450,24 +426,14 @@
     document.addEventListener('clienteSeleccionado', function(evt) {
         const data = evt.detail;
         const selectCliente = document.querySelector('select[name="cliente"]');
-        const idSaeInput = document.querySelector('[name="id_sae_search"]');
-        const inputUsarManual = document.getElementById('id_usar_obra_manual');
         if (selectCliente) {
             let option = selectCliente.querySelector(`option[value="${data.clienteId}"]`);
             if (!option) { option = new Option(data.razonSocial, data.clienteId); selectCliente.add(option); }
             selectCliente.value = data.clienteId;
-            if (idSaeInput) idSaeInput.value = data.idSae;
+            const inputUsarManual = document.getElementById('id_usar_obra_manual');
             if (inputUsarManual) inputUsarManual.value = "false";
             toggleManualClient();
             htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + data.clienteId + '&obra_id=' + data.obraId, '#obras-container');
-            
-            // Actualizar dataset del switch de réplica
-            const switchCopy = document.getElementById('pedido-nueva-obra-copy-client');
-            if (switchCopy) {
-                switchCopy.dataset.name = data.razonSocial;
-                switchCopy.dataset.phone = data.telefono || "";
-                if (switchCopy.checked) switchCopy.onchange(); // Refrescar si ya estaba marcado
-            }
         }
     });
 
@@ -478,48 +444,4 @@
         }
     });
 </script>
-
-{% endblock %}
-
-{% block extra_css %}
-    <style>
-        .htmx-indicator { display: none; }
-        .htmx-request .htmx-indicator { display: block !important; }
-        .htmx-request.htmx-indicator { display: block !important; }
-
-        .step-badge {
-            background: var(--primary-blue); color: white; width: 28px; height: 28px;
-            display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 50%; font-weight: bold; font-size: 0.9rem;
-        }
-        .section-title { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
-        .custom-switch .form-check-input { width: 3rem; height: 1.5rem; cursor: pointer; }
-        .custom-switch .form-check-label { margin-left: 0.5rem; padding-top: 2px; cursor: pointer; }
-
-        /* Altura uniforme: input-group peso = select pago = 38px */
-        #id_peso_total_estimado_kg { height: 38px; }
-        #id_metodo_pago            { height: 38px; }
-    </style>
-    {% block scripts %}
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const formatPhone = (input) => {
-            let val = input.value.replace(/\D/g, '').substring(0, 10);
-            let sections = [];
-            for (let i = 0; i < val.length; i += 2) {
-                sections.push(val.substring(i, i + 2));
-            }
-            input.value = sections.join('-');
-        };
-
-        // Aplicar a los teléfonos ya presentes
-        const telInputs = document.querySelectorAll('input[name*="telefono"]');
-        telInputs.forEach(input => {
-            input.addEventListener('input', function() { formatPhone(this); });
-            // Formatear valor inicial si existe
-            if (this.value) formatPhone(this);
-        });
-    });
-    </script>
-    {% endblock %}
 {% endblock %}

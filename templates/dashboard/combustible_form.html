@@ -2,286 +2,324 @@
 {% load crispy_forms_tags %}
 
 {% block page_title %}
-    {% if object %}Editar Registro{% else %}Nuevo Registro de Combustible{% endif %}
+    {% if object %}Editar Carga{% else %}Nueva Carga de Combustible{% endif %}
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow-sm" style="border-radius: 12px; border: none;">
-            <div class="card-header border-bottom" style="padding: 20px;">
-                <h5 class="mb-0 fw-bold">
-                    <i class="fas fa-gas-pump me-2" style="color: var(--primary-orange);"></i>
-                    Carga de Combustible
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                
-                <!-- Driver Info (Read Only) -->
-                <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
-                    <div class="avatar" style="width: 35px; height: 35px; font-size: 0.9rem; margin-right: 12px;">
-                        {{ request.user.username|first|upper }}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                <!-- Header Premium con Gradiente -->
+                <div class="card-header border-0 py-4 px-4 bg-primary position-relative overflow-hidden">
+                    <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 8rem; transform: translate(30%, -20%);">
+                        <i class="fas fa-gas-pump"></i>
                     </div>
-                    <div>
-                        {% if request.user.is_superuser or request.user.personal.puesto == 'ADMIN' %}
-                             <small class="d-block text-muted">Administrador Responsable</small>
-                             <span class="badge bg-primary">ADMINISTRADOR</span>
-                        {% elif request.user.personal.puesto == 'CHOFER' %}
-                             <small class="d-block text-muted">Chofer Responsable</small>
-                             <span class="badge bg-warning text-dark">CHOFER</span>
-                        {% elif request.user.personal.puesto == 'LOGISTICA' %}
-                             <small class="d-block text-muted">Logística</small>
-                             <span class="badge bg-info text-dark">LOGÍSTICA</span>
-                        {% else %}
-                             <small class="d-block text-muted">Usuario Responsable</small>
-                        {% endif %}
-                        <strong class="d-block mt-1">{{ request.user.username }}</strong>
+                    <div class="d-flex align-items-center position-relative">
+                        <div class="bg-white rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 56px; height: 56px; background-color: rgba(255,255,255,0.2) !important;">
+                            <i class="fas fa-fill-drip text-white fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1 text-white fw-bold">Registro de Combustible</h5>
+                            <p class="text-white-50 small mb-0">Control de eficiencia y gasto operativo</p>
+                        </div>
                     </div>
                 </div>
 
-                <div id="formContainer">
-<form method="post" enctype="multipart/form-data" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML" hx-encoding="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        {{ form.unidad|as_crispy_field }}
-                    </div>
-
-                    <!-- Evidencia Antes -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold mb-2">
-                            <i class="fas fa-camera me-1"></i> Evidencia ANTES de cargar
-                        </label>
-                        <div class="dnd-upload-zone" id="dndZone-evidencia_antes">
-                            <input type="file" name="evidencia_antes" id="id_evidencia_antes" accept="image/*" capture="environment" required>
-                            <i class="fas fa-camera-retro dnd-icon"></i>
-                            <span class="dnd-label">Toca para abrir la cámara o arrastra una foto</span>
-                            <span class="dnd-sublabel">JPG o PNG &middot; Foto del tablero ANTES de cargar</span>
+                <div class="card-body p-4 p-md-5">
+                    <!-- Glassmorphism Driver Info -->
+                    <div class="driver-badge d-flex align-items-center p-3 mb-5 rounded-4 border bg-light-subtle shadow-sm">
+                        <div class="avatar-container position-relative me-3">
+                            {% if request.user.personal and request.user.personal.foto %}
+                                <img src="{{ request.user.personal.foto.url }}" class="rounded-circle border border-2 border-white shadow-sm" style="width: 48px; height: 48px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px; font-weight: bold;">
+                                    {{ request.user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                            <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-light rounded-circle" style="width: 14px; height: 14px;"></span>
                         </div>
-                        <div class="dnd-preview-container" id="dndPreview-evidencia_antes"></div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-6">
-                            {{ form.nivel_inicial|as_crispy_field }}
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 fw-bold">{{ request.user.username|upper }}</h6>
+                            <span class="text-muted x-small text-uppercase fw-semibold tracking-wider">
+                                {% if request.user.is_superuser %}Administrador Global{% else %}{{ request.user.personal.puesto|default:"Usuario Autorizado" }}{% endif %}
+                            </span>
                         </div>
-                        <div class="col-6">
-                            {{ form.tipo_combustible|as_crispy_field }}
+                        <div class="text-end">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2">
+                                <i class="fas fa-shield-alt me-1"></i> SESIÓN SEGURA
+                            </span>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-6">
-                            {{ form.kilometraje_actual|as_crispy_field }}
+                    <form hx-post="{{ request.path }}" 
+                          hx-indicator="#form-indicator" 
+                          hx-swap="none"
+                          enctype="multipart/form-data"
+                          id="combustibleForm"
+                          class="needs-validation">
+                        {% csrf_token %}
+                        
+                        <!-- Sección 1: Selección de Unidad -->
+                        <div class="section-title d-flex align-items-center mb-4 text-primary">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-2" style="padding: 0.5rem; border-radius: 8px;">
+                                <i class="fas fa-truck"></i>
+                            </span>
+                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider small">Activo y Tipo de Carga</h6>
                         </div>
-                        <div class="col-6">
-                            {{ form.litros|as_crispy_field }}
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-6">
-                            {{ form.precio_litro|as_crispy_field }}
-                        </div>
-                        <div class="col-6">
-                            {{ form.propina|as_crispy_field }}
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-12">
-                            {{ form.total|as_crispy_field }}
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-12">
-                            {{ form.observaciones|as_crispy_field }}
-                        </div>
-                    </div>
-
-                    <!-- Evidencia Después -->
-                    <div class="mb-4 mt-3">
-                        <label class="form-label fw-bold mb-2">
-                            <i class="fas fa-check-circle me-1"></i> Evidencia DESPUÉS de cargar
-                        </label>
-                        <div class="dnd-upload-zone" id="dndZone-evidencia_despues">
-                            <input type="file" name="evidencia_despues" id="id_evidencia_despues" accept="image/*" capture="environment" required>
-                            <i class="fas fa-images dnd-icon" style="color: var(--success);"></i>
-                            <span class="dnd-label">Toca para foto del ticket y tablero</span>
-                            <span class="dnd-sublabel">JPG o PNG &middot; Foto DESPUÉS de cargar con nuevo nivel</span>
-                        </div>
-                        <div class="dnd-preview-container" id="dndPreview-evidencia_despues"></div>
-                    </div>
-
-                    <div id="progress_container" class="mt-4 d-none">
-                        <div class="d-flex justify-content-between mb-1">
-                            <small class="text-primary fw-bold" id="progress_status_text">Subiendo el registro...</small>
-                            <small id="progress_text" class="text-muted">0%</small>
-                        </div>
-                        <div class="progress" style="height: 12px; border-radius: 12px;">
-                            <div id="progress_bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                                 role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="row g-4 mb-5">
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold small text-muted text-uppercase mb-2">Unidad / Vehículo</label>
+                                {{ form.unidad|as_crispy_field }}
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold small text-muted text-uppercase mb-2">Combustible</label>
+                                {{ form.tipo_combustible|as_crispy_field }}
                             </div>
                         </div>
-                    </div>
 
-                    <div class="d-grid mt-4 gap-2">
-                        <button type="submit" id="submitBtn" class="btn btn-primary btn-lg" style="background-color: var(--primary-orange); border: none;">
-                            <i class="fas fa-save me-2"></i> Registrar Carga
-                        </button>
-                        <a href="{% url 'dashboard:home' %}" class="btn btn-light text-muted" id="cancelBtn">Cancelar</a>
-                    </div>
-                </form>
-</div>
+                        <!-- Sección 2: Evidencia Inicial -->
+                        <div class="mb-5 p-4 rounded-4 border bg-light-subtle evidence-box-before" style="border-style: dashed !important;">
+                            <div class="section-title d-flex align-items-center mb-3">
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle me-2" style="padding: 0.5rem; border-radius: 8px;">
+                                    <i class="fas fa-camera"></i>
+                                </span>
+                                <h6 class="mb-0 fw-bold text-uppercase tracking-wider small">Evidencia Antes de Cargar</h6>
+                            </div>
+                            <p class="text-muted small mb-4">Captura foto del odómetro y nivel de aguja ANTES de iniciar.</p>
+                            
+                            <div class="dnd-upload-zone premium-dnd" id="dndZone-evidencia_antes">
+                                <input type="file" name="evidencia_antes" id="id_evidencia_antes" accept="image/*" capture="environment" required>
+                                <div class="dnd-visuals">
+                                    <i class="fas fa-camera-retro fs-1 mb-2 opacity-50"></i>
+                                    <span class="d-block fw-bold">Toca para abrir cámara</span>
+                                    <span class="opacity-75 small">Nivel Inicial + Kilometraje</span>
+                                </div>
+                            </div>
+                            <div class="dnd-preview-container mt-3" id="dndPreview-evidencia_antes"></div>
+                        </div>
+
+                        <!-- Sección 3: Datos de la Carga -->
+                        <div class="section-title d-flex align-items-center mb-4 text-primary">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle me-2" style="padding: 0.5rem; border-radius: 8px;">
+                                <i class="fas fa-calculator"></i>
+                            </span>
+                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider small">Detalles y Costos</h6>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                {{ form.kilometraje_actual|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.nivel_inicial|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.litros|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.precio_litro|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.propina|as_crispy_field }}
+                            </div>
+                            <div class="col-md-12">
+                                <div class="p-4 bg-primary text-white rounded-4 shadow-sm border-0 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="mb-0 fw-bold" id="total-display">$0.00</h4>
+                                        <span class="small opacity-75 text-uppercase fw-bold tracking-wider">Inversión Total Bruta</span>
+                                    </div>
+                                    <div class="opacity-50 fs-1">
+                                        <i class="fas fa-receipt"></i>
+                                    </div>
+                                    <div style="display:none;">{{ form.total }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-5">
+                            {{ form.observaciones|as_crispy_field }}
+                        </div>
+
+                        <!-- Sección 4: Evidencia Final -->
+                        <div class="mb-5 p-4 rounded-4 border bg-light-subtle evidence-box-after" style="border-style: dashed !important;">
+                            <div class="section-title d-flex align-items-center mb-3">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle me-2" style="padding: 0.5rem; border-radius: 8px;">
+                                    <i class="fas fa-check-double"></i>
+                                </span>
+                                <h6 class="mb-0 fw-bold text-uppercase tracking-wider small">Comprobante y Salida</h6>
+                            </div>
+                            <p class="text-muted small mb-4">Captura el Ticket y la aguja DESPUÉS de cargar.</p>
+                            
+                            <div class="dnd-upload-zone premium-dnd" id="dndZone-evidencia_despues">
+                                <input type="file" name="evidencia_despues" id="id_evidencia_despues" accept="image/*" capture="environment" required>
+                                <div class="dnd-visuals">
+                                    <i class="fas fa-images fs-1 mb-2 opacity-50"></i>
+                                    <span class="d-block fw-bold">Subir Ticket</span>
+                                    <span class="opacity-75 small">Foto nítida del comprobante</span>
+                                </div>
+                            </div>
+                            <div class="dnd-preview-container mt-3" id="dndPreview-evidencia_despues"></div>
+                        </div>
+
+                        <!-- Progress Bar for Uploads -->
+                        <div id="progress-container" class="mb-5 d-none">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold small text-primary" id="progress-label">Subiendo archivos...</span>
+                                <span class="fw-bold small text-primary" id="progress-percent">0%</span>
+                            </div>
+                            <div class="progress rounded-pill shadow-sm" style="height: 12px; background-color: rgba(0, 59, 112, 0.05);">
+                                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                            <a href="{% url 'dashboard:home' %}" class="btn btn-link text-muted text-decoration-none">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <div class="d-flex align-items-center gap-3">
+                                <div id="form-indicator" class="htmx-indicator spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Procesando...</span>
+                                </div>
+                                <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-sm" style="min-width: 250px;" id="btnSubmit">
+                                    <i class="fas fa-check-circle me-2"></i>Finalizar y Enviar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .bg-primary-subtle { background-color: rgba(0, 59, 112, 0.08) !important; }
+    .bg-warning-subtle { background-color: rgba(245, 158, 11, 0.1) !important; }
+    .bg-success-subtle { background-color: rgba(16, 185, 129, 0.1) !important; }
+    .bg-light-subtle { background-color: rgba(0, 0, 0, 0.02) !important; }
+    body.dark-theme .bg-light-subtle { background-color: rgba(255, 255, 255, 0.05) !important; }
+    
+    .tracking-wider { letter-spacing: 0.1em; }
+    .x-small { font-size: 0.72rem; }
+    
+    .premium-dnd {
+        background: rgba(255, 255, 255, 0.5);
+        border: 2px dashed var(--border-color);
+        border-radius: 16px;
+        min-height: 150px;
+        transition: all 0.3s ease;
+    }
+    .premium-dnd:hover { border-color: var(--primary-blue); background: white; }
+    
+    .form-control, .form-select {
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem !important;
+    }
+    
+    /* Ocultar etiquetas de crispy para usar las personalizadas de ser necesario */
+    .premium-form-grid .asteriskField { display: none; }
+    
+    #total-display { font-size: 2rem; }
+</style>
+
 {% endblock %}
 
 {% block extra_js %}
+<script id="motor-type-data" type="application/json">
+    {
+        {% for u in form.unidad.field.queryset %}
+        "{{ u.id }}": "{{ u.tipo_combustible_unidad|default:''|escapejs }}"{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }
+</script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- LOGICA RESTRICCION TIPO DE MOTOR ---
-        const motorTypeMap = {
-            {% for u in form.fields.unidad.queryset %}
-            "{{ u.id }}": "{{ u.tipo_combustible_unidad }}"{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        };
+        // --- DATA MAP FROM JSON ---
+        const motorDataEl = document.getElementById('motor-type-data');
+        let motorTypeMap = {};
+        try {
+            if (motorDataEl) motorTypeMap = JSON.parse(motorDataEl.textContent);
+        } catch (e) { console.error("Error parsing motor data", e); }
 
+        const fuelForm = document.getElementById('combustibleForm');
         const unidadSelect = document.getElementById('id_unidad');
         const combustibleSelect = document.getElementById('id_tipo_combustible');
 
         function updateFuelOptions() {
             if (!unidadSelect || !combustibleSelect) return;
             const unidadId = unidadSelect.value;
-            const motorType = motorTypeMap[unidadId] || '';
+            const motorType = (motorTypeMap[unidadId] || '').toUpperCase();
             
-            const magnaOption = combustibleSelect.querySelector("option[value='MAGNA']");
-            const premiumOption = combustibleSelect.querySelector("option[value='PREMIUM']");
-            const dieselOption = combustibleSelect.querySelector("option[value='DIESEL']");
+            const options = Array.from(combustibleSelect.options);
+            options.forEach(opt => {
+                if (motorType === 'GASOLINA') {
+                    if (opt.value === 'DIESEL') { opt.disabled = true; opt.style.display = 'none'; }
+                    else { opt.disabled = false; opt.style.display = ''; }
+                } else if (motorType === 'DIESEL') {
+                    if (opt.value !== 'DIESEL' && opt.value !== '') { opt.disabled = true; opt.style.display = 'none'; }
+                    else { opt.disabled = false; opt.style.display = ''; }
+                } else {
+                    opt.disabled = false; opt.style.display = '';
+                }
+            });
             
-            if (motorType === 'GASOLINA') {
-                if(dieselOption) {
-                    dieselOption.disabled = true;
-                    // Ocultarlo visualmente en navegadores modernos (opcional)
-                    dieselOption.style.display = 'none'; 
-                }
-                if(magnaOption) {
-                    magnaOption.disabled = false;
-                    magnaOption.style.display = '';
-                }
-                if(premiumOption) {
-                    premiumOption.disabled = false;
-                    premiumOption.style.display = '';
-                }
-                
-                // Si estaba seleccionado Diesel, cambiar a Magna por defecto
-                if(combustibleSelect.value === 'DIESEL' || !combustibleSelect.value) {
-                    combustibleSelect.value = 'MAGNA'; 
-                }
-            } else if (motorType === 'DIESEL') {
-                if(magnaOption) {
-                    magnaOption.disabled = true;
-                    magnaOption.style.display = 'none';
-                }
-                if(premiumOption) {
-                    premiumOption.disabled = true;
-                    premiumOption.style.display = 'none';
-                }
-                if(dieselOption) {
-                    dieselOption.disabled = false;
-                    dieselOption.style.display = '';
-                }
-                
-                // Forzar la selección al único valor posible
-                combustibleSelect.value = 'DIESEL';
-            } else {
-                 if(dieselOption) { dieselOption.disabled = false; dieselOption.style.display = ''; }
-                 if(magnaOption) { magnaOption.disabled = false; magnaOption.style.display = ''; }
-                 if(premiumOption) { premiumOption.disabled = false; premiumOption.style.display = ''; }
-            }
+            if (motorType === 'DIESEL') combustibleSelect.value = 'DIESEL';
         }
 
-        if(unidadSelect && combustibleSelect) {
+        if(unidadSelect) {
             unidadSelect.addEventListener('change', updateFuelOptions);
-            updateFuelOptions(); // run on initial load
+            updateFuelOptions();
         }
 
-        // --- CALCULADORA DE COSTOS ---
-        const litrosInput = document.getElementById('id_litros');
-        const precioInput = document.getElementById('id_precio_litro');
-        const propinaInput = document.getElementById('id_propina');
-        const totalInput = document.getElementById('id_total');
-        const kilometrajeInput = document.getElementById('id_kilometraje_actual'); // Asegurarnos del ID correcto
+        // --- CALCS ---
+        const litIn = document.getElementById('id_litros');
+        const preIn = document.getElementById('id_precio_litro');
+        const proIn = document.getElementById('id_propina');
+        const totHi = document.getElementById('id_total');
+        const totLb = document.getElementById('total-display');
 
-        function calcularTotal() {
-            const litros = parseFloat(litrosInput.value) || 0;
-            const precio = parseFloat(precioInput.value) || 0;
-            const propina = parseFloat(propinaInput.value) || 0;
-            
-            const total = (litros * precio) + propina;
-            totalInput.value = total.toFixed(2);
+        function calcularTotales() {
+            const l = parseFloat(litIn?.value) || 0;
+            const pr = parseFloat(preIn?.value) || 0;
+            const pp = parseFloat(proIn?.value) || 0;
+            const t = (l * pr) + pp;
+            if (totLb) totLb.innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(t);
+            if (totHi) totHi.value = t.toFixed(2);
         }
 
-        if(litrosInput && precioInput && propinaInput && totalInput) {
-            litrosInput.addEventListener('input', calcularTotal);
-            precioInput.addEventListener('input', calcularTotal);
-            propinaInput.addEventListener('input', calcularTotal);
-            
-            totalInput.readOnly = true; 
-        }
+        [litIn, preIn, proIn].forEach(inp => {
+            if(inp) inp.addEventListener('input', calcularTotales);
+        });
 
-        // Foto/evidencia: handled by global DnD handler in base.html
+        // --- PROGRESS ---
+        const pCont = document.getElementById('progress-container');
+        const pBar = document.getElementById('progress-bar');
+        const pPerc = document.getElementById('progress-percent');
+        const bSub = document.getElementById('btnSubmit');
 
+        document.body.addEventListener('htmx:xhr:progress', function(evt) {
+            if (evt.detail.elt === fuelForm) {
+                if (pCont) pCont.classList.remove('d-none');
+                const percent = Math.round((evt.detail.loaded / evt.detail.total) * 100);
+                if (pBar) pBar.style.width = percent + '%';
+                if (pPerc) pPerc.innerText = percent + '%';
+                
+                if (percent >= 100) {
+                    const label = document.getElementById('progress-label');
+                    if (label) label.innerText = 'Finalizando registro...';
+                    if (pBar) pBar.classList.add('bg-success');
+                }
+            }
+        });
 
-        // --- PREVENIR DOUBLE SUBMIT Y BARRA DE PROGRESO ---
-        const formObj = document.querySelector('form');
-        const submitBtn = document.getElementById('submitBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const progressContainer = document.getElementById('progress_container');
-        const progressBar = document.getElementById('progress_bar');
-        const progressText = document.getElementById('progress_text');
-        const progressStatusText = document.getElementById('progress_status_text');
-
-        if (formObj && submitBtn) {
-            formObj.addEventListener('submit', function(e) {
-                // Dejar que el HTML5 valide primero si faltan fotos o campos requeridos
-                if (formObj.checkValidity()) {
-                    if (submitBtn.dataset.submitted === 'true') {
-                        e.preventDefault(); // Si ya se apretó, bloquear
-                        return;
-                    }
-                    submitBtn.dataset.submitted = 'true';
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Procesando...';
-                    submitBtn.style.opacity = '0.7';
-                    submitBtn.style.pointerEvents = 'none'; // Evitar clics nativos sin deshabilitar form
-                    
-                    if (cancelBtn) cancelBtn.classList.add('disabled');
-                    
-                    if (progressContainer) progressContainer.classList.remove('d-none');
-
-                    let width = 0;
-                    let interval = setInterval(function() {
-                        if (width >= 100) {
-                            clearInterval(interval);
-                            if (progressText) progressText.innerText = "100%";
-                            if (progressStatusText) progressStatusText.innerText = "¡Listo! Finalizando el registro...";
-                        } else {
-                            width += Math.random() * 20; 
-                            if (width > 100) width = 100;
-                            
-                            let widthPercent = Math.round(width) + '%';
-                            if (progressBar) {
-                                progressBar.style.width = widthPercent;
-                                progressBar.setAttribute('aria-valuenow', Math.round(width));
-                            }
-                            if (progressText && width < 100) {
-                                progressText.innerText = widthPercent;
-                            }
-                        }
-                    }, 120);
+        if (fuelForm) {
+            fuelForm.addEventListener('htmx:beforeRequest', () => {
+                if (bSub) {
+                    bSub.disabled = true;
+                    bSub.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Procesando...';
                 }
             });
         }

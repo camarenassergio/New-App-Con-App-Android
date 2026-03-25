@@ -61,6 +61,8 @@ urlpatterns = [
 
     path('usuarios/', views.UsuarioListView.as_view(), name='usuarios_list'),
     path('usuarios/nuevo/', views.UsuarioCreateView.as_view(), name='usuario_create'),
+    path('usuarios/<int:pk>/editar/', views.UsuarioUpdateView.as_view(), name='usuario_update'),
+    path('usuarios/<int:pk>/toggle-estado/', views.UsuarioToggleActiveView.as_view(), name='usuario_toggle_estado'),
     
     # --- CONFIGURACION GENERAL ---
     path('configuraciones/', views.ConfiguracionGeneralUpdateView.as_view(), name='configuracion_general'),
@@ -68,6 +70,11 @@ urlpatterns = [
     # --- PERFIL DE USUARIO ---
     path('mi-perfil/', views.UsuarioPerfilView.as_view(), name='usuario_perfil'),
     path('cambiar-password/', views.UsuarioPasswordChangeView.as_view(), name='usuario_cambiar_password'),
+    path('cambiar-modo/', views.CambiarModoVista.as_view(), name='cambiar_modo'),
+
+    # --- LOGISTICA (PASO 2 - FASE 2) ---
+    path('logistica/dashboard/', views.LogisticaDashboardView.as_view(), name='logistica_dashboard'),
+    path('logistica/armar-viaje/', views.LogisticaArmarViajeView.as_view(), name='logistica_armar_viaje'),
 
     # --- MOSTRADOR (PASO 1 - FASE 2) ---
     path('mostrador/dashboard/', views.MostradorDashboardView.as_view(), name='mostrador_dashboard'),
@@ -84,6 +91,7 @@ urlpatterns = [
     path('pedido/<int:pk>/editar/', views.PedidoUpdateView.as_view(), name='pedido_update'),
     path('pedido/<int:pk>/desbloquear/', views.PedidoUnlockView.as_view(), name='pedido_unlock'),
     path('pedido/<int:pk>/cancelar/', views.PedidoCancelView.as_view(), name='pedido_cancel'),
+    path('pedido/<int:pk>/cambiar-estado/', views.PedidoCambiarEstadoView.as_view(), name='pedido_cambiar_estado'),
 
     # --- GESTIÓN DE CLIENTES Y OBRAS (ADMIN/MOSTRADOR) ---
     path('clientes/', views.ClienteListView.as_view(), name='cliente_list'),

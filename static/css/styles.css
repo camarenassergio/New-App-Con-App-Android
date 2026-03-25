@@ -14,6 +14,8 @@
   --table-header-bg: #003b70;
   --table-header-text: #ffffff;
   --table-row-border: #f1f5f9;
+  --premium-table-hover: rgba(0, 59, 112, 0.04);
+  --premium-table-border: #f1f5f9;
 
   /* Status Colors */
   --success: #10b981;
@@ -43,6 +45,8 @@ body.dark-theme {
   --table-header-bg: #0f172a;
   --table-header-text: #f1f5f9;
   --table-row-border: #1e293b;
+  --premium-table-hover: transparent; /* Hover desactivado en modo oscuro por legibilidad */
+  --premium-table-border: #334155;
   --invert-close-btn: invert(1);
 
   /* --- Sidebar stays corporate navy in dark mode --- */
@@ -144,7 +148,7 @@ body.dark-theme .text-dark {
 }
 
 body.dark-theme .bg-light,
-body.dark-theme .bg-white {
+body.dark-theme .bg-white:not(.btn-white) {
   background-color: #1e293b !important;
   /* Slate gray equivalent in graphite */
   color: var(--text-main) !important;
@@ -246,8 +250,21 @@ body.dark-theme .modal-body .alert-info {
 }
 body.dark-theme .modal-body .alert-success {
   background-color: rgba(16, 185, 129, 0.15) !important;
-  border-color: rgba(16, 185, 129, 0.4) !important;
-  color: #6ee7b7 !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Premium Alerts for Modals */
+.alert-premium-success {
+  background-color: #ecfdf5;
+  border: 1px solid #d1fae5;
+  color: #065f46;
+}
+
+body.dark-theme .alert-premium-success {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
 }
 
 /* Form controls inside dark modals */
@@ -416,14 +433,78 @@ body.dark-theme .table-container td[colspan] {
   transition: background-color 0.15s ease;
 }
 
-/* Table row hover — dark mode */
-body.dark-theme .table-container tbody tr:hover td {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  transition: background-color 0.15s ease;
+/* Standard Premium Table Styles */
+.premium-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.premium-table tbody tr:hover td {
+  background-color: var(--premium-table-hover) !important;
+}
+
+.premium-table td {
+  border-bottom-color: var(--premium-table-border) !important;
+}
+
+/* Placa Badge Dark Mode Support */
+body.dark-theme .placa-badge {
+  background-color: #0f172a !important;
+  border-top: 1px solid #334155 !important;
+  border-right: 1px solid #334155 !important;
+  border-bottom: 1px solid #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Specific Table Hover Legacy (keep for compatibility) */
+body.dark-theme tr:hover,
+body.dark-theme .table-container tbody tr:hover td,
+body.dark-theme table tbody tr:hover td,
+body.dark-theme .premium-table tbody tr:hover td {
+  background-color: transparent !important;
+  transition: background-color 0s ease;
 }
 
 
+/* --- PREMIUM HEADER REFINEMENT --- */
+.header-icon-box {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(4px);
+}
+
+body.dark-theme .header-icon-box {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* --- BUTTONS REFINEMENT --- */
+.btn-white {
+  background-color: #ffffff !important;
+  color: var(--primary-blue) !important;
+  border: none !important;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-white:hover {
+  background-color: #f8f9fa !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: var(--secondary-blue) !important;
+}
+
+body.dark-theme .btn-white {
+  background-color: #ffffff !important;
+  color: #00284d !important; /* Navy profundo para máximo contraste en botón blanco */
+}
+
 .btn-primary {
   background-color: var(--primary-orange) !important;
   border-color: var(--primary-orange) !important;
@@ -1217,7 +1298,7 @@ th {
 }
 
 tr:hover {
-  background-color: #f8f9fa;
+  background-color: var(--premium-table-hover);
 }
 
 .badge {

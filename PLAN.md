@@ -50,6 +50,7 @@
 | Antigravity | Notificaciones: Campana, Badge HTMX y Autorización de Zonas | Verificado y Pulido |
 | Antigravity | UX Mapas: Previsualización de Ruta OSRM, Pin Centroide y Geo-Dissolve | Verificado [AUTO-HEALED] |
 | Antigravity | Fix: Búsqueda de Colonia Estricta (Municipio) — Evita zonas incorrectas en CPs ajenos | Verificado [AUTO-HEALED] |
+| Antigravity | Paso 2 (Fase 2): Logística — Command Center (Kanban Board) con HTMX Drag/Drop state | Verificado y Pulido |
 
 ## Reglas del Proyecto
 - **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).
