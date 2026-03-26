@@ -158,6 +158,23 @@ class UnidadForm(forms.ModelForm):
             'observaciones': forms.Textarea(attrs={'rows': 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Campos obligatorios según solicitud del usuario
+        for field_name in [
+            'nombre_corto', 'descripcion_vehiculo', 'placas',
+            'no_serie', 'no_motor', 'marca', 'submarca', 'modelo_anio',
+            'tipo', 'tipo_combustible_unidad', 'capacidad_kg',
+            'capacidad_tanque', 'numero_llantas',
+            'tarjeta_circulacion', 'vencimiento_placa',
+            'poliza_seguro', 'titular_poliza', 'nombre_aseguradora',
+            'tipo_cobertura_seguro', 'vencimiento_poliza',
+            'fecha_adquisicion', 'ultimo_pago_tenencia',
+            'vencimiento_verificacion', 'tipo_permiso_stc'
+        ]:
+            if field_name in self.fields:
+                self.fields[field_name].required = True
+
     def clean(self):
         cleaned_data = super().clean()
         tipo = cleaned_data.get('tipo')
@@ -277,7 +294,7 @@ class GastoUnidadForm(forms.ModelForm):
         fields = [
             'unidad', 'tipo', 'fecha', 'detalle', 'costo', 'evidencia',
             'poliza_seguro', 'aseguradora', 'tipo_cobertura', 
-            'chofer', 'motivo_multa', 
+            'chofer', 'motivo_multa', 'acompanante', 'responsabilidad_compartida',
             'tipo_permiso', 'vigencia_permiso', 
             'kilometraje'
         ]
@@ -294,9 +311,23 @@ class GastoUnidadForm(forms.ModelForm):
             'aseguradora': forms.TextInput(attrs={'class': 'form-control'}),
             'tipo_cobertura': forms.TextInput(attrs={'class': 'form-control'}),
             'motivo_multa': forms.TextInput(attrs={'class': 'form-control'}),
+            'acompanante': forms.Select(attrs={'class': 'form-select'}),
             'tipo_permiso': forms.TextInput(attrs={'class': 'form-control'}),
             'evidencia': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Eliminar opción vacía y establecer 'Otro' por defecto
+        if 'tipo' in self.fields:
+            self.fields['tipo'].empty_label = None
+            self.fields['tipo'].initial = 'Otro'
+
+        # Campos obligatorios según estandar v2
+        for field_name in ['unidad', 'tipo', 'fecha', 'detalle', 'costo']:
+            if field_name in self.fields:
+                self.fields[field_name].required = True
 
     def clean(self):
         cleaned_data = super().clean()
@@ -487,6 +518,16 @@ class InventarioLlantaForm(forms.ModelForm):
             'fecha_instalacion': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'observaciones': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Campos obligatorios según estandar v2
+        for field_name in [
+            'unidad', 'posicion', 'marca', 'medida', 'numero_serie', 
+            'profundidad_piso_mm', 'fecha_instalacion', 'km_instalacion'
+        ]:
+            if field_name in self.fields:
+                self.fields[field_name].required = True
 
 from .models import EvaluacionEntrega
 

@@ -3,73 +3,165 @@
 
 {% block page_title %}{% if object %}Editar Viaje #{{ object.n_viaje }}{% else %}Programar Nuevo Viaje{% endif %}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .form-header-premium {
+        background: linear-gradient(135deg, var(--primary-blue), #004a99);
+        border-radius: 24px 24px 0 0;
+        padding: 2.5rem;
+    }
+    .card-premium {
+        border-radius: 24px;
+        border: none;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        background: var(--bg-card);
+    }
+    .step-num {
+        width: 32px;
+        height: 32px;
+        background: var(--primary-blue);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-weight: 700;
+        margin-right: 12px;
+        box-shadow: 0 4px 10px rgba(0, 51, 102, 0.2);
+    }
+    .section-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    .form-control, .form-select {
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-input);
+    }
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 4px rgba(var(--primary-blue-rgb), 0.1);
+        border-color: var(--primary-blue);
+    }
+    .bg-soft-blue {
+        background-color: rgba(var(--primary-blue-rgb), 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="form-container" style="max-width: 800px; margin: 0 auto;">
-    <div class="form-header">
-        <h3><i class="fas fa-route me-2"></i> Detalles del Viaje</h3>
-        <p class="text-muted mb-0">Alineado a los lineamientos SDC (Módulo 3.1 Entregas y Logística).</p>
-    </div>
-
-    <div id="formContainer" style="padding: 28px;">
-        <form method="post" id="viajeForm" hx-post="{{ request.path }}" hx-target="#formContainer" hx-select="#formContainer" hx-swap="outerHTML">
-            {% csrf_token %}
-
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.unidad|as_crispy_field }}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card card-premium overflow-hidden">
+                <!-- Header -->
+                <div class="form-header-premium position-relative overflow-hidden">
+                    <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 8rem; transform: translate(25%, -20%);">
+                        <i class="fas fa-shipping-fast text-white"></i>
+                    </div>
+                    <div class="d-flex align-items-center position-relative">
+                        <div class="rounded-circle p-3 me-3 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.2); width: 64px; height: 64px;">
+                            <i class="fas fa-route text-white fs-3"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 fw-bold shadow-sm" style="color: #ffffff !important;">Despacho de Unidades</h3>
+                            <p class="text-white-50 mb-0 small">Control Logístico SDC - Módulo 3.1</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    {{ form.operador|as_crispy_field }}
+
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" id="viajeForm" 
+                          hx-post="{{ request.path }}" 
+                          hx-target="#viajeForm" 
+                          hx-swap="outerHTML">
+                        {% csrf_token %}
+
+                        <div class="row g-4">
+                            <!-- Section 1: Crew & Unit -->
+                            <div class="col-12 premium-step">
+                                <div class="d-flex align-items-center mb-4">
+                                    <span class="step-num shadow-sm me-3">1</span>
+                                    <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Unidad y Personal</h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">{{ form.unidad|as_crispy_field }}</div>
+                                    <div class="col-md-6">{{ form.operador|as_crispy_field }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Section 2: Journey Details -->
+                            <div class="col-12 mt-5 premium-step">
+                                <div class="d-flex align-items-center mb-4">
+                                    <span class="step-num shadow-sm me-3">2</span>
+                                    <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Datos del Viaje</h5>
+                                </div>
+                                <div class="bg-soft-blue mb-4">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">{{ form.tipo_viaje|as_crispy_field }}</div>
+                                        <div class="col-md-4">{{ form.estado_actual|as_crispy_field }}</div>
+                                        <div class="col-md-4">{{ form.zona|as_crispy_field }}</div>
+                                        <div class="col-12">{{ form.folio_nota_factura|as_crispy_field }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 3: Performance & Logs -->
+                            <div class="col-12 mt-5 premium-step">
+                                <div class="d-flex align-items-center mb-4">
+                                    <span class="step-num shadow-sm me-3">3</span>
+                                    <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Kilometraje y Horarios</h5>
+                                </div>
+                                <div class="row g-4">
+                                    <!-- Time Group -->
+                                    <div class="col-md-6">
+                                        <div class="p-3 border rounded-4 bg-light bg-opacity-10 h-100">
+                                            <label class="fw-bold small text-muted text-uppercase mb-3 d-block"><i class="fas fa-clock me-2"></i>Horarios CEDIS</label>
+                                            <div class="row g-2">
+                                                <div class="col-6">{{ form.hora_salida_cedis|as_crispy_field }}</div>
+                                                <div class="col-6">{{ form.hora_llegada_cedis|as_crispy_field }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- KM Group -->
+                                    <div class="col-md-6">
+                                        <div class="p-3 border rounded-4 bg-light bg-opacity-10 h-100">
+                                            <label class="fw-bold small text-muted text-uppercase mb-3 d-block"><i class="fas fa-tachometer-alt me-2"></i>Kilometraje</label>
+                                            <div class="row g-2">
+                                                <div class="col-6">{{ form.km_salida|as_crispy_field }}</div>
+                                                <div class="col-6">{{ form.km_llegada|as_crispy_field }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer Actions -->
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-4 mt-5 pt-4 border-top">
+                            <a href="{% url 'dashboard:viajes_list' %}" class="btn btn-link text-muted text-decoration-none fw-bold">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-lg" style="min-width: 250px;">
+                                GUARDAR DESPACHO <i class="fas fa-check-circle ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    {{ form.tipo_viaje|as_crispy_field }}
-                </div>
-                <div class="col-md-4">
-                    {{ form.estado_actual|as_crispy_field }}
-                </div>
-                <div class="col-md-4">
-                    {{ form.zona|as_crispy_field }}
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <div class="col-12">
-                    {{ form.folio_nota_factura|as_crispy_field }}
-                </div>
-            </div>
-
-            <div class="border-bottom pb-2 mb-3 mt-4">
-                <h5 class="fw-bold mb-0"><i class="fas fa-clock me-2"></i>Control de Tiempos y Distancias</h5>
-            </div>
-
-            <div class="row mb-3 mt-3">
-                <div class="col-md-6">
-                    {{ form.hora_salida_cedis|as_crispy_field }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.hora_llegada_cedis|as_crispy_field }}
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.km_salida|as_crispy_field }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.km_llegada|as_crispy_field }}
-                </div>
-            </div>
-
-            <div class="d-flex gap-3 mt-4">
-                <button type="submit" class="btn btn-primary px-5">
-                    <i class="fas fa-save me-2"></i> Guardar Viaje
-                </button>
-                <a href="{% url 'dashboard:viajes_list' %}" class="btn btn-outline-secondary px-4">Cancelar</a>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
+
+<script>
+    // UX: Auto-fill departing KM if a unit is selected (requires API, but for now we keep it simple)
+</script>
 {% endblock %}

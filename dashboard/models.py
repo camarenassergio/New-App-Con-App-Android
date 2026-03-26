@@ -1130,8 +1130,10 @@ class GastoUnidad(models.Model):
     tipo_cobertura = models.CharField(max_length=100, null=True, blank=True, verbose_name="Cobertura")
     
     # Multas
-    chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Chofer Responsable")
+    chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Chofer Responsable", related_name='gastos_chofer')
     motivo_multa = models.CharField(max_length=200, null=True, blank=True, verbose_name="Motivo de Multa")
+    acompanante = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Acompañante/Chalán", related_name='gastos_acompanante')
+    responsabilidad_compartida = models.BooleanField(default=False, verbose_name="¿Es responsabilidad compartida?")
 
     # Permisos / Placas
     tipo_permiso = models.CharField(max_length=100, null=True, blank=True, verbose_name="Tipo de Permiso")

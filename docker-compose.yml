@@ -26,7 +26,7 @@ services:
     container_name: lupita_web_dev
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/app
+      - ../New App Con App Android:/app
     ports:
       - "8000:8000"
     depends_on:
@@ -37,6 +37,25 @@ services:
       - DB_HOST=db-dev
       - DB_NAME=lupita_dev
       - ENVIRONMENT=DEV
+    env_file: .env
+    restart: always
+
+  # --- STEALTH ENVIRONMENT (Port 8888, DB lupita_dev) ---
+  web-stealth:
+    build: .
+    container_name: lupita_web_stealth
+    command: python manage.py runserver 0.0.0.0:8888
+    volumes:
+      - .:/app
+    ports:
+      - "8888:8888"
+    depends_on:
+      db-dev:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db-dev
+      - DB_NAME=lupita_dev
+      - ENVIRONMENT=STEALTH
     env_file: .env
     restart: always
 

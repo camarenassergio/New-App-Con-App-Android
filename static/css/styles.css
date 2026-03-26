@@ -54,7 +54,7 @@ body.dark-theme {
 }
 
 body.dark-theme .page-title {
-  color: #ff7606 !important;
+  color: #f8fafc !important; /* Brighter white for dark mode page titles */
 }
 
 .sidebar-header {
@@ -101,6 +101,36 @@ body.dark-theme th {
 
 body.dark-theme td {
   color: var(--text-main);
+}
+
+/* Force section titles and labels to white/high-contrast in dark mode */
+body.dark-theme .section-title,
+body.dark-theme .os-section-title,
+body.dark-theme .premium-step h5,
+body.dark-theme .premium-form-grid label,
+body.dark-theme .form-label {
+  color: #f8fafc !important; /* Brighter white for dark mode titles */
+}
+
+/* Step indicators in forms (v2 style) */
+.step-num {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: var(--primary-blue);
+  color: white !important;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+body.dark-theme .step-num {
+  background: #f36f21 !important; /* Force orange for better visibility in dark mode step indicators */
+  color: white !important;
 }
 
 /* Hover removed by user request (matches day mode) */

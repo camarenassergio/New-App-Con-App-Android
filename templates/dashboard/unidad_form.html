@@ -18,7 +18,7 @@
                             <i class="fas fa-truck-loading text-white fs-4"></i>
                         </div>
                         <div>
-                            <h5 class="card-title mb-1 text-white fw-bold">
+                            <h5 class="card-title mb-1 fw-bold" style="color: #ffffff !important;">
                                 {% if form.instance.pk %}Actualizar Unidad {{ form.instance.nUnidad }}{% else %}Alta de Vehículo{% endif %}
                             </h5>
                             <p class="text-white-50 small mb-0">Gestión centralizada de activos de flotilla</p>
@@ -35,26 +35,92 @@
                           class="needs-validation">
                         {% csrf_token %}
                         
-                        <!-- Contenido dinámico del formulario (Crispy) -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="premium-form-grid">
-                                    {{ form|crispy }}
-                                </div>
+                        <!-- BLOQUE 1: IDENTIDAD Y MOTOR -->
+                        <div class="premium-step mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num shadow-sm me-3">1</span>
+                                <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Identidad y Motor</h5>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">{{ form.nombre_corto|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.descripcion_vehiculo|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.placas|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.no_serie|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.no_motor|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.marca|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.submarca|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.modelo_anio|as_crispy_field }}</div>
                             </div>
                         </div>
 
+                        <!-- BLOQUE 2: ESPECIFICACIONES TÉCNICAS -->
+                        <div class="premium-step mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num shadow-sm me-3">2</span>
+                                <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Especificaciones Técnicas</h5>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-4">{{ form.tipo|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.tipo_combustible_unidad|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.kilometraje_actual|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.capacidad_kg|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.capacidad_tanque|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.numero_llantas|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.en_servicio|as_crispy_field }}</div>
+                            </div>
+                        </div>
+
+                        <!-- BLOQUE 3: DOCUMENTACIÓN Y SEGURO -->
+                        <div class="premium-step mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num shadow-sm me-3">3</span>
+                                <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Documentación y Seguro</h5>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">{{ form.tarjeta_circulacion|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.vencimiento_placa|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.poliza_seguro|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.titular_poliza|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.nombre_aseguradora|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.tipo_cobertura_seguro|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.vencimiento_poliza|as_crispy_field }}</div>
+                            </div>
+                        </div>
+
+                        <!-- BLOQUE 4: EXPEDIENTE DIGITAL SDC -->
+                        <div class="premium-step mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num shadow-sm me-3">4</span>
+                                <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Expediente Digital SDC</h5>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">{{ form.fecha_adquisicion|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.ultimo_pago_tenencia|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.vencimiento_verificacion|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.tipo_permiso_stc|as_crispy_field }}</div>
+                                <div class="col-12">{{ form.observaciones|as_crispy_field }}</div>
+                                
+                                <div class="col-md-6">{{ form.doc_factura|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.doc_tarjeta_circulacion|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.doc_poliza|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.doc_permisos|as_crispy_field }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Ocultos -->
+                        {{ form.supervisor_auth }}
+
                         <!-- Botones de Acción -->
-                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
-                            <a href="{% url 'dashboard:unidades_list' %}" class="btn btn-link text-muted text-decoration-none">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-5 pt-4 border-top gap-3">
+                            <a href="{% url 'dashboard:unidades_list' %}" class="btn btn-link text-muted text-decoration-none fw-bold">
                                 <i class="fas fa-arrow-left me-2"></i>Regresar a la lista
                             </a>
                             <div class="d-flex align-items-center gap-3">
                                 <div id="form-indicator" class="htmx-indicator spinner-border spinner-border-sm text-primary" role="status">
                                     <span class="visually-hidden">Procesando...</span>
                                 </div>
-                                <button type="button" id="btnGuardar" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-sm" style="min-width: 220px;">
-                                    <i class="fas fa-save me-2"></i>Guardar Unidad
+                                <button type="button" id="btnGuardar" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-lg" style="min-width: 250px;">
+                                    <i class="fas fa-save me-2"></i>GUARDAR UNIDAD
                                 </button>
                             </div>
                         </div>
