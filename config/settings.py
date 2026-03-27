@@ -173,8 +173,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 
-# CSRF Trusted Origins (For Railway)
-CSRF_TRUSTED_ORIGINS = ['https://*.railway.app']
+# CSRF Trusted Origins (For Railway and Local Dev)
+CSRF_TRUSTED_ORIGINS = ['https://*.railway.app', 'http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:8888', 'http://localhost:8000']
 if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
     CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ.get('RAILWAY_PUBLIC_DOMAIN')}")
 

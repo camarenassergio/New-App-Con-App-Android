@@ -138,12 +138,23 @@
         </li>
         {% endif %}
 
+        <!-- === SECCIÓN: ALMACÉN === -->
+        {% if request.user.is_superuser or request.user.personal.puesto == 'ALMACEN' or request.user.personal.puesto == 'ADMIN' %}
+        <li class="nav-section-label">Almacén</li>
+        <li class="nav-item">
+          <a href="{% url 'dashboard:almacen_dashboard' %}" class="nav-link {% if 'almacen' in request.path %}active{% endif %}">
+            <i class="fas fa-warehouse nav-icon"></i>
+            <span>Control de Almacén</span>
+          </a>
+        </li>
+        {% endif %}
+
         <!-- === SECCIÓN: LOGÍSTICA === -->
         {% if request.user.is_superuser or request.user.personal.puesto == 'LOGISTICA' or request.user.personal.puesto == 'RUTAS' or request.user.personal.puesto == 'ADMIN' %}
         <li class="nav-section-label">Logística</li>
         {% endif %}
         
-        {% if request.user.is_superuser or request.user.personal.puesto == 'LOGISTICA' %}
+        {% if request.user.is_superuser or request.user.personal.puesto == 'LOGISTICA' or request.user.personal.puesto == 'RUTAS' or request.user.personal.puesto == 'ADMIN' %}
         <li class="nav-item">
           <a href="{% url 'dashboard:logistica_dashboard' %}" class="nav-link {% if 'logistica' in request.path %}active{% endif %}">
             <i class="fas fa-layer-group nav-icon"></i>
@@ -346,7 +357,7 @@
                     hx-trigger="click, notifActualizada from:body"
                     title="Notificaciones">
                 <i class="fas fa-bell" style="font-size: 1.15rem;"></i>
-                <div id="notif-badge-container" hx-get="{% url 'dashboard:notificaciones_count' %}" hx-trigger="every 60s, notifActualizada from:body" hx-swap="innerHTML">
+                <div id="notif-badge-container">
                   {% if notificaciones_unread_count > 0 %}
                   <span class="position-absolute translate-middle badge rounded-pill bg-danger" 
                         id="notif-badge"
@@ -646,6 +657,56 @@
                 toast.style.transform = 'translateX(120%)';
                 setTimeout(function() { toast.remove(); }, 420);
             }, 5000);
+        });
+    });
+    </script>
+    <!-- Notificaciones Poller & Sound -->
+    <div hx-get="{% url 'dashboard:notificaciones_count' %}" 
+         hx-trigger="every 5s, notifActualizada from:body" 
+         hx-target="#notif-badge-container" 
+         hx-swap="innerHTML" 
+         style="display:none;"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar el contador en localStorage para evitar pitidos al cargar
+        const initialBadge = document.getElementById('notif-badge');
+        if (initialBadge) {
+            localStorage.setItem('last_notif_count', initialBadge.textContent.trim());
+        } else {
+            localStorage.setItem('last_notif_count', '0');
+        }
+
+        // Sonido de notificación
+        const notifSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
+        notifSound.volume = 0.5;
+
+        // Desbloquear audio tras primera interacción (requisito del navegador)
+        const unlockAudio = () => {
+            notifSound.play().then(() => {
+                notifSound.pause();
+                notifSound.currentTime = 0;
+            }).catch(() => {});
+            document.removeEventListener('click', unlockAudio);
+        };
+        document.addEventListener('click', unlockAudio);
+
+        // Monitorear cambios post-HTMX
+        document.addEventListener('htmx:afterOnLoad', function(evt) {
+            if (evt.detail.target.id === 'notif-badge-container') {
+                const badge = document.getElementById('notif-badge');
+                if (badge) {
+                    const currentCount = parseInt(badge.textContent.trim());
+                    const lastCount = parseInt(localStorage.getItem('last_notif_count') || '0');
+                    
+                    if (currentCount > lastCount) {
+                        notifSound.play().catch(e => console.log("Audio play blocked", e));
+                    }
+                    localStorage.setItem('last_notif_count', currentCount);
+                } else {
+                    localStorage.setItem('last_notif_count', '0');
+                }
+            }
         });
     });
     </script>

@@ -1,83 +1,113 @@
 <div class="modal fade" id="modalArmarViaje" tabindex="-1" aria-labelledby="modalArmarViajeLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0 bg-primary-blue text-white custom-modal-header" style="background-color: var(--primary-blue); color: white; border-radius: 8px 8px 0 0;">
-                <h5 class="modal-title fw-bold" id="modalArmarViajeLabel">
-                    <i class="fas fa-truck-loading me-2"></i> Armar Nuevo Viaje
-                </h5>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            
+            <!-- Header Premium v2.3 -->
+            <div class="modal-header border-0 p-4 bg-primary grad-primary text-white position-relative overflow-hidden">
+                <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 6rem; transform: translate(20%, -20%);">
+                    <i class="fas fa-truck-loading"></i>
+                </div>
+                <div class="d-flex align-items-center position-relative">
+                    <div class="header-icon-box bg-white bg-opacity-20 rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 52px; height: 52px;">
+                        <i class="fas fa-route text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="modalArmarViajeLabel">Despacho de Ruta</h5>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Programación de Viaje y Recursos</p>
+                    </div>
+                </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
             <form id="armarViajeForm" hx-post="{% url 'dashboard:logistica_armar_viaje' %}" hx-target="#modalArmarViaje" hx-swap="outerHTML">
-                <div class="modal-body p-4 bg-light">
+                <div class="modal-body p-4 p-md-5 bg-light bg-opacity-50">
                     {% csrf_token %}
                     
                     {% if form.errors %}
-                        <div class="alert alert-danger mb-4">
-                            Corrige los errores en el formulario para poder continuar.
+                        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 animate__animated animate__shakeX">
+                            <div class="d-flex align-items-center gap-3 p-1">
+                                <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                                <div class="small fw-bold">Por favor, revisa los campos señalados antes de continuar.</div>
+                            </div>
                         </div>
                     {% endif %}
 
-                    <!-- SECCIÓN 1: ASIGNACIÓN DE RECURSOS (CHOFER / UNIDAD) -->
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-white fw-bold d-flex align-items-center">
-                            <i class="fas fa-clipboard-check text-primary me-2"></i> 1. Asignar Recursos
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
+                    <!-- SECCIÓN 1: RECURSOS -->
+                    <div class="section-badge mb-4">
+                        <span class="badge rounded-pill bg-primary-subtle text-primary border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                            <i class="fas fa-id-card me-2"></i>1. ASIGNACIÓN DE RECURSOS
+                        </span>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4 mb-5">
+                        <div class="card-body p-4 premium-form-grid">
+                            <div class="row g-4">
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">Chofer Principal <span class="text-danger">*</span></label>
+                                    <label class="form-label">Chofer Principal <span class="text-danger">*</span></label>
                                     {{ form.chofer }}
-                                    {% if form.chofer.errors %}
-                                        <div class="text-danger small mt-1">{{ form.chofer.errors }}</div>
-                                    {% endif %}
+                                    {% if form.chofer.errors %}<div class="text-danger x-small mt-2 fw-bold">{{ form.chofer.errors.0 }}</div>{% endif %}
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">Unidad (Flotilla)</label>
+                                    <label class="form-label">Unidad (Flotilla)</label>
                                     {{ form.unidad }}
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">Chalán (Opcional)</label>
+                                    <label class="form-label">Chalán (Asistente)</label>
                                     {{ form.chalan }}
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">Si usa Vehículo Personal (Motos)</label>
+                                    <label class="form-label">Vehículo Personal / Moto</label>
                                     {{ form.vehiculo_personal_info }}
                                 </div>
-                                <div class="col-12 mt-3">
-                                    <a class="text-decoration-none small" data-bs-toggle="collapse" href="#collapseProveedor" role="button" aria-expanded="false" aria-controls="collapseProveedor">
-                                        <i class="fas fa-external-link-alt me-1"></i> ¿Es envío por Proveedor Externo?
-                                    </a>
-                                    <div class="collapse mt-2" id="collapseProveedor">
+                            </div>
+                            
+                            <div class="mt-4 pt-3 border-top border-dashed">
+                                <button type="button" class="btn btn-link text-primary text-decoration-none shadow-none p-0 x-small fw-bold" 
+                                        data-bs-toggle="collapse" href="#collapseProveedor" role="button">
+                                    <i class="fas fa-external-link-alt me-1"></i> ¿USAR PROVEEDOR EXTERNO O FLETERA?
+                                </button>
+                                <div class="collapse mt-3" id="collapseProveedor">
+                                    <div class="bg-light p-3 rounded-4 border">
                                         {{ form.proveedor_externo }}
-                                        <small class="text-muted d-block mt-1">Escribe el nombre del proveedor o fletera aquí si no va un chofer de casa.</small>
+                                        <p class="x-small text-muted mb-0 mt-2">Especifica el nombre del servicio de flete externo contratado.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- SECCIÓN 2: SELECCIÓN DE PEDIDOS -->
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
-                            <div><i class="fas fa-box-open text-primary me-2"></i> 2. Seleccionar Pedidos para este Viaje</div>
-                            <span class="badge bg-secondary rounded-pill" id="contadorSeleccionados">0 asignados</span>
+                    <!-- SECCIÓN 2: PEDIDOS -->
+                    <div class="section-badge mb-4">
+                        <span class="badge rounded-pill bg-warning-subtle text-warning border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                            <i class="fas fa-boxes me-2"></i>2. SELECCIÓN DE CARGA
+                        </span>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold small text-muted text-uppercase tracking-wider">Pedidos en Espera</h6>
+                            <span class="badge bg-primary rounded-pill px-3 py-2 fw-bold shadow-sm" id="contadorSeleccionados">0 pedidos</span>
                         </div>
                         <div class="card-body p-0">
                             {% if pedidos_disponibles %}
-                                <div class="list-group list-group-flush" style="max-height: 350px; overflow-y: auto;">
+                                <div class="list-group list-group-flush" style="max-height: 380px; overflow-y: auto;">
                                     {% for pedido in pedidos_disponibles %}
-                                    <label class="list-group-item list-group-item-action d-flex gap-3 px-4 py-3 align-items-center hover-bg-light" style="cursor: pointer;">
-                                        <input class="form-check-input flex-shrink-0 mt-0 cb-pedido" type="checkbox" name="pedidos_seleccionados" value="{{ pedido.id }}" style="width: 1.25em; height: 1.25em;" onchange="actualizarContador()">
+                                    <label class="list-group-item list-group-item-action d-flex gap-3 px-4 py-3 align-items-center selection-row" style="cursor: pointer;">
+                                        <input class="form-check-input flex-shrink-0 mt-0 cb-pedido shadow-none" type="checkbox" name="pedidos_seleccionados" value="{{ pedido.id }}" style="width: 1.5rem; height: 1.5rem; border-radius: 6px;" onchange="actualizarContador()">
                                         
-                                        <div class="w-100 d-flex justify-content-between">
-                                            <div>
-                                                <h6 class="mb-0 fw-bold">{{ pedido.folio_sae }}</h6>
-                                                <small class="text-muted"><i class="fas fa-user-circle me-1"></i> {{ pedido.cliente.razon_social|default:pedido.cliente_nombre_manual|truncatechars:35 }}</small>
+                                        <div class="w-100 d-flex justify-content-between align-items-center ps-2">
+                                            <div class="d-flex flex-column">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="fw-bold fs-6 me-2 text-primary">#{{ pedido.folio_sae }}</span>
+                                                    {% if pedido.es_urgente %}<span class="badge bg-danger-subtle text-danger x-small py-1 px-2">URGENTE</span>{% endif %}
+                                                </div>
+                                                <small class="text-muted fw-bold x-small mt-1"><i class="fas fa-user-circle me-1 opacity-50"></i>{{ pedido.cliente.razon_social|default:pedido.cliente_nombre_manual|truncatechars:40 }}</small>
                                             </div>
-                                            <div class="text-end">
-                                                <span class="badge bg-info text-dark rounded-pill">{{ pedido.peso_total_estimado_kg }} kg</span>
-                                                <div class="small text-muted mt-1"><i class="fas fa-map-marker-alt me-1"></i> {{ pedido.obra.zona.nombre|default:"Sin Zona" }}</div>
+                                            <div class="text-end d-flex flex-column align-items-end">
+                                                <span class="badge bg-light text-dark border-0 rounded-pill px-3 py-1 shadow-xs fw-bold">{{ pedido.peso_total_estimado_kg }} kg</span>
+                                                <div class="x-small text-muted mt-2 fw-bold opacity-75">
+                                                    <i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ pedido.obra.zona.nombre|default:"SIN ZONA" }}
+                                                </div>
                                             </div>
                                         </div>
                                     </label>
@@ -85,20 +115,21 @@
                                 </div>
                             {% else %}
                                 <div class="p-5 text-center text-muted">
-                                    <i class="fas fa-check-circle d-block mb-3" style="font-size: 3rem; opacity: 0.2;"></i>
-                                    <h5>No hay pedidos en la columna de "Asignados a Ruta"</h5>
-                                    <p class="mb-0">Mueve pedidos al estado de asignación en el Kanban primero.</p>
+                                    <div class="bg-light rounded-circle p-4 d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px;">
+                                        <i class="fas fa-check-double fa-3x opacity-25"></i>
+                                    </div>
+                                    <h5 class="fw-bold">No hay pedidos pendientes</h5>
+                                    <p class="x-small mb-0">Asegúrate de mover los pedidos a "Asignados a Ruta" en el tablero logístico.</p>
                                 </div>
                             {% endif %}
                         </div>
                     </div>
-                    
                 </div>
                 
-                <div class="modal-footer bg-white py-3 border-top-0">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary px-5 fw-bold" id="btnProcesarViaje" {% if not pedidos_disponibles %}disabled{% endif %}>
-                        <i class="fas fa-paper-plane me-2"></i> Crear Viaje
+                <div class="modal-footer bg-white py-4 px-5 border-top-0 d-flex justify-content-between align-items-center shadow-lg">
+                    <button type="button" class="btn btn-link text-muted text-decoration-none fw-bold x-small" data-bs-dismiss="modal">DESCARTAR</button>
+                    <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-premium" id="btnProcesarViaje" {% if not pedidos_disponibles %}disabled{% endif %}>
+                        <i class="fas fa-shipping-fast me-2"></i> GENERAR DESPACHO
                     </button>
                 </div>
             </form>
@@ -106,40 +137,57 @@
     </div>
 </div>
 
+<style>
+    /* Estilos Premium v2.3 */
+    .grad-primary { background: var(--grad-primary) !important; }
+    .bg-primary-subtle { background-color: rgba(0, 59, 112, 0.08) !important; }
+    .bg-warning-subtle { background-color: rgba(245, 158, 11, 0.08) !important; }
+    .bg-danger-subtle { background-color: rgba(239, 68, 68, 0.08) !important; }
+    
+    .shadow-premium { box-shadow: 0 12px 30px -5px rgba(0, 59, 112, 0.35); }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .x-small { font-size: 0.72rem; }
+    
+    .premium-form-grid label { font-weight: 700; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block; }
+    .premium-form-grid select, .premium-form-grid input { border-radius: 12px; padding: 0.75rem 1rem; border-color: var(--border-color); background-color: #fff; transition: all 0.2s; font-size: 0.9rem; }
+    .premium-form-grid select:focus, .premium-form-grid input:focus { border-color: var(--primary-orange); box-shadow: 0 4px 12px rgba(243, 111, 33, 0.1); transform: translateY(-2px); }
+
+    .selection-row { transition: all 0.2s ease; border-left: 5px solid transparent !important; }
+    .selection-row:hover { background-color: rgba(0, 59, 112, 0.02) !important; }
+    .selection-row:has(input:checked) { background-color: rgba(0, 59, 112, 0.05) !important; border-left-color: var(--primary-blue) !important; }
+
+    .list-group-item:last-child { border-bottom: 0; }
+    .border-dashed { border-top-style: dashed !important; border-top-width: 2px !important; }
+    
+    body.dark-theme .modal-content { background-color: var(--bg-card); color: var(--text-main); }
+    body.dark-theme .bg-light { background-color: rgba(255,255,255,0.02) !important; }
+    body.dark-theme .card { background-color: var(--bg-card); border-color: var(--border-color) !important; }
+    body.dark-theme .list-group-item { background-color: transparent; border-color: var(--border-color) !important; color: var(--text-main); }
+    body.dark-theme .list-group-item:hover { background-color: rgba(255,255,255,0.02) !important; }
+</style>
+
 <script>
     function actualizarContador() {
         const checkboxes = document.querySelectorAll('.cb-pedido');
         let cont = 0;
-        let pesoTotal = 0;
+        checkboxes.forEach(cb => { if (cb.checked) cont++; });
         
-        checkboxes.forEach(cb => {
-            if (cb.checked) {
-                cont++;
-                // Para sumar peso, tendríamos que leer el data-peso
-            }
-        });
-        
-        document.getElementById('contadorSeleccionados').innerText = cont + " asignados";
+        const badge = document.getElementById('contadorSeleccionados');
+        if (badge) badge.innerText = cont + (cont === 1 ? " pedido" : " pedidos");
         
         const btn = document.getElementById('btnProcesarViaje');
-        if(cont > 0) {
-            btn.disabled = false;
-        } else {
-            btn.disabled = true;
-        }
+        if (btn) btn.disabled = (cont === 0);
     }
     
-    // Iniciar con botón deshabilitado si no hay seleccionados
+    // Iniciar contador
     actualizarContador();
 
-    // Trigger para cerrar el modal programáticamente si viene un 204 y boardChanged
+    // Cerrar modal tras éxito
     document.body.addEventListener("boardChanged", function() {
         var modalEl = document.getElementById('modalArmarViaje');
         if (modalEl) {
             var modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) {
-                modal.hide();
-            }
+            if (modal) modal.hide();
         }
     });
 </script>

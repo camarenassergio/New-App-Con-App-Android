@@ -59,6 +59,18 @@ services:
     env_file: .env
     restart: always
 
+  browser-sync:
+    image: node:lts-slim
+    container_name: browser-sync-stealth
+    volumes:
+      - .:/source
+    working_dir: /source
+    ports:
+      - "3000:3000"
+    command: npx browser-sync start --proxy "web-stealth:8888" --files "templates/**/*.html, static/**/*.css, static/**/*.js" --reload-delay 500 --reload-debounce 500 --no-open --no-ui
+    depends_on:
+      - web-stealth
+
   # --- QA ENVIRONMENT (Port 10000, DB lupita_qa) ---
   db-qa:
     image: mysql:9.4

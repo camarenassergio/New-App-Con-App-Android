@@ -38,11 +38,11 @@
                                     {{ form.id_sae|as_crispy_field }}
                                 </div>
                                 <div class="col-md-8">
-                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Razón Social / Nombre</label>
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Razón Social / Nombre <span class="text-danger">*</span></label>
                                     {{ form.razon_social|as_crispy_field }}
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Teléfono Principal</label>
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Teléfono Principal <span class="text-danger">*</span></label>
                                     {{ form.telefono_principal|as_crispy_field }}
                                 </div>
                             </div>
@@ -80,6 +80,26 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputTel = document.getElementById('id_telefono_principal');
+    
+    const formatPhone = (v) => {
+        // Solo números, máx 10 dígitos, agrupar de 2 en 2 con guiones
+        return v.replace(/\D/g, '').slice(0, 10).match(/.{1,2}/g)?.join('-') || v.replace(/\D/g, '');
+    };
+
+    if (inputTel) {
+        inputTel.addEventListener('input', function() {
+            this.value = formatPhone(this.value);
+            // Mantener puntero al final
+            const len = this.value.length;
+            this.setSelectionRange(len, len);
+        });
+    }
+});
+</script>
 
 <style>
     .bg-primary-subtle { background-color: rgba(0, 59, 112, 0.08) !important; }

@@ -2,150 +2,278 @@
 {% load static %}
 
 {% block title %}Pedido {{ pedido.folio_sae }} — Casa Lupita{% endblock %}
-{% block page_title %}Detalles del Pedido{% endblock %}
+{% block page_title %}Detalle de Pedido{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row g-4">
+<div class="container py-5 animate__animated animate__fadeIn">
+    
+    <!-- Encabezado de Navegación v2.3 -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div class="d-flex align-items-center">
+            <a href="{% url 'dashboard:mostrador_home' %}" class="btn btn-icon-ks rounded-circle me-4 shadow-sm transform-hover">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 x-small text-uppercase fw-bold tracking-widest opacity-50">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard:mostrador_home' %}" class="text-decoration-none text-muted">Mostrador</a></li>
+                        <li class="breadcrumb-item active text-primary" aria-current="page">Detalle Pedido</li>
+                    </ol>
+                </nav>
+                <h3 class="fw-bold mb-0 text-main tracking-tight">Folio SAE: {{ pedido.folio_sae }}</h3>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            {% if pedido.estado == 'REGISTRADO' %}
+                <button class="btn btn-primary bg-primary grad-primary rounded-pill px-4 fw-bold shadow-premium border-0" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>IMPRIMIR TICKET
+                </button>
+            {% endif %}
+            <div class="badge rounded-pill px-4 py-2 fs-6 shadow-sm border
+                {% if pedido.estado == 'REGISTRADO' %}bg-primary-subtle text-primary border-primary
+                {% elif pedido.estado == 'en_ruta' %}bg-primary-subtle text-primary border-primary
+                {% elif pedido.estado == 'entregado' %}bg-success-subtle text-success border-success
+                {% else %}bg-secondary-subtle text-muted border-secondary{% endif %}">
+                <i class="fas fa-circle me-2 x-small opacity-100"></i>{{ pedido.get_estado_display|upper }}
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-5">
         <!-- Columna Izquierda: Información Principal -->
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-4">
-                        <div>
-                            <h2 class="fw-bold mb-1">{{ pedido.folio_sae }}</h2>
-                            <p class="text-muted small mb-0">Registrado el {{ pedido.fecha_registro|date:"d/m/Y H:i" }} por {{ request.user.username }}</p>
+            <!-- Card de Información General -->
+            <div class="card border-0 shadow-premium rounded-4 bg-card mb-5 overflow-hidden">
+                <div class="card-header bg-transparent border-0 p-4 pb-0">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+                            <i class="fas fa-id-card text-primary fs-5"></i>
                         </div>
-                        <span class="badge {% if pedido.estado == 'REGISTRADO' %}bg-info{% else %}bg-success{% endif %} rounded-pill px-3 py-2">
-                            {{ pedido.get_estado_display }}
-                        </span>
+                        <h6 class="mb-0 fw-bold text-main small text-uppercase tracking-wider">Identificación y Registro</h6>
+                    </div>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <div class="p-4 rounded-4 bg-light bg-opacity-10 border border-dashed h-100">
+                                <label class="x-small text-muted text-uppercase fw-bold opacity-75 d-block mb-3">Información del Cliente</label>
+                                <h5 class="fw-bold text-main mb-1">{{ pedido.cliente.razon_social|default:"CLIENTE MOSTRADOR" }}</h5>
+                                <div class="d-flex gap-2 mt-2">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border-0 rounded-pill x-small px-3">ID SAE: {{ pedido.cliente.id_sae|default:"N/A" }}</span>
+                                    <span class="badge bg-secondary bg-opacity-10 text-muted border-0 rounded-pill x-small px-3"><i class="fas fa-phone-alt me-1 text-primary"></i> {{ pedido.cliente.telefono_principal|default:"S/N" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-4 rounded-4 bg-light bg-opacity-10 border border-dashed h-100">
+                                <label class="x-small text-muted text-uppercase fw-bold opacity-75 d-block mb-3">Destino / Obra de Entrega</label>
+                                <h5 class="fw-bold text-main mb-1">{{ pedido.obra.alias|default:"ENTREGA ÚNICA" }}</h5>
+                                <p class="small text-muted mb-0"><i class="fas fa-map-marker-alt text-danger me-2"></i>{{ pedido.obra.calle_numero|default:"Dirección manual registrada" }}</p>
+                                <div class="mt-2 text-primary">
+                                    <span class="badge rounded-pill bg-light border text-primary x-small px-3 fw-bold shadow-xs">
+                                        <i class="fas fa-layer-group me-1 text-primary"></i> ZONA: {{ pedido.obra.zona.nombre|default:"SIN ZONA" }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row g-4">
-                        <div class="col-md-6 border-end">
-                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Cliente</h6>
-                            <h5 class="fw-bold fs-6">{{ pedido.cliente.razon_social }}</h5>
-                            <p class="text-muted small mb-0">ID SAE: {{ pedido.cliente.id_sae }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Destino / Obra</h6>
-                            <h5 class="fw-bold fs-6">{{ pedido.obra.alias }}</h5>
-                            <p class="text-muted small mb-0">{{ pedido.obra.calle_numero }}</p>
-                            <p class="text-muted small mb-0">{{ pedido.obra.zona.nombre }}</p>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <div class="row g-4 text-center">
-                        <div class="col-4">
-                            <div class="bg-light p-3 rounded-3">
-                                <i class="fas fa-weight-hanging text-primary mb-2"></i>
-                                <span class="d-block small text-muted">Peso Est.</span>
-                                <span class="fw-bold">{{ pedido.peso_total_estimado_kg }} kg</span>
+                        <div class="col-md-4">
+                            <div class="info-pill p-3 rounded-4 d-flex align-items-center h-100 border transform-hover bg-white shadow-xs">
+                                <div class="icon-circle bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                    <i class="fas fa-weight-hanging"></i>
+                                </div>
+                                <div>
+                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">PESO ESTIMADO</p>
+                                    <h6 class="mb-0 fw-bold text-main text-primary">{{ pedido.peso_total_estimado_kg }} KG</h6>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-4">
-                            <div class="bg-light p-3 rounded-3">
-                                <i class="{% if pedido.es_urgente %}fas fa-bolt text-danger{% else %}far fa-clock text-muted{% endif %} mb-2"></i>
-                                <span class="d-block small text-muted">Prioridad</span>
-                                <span class="fw-bold">{% if pedido.es_urgente %}URGENTE{% else %}ESTÁNDAR{% endif %}</span>
+                        <div class="col-md-4">
+                            <div class="info-pill p-3 rounded-4 d-flex align-items-center h-100 border transform-hover bg-white shadow-xs">
+                                <div class="icon-circle {% if pedido.es_urgente %}bg-danger bg-opacity-10 text-danger{% else %}bg-primary bg-opacity-10 text-primary{% endif %} rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                    <i class="{% if pedido.es_urgente %}fas fa-bolt animate__animated animate__pulse animate__infinite{% else %}fas fa-check-circle{% endif %}"></i>
+                                </div>
+                                <div>
+                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">PRIORIDAD</p>
+                                    <h6 class="mb-0 fw-bold text-main {% if pedido.es_urgente %}text-danger{% else %}text-primary{% endif %}">{% if pedido.es_urgente %}URGENTE{% else %}ESTÁNDAR{% endif %}</h6>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-4">
-                            <div class="bg-light p-3 rounded-3">
-                                <i class="fas fa-bullhorn text-success mb-2"></i>
-                                <span class="d-block small text-muted">Entrega / Maniobra</span>
-                                <span class="fw-bold">{% if pedido.maniobra_aceptada %}SÍ (Aceptada){% else %}NO (Pie de Carro){% endif %}</span>
+                        <div class="col-md-4">
+                            <div class="info-pill p-3 rounded-4 d-flex align-items-center h-100 border transform-hover bg-white shadow-xs">
+                                <div class="icon-circle bg-info bg-opacity-10 text-info rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                    <i class="fas fa-truck-loading"></i>
+                                </div>
+                                <div>
+                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">MANIOBRA</p>
+                                    <h6 class="mb-0 fw-bold text-main text-info">{% if pedido.maniobra_aceptada %}SÍ (Aceptada){% else %}NO (Pie de Carro){% endif %}</h6>
+                                </div>
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="card-footer bg-light bg-opacity-50 py-3 px-5 border-top-0 d-flex justify-content-between align-items-center">
+                    <span class="x-small text-muted fw-bold opacity-75 text-uppercase">Registrado por: <strong>{{ pedido.registrado_por.username|upper|default:request.user.username|upper }}</strong></span>
+                    <span class="x-small text-muted fw-bold opacity-75 text-uppercase"><i class="far fa-calendar-alt me-1"></i> {{ pedido.fecha_registro|date:"d M Y, H:i" }}</span>
                 </div>
             </div>
 
-            <!-- Card de Evidencia -->
-            <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-                <div class="card-header bg-transparent py-3 px-4 fw-bold">
-                    <i class="fas fa-camera me-2"></i> Documentación del Pedido
-                </div>
-                <div class="card-body p-4 text-center">
+            <!-- Card de Documentación (Evidencia) -->
+            <div class="card border-0 shadow-premium rounded-4 bg-card overflow-hidden">
+                <div class="card-header bg-transparent border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+                            <i class="fas fa-camera text-primary fs-5"></i>
+                        </div>
+                        <h6 class="mb-0 fw-bold text-main small text-uppercase tracking-wider">Documentación de Respaldo</h6>
+                    </div>
                     {% if pedido.evidencia_ticket %}
-                    <img src="{{ pedido.evidencia_ticket.url }}" alt="Ticket SAE" class="img-fluid rounded-3 shadow-sm" style="max-height: 400px;">
-                    <div class="mt-3">
-                        <a href="{{ pedido.evidencia_ticket.url }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
-                            <i class="fas fa-external-link-alt me-1"></i> Ver tamaño completo
-                        </a>
+                    <a href="{{ pedido.evidencia_ticket.url }}" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold shadow-xs">
+                        <i class="fas fa-search-plus me-1"></i> AMPLIAR
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-4 p-md-5 text-center">
+                    {% if pedido.evidencia_ticket %}
+                    <div class="img-container rounded-4 shadow-lg overflow-hidden border p-2 bg-light bg-opacity-50">
+                        <img src="{{ pedido.evidencia_ticket.url }}" alt="Ticket SAE" class="img-fluid rounded-4" style="max-height: 500px; width: 100%; object-fit: contain;">
                     </div>
                     {% else %}
-                    <div class="py-5 text-muted">
-                        <i class="fas fa-file-invoice fa-3x mb-3 opacity-25"></i>
-                        <p>No se cargó evidencia fotográfica del ticket.</p>
+                    <div class="py-5 text-center bg-light bg-opacity-10 rounded-5 border border-dashed">
+                        <div class="bg-light bg-opacity-25 rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-sm" style="width: 100px; height: 100px;">
+                            <i class="fas fa-file-invoice fa-4x opacity-25"></i>
+                        </div>
+                        <h5 class="fw-bold text-muted opacity-50 text-uppercase tracking-widest mb-0">Sin Evidencia de Ticket</h5>
+                        <p class="small text-muted opacity-75 mt-2">No se cargó una captura fotográfica durante el registro en mostrador.</p>
                     </div>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Columna Derecha: Acciones y Estado de Despacho -->
+        <!-- Columna Derecha: Control y Operaciones -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
-                <div class="card-header bg-dark text-white py-3 px-4 fw-bold">
-                    <i class="fas fa-lock me-2"></i> Control de Edición
+            <!-- Panel de Control y Edición -->
+            <div class="card border-0 shadow-premium rounded-4 bg-card mb-5 overflow-hidden">
+                <div class="card-header border-0 py-4 px-4 d-flex align-items-center bg-primary text-white" style="background: linear-gradient(135deg, #003b70 0%, #005aab 100%) !important;">
+                    <div class="bg-white bg-opacity-10 p-2 rounded-circle me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px; border: 1px solid rgba(255,255,255,0.2);">
+                        <i class="fas fa-shield-alt fs-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold small text-uppercase tracking-wider">Panel de Control</h6>
+                        <p class="x-small mb-0 opacity-75 fw-bold text-uppercase">Seguridad Operativa</p>
+                    </div>
                 </div>
                 <div class="card-body p-4">
                     {% if pedido.estado == 'REGISTRADO' %}
                     <div id="unlock-section">
-                        <p class="small text-muted mb-4">
-                            Este pedido está en cola de espera. Para evitar duplicidades o errores en ruta, la edición requiere autorización de un supervisor.
-                        </p>
-                        <form hx-post="{% url 'dashboard:pedido_unlock' pedido.pk %}" hx-target="#unlock-error">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <input type="password" name="password" class="form-control" placeholder="Contraseña Admin" required>
+                        <div class="alert bg-warning bg-opacity-10 border-warning border-opacity-25 rounded-4 p-3 mb-4">
+                            <div class="d-flex">
+                                <i class="fas fa-info-circle text-warning fs-5 me-3 mt-1"></i>
+                                <p class="x-small mb-0 fw-bold opacity-100" style="line-height: 1.4; color: #003b70 !important;">
+                                    El pedido está en cola de espera. Para editarlo se requiere **Autorización de Supervisor**.
+                                </p>
                             </div>
-                            <div id="unlock-error"></div>
-                            <button type="submit" class="btn btn-warning w-100 fw-bold rounded-pill mb-2">
-                                <i class="fas fa-unlock me-2"></i> Desbloquear Edición
+                        </div>
+                        
+                        <form hx-post="{% url 'dashboard:pedido_unlock' pedido.pk %}" hx-target="#unlock-error" class="mb-4">
+                            {% csrf_token %}
+                            <div class="mb-3 position-relative">
+                                <i class="fas fa-key position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                <input type="password" name="password" class="form-control rounded-pill ps-5 py-3 shadow-none border" placeholder="Contraseña de Desbloqueo" required>
+                            </div>
+                            <div id="unlock-error" class="mb-3"></div>
+                            <button type="submit" class="btn btn-warning grad-warning w-100 fw-bold rounded-pill py-3 shadow-lg border-0 transform-hover">
+                                <i class="fas fa-unlock-alt me-2"></i> DESBLOQUEAR EDICIÓN
                             </button>
                         </form>
                         
-                        <form hx-post="{% url 'dashboard:pedido_cancel' pedido.pk %}" hx-confirm="¿Está seguro de que desea CANCELAR este pedido?">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger w-100 small rounded-pill mt-2">
-                                <i class="fas fa-ban me-1"></i> Cancelar Pedido
-                            </button>
-                        </form>
+                        <div class="border-top border-dashed pt-4">
+                            <form hx-post="{% url 'dashboard:pedido_cancel' pedido.pk %}" hx-confirm="¿Está seguro de que desea CANCELAR este pedido? Esta acción es irreversible.">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger w-100 rounded-pill py-2 small fw-bold transform-hover">
+                                    <i class="fas fa-ban me-2"></i> CANCELAR PEDIDO
+                                </button>
+                            </form>
+                        </div>
                     </div>
                     {% else %}
-                    <div class="alert alert-secondary py-3 text-center mb-0">
-                        <i class="fas fa-info-circle mb-2 fa-2x d-block opacity-50"></i>
-                        <span class="small fw-bold d-block text-uppercase">Pedido Bloqueado</span>
-                        <span class="small opacity-75">El pedido ya se encuentra en proceso de logística o en ruta. No puede ser modificado.</span>
+                    <div class="text-center py-4 bg-light bg-opacity-10 rounded-4 border border-dashed">
+                        <div class="badge rounded-circle bg-secondary bg-opacity-10 p-3 mb-3">
+                            <i class="fas fa-lock fa-3x text-muted opacity-50"></i>
+                        </div>
+                        <h6 class="fw-bold text-main text-uppercase mb-2 tracking-wider">Flujo Bloqueado</h6>
+                        <p class="x-small text-muted mb-0 px-4 opacity-75">
+                            El pedido ya fue asignado a un viaje o se encuentra en ruta. No es posible realizar modificaciones.
+                        </p>
                     </div>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Resumen de Despachos (si existen) -->
+            <!-- Panel de Despachos y Logística -->
             {% if pedido.despachos.all %}
-            <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-                <div class="card-header bg-transparent py-3 px-4 fw-bold">
-                    <i class="fas fa-shipping-fast me-2"></i> Despachos Asociados
-                </div>
-                <div class="list-group list-group-flush">
-                    {% for despacho in pedido.despachos.all %}
-                    <div class="list-group-item p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small fw-bold">{{ despacho.get_tipo_envio_display }}</span>
-                            <span class="badge bg-light text-dark border">{{ despacho.peso_asignado_kg }} kg</span>
+            <div class="card border-0 shadow-premium rounded-4 bg-card h-100 overflow-hidden">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+                            <i class="fas fa-shipping-fast text-primary fs-5"></i>
                         </div>
-                        <div class="text-muted small">Viaje: #{{ despacho.viaje_nuevo.id|default:"N/A" }}</div>
+                        <h6 class="mb-0 fw-bold text-main small text-uppercase tracking-wider">Historial de Despacho</h6>
                     </div>
-                    {% endfor %}
+                </div>
+                <div class="card-body p-4 pt-4">
+                    <div class="d-flex flex-column gap-3">
+                        {% for despacho in pedido.despachos.all %}
+                        <div class="p-3 rounded-4 border bg-light bg-opacity-10 transform-hover">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border-0 x-small px-3 fw-bold">VIAJE #{{ despacho.viaje_nuevo.id|default:"N/A" }}</span>
+                                <span class="small fw-bold text-main">{{ despacho.peso_asignado_kg }} KG</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-box-open text-muted x-small me-2 opacity-50"></i>
+                                <span class="x-small text-muted fw-bold opacity-75 text-uppercase">{{ despacho.get_tipo_envio_display }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+    /* Estilos v2.3 Premium Pedido Detail */
+    .tracking-tight { letter-spacing: -1px; }
+    .tracking-widest { letter-spacing: 0.15em; }
+    .shadow-premium { box-shadow: 0 15px 35px -5px rgba(0, 59, 112, 0.12); }
+    .shadow-xs { box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .x-small { font-size: 0.72rem; }
+    
+    .btn-icon-ks {
+        width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center;
+        background: var(--bg-card); border: 1px solid var(--border-color); color: var(--primary-blue);
+        transition: all 0.3s ease;
+    }
+    .btn-icon-ks:hover { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+
+    .info-pill { background-color: var(--bg-body); transition: all 0.3s ease; border-color: var(--border-color) !important; }
+    .info-pill:hover { border-color: var(--primary-blue) !important; background-color: rgba(var(--primary-blue-rgb), 0.02); }
+
+    .border-dashed { border: 2px dashed var(--border-color) !important; }
+    
+    .bg-warning-subtle { background-color: rgba(243, 111, 33, 0.1) !important; color: #f36f21 !important; }
+    .bg-primary-subtle { background-color: rgba(0, 59, 112, 0.1) !important; color: #003b70 !important; }
+    .bg-success-subtle { background-color: rgba(16, 185, 129, 0.1) !important; color: #10b981 !important; }
+    .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.1) !important; color: #6c757d !important; }
+
+    body.dark-theme .bg-card { background-color: var(--bg-card) !important; }
+    body.dark-theme .text-main { color: #fff !important; }
+    body.dark-theme .info-pill { background-color: rgba(255,255,255,0.03); }
+    body.dark-theme .text-dark { color: #fff !important; }
+</style>
 {% endblock %}

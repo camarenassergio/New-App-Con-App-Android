@@ -4,276 +4,404 @@
 {% block page_title %}Control de Combustible - {{ unidad.nUnidad }}{% endblock %}
 
 {% block content %}
-
-<div class="header-actions">
-    <div class="d-flex align-items-center gap-3">
-        <i class="fas fa-truck" style="font-size: 2rem; color: var(--primary-orange);"></i>
-        <div>
-            <h1 class="mb-0">{{ unidad.nUnidad }} - {{ unidad.marca }} {{ unidad.submarca }}</h1>
-            <p class="text-muted mb-0">PLACAS: {{ unidad.placas }} | MODELO: {{ unidad.modelo_anio }}</p>
+<div class="container-fluid px-md-5 py-4 animate__animated animate__fadeIn">
+    <!-- CABECERA PREMIUM V2 -->
+    <div class="card border-0 shadow-premium rounded-4 overflow-hidden mb-4 bg-white">
+        <div class="card-header p-4 border-0 grad-primary">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center gap-4">
+                        <div class="header-icon-box shadow-lg">
+                            <i class="fas fa-gas-pump fa-2x"></i>
+                        </div>
+                        <div>
+                            <h2 class="mb-1 fw-800 text-white text-uppercase tracking-tight">{{ unidad.nUnidad }}</h2>
+                            <p class="mb-0 text-white opacity-75 fw-bold x-small tracking-widest text-uppercase">
+                                <i class="fas fa-id-card me-1"></i> PLACAS: {{ unidad.placas }} | 
+                                <i class="fas fa-tag me-1 ms-2"></i> {{ unidad.marca }} {{ unidad.submarca }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="d-flex gap-2 justify-content-md-end">
+                        <a href="{% url 'dashboard:combustible_general' %}" class="btn btn-white btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                            <i class="fas fa-arrow-left me-2"></i>Volver
+                        </a>
+                        <a href="{% url 'dashboard:combustible_create' %}?unidad={{ unidad.pk }}" class="btn btn-warning btn-sm rounded-pill px-4 fw-bold shadow-sm text-dark">
+                            <i class="fas fa-plus me-2"></i>Nueva Carga
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="d-flex gap-2">
-        <a href="{% url 'dashboard:combustible_general' %}" class="btn btn-outline-secondary" aria-label="Volver al listado de combustible">
-            <i class="fas fa-arrow-left"></i> Volver
-        </a>
-        <a href="{% url 'dashboard:combustible_create' %}?unidad={{ unidad.pk }}" class="btn btn-primary" aria-label="Registrar nueva carga de combustible para {{ unidad.nUnidad }}">
-            <i class="fas fa-plus"></i> Nueva Carga
-        </a>
+
+    <!-- STATS GRID PREMIUM -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-9">
+            <div class="row g-4">
+                <div class="col-md-6 col-xl-3">
+                    <div class="stat-card-v2 p-4 rounded-4 shadow-sm bg-white h-100 border-start border-4 border-primary">
+                        <span class="x-small text-muted fw-800 text-uppercase tracking-widest d-block mb-1">Cargas (Mes)</span>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h3 class="mb-0 fw-800 text-dark">{{ totales_mes_actual.cargas|default:0 }}</h3>
+                            <div class="bg-primary bg-opacity-10 p-2 rounded-circle text-primary">
+                                <i class="fas fa-fill-drip"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="stat-card-v2 p-4 rounded-4 shadow-sm bg-white h-100 border-start border-4 border-info">
+                        <span class="x-small text-muted fw-800 text-uppercase tracking-widest d-block mb-1">Litros (Mes)</span>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h3 class="mb-0 fw-800 text-dark">{{ totales_mes_actual.litros|floatformat:1|default:0 }} <small class="fw-bold opacity-50 fs-6">L</small></h3>
+                            <div class="bg-info bg-opacity-10 p-2 rounded-circle text-info">
+                                <i class="fas fa-oil-can"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="stat-card-v2 p-4 rounded-4 shadow-sm bg-white h-100 border-start border-4 border-warning">
+                        <span class="x-small text-muted fw-800 text-uppercase tracking-widest d-block mb-1">Gasto (Mes)</span>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h3 class="mb-0 fw-800 text-dark">${{ totales_mes_actual.costo|floatformat:0|intcomma|default:0 }}</h3>
+                            <div class="bg-warning bg-opacity-10 p-2 rounded-circle text-warning">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="stat-card-v2 p-4 rounded-4 shadow-sm bg-white h-100 border-start border-4 border-success">
+                        <span class="x-small text-muted fw-800 text-uppercase tracking-widest d-block mb-1">KM Actual</span>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h3 class="mb-0 fw-800 text-dark">{{ unidad.kilometraje_actual|intcomma }}</h3>
+                            <div class="bg-success bg-opacity-10 p-2 rounded-circle text-success">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white p-3">
+                <h6 class="fw-800 text-dark text-uppercase x-small tracking-wider mb-3 pb-2 border-bottom">Leyenda Rendimiento</h6>
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-success rounded-circle shadow-xs" style="width: 12px; height: 12px;"></div>
+                        <span class="x-small fw-bold text-muted">Óptimo (> 5.5 km/L)</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-warning rounded-circle shadow-xs" style="width: 12px; height: 12px;"></div>
+                        <span class="x-small fw-bold text-muted">Regular (3.5 - 5.5)</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-danger rounded-circle shadow-xs" style="width: 12px; height: 12px;"></div>
+                        <span class="x-small fw-bold text-muted">Crítico (< 3.5 km/L)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLA DE HISTORIAL -->
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 bg-white">
+        <div class="card-header p-4 border-0 bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-800 text-dark text-uppercase tracking-tight">
+                <i class="fas fa-history me-2 text-primary"></i>Historial de Cargas
+            </h5>
+            <span class="badge bg-light text-muted rounded-pill px-3">{{ historial_cargas.paginator.count }} Registros</span>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 premium-table">
+                <thead class="bg-light text-uppercase x-small fw-800 text-muted">
+                    <tr>
+                        <th class="ps-4">Carga</th>
+                        <th>Fecha</th>
+                        <th>Chofer</th>
+                        <th class="text-end">KM Odómetro</th>
+                        <th class="text-end">Rendimiento</th>
+                        <th class="text-end">Cant. Litros</th>
+                        <th class="text-end">Costo Total</th>
+                        <th class="text-center">Multimedia</th>
+                        <th class="text-center pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for carga in historial_cargas %}
+                    <tr class="transition-all">
+                        <td class="ps-4">
+                            <span class="fw-800 text-primary">#{{ carga.numero }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="fw-bold text-dark mb-0">{{ carga.fecha|date:"d M Y" }}</span>
+                                <span class="x-small text-muted opacity-75">{{ carga.fecha|time:"H:i" }} hrs</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-user-circle text-muted"></i>
+                                </div>
+                                <span class="small fw-bold text-dark">{{ carga.chofer }}</span>
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex flex-column">
+                                <span class="fw-800 text-dark mb-0">{{ carga.kilometraje|intcomma }} km</span>
+                                {% if carga.km_entre_cargas %}
+                                    <span class="x-small text-primary fw-bold">+{{ carga.km_entre_cargas|intcomma }} km</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            {% if carga.rendimiento > 0 %}
+                                <div class="d-flex flex-column align-items-end">
+                                    {% if carga.rendimiento >= 5.5 %}
+                                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1 x-small fw-800">
+                                            {{ carga.rendimiento|floatformat:2 }} km/L
+                                        </span>
+                                    {% elif carga.rendimiento >= 3.5 %}
+                                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1 x-small fw-800">
+                                            {{ carga.rendimiento|floatformat:2 }} km/L
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1 x-small fw-800">
+                                            {{ carga.rendimiento|floatformat:2 }} km/L
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted opacity-25">---</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <span class="fw-bold text-dark">{{ carga.litros|floatformat:2 }} <small class="text-muted">L</small></span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex flex-column">
+                                <span class="fw-800 text-dark">${{ carga.total|floatformat:2|intcomma }}</span>
+                                <span class="x-small text-muted">${{ carga.precio_litro|floatformat:2 }}/L</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex gap-1 justify-content-center">
+                                {% if carga.evidencia_antes %}
+                                    <button type="button" class="btn btn-icon-v2 btn-outline-primary btn-sm rounded-circle" data-bs-toggle="modal" data-bs-target="#evidenciaModal"
+                                            data-bs-image="{{ carga.evidencia_antes.url }}"
+                                            data-bs-title="Evidencia ANTES - Carga #{{ carga.numero }}">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                {% endif %}
+                                {% if carga.evidencia_despues %}
+                                    <button type="button" class="btn btn-icon-v2 btn-outline-success btn-sm rounded-circle" data-bs-toggle="modal" data-bs-target="#evidenciaModal"
+                                            data-bs-image="{{ carga.evidencia_despues.url }}"
+                                            data-bs-title="Evidencia DESPUÉS - Carga #{{ carga.numero }}">
+                                        <i class="fas fa-check-circle"></i>
+                                    </button>
+                                {% endif %}
+                                {% if carga.observaciones %}
+                                    <button type="button" class="btn btn-icon-v2 btn-outline-info btn-sm rounded-circle" data-bs-toggle="modal" data-bs-target="#observacionesModal" 
+                                            data-bs-observaciones="{{ carga.observaciones }}"
+                                            data-bs-title="Notas - Carga #{{ carga.numero }}">
+                                        <i class="fas fa-comment-dots"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="text-center pe-4">
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm rounded-3 shadow-xs" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v opacity-50"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 p-2">
+                                    {% if carga.puede_editar %}
+                                        <li>
+                                            <a href="{% url 'dashboard:combustible_edit' carga.id %}" class="dropdown-item rounded-2 text-primary py-2 px-3">
+                                                <i class="fas fa-pencil-alt me-2"></i>Editar Registro
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    {% if carga.es_reciente %}
+                                        <li>
+                                            <button type="button" class="dropdown-item rounded-2 text-danger py-2 px-3"
+                                                    data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                                    data-bs-action="{% url 'dashboard:combustible_delete' carga.id %}"
+                                                    data-bs-carga="#{{ carga.numero }} ({{ carga.fecha|date:'d/m/Y' }})">
+                                                <i class="fas fa-trash me-2"></i>Eliminar Carga
+                                            </button>
+                                        </li>
+                                    {% endif %}
+                                    {% if not carga.puede_editar and not carga.es_reciente %}
+                                        <li><span class="dropdown-item disabled text-muted x-small"><i class="fas fa-lock me-2"></i>Periodo Cerrado</span></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="py-5 text-center">
+                            <div class="py-5">
+                                <div class="bg-light rounded-circle p-4 d-inline-block mb-3">
+                                    <i class="fas fa-gas-pump fa-3x text-muted opacity-25"></i>
+                                </div>
+                                <h5 class="fw-800 text-muted">Sin Historial de Cargas</h5>
+                                <p class="text-muted x-small">Registra la primera carga de combustible para esta unidad.</p>
+                                <a href="{% url 'dashboard:combustible_create' %}?unidad={{ unidad.pk }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold">Nueva Carga</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if historial_cargas %}
+                <tfoot class="bg-light bg-opacity-50">
+                    <tr class="fw-800 text-dark">
+                        <td colspan="5" class="ps-4 text-end text-uppercase x-small tracking-wider">Acumulados Históricos</td>
+                        <td class="text-end">{{ totales_historicos.litros|floatformat:1|intcomma }} L</td>
+                        <td class="text-end">${{ totales_historicos.costo|floatformat:0|intcomma }}</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+
+        <!-- PAGINACIÓN PREMIUM -->
+        {% if historial_cargas.paginator.num_pages > 1 %}
+        <div class="card-footer bg-white p-4 border-0 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <span class="x-small text-muted fw-bold">Página {{ historial_cargas.number }} de {{ historial_cargas.paginator.num_pages }}</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if historial_cargas.has_previous %}
+                        <li class="page-item"><a class="page-link rounded-start-pill px-3" href="?page=1">&laquo;</a></li>
+                        <li class="page-item"><a class="page-link px-3" href="?page={{ historial_cargas.previous_page_number }}">Anterior</a></li>
+                    {% endif %}
+                    <li class="page-item active"><span class="page-link px-3">{{ historial_cargas.number }}</span></li>
+                    {% if historial_cargas.has_next %}
+                        <li class="page-item"><a class="page-link px-3" href="?page={{ historial_cargas.next_page_number }}">Siguiente</a></li>
+                        <li class="page-item"><a class="page-link rounded-end-pill px-3" href="?page={{ historial_cargas.paginator.num_pages }}">&raquo;</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Resumen -->
-<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
-    <div class="stat-card">
-        <span class="stat-label">Cargas (Mes)</span>
-        <span class="stat-value">{{ totales_mes_actual.cargas }}</span>
-    </div>
-    <div class="stat-card">
-        <span class="stat-label">Litros (Mes)</span>
-        <span class="stat-value">{{ totales_mes_actual.litros|floatformat:2|intcomma }} L</span>
-    </div>
-    <div class="stat-card orange">
-        <span class="stat-label">Gasto (Mes)</span>
-        <span class="stat-value">${{ totales_mes_actual.costo|floatformat:2|intcomma }}</span>
-    </div>
-    <div class="stat-card info">
-        <span class="stat-label">Km Actual</span>
-        <span class="stat-value">{{ unidad.kilometraje_actual|intcomma }}</span>
+<!-- MODALES MODERNIZADOS -->
+<div class="modal fade" id="observacionesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-800 text-dark">Notas del Registro</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 pt-2">
+                <div class="bg-light p-3 rounded-3 text-dark x-small" id="modalObservacionesContent" style="white-space: pre-wrap; min-height: 100px;"></div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="table-container">
-    <div class="table-header">
-        <h3>Historial de Cargas</h3>
-    </div>
-    
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>\# Carga</th>
-                <th>Fecha</th>
-                <th>Chofer</th>
-                <th class="text-end">Kilometraje</th>
-                <th class="text-end">Km Entre Cargas</th>
-                <th class="text-end">Litros</th>
-                <th class="text-end">Rendimiento (Km/L)</th>
-                <th class="text-end">Precio x Litro</th>
-                <th class="text-end">Total</th>
-                <th class="text-end">Propina</th>
-                <th class="text-center">Evidencia</th>
-                <th class="text-center">Obs.</th>
-                <th class="text-center">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for carga in historial_cargas %}
-            <tr>
-                <td>{{ carga.numero }}</td>
-                <td>{{ carga.fecha|date:"d/m/Y" }}</td>
-                <td>{{ carga.chofer }}</td>
-                <td class="text-right">{{ carga.kilometraje|intcomma }}</td>
-                <td class="text-right">{{ carga.km_entre_cargas|intcomma }}</td>
-                <td class="text-right">{{ carga.litros|floatformat:2 }}</td>
-                <td class="text-right">
-                    {% if carga.rendimiento > 0 %}
-                        {{ carga.rendimiento|floatformat:2 }}
-                    {% else %}
-                        <span class="text-muted">-</span>
-                    {% endif %}
-                </td>
-                <td class="text-right">${{ carga.precio_litro|floatformat:2 }}</td>
-                <td class="text-right font-bold">${{ carga.total|floatformat:2|intcomma }}</td>
-                <td class="text-right">${{ carga.propina|floatformat:2 }}</td>
-                <td class="text-center">
-                    <div class="d-flex gap-2 justify-content-center">
-                        {% if carga.evidencia_antes %}
-                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#evidenciaModal"
-                                data-bs-image="{{ carga.evidencia_antes.url }}"
-                                data-bs-title="Evidencia Antes - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga \#{{ carga.numero }})"
-                                aria-label="Ver evidencia ANTES de cargar (Carga \#{{ carga.numero }})">
-                            <i class="fas fa-camera" style="color: var(--primary-orange);"></i>
-                        </button>
-                        {% endif %}
-                        {% if carga.evidencia_despues %}
-                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#evidenciaModal"
-                                data-bs-image="{{ carga.evidencia_despues.url }}"
-                                data-bs-title="Evidencia Después - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga \#{{ carga.numero }})"
-                                aria-label="Ver evidencia DESPUÉS de cargar (Carga \#{{ carga.numero }})">
-                            <i class="fas fa-check-circle text-success"></i>
-                        </button>
-                        {% endif %}
-                        {% if not carga.evidencia_antes and not carga.evidencia_despues %}
-                        <span class="text-muted">-</span>
-                        {% endif %}
-                    </div>
-                </td>
-                <td class="text-center">
-                    {% if carga.observaciones %}
-                    <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#observacionesModal" 
-                            data-bs-observaciones="{{ carga.observaciones }}"
-                            data-bs-title="Observaciones - {{ unidad.nombre_corto|default:unidad.nUnidad }} - {{ carga.fecha|date:'d/m/Y' }} (Carga #{{ carga.numero }})">
-                        <i class="fas fa-comment-dots text-info"></i>
-                    </button>
-                    {% else %}
-                    -
-                    {% endif %}
-                </td>
-                </td>
-                <td class="text-center">
-                    <div class="d-flex gap-2 justify-content-center">
-                        {% if carga.puede_editar %}
-                            <a href="{% url 'dashboard:combustible_edit' carga.id %}" class="btn btn-sm btn-outline-primary"
-                               aria-label="Editar carga \#{{ carga.numero }} del {{ carga.fecha|date:'d/m/Y' }}" title="Editar">
-                                <i class="fas fa-pencil-alt"></i>
-                            </a>
-                        {% endif %}
-                        {% if carga.es_reciente %}
-                             <button type="button" class="btn btn-sm btn-outline-danger"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#deleteModal"
-                                    data-bs-action="{% url 'dashboard:combustible_delete' carga.id %}"
-                                    data-bs-carga="\#{{ carga.numero }} ({{ carga.fecha|date:'d/m/Y' }})"
-                                    aria-label="Eliminar carga \#{{ carga.numero }} del {{ carga.fecha|date:'d/m/Y' }}"
-                                    title="Eliminar Registro">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        {% endif %}
-                        {% if not carga.puede_editar and not carga.es_reciente %}
-                            <span class="text-muted" title="Periodo de edición cerrado"><i class="fas fa-lock"></i></span>
-                        {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-            <tr class="totales-row">
-                <td colspan="5" class="text-end fw-bold">TOTALES HISTÓRICOS</td>
-                <td class="text-right">{{ totales_historicos.litros|floatformat:2|intcomma }}</td>
-                <td class="text-right">-</td> <!-- Promedio Rendimiento could go here -->
-                <td class="text-right">-</td>
-                <td class="text-right">${{ totales_historicos.costo|floatformat:2|intcomma }}</td>
-                <td class="text-right">${{ totales_historicos.propina|floatformat:2|intcomma }}</td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
-    
-    <!-- Paginación -->
-    {% if historial_cargas.paginator.num_pages > 1 %}
-    <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd;">
-        <div>
-            Página {{ historial_cargas.number }} de {{ historial_cargas.paginator.num_pages }}
-        </div>
-        <div>
-            {% if historial_cargas.has_previous %}
-                <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; Primera</a>
-                <a href="?page={{ historial_cargas.previous_page_number }}" class="btn btn-sm btn-outline-secondary">Anterior</a>
-            {% endif %}
-            
-            {% if historial_cargas.has_next %}
-                <a href="?page={{ historial_cargas.next_page_number }}" class="btn btn-sm btn-outline-secondary">Siguiente</a>
-                <a href="?page={{ historial_cargas.paginator.num_pages }}" class="btn btn-sm btn-outline-secondary">Última &raquo;</a>
-            {% endif %}
+<div class="modal fade" id="evidenciaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 bg-dark text-white p-3">
+                <h6 class="modal-title fw-bold" id="evidenciaModalTitle">Evidencia Fotográfica</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 bg-black d-flex align-items-center justify-content-center" style="min-height: 400px;">
+                <img id="modalEvidenciaImage" src="" class="img-fluid" alt="Evidencia" style="max-height: 80vh;">
+            </div>
         </div>
     </div>
-    {% endif %}
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header grad-danger text-white p-4">
+                <h5 class="modal-title fw-800"><i class="fas fa-trash-alt me-2"></i>Eliminar Registro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="deleteForm" action="">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p class="text-dark">¿Estás seguro de eliminar el registro <strong id="deleteCargaLabel" class="text-danger"></strong>?</p>
+                    <div class="alert alert-warning border-0 rounded-3 p-3 mb-4 bg-warning bg-opacity-10 d-flex gap-3">
+                        <i class="fas fa-exclamation-triangle fs-4 text-warning"></i>
+                        <span class="x-small text-warning-emphasis fw-bold">Esta acción recalculará los promedios de rendimiento y es irreversible.</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label x-small fw-800 text-uppercase text-muted">Contraseña Administrador</label>
+                        <input type="password" name="admin_password" class="form-control rounded-3 border-light py-2" required placeholder="Ingresa clave para confirmar">
+                    </div>
+
+                    <div class="mb-1">
+                        <label class="form-label x-small fw-800 text-uppercase text-muted">Corregir Kilometraje Unidad</label>
+                        <input type="number" name="nuevo_kilometraje" class="form-control rounded-3 border-light py-2" required value="{{ unidad.kilometraje_actual }}">
+                        <div class="form-text x-small">Ajuste técnico del odómetro maestro tras borrar el registro.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">Eliminar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <style>
-    .text-right { text-align: right; }
-    .text-end { text-align: right; }
-    .font-bold { font-weight: bold; }
-    .header-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        background: var(--bg-card);
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: var(--shadow-sm);
+    /* Estilos Locales v2.1 */
+    .fw-800 { font-weight: 800; }
+    .x-small { font-size: 0.72rem; }
+    .fs-xsmall { font-size: 0.78rem; }
+    .tracking-widest { letter-spacing: 0.15em; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    
+    .shadow-premium { box-shadow: 0 10px 30px rgba(0, 59, 112, 0.15); }
+    .grad-primary { background: linear-gradient(135deg, #003b70 0%, #005aab 100%); }
+    .grad-danger { background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%); }
+    
+    .header-icon-box {
+        background: rgba(255,255,255,0.2);
+        width: 60px; height: 60px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 15px; border: 1px solid rgba(255,255,255,0.3);
+        color: white; backdrop-filter: blur(10px);
     }
-    .data-table thead tr th {
-        background-color: var(--primary-orange);
-        color: white;
-    }
-    .totales-row td {
-        background-color: var(--bg-body) !important;
-        font-weight: 700;
-        color: var(--text-main);
-    }
+    
+    .stat-card-v2 { transition: all 0.3s ease; border: 1px solid #f1f5f9; }
+    .stat-card-v2:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important; }
+    
+    .premium-table thead th { border-bottom: none; }
+    .premium-table tbody tr:hover { background-color: rgba(var(--bs-primary-rgb), 0.02); }
+    
+    .btn-icon-v2 { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .btn-icon-v2:hover { transform: translateY(-2px); }
+    
+    .transition-all { transition: all 0.3s ease; }
+    
+    /* DARK MODE SUPPORT */
+    body.dark-theme .card, body.dark-theme .stat-card-v2 { background-color: #1e293b !important; border-color: rgba(255,255,255,0.05) !important; }
+    body.dark-theme .text-dark { color: #f8fafc !important; }
+    body.dark-theme .text-muted { color: #94a3b8 !important; }
+    body.dark-theme .bg-light { background-color: rgba(255,255,255,0.02) !important; }
+    body.dark-theme .table { color: #f8fafc; }
+    body.dark-theme .table thead th { border-bottom: 1px solid rgba(255,255,255,0.05); }
+    body.dark-theme .modal-content { background-color: #1e293b; color: #f8fafc; }
+    body.dark-theme .dropdown-menu { background-color: #1e293b; border: 1px solid rgba(255,255,255,0.1); }
+    body.dark-theme .dropdown-item:hover { background-color: rgba(255,255,255,0.05); }
 </style>
-
-
-{% endblock %}
-
-{% block extra_js %}
-<!-- Modales fuera del loop -->
-<!-- Modal Observaciones -->
-<div class="modal fade" id="observacionesModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Observaciones</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p id="modalObservacionesContent" style="white-space: pre-wrap;"></p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Evidencia -->
-<div class="modal fade" id="evidenciaModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Evidencia Fotográfica</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center p-0">
-        <img id="modalEvidenciaImage" src="" class="img-fluid" alt="Evidencia" style="max-height: 80vh;">
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Eliminar -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title">Eliminar Registro de Combustible</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form method="post" id="deleteForm" action="">
-          {% csrf_token %}
-          <div class="modal-body">
-            <p>¿Estás seguro de que deseas eliminar la carga <strong id="deleteCargaLabel"></strong>?</p>
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i> Esta acción es irreversible.
-            </div>
-            
-            <div class="mb-3">
-                <label for="id_admin_password" class="form-label">Contraseña de Administrador (Confirmación)</label>
-                <input type="password" name="admin_password" class="form-control" id="id_admin_password" required placeholder="Contraseña de Admin">
-            </div>
-
-            <div class="mb-3">
-                <label for="id_nuevo_kilometraje" class="form-label">Kilometraje Actual Real (Corrección)</label>
-                <input type="number" name="nuevo_kilometraje" class="form-control" id="id_nuevo_kilometraje" required value="{{ unidad.kilometraje_actual }}">
-                <div class="form-text">Ajusta el kilometraje de la unidad para corregir inconsistencias tras eliminar este registro.</div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-danger">Eliminar Definitivamente</button>
-          </div>
-      </form>
-    </div>
-  </div>
-</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -283,12 +411,8 @@ document.addEventListener('DOMContentLoaded', function() {
         observacionesModal.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
             var observaciones = button.getAttribute('data-bs-observaciones');
-            var title = button.getAttribute('data-bs-title');
-            var modalBodyInput = observacionesModal.querySelector('#modalObservacionesContent');
-            var modalTitle = observacionesModal.querySelector('.modal-title');
-            
-            modalBodyInput.textContent = observaciones;
-            if(title) modalTitle.textContent = title;
+            var modalBodyContent = observacionesModal.querySelector('#modalObservacionesContent');
+            modalBodyContent.textContent = observaciones;
         });
     }
 
@@ -314,10 +438,8 @@ document.addEventListener('DOMContentLoaded', function() {
             var button = event.relatedTarget;
             var actionUrl = button.getAttribute('data-bs-action');
             var cargaLabel = button.getAttribute('data-bs-carga');
-            
             var form = deleteModal.querySelector('#deleteForm');
             var label = deleteModal.querySelector('#deleteCargaLabel');
-            
             form.action = actionUrl;
             label.textContent = cargaLabel;
         });
@@ -325,3 +447,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+

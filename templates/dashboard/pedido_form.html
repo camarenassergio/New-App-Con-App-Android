@@ -70,7 +70,7 @@
                             <div class="row g-4">
                                 <!-- Folio Origen -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Folio de Origen / Ticket</label>
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Folio de Origen / Ticket <span class="text-danger">*</span></label>
                                     <div class="input-group shadow-sm border rounded-pill overflow-hidden bg-white">
                                         <span class="input-group-text bg-light border-0 px-3">
                                             <i class="fas fa-hashtag text-primary"></i>
@@ -119,12 +119,12 @@
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-8">
-                                        <label class="form-label x-small fw-bold text-muted">Nombre Completo</label>
+                                        <label class="form-label x-small fw-bold text-muted">Nombre Completo <span class="text-danger">*</span></label>
                                         <input type="text" name="cliente_nombre_manual" id="id_cliente_nombre_manual" class="form-control rounded-3" 
                                                placeholder="Ej. Juan Pérez" value="{{ form.cliente_nombre_manual.value|default:'' }}">
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label x-small fw-bold text-muted">Teléfono</label>
+                                        <label class="form-label x-small fw-bold text-muted">Teléfono <span class="text-danger">*</span></label>
                                         <input type="text" name="cliente_telefono_manual" id="id_cliente_telefono_manual" class="form-control rounded-3" 
                                                placeholder="10 dígitos" value="{{ form.cliente_telefono_manual.value|default:'' }}">
                                     </div>
@@ -181,7 +181,7 @@
 
                             <div class="row g-4 mb-4">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Peso Total de Carga</label>
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Peso Total de Carga <span class="text-danger">*</span></label>
                                     <div class="input-group shadow-sm border rounded-pill overflow-hidden bg-white">
                                         <input type="number" step="0.01" name="peso_total_estimado_kg" id="id_peso_total_estimado_kg" class="form-control border-0 py-2 ps-4" 
                                                placeholder="Total KG" required value="{{ form.peso_total_estimado_kg.value|default:'' }}">
@@ -189,7 +189,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Método de Pago</label>
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Método de Pago <span class="text-danger">*</span></label>
                                     <div class="shadow-sm border rounded-pill overflow-hidden">
                                         {{ form.metodo_pago }}
                                     </div>
@@ -317,6 +317,14 @@
 
     .htmx-indicator { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
     .htmx-request .htmx-indicator { opacity: 1; pointer-events: auto; }
+
+    /* Dark Mode Fixes */
+    body.dark-theme .card { background-color: var(--bg-card) !important; color: #fff !important; }
+    body.dark-theme .bg-body { background-color: var(--bg-card) !important; color: #fff !important; }
+    body.dark-theme .card-header { border-bottom-color: rgba(255,255,255,0.05) !important; }
+    body.dark-theme .form-label, body.dark-theme .form-text { color: rgba(255,255,255,0.7) !important; }
+    body.dark-theme .bg-light-subtle { background-color: rgba(255, 255, 255, 0.05) !important; }
+    body.dark-theme .dnd-upload-zone { background-color: rgba(255, 255, 255, 0.02) !important; border-color: rgba(255, 255, 255, 0.1) !important; }
 </style>
 
 <script>

@@ -608,7 +608,7 @@ class ConfiguracionGeneralForm(forms.ModelForm):
             'tolerancia_peso_ruta_kg': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
 
-from .models import Cliente, Obra, Pedido, Despacho, ViajeNuevo, MensajeInterno
+from .models import Cliente, Obra, Pedido, Despacho, ViajeNuevo, MensajeInterno, Operador
 
 class ClienteForm(forms.ModelForm):
     class Meta:
@@ -617,8 +617,19 @@ class ClienteForm(forms.ModelForm):
         widgets = {
             'id_sae': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ID de SAE (opcional)'}),
             'razon_social': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo o Razón Social'}),
-            'telefono_principal': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 5512345678'}),
+            'telefono_principal': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Ej. 55-12-34-56-78',
+                'id': 'id_telefono_principal',
+                'maxlength': '14'
+            }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].required = True
+        self.fields['id_sae'].required = False
 
 class ObraForm(forms.ModelForm):
     class Meta:
@@ -765,8 +776,10 @@ class PedidoForm(forms.ModelForm):
         # 1. VALIDACIÓN DE CLIENTE (Si no hay SAE)
         if not cliente:
             id_sae_search = self.data.get('id_sae_search', '').strip()
-            if not nombre and not id_sae_search:
-                self.add_error('cliente_nombre_manual', "Este campo es obligatorio para el modo Mostrador.")
+            if not nombre:
+                self.add_error('cliente_nombre_manual', "El nombre es obligatorio para registros sin cliente SAE.")
+            if not telefono:
+                self.add_error('cliente_telefono_manual', "El teléfono es obligatorio para registros sin cliente SAE.")
             elif nombre:
                 # Mínimo 2 palabras si se escribe nombre
                 import re
@@ -864,3 +877,31 @@ class MensajeInternoForm(forms.ModelForm):
             'destinatario': forms.Select(attrs={'class': 'form-select'}),
             'contenido': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Escribe un mensaje...'}),
         }
+
+class OperadorForm(forms.ModelForm):
+    class Meta:
+        model = Operador
+        fields = ['nombre', 'puesto', 'telefono', 'email', 'licencia', 'vigencia_licencia', 'usuario_asociado', 'usa_sistema', 'activo']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'puesto': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'licencia': forms.TextInput(attrs={'class': 'form-control'}),
+            'vigencia_licencia': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'usuario_asociado': forms.Select(attrs={'class': 'form-select'}),
+            'usa_sistema': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_usuario_asociado(self):
+        usuario = self.cleaned_data.get('usuario_asociado')
+        if usuario:
+            # Revisa si este usuario ya está en OTRO operador
+            qs = Operador.objects.filter(usuario_asociado=usuario)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            
+            if qs.exists():
+                raise forms.ValidationError("Este usuario ya está asignado a otro colaborador en el directorio. Seleccione uno distinto.")
+        return usuario

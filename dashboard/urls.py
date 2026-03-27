@@ -93,6 +93,11 @@ urlpatterns = [
     path('pedido/<int:pk>/cancelar/', views.PedidoCancelView.as_view(), name='pedido_cancel'),
     path('pedido/<int:pk>/cambiar-estado/', views.PedidoCambiarEstadoView.as_view(), name='pedido_cambiar_estado'),
 
+    # --- GESTIÓN DE ALMACÉN (PASO 2 - FLUJO OPERATIVO) ---
+    path('almacen/dashboard/', views.AlmacenDashboardView.as_view(), name='almacen_dashboard'),
+    path('almacen/preparacion/', views.AlmacenPreparacionListView.as_view(), name='almacen_preparacion'),
+    path('almacen/carga/', views.AlmacenCargaListView.as_view(), name='almacen_carga'),
+
     # --- GESTIÓN DE CLIENTES Y OBRAS (ADMIN/MOSTRADOR) ---
     path('clientes/', views.ClienteListView.as_view(), name='cliente_list'),
     path('clientes/nuevo/', views.ClienteCreateView.as_view(), name='cliente_create'),
@@ -107,4 +112,5 @@ urlpatterns = [
     path('notificaciones/<int:pk>/marcar-leida/', views.NotificacionMarcarLeidaView.as_view(), name='notificacion_marcar_leida'),
     path('notificaciones/marcar-todas-leidas/', views.marcar_todas_leidas, name='notificaciones_marcar_todas_leidas'),
     path('notificaciones/count/', views.notificaciones_count_ajax, name='notificaciones_count'),
+    path('api/enviar-mensaje/', views.DirectMessageView.as_view(), name='enviar_mensaje_api'),
 ]

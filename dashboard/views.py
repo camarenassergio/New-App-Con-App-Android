@@ -31,7 +31,8 @@ from .forms import (
     OrdenServicioForm, ChecklistUnidadForm, ViajeForm,
     InventarioLlantaForm, EvaluacionEntregaForm, ZonaEntregaForm,
     ConfiguracionGeneralForm, ClienteForm, ObraForm, PedidoForm,
-    DespachoForm, DespachoEntregaForm, ViajeNuevoForm, MensajeInternoForm
+    DespachoForm, DespachoEntregaForm, ViajeNuevoForm, MensajeInternoForm,
+    OperadorForm
 )
 
 class AjaxSuccessMixin:
@@ -82,6 +83,8 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
                 return redirect('dashboard:viajes_list')
             elif puesto == 'MOSTRADOR':
                 return redirect('dashboard:mostrador_dashboard')
+            elif puesto == 'ALMACEN':
+                return redirect('dashboard:almacen_dashboard')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -349,6 +352,18 @@ class UnidadDetailView(LoginRequiredMixin, NonChoferRequiredMixin, DetailView):
                          llantas_dic[der]['estado'] = 'warning'
 
         context['esquema_llantas'] = llantas_dic
+        
+        # Documentos list for easy iteration in v2 UI
+        context['doc_list'] = [
+            ('Factura de Unidad', 'fa-file-invoice', self.object.doc_factura, 'Factura Orig.'),
+            ('Tarjeta de Circulación', 'fa-id-card', self.object.doc_tarjeta_circulacion, 'T. Circulación'),
+            ('Póliza de Seguro', 'fa-shield-alt', self.object.doc_poliza, 'Póliza Vig.'),
+            ('Permisos Especiales', 'fa-stamp', self.object.doc_permisos, 'Permisos SCT'),
+        ]
+        
+        from django.utils import timezone
+        context['today'] = timezone.now().date()
+        
         return context
 
 from django.views import View
@@ -400,14 +415,14 @@ class OperadorListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
 
 class OperadorCreateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, CreateView):
     model = Operador
-    fields = ['nombre', 'puesto', 'telefono', 'email', 'licencia', 'vigencia_licencia', 'usuario_asociado', 'usa_sistema', 'activo']
+    form_class = OperadorForm
     template_name = "dashboard/operador_form.html"
     success_url = reverse_lazy('dashboard:operadores_list')
     ajax_success_message = "Registro añadido al directorio correctamente."
 
 class OperadorUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, UpdateView):
     model = Operador
-    fields = ['nombre', 'puesto', 'telefono', 'email', 'licencia', 'vigencia_licencia', 'usuario_asociado', 'usa_sistema', 'activo']
+    form_class = OperadorForm
     template_name = "dashboard/operador_form.html"
     success_url = reverse_lazy('dashboard:operadores_list')
     ajax_success_message = "Registro actualizado correctamente."
@@ -585,7 +600,74 @@ class UsuarioToggleActiveView(LoginRequiredMixin, NonChoferRequiredMixin, View):
             response["HX-Redirect"] = reverse('dashboard:usuarios_list')
             return response
             
+            
         return redirect('dashboard:usuarios_list')
+
+class DirectMessageView(LoginRequiredMixin, View):
+    """
+    Endpoint para enviar mensajes directos desde el directorio.
+    Crea un MensajeInterno y dispara una Notificacion para el destinatario.
+    """
+    def post(self, request, *args, **kwargs):
+        from django.http import JsonResponse
+        destinatario_id = request.POST.get('destinatario_id')
+        contenido = request.POST.get('contenido')
+
+        if not destinatario_id or not contenido:
+            return JsonResponse({'status': 'error', 'message': 'Faltan datos obligatorios.'}, status=400)
+
+        # 1. Caso: Mensaje Global (Solo Admins)
+        if destinatario_id == 'global':
+            if not (request.user.is_superuser or request.user.personal.puesto == 'ADMIN'):
+                return JsonResponse({'status': 'error', 'message': 'No tienes permisos para anuncios globales.'}, status=403)
+            
+            # Registrar el aviso global
+            MensajeInterno.objects.create(
+                remitente=request.user,
+                destinatario=None, # None = Global
+                contenido=contenido
+            )
+
+            # Notificar a TODOS los usuarios activos (menos el remitente)
+            users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+            notifs = [
+                Notificacion(
+                    usuario=u,
+                    tipo='SISTEMA',
+                    titulo=f"📢 AVISO GLOBAL de {request.user.first_name or request.user.username}",
+                    descripcion=contenido[:120] + ('...' if len(contenido) > 120 else ''),
+                    link="#"
+                ) for u in users
+            ]
+            Notificacion.objects.bulk_create(notifs)
+            
+            return JsonResponse({'status': 'success', 'message': '¡Anuncio global enviado correctamente!'})
+
+        # 2. Caso: Mensaje Directo
+        destinatario = get_object_or_404(User, id=destinatario_id)
+        
+        # 3. Evitar automensajes
+        if destinatario == request.user:
+            return JsonResponse({'status': 'error', 'message': 'No puedes enviarte mensajes a ti mismo.'}, status=400)
+
+        # 1. Crear Mensaje Interno (Persistencia)
+        MensajeInterno.objects.create(
+            remitente=request.user,
+            destinatario=destinatario,
+            contenido=contenido
+        )
+
+        # 2. Disparar Notificación (Aviso en la campana)
+        Notificacion.objects.create(
+            usuario=destinatario,
+            tipo='SISTEMA',
+            titulo=f"💬 Nuevo mensaje de {request.user.first_name or request.user.username}",
+            descripcion=contenido[:120] + ('...' if len(contenido) > 120 else ''),
+            link="#"
+        )
+
+        return JsonResponse({'status': 'success', 'message': '¡Mensaje enviado con éxito!'})
+
 
 class CombustibleGeneralView(LoginRequiredMixin, NonChoferRequiredMixin, TemplateView):
     template_name = "dashboard/combustible_general.html"
@@ -2212,11 +2294,11 @@ class ClienteBuscadorAccionView(LoginRequiredMixin, View):
         if not query:
             return HttpResponse('<div class="p-5 text-center text-muted small opacity-50"><i class="fas fa-keyboard fa-2x mb-2"></i><br>Comience a escribir...</div>')
 
-        # Clonamos la lógica de ClienteListView que SÍ funciona:
+        from django.db.models.functions import Length
         clientes = Cliente.objects.filter(
             Q(razon_social__icontains=query) | 
             Q(id_sae__icontains=query)
-        ).distinct()[:30]
+        ).order_by(Length('id_sae'), 'id_sae', 'razon_social').distinct()[:30]
         
         # Formatear resultados para que el fragmento funcione
         lista_resultados = []
@@ -2491,6 +2573,26 @@ class LogisticaArmarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, View):
 class ClienteListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
     model = Cliente
     template_name = "dashboard/clientes/cliente_list.html"
+    context_object_name = "clientes"
+    paginate_by = 30
+
+    def get_queryset(self):
+        from django.db.models.functions import Length
+        queryset = Cliente.objects.all().order_by(Length('id_sae'), 'id_sae', 'razon_social')
+        query = self.request.GET.get('q')
+        tipo = self.request.GET.get('tipo')
+
+        if query:
+            queryset = queryset.filter(
+                Q(razon_social__icontains=query) | Q(id_sae__icontains=query)
+            )
+        
+        if tipo == 'sae':
+            queryset = queryset.filter(es_mostrador=False)
+        elif tipo == 'mostrador':
+            queryset = queryset.filter(es_mostrador=True)
+
+        return queryset
 
 class CambiarModoVista(LoginRequiredMixin, View):
     """Permite intercambiar el rol o modo de vista activo en la sesión del usuario"""
@@ -2516,25 +2618,6 @@ class CambiarModoVista(LoginRequiredMixin, View):
             
         # Recargar la página completa con un Redireccionamiento Real (no silencioso)
         return redirect(request.META.get('HTTP_REFERER', reverse('dashboard:home')))
-    context_object_name = "clientes"
-    paginate_by = 30
-
-    def get_queryset(self):
-        queryset = Cliente.objects.all().order_by('razon_social')
-        query = self.request.GET.get('q')
-        tipo = self.request.GET.get('tipo')
-
-        if query:
-            queryset = queryset.filter(
-                Q(razon_social__icontains=query) | Q(id_sae__icontains=query)
-            )
-        
-        if tipo == 'sae':
-            queryset = queryset.filter(es_mostrador=False)
-        elif tipo == 'mostrador':
-            queryset = queryset.filter(es_mostrador=True)
-
-        return queryset
 
 class ClienteCreateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, CreateView):
     model = Cliente
@@ -2661,3 +2744,49 @@ def notificaciones_count_ajax(request):
         return HttpResponse(f'<span class="position-absolute translate-middle badge rounded-pill bg-danger" id="notif-badge" style="top: 10px; right: -5px; font-size: 0.65rem; padding: 2px 6px; border: 2px solid var(--bg-card); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);">{count}</span>')
     return HttpResponse("")
     
+# --- GESTIÓN DE ALMACÉN (SDC 3.5) ---
+
+class AlmacenDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, TemplateView):
+    """Resumen operativo para el equipo de Almacén"""
+    template_name = 'dashboard/almacen/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pedidos que Mostrador ya capturó pero Almacén no ha empezado
+        context['count_por_preparar'] = Pedido.objects.filter(estado='REGISTRADO').count()
+        
+        # Pedidos siendo preparados físicamente
+        context['count_preparacion'] = Pedido.objects.filter(estado='EN_PREPARACION').count()
+        
+        # Pedidos ya asignados a una unidad, listos para subir al camión
+        context['count_por_cargar'] = Pedido.objects.filter(estado='ASIGNADO_A_RUTA').count()
+        
+        # Historial de preparaciones de hoy
+        hoy = timezone.now().date()
+        context['pedidos_preparados_hoy'] = Pedido.objects.filter(
+            estado__in=['ASIGNADO_A_RUTA', 'EN_RUTA', 'ENTREGADO'],
+            ultima_actualizacion__date=hoy
+        ).count()
+
+        return context
+
+class AlmacenPreparacionListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
+    """Lista de pedidos pendientes de surtir/preparar"""
+    model = Pedido
+    template_name = 'dashboard/almacen/preparacion_list.html'
+    context_object_name = 'pedidos'
+
+    def get_queryset(self):
+        # Mostramos lo registrado y lo que ya están preparando
+        return Pedido.objects.filter(
+            estado__in=['REGISTRADO', 'EN_PREPARACION', 'REPROGRAMADO']
+        ).order_by('es_urgente', 'fecha_registro')
+
+class AlmacenCargaListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
+    """Lista de pedidos que ya tienen unidad asignada y deben cargarse"""
+    model = Pedido
+    template_name = 'dashboard/almacen/carga_list.html'
+    context_object_name = 'pedidos'
+
+    def get_queryset(self):
+        return Pedido.objects.filter(estado='ASIGNADO_A_RUTA').order_by('fecha_registro')

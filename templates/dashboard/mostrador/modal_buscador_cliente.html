@@ -1,45 +1,102 @@
 <div class="modal fade" id="buscadorClienteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title fw-bold"><i class="fas fa-search me-2"></i> BUSCADOR SIMPLE</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            
+            <!-- Header Premium v2.3 -->
+            <div class="modal-header border-0 py-4 px-4 bg-primary grad-primary text-white position-relative overflow-hidden">
+                <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 6rem; transform: translate(30%, -20%);">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="d-flex align-items-center position-relative">
+                    <div class="header-icon-box bg-white bg-opacity-20 rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 52px; height: 52px;">
+                        <i class="fas fa-search text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">Buscador de Clientes</h5>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Consulta el Directorio SAE en Tiempo Real</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <div class="modal-body p-4">
+
+            <div class="modal-body p-4 p-md-5">
                 
-                {# ── INPUT DE BÚSQUEDA ── #}
-                <div class="input-group mb-4 shadow-sm border rounded">
-                    <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
-                    <input type="text" name="q" id="q-search-direct" class="form-control border-0 py-2 fs-5" 
-                           placeholder="Buscar por Nombre o ID SAE..." 
-                           hx-get="{% url 'dashboard:cliente_buscador_accion' %}"
-                           hx-target="#resultados-simples"
-                           hx-trigger="keyup changed delay:400ms, search"
-                           autocomplete="off">
-                    <button class="btn btn-dark px-4 fw-bold" 
-                            hx-get="{% url 'dashboard:cliente_buscador_accion' %}"
-                            hx-target="#resultados-simples"
-                            hx-include="#q-search-direct">
-                        BUSCAR
-                    </button>
+                {# ── INPUT DE BÚSQUEDA PREMIUM ── #}
+                <div class="search-container mb-5">
+                    <div class="input-group input-group-lg shadow-premium rounded-pill overflow-hidden border">
+                        <span class="input-group-text bg-white border-0 ps-4 text-primary opacity-50">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="q" id="q-search-direct" 
+                               class="form-control border-0 py-3 ps-2 pe-4 fs-5 fw-bold text-primary autofocus-input" 
+                               placeholder="Nombre o ID SAE del cliente..." 
+                               hx-get="{% url 'dashboard:cliente_buscador_accion' %}"
+                               hx-target="#resultados-simples"
+                               hx-trigger="keyup changed delay:350ms, search"
+                               autocomplete="off"
+                               style="box-shadow: none !important;">
+                    </div>
+                    <div class="text-center mt-3">
+                        <span class="x-small text-muted fw-bold text-uppercase opacity-50 tracking-wider">Resultados sugeridos de la base de datos</span>
+                    </div>
                 </div>
 
                 {# ── ZONA DE RESULTADOS ── #}
-                <div id="resultados-simples" class="bg-light border rounded overflow-auto" style="min-height: 300px; max-height: 450px;">
-                    <div class="p-5 text-center text-muted">
-                        <i class="fas fa-keyboard fa-2x mb-2"></i>
-                        <p>Escriba para ver resultados...</p>
+                <div id="resultados-simples" class="resultados-scroll-area rounded-4 border bg-light bg-opacity-25 overflow-auto" style="min-height: 380px; max-height: 480px;">
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 py-5 opacity-50 text-muted">
+                        <div class="p-4 bg-white rounded-circle shadow-xs mb-3" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-keyboard fa-3x"></i>
+                        </div>
+                        <h6 class="fw-bold text-uppercase tracking-wider">Esperando Entrada</h6>
+                        <p class="small">Comience a escribir el nombre o código del cliente</p>
                     </div>
+                </div>
+
+                {# ── PIE DE MODAL / ACCIÓN RÁPIDA ── #}
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                    <p class="x-small text-muted mb-0 fw-bold">
+                        <i class="fas fa-info-circle me-1"></i> Pulsa ENTER para búsqueda forzada
+                    </p>
+                    <a href="{% url 'dashboard:cliente_create' %}" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold">
+                        <i class="fas fa-plus-circle me-1"></i> NUEVO CLIENTE
+                    </a>
                 </div>
 
             </div>
         </div>
     </div>
     
+    <style>
+        /* Estilos Integrados v2.3 */
+        .grad-primary { background: var(--grad-primary) !important; }
+        .shadow-premium { box-shadow: 0 10px 25px -5px rgba(0, 59, 112, 0.15); }
+        .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .x-small { font-size: 0.72rem; }
+        
+        .resultados-scroll-area::-webkit-scrollbar { width: 6px; }
+        .resultados-scroll-area::-webkit-scrollbar-track { background: transparent; }
+        .resultados-scroll-area::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        
+        .search-container input::placeholder { color: #adb5bd; font-weight: 500; opacity: 0.7; }
+        
+        body.dark-theme .modal-content { background-color: var(--bg-card); border-color: var(--border-color); }
+        body.dark-theme .bg-white { background-color: var(--bg-card) !important; }
+        body.dark-theme .input-group-text { background-color: var(--bg-card) !important; }
+        body.dark-theme input { background-color: var(--bg-card) !important; color: #fff !important; }
+    </style>
+
     <script>
-        var modalEl = document.getElementById('buscadorClienteModal');
-        var bsModal = new bootstrap.Modal(modalEl);
-        bsModal.show();
-        setTimeout(() => document.getElementById('q-search-direct').focus(), 300);
+        (function() {
+            var modalEl = document.getElementById('buscadorClienteModal');
+            if (modalEl) {
+                var bsModal = new bootstrap.Modal(modalEl);
+                bsModal.show();
+                // Foco inteligente con delay para asegurar renderizado
+                setTimeout(() => {
+                    const input = document.getElementById('q-search-direct');
+                    if (input) input.focus();
+                }, 400);
+            }
+        })();
     </script>
 </div>

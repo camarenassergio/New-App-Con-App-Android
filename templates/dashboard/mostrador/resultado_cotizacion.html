@@ -1,71 +1,163 @@
-<div class="mt-4 p-3 shadow-sm border-0" style="border-radius: 12px; background-color: var(--bg-body, #ffffff); border: 1px solid var(--border-color) !important;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 style="color: var(--primary-blue, #003366); margin: 0;"><i class="fas fa-calculator me-2"></i> Cotización Sugerida</h6>
-        <span class="badge {% if es_urgente %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-3 py-2">
-            {% if es_urgente %}<i class="fas fa-bolt me-1"></i> URGENTE{% else %}ESTÁNDAR{% endif %}
+<div class="mt-4 p-4 shadow-lg rounded-4 border" style="background-color: var(--bg-card); border-color: var(--border-color) !important;">
+    <!-- Encabezado de Resultado -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-dashed">
+        <div class="d-flex align-items-center">
+            <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                <i class="fas fa-calculator text-primary"></i>
+            </div>
+            <h6 class="fw-bold mb-0 text-main">Cotización Sugerida</h6>
+        </div>
+        <span class="badge {% if es_urgente %}bg-danger animate__animated animate__pulse animate__infinite{% else %}bg-success{% endif %} rounded-pill px-3 py-2 fw-bold x-small shadow-sm">
+            {% if es_urgente %}<i class="fas fa-bolt me-1"></i> URGENTE (20% Recargo){% else %}SERVICIO ESTÁNDAR{% endif %}
         </span>
     </div>
     
-    <p class="text-muted small mb-3">Costos operativos calculados para la zona <strong>{{ zona.nombre }}</strong> ({{ zona.distancia_km }}km / ~{{ zona.tiempo_traslado_minutos }}min).</p>
+    <!-- Info Zona -->
+    <div class="p-3 bg-light bg-opacity-25 rounded-4 mb-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-map-marker-alt text-danger me-3 fs-4"></i>
+            <div>
+                <p class="mb-0 fw-bold small text-main">Zona de Entrega: {{ zona.nombre }}</p>
+                <p class="mb-0 x-small text-muted opacity-75">Configurado para: {{ zona.distancia_km }}km / ~{{ zona.tiempo_traslado_minutos }}min de tránsito.</p>
+            </div>
+        </div>
+    </div>
     
-    <div class="d-flex flex-wrap gap-2 mb-3">
+    <!-- Filtros de Vehículo (Tabs rápidos) -->
+    <div class="d-flex flex-wrap gap-2 mb-4" id="cotizador-options-container">
         {% for op in opciones %}
-        <button type="button" class="btn {% if forloop.last %}btn-primary fw-bold text-white shadow-sm{% else %}btn-outline-secondary{% endif %} btn-sm rounded-pill d-flex align-items-center py-2 px-3"
+        <button type="button" 
+                class="option-pill btn {% if forloop.last %}btn-selected shadow-premium{% else %}btn-unselected{% endif %} rounded-pill py-2 px-3 d-flex align-items-center border-0"
                 onclick="mostrarDesgloseCotizacion('desglose-{{ forloop.counter }}', this)">
-            <i class="{% if op.codigo == 'MOTO' %}fas fa-motorcycle{% elif op.codigo == 'CAMION' %}fas fa-truck-moving{% else %}fas fa-truck{% endif %} me-2"></i>
-            {{ op.tipo }}: <strong class="ms-1">${{ op.costo|floatformat:2 }}</strong>
+            <i class="{% if op.codigo == 'MOTO' %}fas fa-motorcycle{% elif op.codigo == 'SEDAN' or op.codigo == 'AUTO' %}fas fa-car{% elif op.codigo == 'CAMIONETA' %}fas fa-truck-pickup{% else %}fas fa-truck-moving{% endif %} me-2"></i>
+            <div class="text-start">
+                <div class="x-small fw-bold opacity-75 text-uppercase tracking-wider" style="font-size: 0.6rem;">{{ op.tipo|truncatechars:15 }}</div>
+                <div class="fw-bold small">${{ op.costo|floatformat:2 }}</div>
+            </div>
         </button>
         {% endfor %}
     </div>
 
+    <!-- Paneles de Detalle -->
     {% for op in opciones %}
-    <div id="desglose-{{ forloop.counter }}" class="cotizacion-desglose-panel small" style="{% if not forloop.last %}display:none;{% endif %} background: #f8f9fa; color: #212529; padding: 15px; border-radius: 8px; border: 1px dashed #dee2e6;">
-        <div class="d-flex align-items-center mb-2">
-            <i class="fas fa-info-circle text-primary me-2"></i>
-            <strong class="text-uppercase text-primary">{{ op.tipo }}</strong>
-        </div>
-        <p class="mb-2 text-muted">La fórmula calcula km recorridos y horas-hombre basadas en distancia y tiempo de la zona con unidades reales.</p>
-        <div class="d-flex justify-content-between border-bottom pb-1 mb-1">
-            <span>Costo operativo dinámico calculado:</span>
-            <strong>${{ op.costo|floatformat:2 }}</strong>
-        </div>
-        
-        {% if es_urgente %}
-        <div class="d-flex justify-content-between border-bottom pb-1 mb-1 text-danger">
-            <span>Recargo pre-calculado por Urgencia (20%):</span>
-            <strong>Incluido</strong>
-        </div>
-        {% endif %}
-        
-        <div class="mt-3 text-center">
-            <div class="badge bg-success px-4 py-2 fs-6 rounded-pill shadow-sm">
-                TARIFA FICTICIA SUGERIDA: ${{ op.costo|floatformat:2 }}
+    <div id="desglose-{{ forloop.counter }}" class="cotizacion-desglose-panel animate__animated animate__fadeIn" style="{% if not forloop.last %}display:none;{% endif %}">
+        <div class="detail-box p-4 rounded-4 border-dashed bg-opacity-10 border-primary" style="background-color: rgba(var(--primary-blue-rgb), 0.05);">
+            <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-info-circle text-primary me-2 shadow-xs"></i>
+                <h6 class="mb-0 fw-bold small text-uppercase text-primary tracking-wide">Desglose Operativo: {{ op.tipo }}</h6>
+            </div>
+            
+            <p class="text-muted small mb-4 opacity-75">
+                Esta tarifa contempla el costo de combustible, horas-hombre del operador, desgaste de neumáticos y mantenimiento preventivo por la distancia recorrida a la zona <strong>{{ zona.nombre }}</strong>.
+            </p>
+
+            <div class="cotizacion-detalles-vertical mt-4">
+                <div class="detalle-item mb-3">
+                    <div class="x-small text-muted text-uppercase fw-bold opacity-75">Costo Operativo Base</div>
+                    <div class="fs-5 fw-bold text-main">${{ op.costo|floatformat:2 }}</div>
+                </div>
+
+                {% if es_urgente %}
+                <div class="detalle-item mb-3">
+                    <div class="x-small text-danger text-uppercase fw-bold opacity-75">Recargo por Emergencia Logística (20%)</div>
+                    <div class="small fw-bold text-danger">INCLUIDO EN EL TOTAL</div>
+                </div>
+                {% endif %}
+
+                <div class="detalle-item mt-4 pt-3 border-top border-dashed border-primary">
+                    <div class="small fw-bold text-primary text-uppercase tracking-wider">TARIFA SUGERIDA AL CLIENTE</div>
+                    <div class="fs-2 fw-bold text-success mt-1" style="letter-spacing: -1px;">${{ op.costo|floatformat:2 }}</div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                 <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-premium" onclick="copiarAlPortapapeles('${{ op.costo|floatformat:2 }}', '{{ op.tipo }}')">
+                     <i class="fas fa-copy me-2"></i>Copiar Tarifa
+                 </button>
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
 
+<style>
+    /* Estilos v2.3 Premium Fragmento Cotización */
+    :root {
+        --primary-blue: #003b70;
+        --primary-blue-rgb: 0, 59, 112;
+        --primary-orange: #f36f21;
+        --bg-card-rgb: 255, 255, 255;
+    }
+
+    body.dark-theme {
+        --bg-card-rgb: 24, 24, 27;
+    }
+
+    .x-small { font-size: 0.72rem; }
+    .tracking-wide { letter-spacing: 0.05em; }
+    .border-dashed { border: 2px dashed var(--border-color, rgba(0,0,0,0.1)) !important; }
+    
+    .option-pill { transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); cursor: pointer; }
+    
+    /* Estado Seleccionado */
+    .btn-selected { 
+        background-color: var(--primary-orange) !important; 
+        color: #fff !important; 
+        transform: translateY(-5px) scale(1.05);
+    }
+    .btn-selected .text-muted { color: rgba(255,255,255,0.8) !important; }
+
+    /* Estado No Seleccionado */
+    .btn-unselected { 
+        background: var(--bg-body, #f8f9fa); 
+        color: var(--text-muted, #6c757d); 
+        border: 1px solid var(--border-color, rgba(0,0,0,0.1)) !important; 
+        opacity: 0.7;
+    }
+    .btn-unselected:hover { opacity: 1; transform: translateY(-2px); border-color: var(--primary-orange) !important; }
+
+    .shadow-premium { box-shadow: 0 10px 20px -5px rgba(243, 111, 33, 0.3); }
+
+    .detail-box { border-width: 2px !important; }
+    
+    body:not(.dark-theme) .text-main { color: #1e293b !important; }
+    body.dark-theme .btn-unselected { background: rgba(255,255,255,0.05); }
+    body.dark-theme .detail-box { border-color: rgba(var(--primary-blue-rgb), 0.3) !important; }
+    body.dark-theme .text-main { color: #fff !important; }
+</style>
+
 <script>
     function mostrarDesgloseCotizacion(idDesglose, btnElement) {
-        // Ocultar todos los desgloses
+        // Ocultar todos los desgloses con animación
         document.querySelectorAll('.cotizacion-desglose-panel').forEach(panel => {
             panel.style.display = 'none';
         });
         
-        // Aplicar fade in rápido al panel seleccionado
-        const panelActivo = document.getElementById(idDesglose);
-        panelActivo.style.display = 'block';
-        panelActivo.style.opacity = '0';
-        setTimeout(() => { panelActivo.style.opacity = '1'; panelActivo.style.transition = 'opacity 0.2s ease'; }, 10);
+        // Mostrar el seleccionado
+        const target = document.getElementById(idDesglose);
+        target.style.display = 'block';
         
-        // Restaurar estado inactivo en botones
-        const container = btnElement.parentElement;
-        Array.from(container.children).forEach(btn => {
-            btn.className = 'btn btn-outline-secondary btn-sm rounded-pill d-flex align-items-center py-2 px-3';
+        // Actualizar diseño de botones
+        const container = document.getElementById('cotizador-options-container');
+        container.querySelectorAll('.option-pill').forEach(btn => {
+            btn.classList.remove('btn-selected', 'shadow-premium');
+            btn.classList.add('btn-unselected');
         });
         
-        // Poner estado activo al presionado
-        btnElement.className = 'btn btn-primary fw-bold text-white shadow-sm btn-sm rounded-pill d-flex align-items-center py-2 px-3';
+        btnElement.classList.remove('btn-unselected');
+        btnElement.classList.add('btn-selected', 'shadow-premium');
+    }
+
+    function copiarAlPortapapeles(monto, tipo) {
+        navigator.clipboard.writeText(`Tarifa de flete sugerida para ${tipo}: ${monto} MXN`).then(() => {
+            // Feedback visual rápido
+            const originalText = event.currentTarget.innerHTML;
+            event.currentTarget.classList.replace('btn-primary', 'btn-success');
+            event.currentTarget.innerHTML = '<i class="fas fa-check me-2"></i>¡Copiado!';
+            setTimeout(() => {
+                event.currentTarget.classList.replace('btn-success', 'btn-primary');
+                event.currentTarget.innerHTML = originalText;
+            }, 2000);
+        });
     }
 </script>

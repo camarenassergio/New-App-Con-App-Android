@@ -1,139 +1,235 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block page_title %}Configuración General{% endblock %}
+{% block page_title %}Ajustes Globales — Casa Lupita{% endblock %}
 
 {% block content %}
-<div class="form-container" style="max-width: 800px; margin: 0 auto;">
-    <div class="form-header">
-        <h3><i class="fas fa-cogs me-2"></i> Ajustes Globales del Sistema</h3>
-        <p class="text-muted mb-0">Variables de configuración global para la operación logística.</p>
-    </div>
-
-    <div class="p-4">
-        <form id="configForm" method="post" action=""
-              hx-post=""
-              hx-target="#configForm"
-              hx-swap="outerHTML"
-              hx-indicator="#config-spinner"
-              aria-label="Formulario de configuración general">
-            {% csrf_token %}
-
-            {% if form.errors %}
-            <div class="alert alert-danger shadow-sm border-start border-4 border-danger animate__animated animate__shakeX">
-                <h6 class="fw-bold mb-1"><i class="fas fa-exclamation-circle me-2"></i> Errores de validación:</h6>
-                <ul class="mb-0 small">
-                    {% for field, errors in form.errors.items %}
-                        {% for error in errors %}
-                            <li><strong>{{ field|title }}:</strong> {{ error }}</li>
-                        {% endfor %}
-                    {% endfor %}
-                    {% for error in form.non_field_errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            <div class="border-bottom pb-2 mb-4">
-                <h5 class="fw-bold mb-0 text-success"><i class="fas fa-money-bill-wave me-2"></i> Sueldos Base Semanales</h5>
-            </div>
-            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-success shadow-sm">
-                <div class="col-md-6 mb-3">
-                    {{ form.sueldo_semanal_chofer|as_crispy_field }}
-                </div>
-                <div class="col-md-6 mb-3">
-                    {{ form.sueldo_semanal_chalan|as_crispy_field }}
-                </div>
-            </div>
-
-            <div class="border-bottom pb-2 mb-4 mt-4">
-                <h5 class="fw-bold mb-0 text-info"><i class="fas fa-truck-loading me-2"></i> Operación y Tiempos</h5>
-            </div>
-            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-info shadow-sm">
-                <div class="col-md-6 mb-3">
-                    {{ form.tiempo_descarga_promedio_min|as_crispy_field }}
-                    <small class="text-muted d-block mt-1">Tiempo fijo estimado para cada parada de entrega (min).</small>
-                </div>
-            </div>
-
-            <div class="border-bottom pb-2 mb-4 mt-4">
-                <h5 class="fw-bold mb-0 text-warning"><i class="fas fa-tools me-2"></i> Control de Neumáticos (Seguridad)</h5>
-            </div>
-            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-warning shadow-sm">
-                <div class="col-md-6 mb-3">
-                    {{ form.limite_seguridad_llanta_mm|as_crispy_field }}
-                    <small class="text-muted d-block mt-1">Grosor mínimo permitido antes de marcar cambio obligatorio (mm).</small>
-                </div>
-                <div class="col-md-6 mb-3">
-                    {{ form.vida_util_estimada_llanta_km|as_crispy_field }}
-                    <small class="text-muted d-block mt-1">Kilometraje promedio esperado para un neumático nuevo (km).</small>
-                </div>
-            </div>
-
-            <div class="border-bottom pb-2 mb-4 mt-4">
-                <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-weight-hanging me-2"></i> Pesos y Tolerancias</h5>
-            </div>
-            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-primary shadow-sm">
-                <div class="col-md-6 mb-3">
-                    {{ form.limite_peso_vehiculo_personal_kg|as_crispy_field }}
-                    <small class="text-muted d-block mt-1">Carga máxima permitida para vehículos livianos (kg).</small>
-                </div>
-                <div class="col-md-6 mb-3">
-                    {{ form.tolerancia_peso_ruta_kg|as_crispy_field }}
-                    <small class="text-muted d-block mt-1">Margen de peso extra permitido antes de bloquear un viaje (kg).</small>
-                </div>
-            </div>
-
-            <div class="border-bottom pb-2 mb-4 mt-4">
-                <h5 class="fw-bold mb-0 text-danger"><i class="fas fa-ticket-alt me-2"></i> Prefijos de Folios (Mostrador)</h5>
-            </div>
-            <div class="row bg-light rounded p-3 mx-0 mb-4 border-start border-4 border-danger shadow-sm">
-                <div class="col-12 mb-3">
-                    <!-- Campo único de Django para tipos_ticket_json -->
-                    <div style="display: none;">{{ form.tipos_ticket_json }}</div>
-                    
-                    <div id="tipos-ticket-manager">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-sm align-middle mb-2 bg-white shadow-sm" style="table-layout: fixed;">
-                                <thead class="table-dark small opacity-75">
-                                    <tr class="text-uppercase text-center">
-                                        <th style="width: 60%;" class="ps-3 text-start">Documento</th>
-                                        <th style="width: 25%;">Prefijo SAE</th>
-                                        <th style="width: 15%;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tipos-ticket-body">
-                                    <!-- Filas generadas por JS -->
-                                </tbody>
-                            </table>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                <!-- Header Premium v2.3 -->
+                <div class="card-header border-0 py-4 px-4 bg-primary position-relative overflow-hidden grad-primary">
+                    <div class="position-absolute top-0 end-0 opacity-10 text-white" style="font-size: 8rem; transform: translate(30%, -20%);">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="d-flex align-items-center position-relative">
+                        <div class="header-icon-box bg-white bg-opacity-20 rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 56px; height: 56px;">
+                            <i class="fas fa-sliders-h text-white fs-4"></i>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center mt-2">
-                            <button type="button" class="btn btn-outline-success btn-sm px-3 rounded-pill" onclick="addTicketRow()">
-                                <i class="fas fa-plus-circle me-1"></i> Agregar Nuevo Tipo
-                            </button>
+                        <div>
+                            <h5 class="card-title mb-1 text-white fw-bold">Configuración General</h5>
+                            <p class="text-white-50 small mb-0">Control global de variables operativas y administrativas</p>
                         </div>
                     </div>
+                </div>
 
-                    <div class="alert alert-info py-2 px-3 small mt-3 mb-0">
-                        <i class="fas fa-info-circle me-1"></i> El prefijo se concatenará al número de folio capturado automáticamente.
-                    </div>
+                <div class="card-body p-4 p-md-5">
+                    <form id="configForm" method="post" 
+                          hx-post="" 
+                          hx-target="#configForm" 
+                          hx-swap="outerHTML" 
+                          hx-indicator="#config-spinner"
+                          class="needs-validation">
+                        {% csrf_token %}
+
+                        <!-- Alertas de Error -->
+                        {% if form.errors %}
+                        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-5 animate__animated animate__shakeX">
+                            <div class="d-flex align-items-center gap-3 p-2">
+                                <i class="fas fa-exclamation-circle fa-2x opacity-50"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Se detectaron errores en la configuración:</h6>
+                                    <ul class="mb-0 small opacity-75 list-unstyled">
+                                        {% for field, errors in form.errors.items %}{% for error in errors %}<li><i class="fas fa-angle-right me-1"></i> {{ error }}</li>{% endfor %}{% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="premium-form-grid">
+                            
+                            <!-- SECCIÓN: FINANZAS Y COMPENSACIONES -->
+                            <div class="section-badge mb-4">
+                                <span class="badge rounded-pill bg-success-subtle text-success border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                                    <i class="fas fa-money-bill-wave me-2"></i>FINANZAS & COMPENSACIONES
+                                </span>
+                            </div>
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-6">
+                                    {{ form.sueldo_semanal_chofer|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.sueldo_semanal_chalan|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN: OPERACIÓN Y LOGÍSTICA -->
+                            <div class="section-badge mb-4">
+                                <span class="badge rounded-pill bg-info-subtle text-info border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                                    <i class="fas fa-shipping-fast me-2"></i>EFICIENCIA OPERATIVA
+                                </span>
+                            </div>
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-6">
+                                    {{ form.tiempo_descarga_promedio_min|as_crispy_field }}
+                                    <div class="form-text x-small text-muted mt-2 ps-1">
+                                        <i class="fas fa-info-circle me-1 opacity-50"></i>Promedio base usado para estimar horarios de ruta.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN: SEGURIDAD -->
+                            <div class="section-badge mb-4">
+                                <span class="badge rounded-pill bg-warning-subtle text-warning border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                                    <i class="fas fa-shield-alt me-2"></i>MANTENIMIENTO & SEGURIDAD
+                                </span>
+                            </div>
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-6">
+                                    {{ form.limite_seguridad_llanta_mm|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.vida_util_estimada_llanta_km|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN: POLÍTICAS DE CARGA -->
+                            <div class="section-badge mb-4">
+                                <span class="badge rounded-pill bg-primary-subtle text-primary border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                                    <i class="fas fa-weight-hanging me-2"></i>POLÍTICAS DE CARGA
+                                </span>
+                            </div>
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-6">
+                                    {{ form.limite_peso_vehiculo_personal_kg|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.tolerancia_peso_ruta_kg|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN: FOLIOS -->
+                            <div class="section-badge mb-4">
+                                <span class="badge rounded-pill bg-danger-subtle text-danger border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                                    <i class="fas fa-ticket-alt me-2"></i>PREFIJOS DE DOCUMENTACIÓN (SAE)
+                                </span>
+                            </div>
+                            
+                            <div class="card border border-2 border-dashed rounded-4 p-4 mb-4 bg-light bg-opacity-10">
+                                <div style="display: none;">{{ form.tipos_ticket_json }}</div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-3 premium-table border-0" id="tipos-ticket-manager">
+                                        <thead class="bg-transparent">
+                                            <tr class="text-muted x-small text-uppercase fw-bold">
+                                                <th class="border-0 ps-3">Nombre del Documento</th>
+                                                <th class="border-0 text-center" style="width: 150px;">Prefijo SAE</th>
+                                                <th class="border-0 text-center" style="width: 80px;">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tipos-ticket-body" class="border-0">
+                                            <!-- Dynamically filled by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+                                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill fw-bold px-4 py-2" onclick="addTicketRow()">
+                                        <i class="fas fa-plus-circle me-2"></i>Añadir Tipo de Documento
+                                    </button>
+                                    <div class="x-small text-muted fst-italic">
+                                        <i class="fas fa-sync me-1 text-primary"></i> Sincronizado automáticamente
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                            <a href="{% url 'dashboard:home' %}" class="btn btn-link text-muted text-decoration-none px-0">
+                                <i class="fas fa-arrow-left me-2"></i>Regresar al Inicio
+                            </a>
+                            <div class="d-flex align-items-center gap-3">
+                                <div id="config-spinner" class="htmx-indicator spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Procesando...</span>
+                                </div>
+                                <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-premium" style="min-width: 260px;">
+                                    <i class="fas fa-save me-2"></i>Guardar Ajustes Globales
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            <div class="d-flex justify-content-end align-items-center gap-3 mt-4">
-                <span id="config-spinner" class="htmx-indicator">
-                    <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
-                    <small class="text-muted ms-1">Guardando...</small>
-                </span>
-                <button type="submit" class="btn btn-primary px-5"
-                        aria-label="Guardar configuración general">
-                    <i class="fas fa-save me-2"></i> Guardar Cambios
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Estilos v2.3 Premium Design System */
+    :root {
+        --primary-blue: #003b70;
+        --grad-primary: linear-gradient(135deg, #003b70, #005aab);
+    }
+
+    .grad-primary { 
+        background: #003b70 !important;
+        background: var(--grad-primary) !important; 
+        color: white !important;
+    }
+    
+    .bg-success-subtle { background-color: rgba(16, 185, 129, 0.1) !important; }
+    .bg-info-subtle { background-color: rgba(59, 130, 246, 0.1) !important; }
+    .bg-warning-subtle { background-color: rgba(245, 158, 11, 0.1) !important; }
+    .bg-primary-subtle { background-color: rgba(0, 59, 112, 0.1) !important; }
+    .bg-danger-subtle { background-color: rgba(239, 68, 68, 0.1) !important; }
+
+    .premium-form-grid label { 
+        font-weight: 700; font-size: 0.75rem; color: var(--text-muted); 
+        text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; 
+        display: block; 
+    }
+    
+    .premium-form-grid .form-control { 
+        border-radius: 12px; padding: 0.75rem 1rem; border-color: var(--border-color); 
+        background-color: var(--bg-card); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+    
+    .premium-form-grid .form-control:focus { 
+        border-color: var(--primary-orange); 
+        box-shadow: 0 4px 15px rgba(243, 111, 33, 0.15); 
+        transform: translateY(-2px); 
+    }
+
+    .section-badge .badge { letter-spacing: 1px; }
+    .shadow-premium { box-shadow: 0 12px 30px -5px rgba(0, 59, 112, 0.35); }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .x-small { font-size: 0.75rem; }
+    .border-dashed { border-style: dashed !important; }
+
+    /* Estilos para el manejador de tickets */
+    #tipos-ticket-manager thead th { border-bottom: 2px solid var(--border-color) !important; padding-bottom: 12px; }
+    #tipos-ticket-body tr { border-bottom: 1px solid var(--border-color); }
+    #tipos-ticket-body tr:last-child { border-bottom: none; }
+    #tipos-ticket-body tr:hover { background-color: rgba(0, 59, 112, 0.02); }
+    
+    body.dark-theme #tipos-ticket-body tr:hover { background-color: rgba(255, 255, 255, 0.02); }
+    
+    #tipos-ticket-body .form-control { 
+        border: 1px solid transparent; 
+        background: transparent; 
+        padding: 0.5rem 0.75rem;
+    }
+    #tipos-ticket-body .form-control:hover, #tipos-ticket-body .form-control:focus { 
+        border-color: var(--border-color); 
+        background-color: var(--bg-card); 
+    }
+
+    .asteriskField { display: none; }
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -154,31 +250,29 @@
             return (nombre || prefijo) ? { nombre: nombre, prefijo: prefijo } : null;
         }).filter(item => item !== null);
 
-        // Actualizamos el value para que se envíe en el POST
         hiddenInput.value = JSON.stringify(data);
     };
 
     /**
-     * Agrega una fila a la tabla visual
+     * Agrega una fila a la tabla visual con el nuevo estilo premium
      */
     window.addTicketRow = function(nombre = '', prefijo = '') {
         const body = document.getElementById('tipos-ticket-body');
         if (!body) return;
 
         const tr = document.createElement('tr');
-        tr.className = 'align-middle';
         tr.innerHTML = `
-            <td>
-                <input type="text" class="form-control form-control-sm ticket-nombre border-0 ps-3" 
+            <td class="ps-1">
+                <input type="text" class="form-control ticket-nombre" 
                        placeholder="Nombre (Ej: Remisión)" value="${nombre}" oninput="syncTicketJSON()">
             </td>
             <td>
-                <input type="text" class="form-control form-control-sm ticket-prefijo border-0 fw-bold text-center" 
-                       placeholder="Prefijo (Ej: R)" value="${prefijo}" oninput="syncTicketJSON()">
+                <input type="text" class="form-control ticket-prefijo fw-bold text-center" 
+                       placeholder="Prefix" value="${prefijo}" oninput="syncTicketJSON()" maxlength="5">
             </td>
             <td class="text-center">
-                <button type="button" class="btn btn-sm btn-link text-danger p-1" 
-                        onclick="this.closest('tr').remove(); syncTicketJSON();">
+                <button type="button" class="btn btn-link text-danger p-2 hover-scale" 
+                        onclick="this.closest('tr').remove(); syncTicketJSON();" title="Eliminar fila">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             </td>
@@ -190,10 +284,8 @@
      * Inicializa el componente leyendo del input de Django
      */
     window.initTicketManager = function() {
-        // Encontrar por nombre es más seguro si crispy genera IDs dinámicos
         const hiddenInput = document.querySelector('textarea[name="tipos_ticket_json"]');
         const body = document.getElementById('tipos-ticket-body');
-        
         if (!body || !hiddenInput) return;
 
         let existingData = [];
@@ -206,8 +298,6 @@
         }
 
         body.innerHTML = '';
-        // Solo agregar predeterminados si el campo está TOTALMENTE vacío (sin siquiera un [])
-        // O si contiene el string 'null'
         if (existingData && existingData.length > 0) {
             existingData.forEach(d => addTicketRow(d.nombre, d.prefijo));
         } else if (rawValue === "" || rawValue === "null") {
@@ -221,7 +311,6 @@
         }
     };
 
-    // Inicialización al cargar y tras HTMX
     document.addEventListener('DOMContentLoaded', initTicketManager);
     
     document.addEventListener('htmx:afterSettle', function(evt) {
@@ -230,14 +319,10 @@
         }
     });
 
-    // Sincronización PROFUNDA antes de enviar por HTMX
     document.addEventListener('htmx:configRequest', function(evt) {
         const form = document.getElementById('configForm');
         if (form && (evt.target === form || form.contains(evt.target))) {
-            // 1. Sincronizar el DOM del textarea
             syncTicketJSON();
-            
-            // 2. Sincronizar los parámetros que htmx YA capturó
             const hiddenInput = document.querySelector('textarea[name="tipos_ticket_json"]');
             if (hiddenInput && evt.detail.parameters) {
                 evt.detail.parameters['tipos_ticket_json'] = hiddenInput.value;
@@ -245,24 +330,4 @@
         }
     });
 </script>
-
-<style>
-    /* Estilos para que la tabla parezca parte del input */
-    #tipos-ticket-manager table {
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    #tipos-ticket-manager .form-control:focus {
-        box-shadow: none;
-        background-color: var(--table-hover-bg);
-    }
-    /* Estabilidad visual */
-    #tipos-ticket-manager tr:hover {
-        background-color: rgba(0,0,0,0.02);
-    }
-    body.dark-theme #tipos-ticket-manager tr:hover {
-        background-color: rgba(255,255,255,0.02);
-    }
-</style>
 {% endblock %}

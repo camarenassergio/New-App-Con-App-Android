@@ -4,136 +4,241 @@
 {% block page_title %}Mi Perfil{% endblock %}
 {% block meta_description %}<meta name="description" content="Perfil de usuario — Sistema de Gestión Logística Casa Lupita">{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <!-- Cropper CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" referrerpolicy="no-referrer" />
+<style>
+    /* VARIABLES LOCALES v2.3 */
+    :root {
+        --primary-blue: #003b70;
+        --primary-orange: #f36f21;
+        --grad-primary: linear-gradient(135deg, #003b70, #005aab);
+        --grad-success: linear-gradient(135deg, #10b981, #0a504a);
+    }
 
-<div class="container-fluid py-4">
+    .perfil-avatar-wrapper {
+        position: relative;
+        display: inline-block;
+        padding: 5px;
+        background: linear-gradient(135deg, var(--primary-blue), var(--primary-orange));
+        border-radius: 50%;
+        box-shadow: 0 10px 25px -5px rgba(0, 59, 112, 0.4);
+        margin-bottom: 1.5rem;
+    }
+
+    .perfil-avatar-img, .perfil-avatar-placeholder {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--bg-card);
+        background-color: var(--bg-body);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: var(--primary-blue);
+    }
+
+    .info-badge-puesto {
+        background: rgba(243, 111, 33, 0.1);
+        color: var(--primary-orange);
+        padding: 0.5rem 1.25rem;
+        border-radius: 50px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        border: 1px solid rgba(243, 111, 33, 0.2);
+    }
+
+    /* Cropper Overrides */
+    .cropper-view-box, .cropper-face { border-radius: 50%; outline: none !important; }
+    .cropper-modal { opacity: 0.8; background-color: #000; }
+    .cropper-line, .cropper-point { display: none !important; }
+    .cropper-view-box { outline: 2px solid #fff !important; }
+    #zoomRange { height: 6px; }
+    
+    /* Utility Classes v2.3 */
+    .grad-primary { background: var(--grad-primary) !important; }
+    
+    .contact-info-card {
+        background: rgba(0, 59, 112, 0.03);
+        border: 1px dashed rgba(0, 59, 112, 0.15);
+    }
+    
+    body.dark-theme .contact-info-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+    }
+
+    body.dark-theme .modal-content { background-color: #1e293b; color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="perfil-card">
-
-                <!-- Header -->
-                <div class="perfil-card-header">
-                    <i class="fas fa-user-circle fa-2x"></i>
-                    <h4 class="mb-0 ms-2">Información del Usuario</h4>
+        <div class="col-lg-6">
+            
+            <!-- Perfil Card Premium -->
+            <div class="card border-0 shadow-premium rounded-4 overflow-hidden bg-card">
+                <!-- Header con Gradiente -->
+                <div class="grad-primary p-4 text-white text-center position-relative">
+                    <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                        <i class="fas fa-shield-alt fa-4x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-0">Gestión de Cuenta</h4>
+                    <p class="x-small mb-0 opacity-75 text-uppercase tracking-widest fw-bold">Seguridad y Perfil Operativo</p>
                 </div>
 
-                <div class="perfil-card-body">
-
-                    <!-- Avatar Preview -->
-                    <div class="text-center mb-4">
-                        {% if request.user.personal and request.user.personal.foto %}
-                            <img id="profile_preview" src="{{ request.user.personal.foto.url }}"
-                                 alt="Foto de perfil de {{ request.user.username }}"
-                                 class="perfil-avatar-img">
-                        {% else %}
-                            <img id="profile_preview" src="" alt="Foto de perfil"
-                                 class="perfil-avatar-img" style="display: none;">
-                            <div id="avatar_placeholder" class="perfil-avatar-placeholder">
-                                {{ request.user.username|first|upper }}
-                            </div>
-                        {% endif %}
-                        <h4 class="perfil-name">
+                <div class="card-body p-4 p-md-5">
+                    
+                    <!-- Avatar Section -->
+                    <div class="text-center mb-5">
+                        <div class="perfil-avatar-wrapper animate__animated animate__zoomIn">
+                            {% if request.user.personal and request.user.personal.foto %}
+                                <img id="profile_preview" src="{{ request.user.personal.foto.url }}"
+                                     alt="Foto de perfil de {{ request.user.username }}"
+                                     class="perfil-avatar-img">
+                            {% else %}
+                                <img id="profile_preview" src="" alt="Foto de perfil"
+                                     class="perfil-avatar-img" style="display: none;">
+                                <div id="avatar_placeholder" class="perfil-avatar-placeholder">
+                                    {{ request.user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <h3 class="fw-bold text-main mb-1">
                             {{ request.user.personal.nombre|default:request.user.username }}
                             {{ request.user.personal.apellido_paterno|default:"" }}
-                        </h4>
-                        <p class="text-muted">
-                            <i class="fas fa-briefcase me-2"></i>
-                            Puesto: <strong>{{ request.user.personal.get_puesto_display|default:"Sin Puesto Definido" }}</strong>
-                        </p>
+                        </h3>
+                        <div class="info-badge-puesto mb-3 shadow-sm">
+                            <i class="fas fa-id-badge"></i>
+                            {{ request.user.personal.get_puesto_display|default:"Sin Puesto Definido" }}
+                        </div>
                     </div>
 
-                    <hr class="perfil-divider">
-
-                    <h5 class="perfil-section-title">
-                        <i class="fas fa-camera me-2"></i> Actualizar Foto de Perfil
-                    </h5>
-
-                    <form method="post" enctype="multipart/form-data" id="perfil_form">
-                        {% csrf_token %}
-
-                        <!-- Hidden native form fields -->
-                        <div class="d-none">
-                            {{ form|crispy }}
-                        </div>
-
-                        <!-- DnD Upload Zone (igual que combustible) -->
-                        <div class="dnd-upload-zone" id="dndZone-perfil"
-                             role="button" tabindex="0"
-                             aria-label="Arrastra tu foto de perfil aquí o toca para abrir la cámara">
-                            <input type="file" id="foto_input_dnd"
-                                   accept="image/*"
-                                   capture="environment"
-                                   class="dnd-input"
-                                   aria-label="Seleccionar foto de perfil">
-                            <div class="dnd-content">
-                                <i class="fas fa-user-circle dnd-icon"></i>
-                                <p class="dnd-title">Arrastra tu foto aquí</p>
-                                <p class="dnd-subtitle">o toca para abrir la cámara / galería</p>
-                                <span class="dnd-badge">JPG / PNG · Máx. 5MB</span>
+                    <!-- Contact Info Block Premium -->
+                    <div class="p-4 rounded-4 contact-info-card mb-5 mx-2">
+                        <div class="row g-3">
+                            <div class="col-12 d-flex align-items-center gap-3">
+                                <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-phone-alt"></i>
+                                </div>
+                                <div class="text-start">
+                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">TELÉFONO DE CONTACTO</p>
+                                    <h6 class="mb-0 fw-bold text-main">{{ request.user.perfil_directorio.telefono|default:"No registrado" }}</h6>
+                                </div>
                             </div>
-                        </div>
-                        <div class="dnd-preview" id="dndPreview-perfil"></div>
-
-                        <!-- Progress bar -->
-                        <div id="progress_container" class="mt-3 d-none">
-                            <div class="d-flex justify-content-between mb-1">
-                                <small class="fw-bold" style="color: var(--primary-blue);">Subiendo foto...</small>
-                                <small id="progress_text" class="text-muted">0%</small>
-                            </div>
-                            <div class="progress" style="height: 10px; border-radius: 10px;">
-                                <div id="progress_bar" class="progress-bar progress-bar-striped progress-bar-animated"
-                                     style="background-color: var(--primary-orange);"
-                                     role="progressbar" style="width: 0%;"
-                                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            <div class="col-12 d-flex align-items-center gap-3 border-top border-dashed pt-3">
+                                <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="text-start">
+                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">CORREO ELECTRÓNICO</p>
+                                    <h6 class="mb-0 fw-bold text-main small text-truncate" title="{{ request.user.perfil_directorio.email|default:request.user.email }}">
+                                        {{ request.user.perfil_directorio.email|default:request.user.email }}
+                                    </h6>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" id="submit_btn" class="btn btn-primary btn-lg"
-                                    style="background-color: var(--primary-orange); border: none;"
-                                    aria-label="Guardar cambios de foto de perfil">
-                                <i class="fas fa-save me-2"></i> Guardar Cambios
-                            </button>
-                            <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary"
-                               id="cancel_btn" aria-label="Cancelar y volver al dashboard">
-                                Cancelar
-                            </a>
-                        </div>
-                    </form>
+                    <div class="border-top border-dashed pt-5 mt-2">
+                        <h6 class="fw-bold text-uppercase tracking-widest text-primary mb-4 x-small">
+                            <i class="fas fa-camera-retro me-2"></i>Actualizar Fotografía
+                        </h6>
+
+                        <form method="post" enctype="multipart/form-data" id="perfil_form">
+                            {% csrf_token %}
+
+                            <!-- Hidden native form fields -->
+                            <div class="d-none">
+                                {{ form|crispy }}
+                            </div>
+
+                            <!-- DnD Upload Zone Standard v2.3 -->
+                            <div class="dnd-upload-zone rounded-4 border-2 border-dashed bg-light bg-opacity-10 p-5 text-center mb-3" 
+                                 id="dndZone-perfil" role="button" tabindex="0">
+                                <input type="file" id="foto_input_dnd" accept="image/*" capture="environment" class="d-none">
+                                <div class="dnd-content">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                        <i class="fas fa-cloud-upload-alt fs-2 text-primary"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-main mb-1">Cargar nueva foto</h6>
+                                    <p class="x-small text-muted mb-0">Arrastra aquí o toca para usar la cámara</p>
+                                </div>
+                            </div>
+                            <div class="dnd-preview d-flex justify-content-center mb-4" id="dndPreview-perfil"></div>
+
+                            <!-- Progress bar Premium -->
+                            <div id="progress_container" class="mt-4 mb-4 d-none">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="x-small fw-bold text-primary text-uppercase">Subiendo archivo...</span>
+                                    <span id="progress_text" class="x-small fw-bold">0%</span>
+                                </div>
+                                <div class="progress" style="height: 12px; border-radius: 50px; background: rgba(0,0,0,0.05);">
+                                    <div id="progress_bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                         role="progressbar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-8">
+                                    <button type="submit" id="submit_btn" class="btn btn-primary bg-primary grad-primary w-100 py-3 rounded-pill fw-bold shadow-premium border-0">
+                                        <i class="fas fa-check-circle me-2"></i>GUARDAR CAMBIOS
+                                    </button>
+                                </div>
+                                <div class="col-4">
+                                    <a href="{% url 'dashboard:home' %}" class="btn btn-light w-100 py-3 rounded-pill fw-bold border shadow-sm">
+                                        CANCELAR
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
                 </div>
             </div>
+            
+            <!-- Password Security Tip -->
+            <div class="mt-4 p-4 rounded-4 bg-primary border border-primary border-opacity-10 d-flex align-items-start gap-3">
+                <i class="fas fa-lock text-white fs-4 mt-1"></i>
+                <div>
+                    <h6 class="fw-bold text-white mb-1 small">Seguridad de Cuenta</h6>
+                    <p class="mb-0 x-small text-white opacity-90">Tu foto es visible para el equipo de logística y operadores. Asegúrate de usar una imagen clara y profesional para facilitar la identificación operativa.</p>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
 
-<!-- Modal para Cropper -->
-<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" aria-labelledby="cropModalTitle">
+<!-- Modal para Cropper Premium -->
+<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; background: var(--bg-card);">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold" id="cropModalTitle" style="color: var(--text-main);">Ajusta tu foto</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header grad-primary text-white border-0 py-3">
+        <h5 class="modal-title fw-bold fs-6 mb-0 text-uppercase tracking-wider">Ajuste de Fotografía</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
-      <div class="modal-body p-4">
-        <div class="img-container mb-4" style="height: 350px; background: var(--bg-body); border-radius: 8px; overflow: hidden;">
-            <img id="image_to_crop" src="" style="max-width: 100%;" alt="Imagen a recortar">
+      <div class="modal-body p-4 p-md-5">
+        <div class="img-container mb-4 shadow-sm border rounded-4 overflow-hidden" style="height: 350px; background: #000;">
+            <img id="image_to_crop" src="" alt="Imagen a recortar">
         </div>
-        <div class="d-flex align-items-center justify-content-center px-3">
-            <i class="fas fa-image me-3 text-muted" style="font-size: 0.8rem;"></i>
-            <input type="range" class="form-range" id="zoomRange" min="0" max="1" step="0.01" value="0"
-                   aria-label="Zoom de recorte de foto">
-            <i class="fas fa-image ms-3 text-muted" style="font-size: 1.2rem;"></i>
+        <div class="px-3">
+            <label class="x-small fw-bold text-muted text-uppercase mb-3 d-block text-center"><i class="fas fa-search-plus me-1"></i> Control de Zoom</label>
+            <input type="range" class="form-range custom-range" id="zoomRange" min="0" max="1" step="0.01" value="0">
         </div>
       </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-link text-decoration-none text-muted fw-bold" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary px-4" id="crop_button"
-                style="border-radius: 20px; background-color: var(--primary-blue); border: none;"
-                aria-label="Confirmar recorte de foto">
-            Aceptar
+      <div class="modal-footer border-0 p-4 pt-0 gap-3">
+        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold flex-grow-1" data-bs-dismiss="modal">CANCELAR</button>
+        <button type="button" class="btn btn-primary bg-primary grad-primary rounded-pill px-5 fw-bold shadow-sm flex-grow-1 border-0" id="crop_button">
+            ACEPTAR RECORTE
         </button>
       </div>
     </div>
@@ -143,22 +248,8 @@
 <!-- Cropper JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js" referrerpolicy="no-referrer"></script>
 
-<style>
-.cropper-view-box,
-.cropper-face { border-radius: 50%; outline: none !important; }
-.cropper-modal { opacity: 0.7; background-color: #000; }
-.cropper-line, .cropper-point { display: none !important; }
-.cropper-view-box { outline: 2px solid #fff !important; }
-#zoomRange { max-width: 300px; }
-.img-container { width: 100%; margin: 0 auto; height: 350px; }
-.img-container img { display: block; max-width: 100%; }
-.cropper-drag-box.cropper-move, .cropper-face.cropper-move { cursor: grab; }
-.cropper-drag-box.cropper-move:active, .cropper-face.cropper-move:active { cursor: grabbing; }
-</style>
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // === Re-use the DnD zone's hidden input instead of separate btn_camera/btn_gallery ===
     const dndZone    = document.getElementById('dndZone-perfil');
     const dndInput   = dndZone ? dndZone.querySelector('input[type="file"]') : null;
     const base64Input = document.getElementById('id_foto_base64');
@@ -171,7 +262,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const zoomRange  = document.getElementById('zoomRange');
     let cropper;
 
-    // When user picks a file via DnD or click → open cropper instead of default preview
+    // Trigger click on zone
+    if (dndZone && dndInput) {
+        dndZone.addEventListener('click', () => dndInput.click());
+    }
+
     if (dndInput) {
         dndInput.addEventListener('change', function(e) {
             const files = e.target.files;
@@ -182,13 +277,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     cropModal.show();
                 };
                 reader.readAsDataURL(files[0]);
-                // Prevent the global DnD handler from showing a thumbnail before crop
                 e.stopImmediatePropagation();
             }
-        }, true); // capture phase to run before the global DnD handler
+        }, true);
     }
 
-    // Initialize Cropper when modal opens
     cropModalElement.addEventListener('shown.bs.modal', function () {
         if (cropper) cropper.destroy();
         cropper = new Cropper(imageToCrop, {
@@ -201,16 +294,10 @@ document.addEventListener('DOMContentLoaded', function () {
             cropBoxMovable: false,
             cropBoxResizable: false,
             toggleDragModeOnDblclick: false,
-            responsive: true,
-            ready: function () { zoomRange.value = 0; },
-            zoom: function (e) {
-                let ratio = e.detail.ratio;
-                zoomRange.value = (ratio - 0.1) / 2;
-            }
+            ready: function () { zoomRange.value = 0; }
         });
     });
 
-    // Zoom slider
     if (zoomRange) {
         zoomRange.addEventListener('input', function() {
             if (cropper) {
@@ -220,90 +307,52 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Apply crop
     if (cropButton) {
         cropButton.addEventListener('click', function () {
-            try {
-                if (!cropper) return;
-                const canvas = cropper.getCroppedCanvas({ width: 500, height: 500, imageSmoothingQuality: 'high' });
-                if (!canvas) return;
-                const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            if (!cropper) return;
+            const canvas = cropper.getCroppedCanvas({ width: 500, height: 500, imageSmoothingQuality: 'high' });
+            if (!canvas) return;
+            const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
-                if (base64Input) base64Input.value = croppedDataUrl;
+            if (base64Input) base64Input.value = croppedDataUrl;
+            if (dndInput) dndInput.value = '';
 
-                // Clear the file input (Django will use base64 field)
-                if (dndInput) dndInput.value = '';
-
-                // Show preview in avatar circle
-                if (profilePreview) {
-                    profilePreview.src = croppedDataUrl;
-                    profilePreview.style.display = 'inline-block';
-                    if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
-                }
-
-                // Also show mini preview in DnD zone
-                const dndPreview = document.getElementById('dndPreview-perfil');
-                if (dndPreview) {
-                    dndPreview.innerHTML = '';
-                    const item = document.createElement('div');
-                    item.className = 'dnd-preview-item';
-                    const img = document.createElement('img');
-                    img.src = croppedDataUrl;
-                    img.alt = 'Foto recortada';
-                    item.appendChild(img);
-                    dndPreview.appendChild(item);
-                }
-
-                cropModal.hide();
-            } catch(err) {
-                console.error('Error al recortar:', err);
+            if (profilePreview) {
+                profilePreview.src = croppedDataUrl;
+                profilePreview.style.display = 'inline-block';
+                if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+                profilePreview.classList.add('animate__animated', 'animate__pulse');
             }
+
+            const dndPreview = document.getElementById('dndPreview-perfil');
+            if (dndPreview) {
+                dndPreview.innerHTML = `
+                    <div class="p-2 border rounded-circle bg-white shadow-sm" style="width: 80px; height: 80px;">
+                        <img src="${croppedDataUrl}" class="w-100 h-100 rounded-circle" style="object-fit:cover;">
+                    </div>
+                `;
+            }
+            cropModal.hide();
         });
     }
 
-    // Clean up on close
-    cropModalElement.addEventListener('hidden.bs.modal', function () {
-        if (cropper) { cropper.destroy(); cropper = null; }
-        if (dndInput && (!base64Input || !base64Input.value)) dndInput.value = '';
-    });
-
-    // Submit progress simulation
     document.getElementById('perfil_form').addEventListener('submit', function () {
         const submitBtn = document.getElementById('submit_btn');
-        const cancelBtn = document.getElementById('cancel_btn');
         const progressContainer = document.getElementById('progress_container');
         const progressBar = document.getElementById('progress_bar');
         const progressText = document.getElementById('progress_text');
 
         if (submitBtn) submitBtn.disabled = true;
-        if (cancelBtn) cancelBtn.classList.add('disabled');
         if (progressContainer) progressContainer.classList.remove('d-none');
 
         let width = 0;
         const interval = setInterval(function() {
-            width += Math.random() * 20;
-            if (width >= 100) { width = 100; clearInterval(interval); if (progressText) progressText.innerText = '¡Listo!'; }
+            width += Math.random() * 15;
+            if (width >= 100) { width = 100; clearInterval(interval); }
             const pct = Math.round(width) + '%';
-            if (progressBar) { progressBar.style.width = pct; progressBar.setAttribute('aria-valuenow', Math.round(width)); }
-            if (progressText && width < 100) progressText.innerText = pct;
-        }, 120);
-    });
-
-    // Toast auto-dismiss
-    document.querySelectorAll('.toast-close').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const toast = btn.closest('.toast-msg');
-            if (toast) { toast.style.opacity = '0'; toast.style.transform = 'translateX(120%)'; setTimeout(() => toast.remove(), 300); }
-        });
-    });
-    // Auto-dismiss after 5s
-    document.querySelectorAll('.toast-msg').forEach(function(toast) {
-        setTimeout(function() {
-            toast.style.transition = 'opacity 0.4s, transform 0.4s';
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(120%)';
-            setTimeout(() => toast.remove(), 400);
-        }, 5000);
+            if (progressBar) progressBar.style.width = pct;
+            if (progressText) progressText.innerText = pct;
+        }, 150);
     });
 });
 </script>

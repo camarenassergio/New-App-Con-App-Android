@@ -1,219 +1,258 @@
 {% extends 'base.html' %}
+{% load humanize %}
+{% load crispy_forms_tags %}
 
-{% block page_title %}{% if form.instance.pk %}Editar Registro{% else %}Añadir al Directorio{% endif %}{% endblock %}
+{% block page_title %}{% if form.instance.pk %}Editar Colaborador{% else %}Inscripción de Personal{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 px-md-5">
+<div class="container-fluid py-5 px-md-5 animate__animated animate__fadeIn">
     <div class="row justify-content-center">
-        <div class="col-lg-9 col-xl-8">
+        <div class="col-lg-10 col-xl-9">
             
-            <!-- HEADER PREMIUM -->
-            <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
-                <div class="card-body p-0">
-                    <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
-                        <div class="d-flex align-items-center mb-3 mb-md-0">
-                            <div class="header-icon-box me-3">
-                                <i class="fas fa-address-card fs-3"></i>
-                            </div>
-                            <div>
-                                <h4 class="fw-bold mb-0">{% if form.instance.pk %}Perfil de Colaborador{% else %}Registro de Operador{% endif %}</h4>
-                                <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Estructura Organizacional & Gestión Operativa</p>
+            <!-- CABECERA PREMIUM V2 -->
+            <div class="card border-0 shadow-premium rounded-5 overflow-hidden mb-5 bg-white">
+                <div class="card-header p-4 border-0 grad-primary position-relative overflow-hidden">
+                    <!-- Decoración de fondo -->
+                    <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 7rem; transform: translate(20%, -30%);">
+                        <i class="fas fa-id-badge"></i>
+                    </div>
+                    
+                    <div class="row align-items-center position-relative">
+                        <div class="col-12">
+                            <div class="d-flex align-items-center gap-4">
+                                <div class="header-icon-box shadow-lg">
+                                    <i class="fas fa-id-badge fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h2 class="mb-1 fw-800 text-white text-uppercase tracking-tight">
+                                        {% if form.instance.pk %}Actualizar Expediente{% else %}Alta de Colaborador{% endif %}
+                                    </h2>
+                                    <p class="mb-0 text-white opacity-75 fw-bold x-small tracking-widest text-uppercase">
+                                        Logística & Gestión de Capital Humano
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                        <a href="{% url 'dashboard:operadores_list' %}" class="btn btn-glass-white rounded-pill px-4 fw-bold shadow-sm">
-                            <i class="fas fa-arrow-left me-2"></i>Volver al Directorio
-                        </a>
                     </div>
                 </div>
             </div>
 
-            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
-                <div class="card-body p-4 p-md-5">
-                    <form hx-post="{{ request.path }}" 
-                          hx-indicator="#form-indicator" 
-                          hx-swap="none"
-                          class="needs-validation">
-                        {% csrf_token %}
+            <form id="operadorForm" method="post" enctype="multipart/form-data" class="needs-validation" hx-post="{{ request.path }}" hx-indicator="#form-indicator" hx-swap="outerHTML" hx-target="this" hx-select="#operadorForm">
+                {% csrf_token %}
+                
+                <div class="card border-0 shadow-premium rounded-4 overflow-hidden bg-white mb-5">
+                    <div class="card-body p-4 p-md-5">
                         
-                        <!-- Sección 1: Información Personal -->
-                        <div class="section-badge mb-4">
-                            <span class="badge rounded-pill bg-light text-primary border-0 px-3 py-2 x-small fw-bold shadow-xs">
-                                <i class="fas fa-user-edit me-2"></i>INFORMACIÓN PRIMARIA
-                            </span>
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger shadow-sm border-0 rounded-4 mb-4 animate__animated animate__shakeX">
+                            {% for error in form.non_field_errors %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span class="fw-bold small">{{ error }}</span>
+                                </div>
+                            {% endfor %}
                         </div>
-
-                        <div class="row g-4 mb-5 p-3 rounded-4 bg-light bg-opacity-50 border shadow-xs">
-                            <div class="col-md-7">
-                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Nombre Completo</label>
-                                <div class="input-group-premium">
-                                    <span class="icon"><i class="fas fa-user"></i></span>
-                                    {{ form.nombre }}
+                        {% endif %}
+                        
+                        <!-- SECCIÓN 1: IDENTIDAD -->
+                        <div class="premium-step-v2 mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num-v2 me-3">1</span>
+                                <h5 class="mb-0 fw-800 text-primary text-uppercase tracking-wider fs-6">Datos Personales y Operativos</h5>
+                            </div>
+                            <div class="row g-4 px-2">
+                                <div class="col-md-7">
+                                    {{ form.nombre|as_crispy_field }}
                                 </div>
-                            </div>
-                            <div class="col-md-5">
-                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Puesto / Depto.</label>
-                                <div class="input-group-premium">
-                                    <span class="icon"><i class="fas fa-briefcase"></i></span>
-                                    {{ form.puesto }}
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">WhatsApp</label>
-                                <div class="input-group-premium">
-                                    <span class="icon text-success"><i class="fab fa-whatsapp"></i></span>
-                                    {{ form.telefono }}
-                                </div>
-                                <div class="form-text x-small mt-2 px-1 text-muted opacity-75">Sincronización de rutas y geolocalización activa.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Email Empresarial</label>
-                                <div class="input-group-premium">
-                                    <span class="icon"><i class="fas fa-envelope"></i></span>
-                                    {{ form.email }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sección 2: Choferes (Contextual) -->
-                        <div id="chofer-section" class="mb-5 animate__animated animate__fadeIn" style="display: none;">
-                            <div class="section-badge mb-4">
-                                <span class="badge rounded-pill bg-warning-subtle text-warning border-0 px-3 py-2 x-small fw-bold shadow-xs">
-                                    <i class="fas fa-truck-moving me-2"></i>COMPLEMENTO DE SEGURIDAD VIAL
-                                </span>
-                            </div>
-                            
-                            <div class="row g-4 p-3 rounded-4 bg-warning bg-opacity-5 border border-warning border-opacity-10 shadow-xs">
-                                <div class="col-md-6">
-                                    <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">No. de Licencia</label>
-                                    <div class="input-group-premium">
-                                        {{ form.licencia }}
-                                    </div>
+                                <div class="col-md-5">
+                                    {{ form.puesto|as_crispy_field }}
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Vigencia Federal / Estatal</label>
-                                    <div class="input-group-premium">
-                                        {{ form.vigencia_licencia }}
-                                    </div>
+                                    {{ form.telefono|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.email|as_crispy_field }}
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Sección 3: Acceso -->
-                        <div class="section-badge mb-4">
-                            <span class="badge rounded-pill bg-dark bg-opacity-10 text-dark border-0 px-3 py-2 x-small fw-bold shadow-xs">
-                                <i class="fas fa-shield-alt me-2"></i>CREDENCIALES Y ACCESO
-                            </span>
-                        </div>
-                        
-                        <div class="row g-4 align-items-center mb-5 p-3 rounded-4 bg-light border shadow-xs">
-                            <div class="col-md-7">
-                                <label class="form-label x-small fw-bold text-muted text-uppercase tracking-widest px-1">Cuenta de Usuario Vinculada</label>
-                                <div class="input-group-premium">
-                                    {{ form.usuario_asociado }}
-                                </div>
-                                <div class="form-text x-small mt-2 px-1 text-muted">Asegura que el perfil de login coincida con el registro.</div>
+                        <!-- SECCIÓN 2: ACCESO Y SEGURIDAD -->
+                        <div class="premium-step-v2 mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num-v2 me-3">2</span>
+                                <h5 class="mb-0 fw-800 text-warning text-uppercase tracking-wider fs-6">Configuración de Acceso</h5>
                             </div>
-                            <div class="col-md-5">
-                                <div class="card border-0 bg-white p-3 rounded-4 shadow-sm border">
-                                    <div class="form-check form-switch mb-0 d-flex align-items-center justify-content-between">
-                                        <label class="form-check-label fw-800 small text-dark" for="{{ form.usa_sistema.id_for_label }}">HABILITAR APP / LOGIN</label>
+                            <div class="row g-4 px-2 align-items-end">
+                                <div class="col-md-8">
+                                    {{ form.usuario_asociado|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4 pb-2">
+                                    <div class="p-3 bg-light rounded-4 border border-opacity-10 d-flex align-items-center justify-content-between">
+                                        <label class="fw-800 x-small text-muted text-uppercase tracking-wider mb-0">Habilitar APP</label>
                                         {{ form.usa_sistema }}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- ACTIONS -->
-                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
-                            <a href="{% url 'dashboard:operadores_list' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </a>
-                            <div class="d-flex align-items-center gap-4">
-                                <div id="form-indicator" class="htmx-indicator">
-                                    <div class="spinner-grow spinner-grow-sm text-primary" role="status"></div>
+                        <!-- SECCIÓN 3: LICENCIAS (CONDICIONAL) -->
+                        <div class="premium-step-v2 mb-2" id="chofer-section" style="display: none;">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num-v2 me-3" style="background: #0dcaf0;">3</span>
+                                <h5 class="mb-0 fw-800 text-info text-uppercase tracking-wider fs-6">Documentación Vial</h5>
+                            </div>
+                            <div class="row g-4 px-2">
+                                <div class="col-md-6">
+                                    {{ form.licencia|as_crispy_field }}
                                 </div>
-                                <button type="submit" class="btn btn-dark rounded-pill px-5 py-3 fw-bold grad-dark shadow-lg border-0">
-                                    <i class="fas fa-save me-2"></i>GUARDAR EXPEDIENTE
-                                </button>
+                                <div class="col-md-6">
+                                    {{ form.vigencia_licencia|as_crispy_field }}
+                                </div>
                             </div>
                         </div>
-                    </form>
+                    </div>
+
+                    <!-- FOOTER DE ACCIONES -->
+                    <div class="card-footer bg-light border-0 p-4 p-md-5 d-flex justify-content-between align-items-center">
+                        <a href="{% url 'dashboard:operadores_list' %}" class="btn btn-link text-muted text-decoration-none fw-bold">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <div class="d-flex align-items-center gap-4">
+                            <div id="form-indicator" class="htmx-indicator">
+                                <div class="spinner-grow spinner-grow-sm text-primary" role="status"></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-lg grad-orange border-0 hover-scale">
+                                <i class="fas fa-save me-2"></i>{% if form.instance.pk %}GUARDAR CAMBIOS{% else %}REGISTRAR COLABORADOR{% endif %}
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 
 <style>
-    .grad-primary { background: linear-gradient(135deg, #003b70, #005aab) !important; }
-    .grad-dark { background: linear-gradient(135deg, #141e30, #243b55) !important; }
-    .btn-glass-white { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; }
-    .btn-glass-white:hover { background: rgba(255,255,255,0.25); color: white; }
-    
-    .input-group-premium {
-        position: relative; border-radius: 12px; overflow: hidden;
-        border: 1px solid #e9ecef; background: white; transition: all 0.2s;
-    }
-    .input-group-premium:focus-within {
-        border-color: #003b70; box-shadow: 0 4px 12px rgba(0,59,112,0.1);
-        transform: translateY(-1px);
-    }
-    .input-group-premium .icon {
-        position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
-        color: #7c8db5; font-size: 0.9rem; z-index: 5;
-    }
-    .input-group-premium .form-control, 
-    .input-group-premium .form-select {
-        border: 0; padding: 0.8rem 1rem 0.8rem 2.8rem; font-size: 0.95rem;
-        background: transparent; border-radius: 0;
-    }
-    .input-group-premium .form-control:focus,
-    .input-group-premium .form-select:focus { box-shadow: none; }
-    
-    /* For selects/inputs without icons */
-    .input-group-premium:not(:has(.icon)) .form-control,
-    .input-group-premium:not(:has(.icon)) .form-select { padding-left: 1rem; }
-
-    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .x-small { font-size: 0.72rem; }
+    /* Estilos v2.3 Estándar - Máxima Uniformidad */
     .fw-800 { font-weight: 800; }
+    .x-small { font-size: 0.72rem; }
     .tracking-widest { letter-spacing: 0.15em; }
     .tracking-tight { letter-spacing: -0.025em; }
     
-    .form-check-input { width: 3em; height: 1.5em; cursor: pointer; }
-    .form-check-input:checked { background-color: #003b70; border-color: #003b70; }
+    .shadow-premium { box-shadow: 0 10px 40px rgba(0, 59, 112, 0.12); }
+    .grad-primary { background: linear-gradient(135deg, #003b70 0%, #005aab 100%) !important; }
+    .grad-orange { background: linear-gradient(135deg, #f36f21 0%, #ff8c42 100%) !important; }
+    
+    .header-icon-box {
+        background: rgba(255,255,255,0.2);
+        width: 65px; height: 65px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 18px; border: 1px solid rgba(255,255,255,0.3);
+        color: white; backdrop-filter: blur(10px);
+    }
+
+    /* Step Numbers */
+    .step-num-v2 {
+        background: #003b70; color: white; width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 10px; font-weight: 800; font-size: 0.8rem;
+    }
+
+    /* Uniformidad de Inputs */
+    .form-control, .form-select {
+        border-radius: 12px !important;
+        padding: 0.8rem 1rem !important;
+        border: 1px solid #e2e8f0 !important;
+        font-weight: 600 !important;
+        background-color: #f8fafc !important;
+        transition: all 0.2s ease !important;
+    }
+    .form-control:focus {
+        border-color: #003b70 !important;
+        background-color: #fff !important;
+        box-shadow: 0 4px 12px rgba(0,59,112,0.08) !important;
+    }
+
+    /* Override Labels Crispy */
+    label.form-label {
+        font-weight: 800 !important;
+        font-size: 0.72rem !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+        margin-bottom: 0.5rem !important;
+        padding-left: 0.2rem !important;
+    }
+
+    .rounded-5 { border-radius: 2rem !important; }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.02); }
+
+    /* DARK MODE SUPPORT - UNIFORMIDAD TOTAL */
+    body.dark-theme {
+        background-color: #0f172a !important;
+        color-scheme: dark !important;
+    }
+    body.dark-theme .card { 
+        background-color: #1e293b !important; 
+        border: 1px solid rgba(255,255,255,0.05) !important; 
+    }
+    body.dark-theme .form-control, body.dark-theme .form-select { 
+        background-color: #0f172a !important; 
+        border-color: #334155 !important; 
+        color: #f1f5f9 !important;
+    }
+    body.dark-theme .form-control:focus {
+        background-color: #0f172a !important;
+        border-color: #3b82f6 !important;
+    }
+    body.dark-theme .bg-light { background-color: rgba(255,255,255,0.02) !important; }
+    body.dark-theme .text-muted { color: #94a3b8 !important; }
+    body.dark-theme .step-num-v2 { background-color: #f36f21 !important; color: white !important; }
+
+    /* KILL AUTOFILL WHITE PATCHES */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px #f8fafc inset !important;
+        transition: background-color 5000s ease-in-out 0s !important;
+    }
+    body.dark-theme input:-webkit-autofill,
+    body.dark-theme input:-webkit-autofill:hover, 
+    body.dark-theme input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+        -webkit-text-fill-color: #f1f5f9 !important;
+    }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const puestoInput = document.querySelector('[name="puesto"]');
+        const licenciaInput = document.querySelector('[name="licencia"]');
         const choferSection = document.getElementById('chofer-section');
 
         function toggleChoferSection() {
             if (!puestoInput) return;
-            const val = (puestoInput.value || '').toUpperCase();
-            if (val.includes('CHOFER') || val.includes('OPERADOR')) {
+            const valPuesto = (puestoInput.value || '').toUpperCase();
+            const valLicencia = (licenciaInput ? licenciaInput.value : '') || '';
+            
+            if (valPuesto.includes('CHOFER') || valPuesto.includes('OPERADOR') || valLicencia.trim() !== '') {
                 choferSection.style.display = 'block';
-                choferSection.classList.add('animate__fadeIn');
+                choferSection.classList.add('animate__fadeInUp');
             } else {
                 choferSection.style.display = 'none';
             }
         }
 
         if (puestoInput) {
-            puestoInput.addEventListener('change', toggleChoferSection);
             puestoInput.addEventListener('input', toggleChoferSection);
             toggleChoferSection();
         }
-    });
 
-    document.body.addEventListener('htmx:afterRequest', function(evt) {
-        if (evt.detail.successful) {
-            // Toast notification could go here
-            console.log("Success");
-        }
+        // Forzar autocomplete off para evitar parches blancos
+        document.querySelectorAll('input, select').forEach(el => {
+            el.setAttribute('autocomplete', 'new-password');
+        });
     });
 </script>
 {% endblock %}
-

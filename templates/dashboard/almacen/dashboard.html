@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Almacén — Casa Lupita{% endblock %}
+{% block page_title %}Control de Almacén{% endblock %}
+
+{% block content %}
+<div id="almacen-dashboard" 
+     hx-get="{% url 'dashboard:almacen_dashboard' %}" 
+     hx-trigger="every 45s" 
+     hx-select="#almacen-dashboard" 
+     hx-target="#almacen-dashboard" 
+     hx-swap="outerHTML" 
+     class="container-fluid py-4 animate__animated animate__fadeIn">
+    
+    <!-- Header Almacén v2.3 -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+        <div>
+            <h4 class="fw-bold text-main mb-1">Centro de Operaciones Almacén</h4>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill bg-success grad-success px-3 py-1 x-small fw-bold">SURTIDO Y CARGA</span>
+                <span class="x-small text-muted opacity-50 htmx-indicator spinner-border spinner-border-sm" role="status" style="width: 12px; height: 12px;"></span>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary rounded-circle shadow-sm" style="width: 42px; height: 42px;" onclick="location.reload();">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Métrica de Almacén (Cards Premium) -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <a href="{% url 'dashboard:almacen_preparacion' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-primary text-white">
+                    <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <div class="card-body p-4 position-relative">
+                        <div class="mb-4">
+                            <div class="icon-shape bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="fas fa-clipboard-list fs-4 text-primary"></i>
+                            </div>
+                        </div>
+                        <h2 class="display-5 fw-bold mb-1 tracking-tight text-white">{{ count_por_preparar }}</h2>
+                        <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-white">Por Preparar</p>
+                        <div class="mt-3">
+                            <span class="badge rounded-pill bg-white text-primary fw-bold x-small px-3 py-1 shadow-sm border-0">PENDIENTE</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{% url 'dashboard:almacen_preparacion' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-warning">
+                    <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
+                        <i class="fas fa-dolly-flatbed"></i>
+                    </div>
+                    <div class="card-body p-4 position-relative">
+                        <div class="mb-4">
+                            <div class="icon-shape bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="fas fa-tasks fs-4 text-warning"></i>
+                            </div>
+                        </div>
+                        <h2 class="display-5 fw-bold mb-1 tracking-tight text-dark">{{ count_preparacion }}</h2>
+                        <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-dark">En Surtido</p>
+                        <div class="mt-3">
+                            <span class="badge rounded-pill bg-dark text-white fw-bold x-small px-3 py-1 shadow-sm border-0">PROCESO</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{% url 'dashboard:almacen_carga' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-success text-white">
+                    <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
+                        <i class="fas fa-truck-loading"></i>
+                    </div>
+                    <div class="card-body p-4 position-relative">
+                        <div class="mb-4">
+                            <div class="icon-shape bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="fas fa-check-double fs-4 text-success"></i>
+                            </div>
+                        </div>
+                        <h2 class="display-5 fw-bold mb-1 tracking-tight text-white">{{ count_por_cargar }}</h2>
+                        <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-white">Listos p/Cargar</p>
+                        <div class="mt-3">
+                            <span class="badge rounded-pill bg-white text-success fw-bold x-small px-3 py-1 shadow-sm border-0">A CAMIÓN</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-card border-dashed">
+                <div class="card-body p-4 text-center d-flex flex-column justify-content-center align-items-center">
+                    <div class="mb-3">
+                        <div class="icon-shape bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-clipboard-check fs-3 text-success"></i>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold mb-0 text-main">{{ pedidos_preparados_hoy }}</h4>
+                    <p class="text-muted small text-uppercase fw-bold mt-1">Surtidos Hoy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-premium rounded-4 bg-card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-4">
+                            <i class="fas fa-warehouse fs-2 text-primary"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-main mb-1">Administración de Picking</h5>
+                            <p class="text-muted small mb-0">Gestiona los pedidos que están siendo preparados en bodega.</p>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'dashboard:almacen_preparacion' %}" class="btn btn-primary grad-primary py-3 rounded-4 fw-bold shadow-premium">
+                            <i class="fas fa-list-check me-2"></i>IR A LISTA DE PREPARACIÓN
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-premium rounded-4 bg-card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="bg-success bg-opacity-10 p-3 rounded-4">
+                            <i class="fas fa-dolly fs-2 text-success"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-main mb-1">Logística de Carga</h5>
+                            <p class="text-muted small mb-0">Confirma físicamente que los pedidos han sido subidos a la unidad.</p>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'dashboard:almacen_carga' %}" class="btn btn-success grad-success py-3 rounded-4 fw-bold shadow-premium text-white">
+                            <i class="fas fa-truck-moving me-2"></i>CONFIRMAR CARGA DE UNIDADES
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .grad-success { background: linear-gradient(135deg, #10b981, #0a504a) !important; }
+    .card-metric { transition: transform 0.3s ease; border-radius: 20px !important; }
+    .card-metric:hover { transform: translateY(-5px); }
+    .x-small { font-size: 0.75rem; }
+    .bg-card { background-color: var(--bg-card) !important; }
+</style>
+{% endblock %}

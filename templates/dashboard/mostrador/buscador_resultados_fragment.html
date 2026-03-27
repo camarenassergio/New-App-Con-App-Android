@@ -1,55 +1,101 @@
-<div class="list-group list-group-flush shadow-sm">
+<div class="list-group list-group-flush p-2">
     {% for res in resultados %}
-    <button type="button" class="list-group-item list-group-item-action p-3 border-bottom hover-light"
+    <button type="button" class="list-group-item list-group-item-action p-4 border rounded-4 mb-3 shadow-xs hover-premium-item animate__animated animate__fadeInUp"
             onclick="seleccionarResultado('{{ res.cliente.pk }}', '{{ res.cliente.id_sae|default:''|escapejs }}', '{{ res.cliente.razon_social|escapejs }}', '', '{{ res.cliente.telefono_principal|default:'' }}')"
-            style="background: white !important;">
+            style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
         <div class="d-flex justify-content-between align-items-center">
             <div class="flex-grow-1">
-                <div class="d-flex align-items-center mb-1">
-                    <span class="badge bg-dark me-2 font-monospace">{{ res.cliente.id_sae|default:'S/ID' }}</span>
-                    <h6 class="mb-0 fw-bold text-dark text-uppercase fs-6">{{ res.cliente.razon_social }}</h6>
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge bg-primary-subtle text-primary border-0 rounded-pill px-3 py-1 font-monospace x-small fw-bold">ID: {{ res.cliente.id_sae|default:'S/ID' }}</span>
+                    {% if res.cliente.es_mostrador %}
+                    <span class="badge bg-warning-subtle text-warning border-0 rounded-pill px-2 py-1 x-small ms-2 fw-bold">LOCAL</span>
+                    {% endif %}
                 </div>
-                <div class="small text-muted border-start border-primary ps-2 ms-1">
+                <h6 class="mb-2 fw-bold text-dark text-uppercase fs-6 tracking-wide">{{ res.cliente.razon_social }}</h6>
+                
+                <div class="small text-muted d-flex align-items-center">
+                    <div class="avatar-ks bg-light border p-1 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                        <i class="fas fa-map-marker-alt text-primary opacity-50"></i>
+                    </div>
                     {% with obras=res.cliente.obras.all %}
-                        {% if obras %}
-                            <i class="fas fa-map-marker-alt me-1 text-primary small"></i>
-                            {{ obras.0.alias }} — {{ obras.0.colonia|default:'Sin colonia' }}
-                        {% else %}
-                            <i class="fas fa-exclamation-triangle me-1 text-warning small"></i>
-                            Sin obras registradas.
-                        {% endif %}
+                        <div class="d-flex flex-column">
+                            {% if obras %}
+                                <span class="fw-bold small">{{ obras.0.alias }}</span>
+                                <span class="x-small opacity-75">{{ obras.0.colonia|default:'Sin colonia' }}</span>
+                            {% else %}
+                                <span class="x-small fst-italic opacity-50">Sin obras vigentes asignadas</span>
+                            {% endif %}
+                        </div>
                     {% endwith %}
                 </div>
             </div>
-            <div class="ms-3 text-primary opacity-50">
-                <i class="fas fa-arrow-right"></i>
+            
+            <div class="ms-4 action-indicator p-3 bg-light rounded-circle shadow-xs transition-all">
+                <i class="fas fa-chevron-right text-primary fa-lg"></i>
             </div>
         </div>
     </button>
     {% empty %}
-    <div class="p-5 text-center text-muted">
+    <div class="p-5 text-center text-muted d-flex flex-column align-items-center justify-content-center" style="min-height: 380px;">
+        <div class="p-4 bg-light rounded-circle shadow-xs mb-3" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-search-minus fa-3x opacity-25"></i>
+        </div>
         {% if query %}
-            <i class="fas fa-search-minus fa-3x opacity-25 mb-3"></i>
-            <p>No se encontraron resultados para "<strong>{{ query }}</strong>"</p>
+            <h5 class="fw-bold tracking-wider">SIN COINCIDENCIAS</h5>
+            <p class="small">No se encontraron clientes para "<strong>{{ query }}</strong>"</p>
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mt-3" data-bs-dismiss="modal" onclick="location.href='{% url 'dashboard:cliente_create' %}'">
+                <i class="fas fa-user-plus me-1"></i> DAR DE ALTA CLIENTE
+            </button>
         {% else %}
-            <p>Escriba al menos 1 letra...</p>
+            <p class="small opacity-50">Escriba al menos 1 letra para filtrar...</p>
         {% endif %}
     </div>
     {% endfor %}
 </div>
 
+<style>
+    /* Estilos Premium v2.3 Fragmento */
+    .bg-primary-subtle { background-color: rgba(0, 59, 112, 0.08) !important; }
+    .bg-warning-subtle { background-color: rgba(243, 111, 33, 0.08) !important; }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .x-small { font-size: 0.72rem; }
+    .tracking-wide { letter-spacing: 0.03em; }
+
+    .hover-premium-item {
+        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); cursor: pointer; border-color: rgba(0,0,0,0.05) !important; background-color: #fff !important;
+    }
+    .hover-premium-item:hover {
+        transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 59, 112, 0.1); border-color: var(--primary-orange) !important; z-index: 10;
+    }
+    .hover-premium-item:hover .action-indicator { background-color: var(--primary-orange) !important; }
+    .hover-premium-item:hover .action-indicator i { color: #fff !important; }
+    .hover-premium-item:active { transform: scale(0.98); }
+
+    .action-indicator { transition: all 0.3s ease; }
+    
+    body.dark-theme .list-group-item { background: var(--bg-card) !important; border-color: var(--border-color) !important; }
+    body.dark-theme .bg-light { background-color: rgba(255,255,255,0.03) !important; }
+    body.dark-theme .text-dark { color: #fff !important; }
+    body.dark-theme .hover-premium-item:hover { background-color: rgba(255,118,6,0.05) !important; box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important; }
+</style>
+
 <script>
+    /**
+     * Sincroniza el resultado seleccionado con el formulario de pedidos del mostrador.
+     */
     function seleccionarResultado(clienteId, idSae, razonSocial, obraId, telefono) {
-        // Disparar evento global para el pedido_form.html
+        // Disparar evento global para que pedido_form.html lo capte (HTMX o JS nativo)
         document.dispatchEvent(new CustomEvent('clienteSeleccionado', {
             detail: { clienteId, idSae, razonSocial, obraId, telefono }
         }));
 
-        // Si existe el input de ID SAE en el formulario principal, lo rellenamos
+        // Rellenar input de búsqueda principal para continuidad visual
         const mainInput = document.querySelector('input[name="id_sae_search"]');
-        if (mainInput) {
-            mainInput.value = idSae;
-        }
+        if (mainInput) mainInput.value = idSae;
+
+        // Limpiar búsqueda en cliente_form si aplica
+        const clientePkInput = document.getElementById('id_cliente_pk'); // ID del input oculto en pedido_form
+        if (clientePkInput) clientePkInput.value = clienteId;
 
         // Cerramos el modal
         const modalEl = document.getElementById('buscadorClienteModal');
@@ -59,10 +105,3 @@
         }
     }
 </script>
-
-<style>
-    .hover-light:hover {
-        background-color: #f0f7ff !important;
-        cursor: pointer;
-    }
-</style>

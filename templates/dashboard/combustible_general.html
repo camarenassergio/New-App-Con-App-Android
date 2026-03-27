@@ -5,146 +5,250 @@
 
 {% block content %}
 
-<div class="table-container">
-    <div class="table-header d-flex justify-content-between align-items-center">
-        <h3 class="mb-0">Reporte Mensual de Combustible</h3>
-        <a href="{% url 'dashboard:combustible_create' %}" class="btn btn-primary">
-            <i class="fas fa-gas-pump"></i> Registrar Carga
-        </a>
-    </div>
-
-    <div style="padding: 20px;">
-        <p class="text-muted mb-4">Desglose de consumo y costos por unidad por mes.</p>
-        
-        <!-- Filtros de Fecha Avanzados -->
-        <form method="get" class="d-flex align-items-end gap-3 flex-wrap">
-            
-            <!-- Grupo Inicio -->
-            <div class="d-flex flex-column gap-1">
-                <label class="form-label mb-0 fw-bold" style="font-size: 0.85rem;">Desde</label>
-                <div class="d-flex gap-2">
-                    <select name="mes_inicio" class="form-select" style="min-width: 130px;">
-                        {% for m in meses_range %}
-                        <option value="{{ m }}" {% if filtros.mes_inicio == m %}selected{% endif %}>
-                            {% if m == 1 %}ENERO{% elif m == 2 %}FEBRERO{% elif m == 3 %}MARZO{% elif m == 4 %}ABRIL{% elif m == 5 %}MAYO{% elif m == 6 %}JUNIO{% elif m == 7 %}JULIO{% elif m == 8 %}AGOSTO{% elif m == 9 %}SEPTIEMBRE{% elif m == 10 %}OCTUBRE{% elif m == 11 %}NOVIEMBRE{% elif m == 12 %}DICIEMBRE{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <select name="anio_inicio" class="form-select" style="min-width: 100px;">
-                        {% for yy in anios_disponibles %}
-                        <option value="{{ yy }}" {% if filtros.anio_inicio == yy %}selected{% endif %}>{{ yy }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-
-            <!-- Separator -->
-            <div class="pb-2 text-muted">
-                <i class="fas fa-arrow-right"></i>
-            </div>
-            
-            <!-- Grupo Fin -->
-            <div class="d-flex flex-column gap-1">
-                <label class="form-label mb-0 fw-bold" style="font-size: 0.85rem;">Hasta</label>
-                <div class="d-flex gap-2">
-                    <select name="mes_fin" class="form-select" style="min-width: 130px;">
-                        {% for m in meses_range %}
-                        <option value="{{ m }}" {% if filtros.mes_fin == m %}selected{% endif %}>
-                           {% if m == 1 %}ENERO{% elif m == 2 %}FEBRERO{% elif m == 3 %}MARZO{% elif m == 4 %}ABRIL{% elif m == 5 %}MAYO{% elif m == 6 %}JUNIO{% elif m == 7 %}JULIO{% elif m == 8 %}AGOSTO{% elif m == 9 %}SEPTIEMBRE{% elif m == 10 %}OCTUBRE{% elif m == 11 %}NOVIEMBRE{% elif m == 12 %}DICIEMBRE{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <select name="anio_fin" class="form-select" style="min-width: 100px;">
-                        {% for yy in anios_disponibles %}
-                        <option value="{{ yy }}" {% if filtros.anio_fin == yy %}selected{% endif %}>{{ yy }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            
-            <button type="submit" class="btn btn-secondary px-4">
-                <i class="fas fa-filter me-1"></i> Filtrar
-            </button>
-            
-            <a href="?" class="btn btn-outline-secondary" title="Resetear Filtros">
-                <i class="fas fa-undo"></i>
-            </a>
-            
-        </form>
-    </div>
-</div>
-
-<div class="mt-4">
-{% for mes_data in reporte_mensual %}
-<div class="table-container shadow-sm mb-5">
-    <div class="table-header p-3 border-bottom d-flex justify-content-between align-items-center" style="background: rgba(0,0,0,0.02);">
-        <h4 class="mb-0 fw-bold">{{ mes_data.mes_nombre }}</h4>
-        <span class="badge bg-light text-dark border p-2 px-3 fs-6">
-            <span class="text-muted fw-normal">Total Mes:</span> 
-            <span class="fw-bold">${{ mes_data.totales.total_global|floatformat:2|intcomma }}</span>
-        </span>
-    </div>
-    <table class="table align-middle">
-        <thead>
-            <tr>
-                <th class="ps-4">Unidad</th>
-                <th>Placas</th>
-                <th>Km Recorridos</th>
-                <th class="text-end">Litros</th>
-                <th class="text-end">Costo Combustible</th>
-                <th class="text-end">% Consumo</th>
-                <th class="text-end pe-4">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for fila in mes_data.filas %}
-            <tr>
-                <td class="ps-4">
-                    <a href="{% url 'dashboard:combustible_unidad_detail' fila.unidad.pk %}" class="fw-bold text-decoration-none">
-                        {{ fila.unidad.nUnidad }} - {{ fila.unidad.nombre_corto|default:fila.unidad.nUnidad }}
-                    </a>
-                    <small class="d-block text-muted">{{ fila.unidad.marca }}</small>
-                </td>
-                <td><span class="placa-badge">{{ fila.unidad.placas }}</span></td>
-                <td>{{ fila.km_recorridos|intcomma }} km</td>
-                
-                <td class="text-end">{{ fila.litros|floatformat:2 }} L</td>
-                <td class="text-end fw-bold">${{ fila.costo_combustible|floatformat:2|intcomma }}</td>
-                <td class="text-end">
-                    <div class="progress" style="height: 6px; width: 80px; display: inline-flex; margin-right: 10px;">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ fila.pct_consumo }}%" aria-valuenow="{{ fila.pct_consumo }}" aria-valuemin="0" aria-valuemax="100"></div>
+<div class="container-fluid py-4 px-md-5">
+    
+    <!-- HEADER PREMIUM V2 -->
+    <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+        <div class="card-body p-0">
+            <div class="p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white">
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="header-icon-box me-3 bg-white bg-opacity-10 rounded-4 p-3 shadow-sm border border-white border-opacity-10">
+                        <i class="fas fa-gas-pump fs-3 text-warning"></i>
                     </div>
-                    {{ fila.pct_consumo|floatformat:1 }}%
-                </td>
-                <td class="text-end fw-bold pe-4">${{ fila.total|floatformat:2|intcomma }}</td>
-            </tr>
-            {% endfor %}
-            <!-- Fila de Totales del Mes -->
-            <tr class="table-active fw-bold">
-                <td colspan="2" class="text-end ps-4">TOTALES DEL MES</td>
-                <td>{{ mes_data.totales.km|intcomma }} km</td>
-                <td class="text-end">{{ mes_data.totales.litros|floatformat:2|intcomma }} L</td>
-                <td class="text-end">${{ mes_data.totales.combustible|floatformat:2|intcomma }}</td>
-                <td class="text-end">100%</td>
-                <td class="text-end pe-4">${{ mes_data.totales.total_global|floatformat:2|intcomma }}</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-{% empty %}
-<div class="table-container">
-    <div class="p-5 text-center">
-        <div class="empty-state d-flex flex-column align-items-center justify-content-center">
-            <i class="fas fa-gas-pump mb-3" style="font-size: 5rem;"></i>
-            <h3 class="fw-bold mb-2">No hay registros de combustible</h3>
-            <p class="mb-4 text-muted" style="max-width: 450px; font-size: 1.1rem;">Comienza registrando las cargas de tus unidades para generar reportes mensuales automáticos.</p>
-            <a href="{% url 'dashboard:combustible_create' %}" class="btn btn-primary btn-lg px-5 shadow-sm" style="border-radius: 50px;">
-                <i class="fas fa-plus me-2"></i> Registrar Primera Carga
+                    <div>
+                        <h3 class="fw-bold mb-0 text-white" style="text-shadow: 0 2px 10px rgba(0,0,0,0.3);">Inteligencia de Combustible</h3>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Reporte Consolidado de Consumo y Eficiencia</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="bg-white bg-opacity-10 rounded-pill px-4 py-2 border border-white border-opacity-10 d-flex align-items-center">
+                        <span class="x-small text-uppercase opacity-75 me-2">Periodos</span>
+                        <span class="fw-bold fs-5">{{ reporte_mensual|length }}</span>
+                    </div>
+                    <a href="{% url 'dashboard:combustible_create' %}" class="btn btn-warning rounded-pill px-4 fw-800 shadow-sm hover-scale border-0" style="color: #0f172a !important;">
+                        <i class="fas fa-plus-circle me-2"></i>Nueva Carga
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTROS MODERNOS -->
+    <div class="card border-0 shadow-sm mb-4 bg-white" style="border-radius: 20px;">
+        <div class="card-body p-4">
+            <h6 class="fw-bold text-muted mb-4 x-small text-uppercase tracking-widest d-flex align-items-center">
+                <i class="fas fa-calendar-alt me-2 text-primary"></i>Rango de Auditoría Temporal
+            </h6>
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label x-small fw-bold text-muted text-uppercase px-1">Desde el Periodo</label>
+                    <div class="input-group">
+                        <select name="mes_inicio" class="form-select border-0 bg-light rounded-start-pill ps-3 py-2 shadow-xs">
+                            {% for m in meses_range %}
+                            <option value="{{ m }}" {% if filtros.mes_inicio == m %}selected{% endif %}>
+                                {% if m == 1 %}ENERO{% elif m == 2 %}FEBRERO{% elif m == 3 %}MARZO{% elif m == 4 %}ABRIL{% elif m == 5 %}MAYO{% elif m == 6 %}JUNIO{% elif m == 7 %}JULIO{% elif m == 8 %}AGOSTO{% elif m == 9 %}SEPTIEMBRE{% elif m == 10 %}OCTUBRE{% elif m == 11 %}NOVIEMBRE{% elif m == 12 %}DICIEMBRE{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <select name="anio_inicio" class="form-select border-0 bg-light rounded-end-pill ps-2 py-2 shadow-xs border-start border-white border-opacity-50">
+                            {% for yy in anios_disponibles %}
+                            <option value="{{ yy }}" {% if filtros.anio_inicio == yy %}selected{% endif %}>{{ yy }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-1 text-center d-none d-md-block pb-2">
+                    <i class="fas fa-long-arrow-alt-right text-muted opacity-50 fs-4"></i>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label x-small fw-bold text-muted text-uppercase px-1">Hasta el Periodo</label>
+                    <div class="input-group">
+                        <select name="mes_fin" class="form-select border-0 bg-light rounded-start-pill ps-3 py-2 shadow-xs">
+                            {% for m in meses_range %}
+                            <option value="{{ m }}" {% if filtros.mes_fin == m %}selected{% endif %}>
+                                {% if m == 1 %}ENERO{% elif m == 2 %}FEBRERO{% elif m == 3 %}MARZO{% elif m == 4 %}ABRIL{% elif m == 5 %}MAYO{% elif m == 6 %}JUNIO{% elif m == 7 %}JULIO{% elif m == 8 %}AGOSTO{% elif m == 9 %}SEPTIEMBRE{% elif m == 10 %}OCTUBRE{% elif m == 11 %}NOVIEMBRE{% elif m == 12 %}DICIEMBRE{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <select name="anio_fin" class="form-select border-0 bg-light rounded-end-pill ps-2 py-2 shadow-xs border-start border-white border-opacity-50">
+                            {% for yy in anios_disponibles %}
+                            <option value="{{ yy }}" {% if filtros.anio_fin == yy %}selected{% endif %}>{{ yy }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm flex-grow-1 h-100 py-2">
+                            <i class="fas fa-sync-alt me-2 text-white-50"></i>Procesar
+                        </button>
+                        <a href="?" class="btn btn-outline-secondary rounded-pill px-3 fw-bold h-100 py-2" title="Resetear Filtros">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LISTADO DE REPORTES MENSUALES -->
+    {% for mes_data in reporte_mensual %}
+    <div class="card border-0 shadow-lg mb-5 overflow-hidden animate__animated animate__fadeInUp" style="border-radius: 28px;">
+        <div class="card-header bg-white border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="bg-primary bg-opacity-10 rounded-pill px-4 py-1 me-3">
+                    <h5 class="mb-0 fw-800 text-primary text-uppercase tracking-tight">{{ mes_data.mes_nombre }}</h5>
+                </div>
+                <span class="x-small text-muted fw-bold text-uppercase opacity-75 d-none d-sm-block">Análisis Mensual Consolidado</span>
+            </div>
+            <div class="badge bg-success-subtle border border-success border-opacity-10 p-3 rounded-4 shadow-sm">
+                <span class="x-small text-success fw-bold text-uppercase d-block mb-1 text-center opacity-75">Inversión Global Mes</span>
+                <span class="fs-5 text-success fw-800 tracking-tight">${{ mes_data.totales.total_global|floatformat:2|intcomma }}</span>
+            </div>
+        </div>
+        <div class="card-body p-0 mt-3">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 premium-table">
+                    <thead class="bg-light bg-opacity-50">
+                        <tr>
+                            <th class="ps-4">Unidad Operativa</th>
+                            <th>Placas / ID</th>
+                            <th>Km Proyectados</th>
+                            <th class="text-end">Litros Suministrados</th>
+                            <th class="text-end">Costo Directo</th>
+                            <th class="text-end" style="width: 150px;">Carga %</th>
+                            <th class="text-end pe-4">Total Egresado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in mes_data.filas %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <a href="{% url 'dashboard:combustible_unidad_detail' fila.unidad.pk %}" class="hover-scale text-decoration-none d-block">
+                                        <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-3 shadow-xs" style="width: 42px; height: 42px; border: 2px solid #fff;">
+                                            <i class="fas fa-truck text-dark fs-6 opacity-75"></i>
+                                        </div>
+                                    </a>
+                                    <div class="d-flex flex-column">
+                                        <a href="{% url 'dashboard:combustible_unidad_detail' fila.unidad.pk %}" class="fw-bold text-dark text-decoration-none hover-primary">
+                                            {{ fila.unidad.nUnidad }} - {{ fila.unidad.nombre_corto|default:fila.unidad.nUnidad }}
+                                        </a>
+                                        <span class="x-small text-muted fw-bold text-uppercase flex-grow-1 opacity-75">{{ fila.unidad.marca }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge border border-dark border-opacity-10 text-dark bg-white rounded-pill px-3 py-1 fw-bold fs-xsmall shadow-xs">
+                                    <i class="fas fa-id-card-alt me-1 opacity-50"></i>{{ fila.unidad.placas }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="fw-bold text-dark me-1">{{ fila.km_recorridos|intcomma }}</span>
+                                    <span class="x-small text-muted fw-bold">KM</span>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <span class="fw-bold text-dark">{{ fila.litros|floatformat:2 }}</span>
+                                <span class="x-small text-muted fw-bold ms-1">LTS</span>
+                            </td>
+                            <td class="text-end fw-bold text-dark">
+                                ${{ fila.costo_combustible|floatformat:2|intcomma }}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                    <div class="progress rounded-pill bg-light" style="height: 8px; width: 60px;">
+                                        <div class="progress-bar rounded-pill bg-primary" role="progressbar" style="width: {{ fila.pct_consumo }}%"></div>
+                                    </div>
+                                    <span class="small fw-800 text-primary">{{ fila.pct_consumo|floatformat:1 }}%</span>
+                                </div>
+                            </td>
+                            <td class="text-end fw-800 text-dark fs-6 pe-4">
+                                ${{ fila.total|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <!-- FOOTER DE TOTALES -->
+                        <tr class="bg-light bg-opacity-30">
+                            <td colspan="2" class="text-uppercase fw-800 text-muted x-small ps-4 tracking-widest py-3">Resumen Consolidado {{ mes_data.mes_nombre }}</td>
+                            <td class="py-3">
+                                <span class="fw-800 text-dark">{{ mes_data.totales.km|intcomma }}</span> <span class="x-small text-muted fw-bold">KM</span>
+                            </td>
+                            <td class="text-end py-3">
+                                <span class="fw-800 text-dark">{{ mes_data.totales.litros|floatformat:2|intcomma }}</span> <span class="x-small text-muted fw-bold">LTS</span>
+                            </td>
+                            <td class="text-end py-3 text-dark fw-800">
+                                ${{ mes_data.totales.combustible|floatformat:2|intcomma }}
+                            </td>
+                            <td class="text-end py-3">
+                                <span class="badge bg-primary rounded-pill px-3 py-1 fw-800 x-small shadow-sm">100% EFICIENCIA</span>
+                            </td>
+                            <td class="text-end pe-4 py-3 text-dark fw-800 fs-6">
+                                ${{ mes_data.totales.total_global|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <!-- EMPTY STATE PREMIUM -->
+    <div class="card border-0 shadow-lg text-center" style="border-radius: 28px;">
+        <div class="card-body py-5 my-5 d-flex flex-column align-items-center">
+            <div class="bg-light bg-opacity-75 rounded-circle p-5 mb-4 shadow-xs animate__animated animate__pulse animate__infinite" style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-gas-pump fa-4x text-muted opacity-50"></i>
+            </div>
+            <h3 class="fw-800 text-dark mb-2">No se han detectado suministros</h3>
+            <p class="text-muted mb-4" style="max-width: 480px;">Registre las cargas de combustible de la flota para comenzar a generar inteligencia operativa y reportes mensuales automatizados.</p>
+            <a href="{% url 'dashboard:combustible_create' %}" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg hover-scale">
+                <i class="fas fa-plus me-2"></i>Registrar Primer Suministro
             </a>
         </div>
     </div>
+    {% endfor %}
 </div>
-{% endfor %}
+
+<style>
+    .fw-800 { font-weight: 800; }
+    .x-small { font-size: 0.72rem; }
+    .fs-xsmall { font-size: 0.78rem; }
+    .tracking-widest { letter-spacing: 0.15em; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    .shadow-xs { box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .hover-scale { transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .hover-scale:hover { transform: scale(1.03); }
+    .hover-primary:hover { color: #007bff !important; }
+
+    .premium-table thead th { 
+        font-weight: 700; font-size: 0.75rem; color: #7c8db5; text-transform: uppercase; 
+        letter-spacing: 1px; padding: 1.25rem 1rem; border: 0;
+    }
+    .premium-table tbody td { padding: 1.25rem 1rem; border-color: rgba(0,0,0,0.03); font-size: 0.9rem; }
+    
+    /* DARK MODE SUPPORT */
+    body.dark-theme .card { background-color: #1e293b !important; }
+    body.dark-theme .bg-light { background-color: rgba(255,255,255,0.02) !important; }
+    body.dark-theme .text-dark:not(.btn) { color: #e2e8f0 !important; }
+    body.dark-theme .text-muted { color: #94a3b8 !important; }
+    body.dark-theme .premium-table tbody td { border-color: rgba(255,255,255,0.05); }
+    body.dark-theme .table-responsive { background-color: transparent !important; }
+    body.dark-theme .badge.bg-white { background-color: rgba(255,255,255,0.05) !important; color: #e2e8f0 !important; border-color: rgba(255,255,255,0.1) !important; }
+    
+    /* FIX: Asegurar que el botón warning se vea bien en Dark Mode sin importar el color global */
+    body.dark-theme .btn-warning {
+        background-color: #fbbf24 !important;
+        color: #0f172a !important;
+        box-shadow: 0 4px 15px rgba(251, 191, 36, 0.2) !important;
+    }
+    body.dark-theme .btn-warning:hover {
+        background-color: #f59e0b !important;
+    }
+</style>
 </div>
 
 {% endblock %}
