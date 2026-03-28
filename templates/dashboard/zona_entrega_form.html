@@ -304,7 +304,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 fetch(`{% url 'dashboard:colonias_por_cp_api' %}?cps=${encodeURIComponent(this.value)}`).then(r => r.json()).then(data => {
                     if (data.colonias && data.colonias.length > 0) {
                         if (coloniasInput) coloniasInput.value = data.colonias.join(', ');
-                        if (data.municipio && municipioInput && !municipioInput.value.trim()) municipioInput.value = data.municipio;
+                        if (data.municipio && municipioInput) municipioInput.value = data.municipio;
                         fetch(`{% url 'dashboard:calcular_centroide_api' %}?cps=${encodeURIComponent(this.value)}`).then(r => r.json()).then(centroid => {
                             if (centroid.lat && centroid.lon) {
                                 map.setView([centroid.lat, centroid.lon], 12);

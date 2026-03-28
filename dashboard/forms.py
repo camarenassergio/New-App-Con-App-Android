@@ -569,7 +569,11 @@ class ZonaEntregaForm(forms.ModelForm):
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Zona Norte'}),
-            'municipio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Texcoco, Ecatepec...'}),
+            'municipio': forms.TextInput(attrs={
+                'class': 'form-control bg-light-subtle opacity-75', 
+                'placeholder': 'Autocalculado...',
+                'readonly': 'readonly'
+            }),
             'codigos_postales': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ej. 50000, 50010, 50020 (Separados por coma)'}),
             'colonias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Lista de colonias representativas'}),
             'tiempo_traslado_minutos': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
