@@ -183,7 +183,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase mb-2">Peso Total de Carga <span class="text-danger">*</span></label>
                                     <div class="input-group shadow-sm border rounded-pill overflow-hidden bg-white">
-                                        <input type="number" step="0.01" name="peso_total_estimado_kg" id="id_peso_total_estimado_kg" class="form-control border-0 py-2 ps-4" 
+                                        <input type="number" step="0.01" min="0" name="peso_total_estimado_kg" id="id_peso_total_estimado_kg" class="form-control border-0 py-2 ps-4" 
                                                placeholder="Total KG" required value="{{ form.peso_total_estimado_kg.value|default:'' }}">
                                         <span class="input-group-text bg-light border-0 px-3 fw-bold text-muted small">KG</span>
                                     </div>
