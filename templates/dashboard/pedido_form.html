@@ -33,10 +33,8 @@
                 </div>
 
                 <div class="card-body p-4 p-md-5">
-                    <form hx-post="." 
-                          hx-encoding="multipart/form-data" 
-                          hx-indicator="#form-indicator"
-                          class="needs-validation">
+                    <form method="POST" action="." enctype="multipart/form-data" 
+                          class="needs-validation" novalidate>
                         {% csrf_token %}
                         
                         <!-- Overlay Spinner Premium -->
@@ -48,18 +46,6 @@
                             </div>
                         </div>
                         
-                        {% if form.non_field_errors %}
-                        <div class="alert alert-danger border-0 shadow-sm rounded-4 p-4 mb-5 animate__animated animate__shakeX">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-exclamation-triangle fs-4 me-3"></i>
-                                <h6 class="mb-0 fw-bold">Atención: Errores en el registro</h6>
-                            </div>
-                            <ul class="mb-0 small ps-5">
-                                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-                            </ul>
-                        </div>
-                        {% endif %}
-
                         <!-- PASO 1: CLIENTE -->
                         <div class="premium-step mb-5">
                             <div class="d-flex align-items-center mb-4">
@@ -83,7 +69,9 @@
                                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                                value="{{ form.folio_sae.value|default:'' }}">
                                     </div>
-                                    <div id="folio-error" class="mt-2 text-danger x-small fw-bold"></div>
+                                    <div id="folio-error" class="mt-2 text-danger x-small fw-bold">
+                                        {% if form.folio_sae.errors %}{{ form.folio_sae.errors|striptags }}{% endif %}
+                                    </div>
                                 </div>
 
                                 <!-- Buscador SAE -->
@@ -93,11 +81,13 @@
                                         <span class="input-group-text bg-light border-0 px-3">
                                             <i class="fas fa-search text-primary"></i>
                                         </span>
-                                        <input type="text" name="id_sae_search" class="form-control border-0 py-2" 
+                                        <input type="text" name="id_sae_search" id="id_sae_search" class="form-control border-0 py-2" 
                                                placeholder="Ingrese ID SAE..."
+                                               value="{{ request.POST.id_sae_search|default:'' }}"
                                                hx-get="{% url 'dashboard:cliente_sae_busqueda' %}"
                                                hx-target="#cliente-info-box"
                                                hx-trigger="keyup changed delay:400ms"
+                                               hx-disinherit="*"
                                                oninput="this.value = this.value.toUpperCase()"
                                                autocomplete="off">
                                         <button type="button" class="btn btn-primary px-3" 
@@ -122,11 +112,13 @@
                                         <label class="form-label x-small fw-bold text-muted">Nombre Completo <span class="text-danger">*</span></label>
                                         <input type="text" name="cliente_nombre_manual" id="id_cliente_nombre_manual" class="form-control rounded-3" 
                                                placeholder="Ej. Juan Pérez" value="{{ form.cliente_nombre_manual.value|default:'' }}">
+                                        {% if form.cliente_nombre_manual.errors %}<div class="text-danger x-small mt-1 fw-bold">{{ form.cliente_nombre_manual.errors|striptags }}</div>{% endif %}
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label x-small fw-bold text-muted">Teléfono <span class="text-danger">*</span></label>
                                         <input type="text" name="cliente_telefono_manual" id="id_cliente_telefono_manual" class="form-control rounded-3" 
                                                placeholder="10 dígitos" value="{{ form.cliente_telefono_manual.value|default:'' }}">
+                                        {% if form.cliente_telefono_manual.errors %}<div class="text-danger x-small mt-1 fw-bold">{{ form.cliente_telefono_manual.errors|striptags }}</div>{% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -150,6 +142,7 @@
                                             <i class="fas fa-plus me-2"></i>Nueva Dirección
                                         </button>
                                     </div>
+                                    {% if form.obra.errors %}<div class="text-danger x-small mt-2 fw-bold ps-2">{{ form.obra.errors|striptags }}</div>{% endif %}
                                     <div class="form-text x-small text-info mt-2">
                                         <i class="fas fa-info-circle me-1"></i>Seleccione una dirección existente o registre una nueva para este cliente.
                                     </div>
@@ -187,12 +180,14 @@
                                                placeholder="Total KG" required value="{{ form.peso_total_estimado_kg.value|default:'' }}">
                                         <span class="input-group-text bg-light border-0 px-3 fw-bold text-muted small">KG</span>
                                     </div>
+                                    {% if form.peso_total_estimado_kg.errors %}<div class="text-danger x-small mt-2 fw-bold ps-4">{{ form.peso_total_estimado_kg.errors|striptags }}</div>{% endif %}
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase mb-2">Método de Pago <span class="text-danger">*</span></label>
                                     <div class="shadow-sm border rounded-pill overflow-hidden">
                                         {{ form.metodo_pago }}
                                     </div>
+                                    {% if form.metodo_pago.errors %}<div class="text-danger x-small mt-1 fw-bold">{{ form.metodo_pago.errors|striptags }}</div>{% endif %}
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label fw-bold small text-muted text-uppercase mb-2">Observaciones y Referencias</label>
@@ -255,6 +250,7 @@
                                             <div class="col-md-7">
                                                 <label class="form-label fw-bold small text-uppercase mb-3">Detalle de Mercancía</label>
                                                 {{ form.productos_entregados_parcial }}
+                                                {% if form.productos_entregados_parcial.errors %}<div class="text-danger x-small mt-1 fw-bold">{{ form.productos_entregados_parcial.errors|striptags }}</div>{% endif %}
                                                 <div class="form-text x-small mt-2"><i class="fas fa-info-circle me-1"></i>Especifique cantidades y códigos de producto.</div>
                                             </div>
                                         </div>
@@ -328,96 +324,121 @@
 </style>
 
 <script>
-    // --- SINCRONIZACIÓN MANUAL (MOSTRADOR) ---
-    function updateManualSync() {
-        const inputNombreManual = document.getElementById('id_cliente_nombre_manual');
-        const inputTelefonoManual = document.getElementById('id_cliente_telefono_manual');
-        const ownerDisplay = document.getElementById('pedido-nueva-obra-cliente-display');
-        const switchCopy = document.getElementById('pedido-nueva-obra-copy-client');
-        const clienteSelect = document.querySelector('select[name="cliente"]');
+    // --- SINCRONIZACIÓN Y PROTECCIÓN DE SCRIPTS (Garantiza que no haya ya declarado error) ---
+    
+    if (typeof window.updateManualSync !== 'function') {
+        window.updateManualSync = function() {
+            const inputNombreManual = document.getElementById('id_cliente_nombre_manual');
+            const inputTelefonoManual = document.getElementById('id_cliente_telefono_manual');
+            const ownerDisplay = document.getElementById('pedido-nueva-obra-cliente-display');
+            const switchCopy = document.getElementById('pedido-nueva-obra-copy-client');
+            const clienteSelect = document.querySelector('select[name="cliente"]');
 
-        if (clienteSelect && clienteSelect.value !== "") return;
-        
-        const nombre = (inputNombreManual?.value || "").trim();
-        const telefono = (inputTelefonoManual?.value || "").trim();
-        
-        if (ownerDisplay) {
-            ownerDisplay.innerHTML = `<strong>Mostrador — ${nombre || 'Nombre no especificado'}</strong>`;
-        }
-        if (switchCopy) {
-            switchCopy.dataset.name = nombre;
-            switchCopy.dataset.phone = telefono;
-        }
+            if (clienteSelect && clienteSelect.value !== "") return;
+            
+            const nombre = (inputNombreManual?.value || "").trim();
+            const telefono = (inputTelefonoManual?.value || "").trim();
+            
+            if (ownerDisplay) {
+                ownerDisplay.innerHTML = `<strong>Mostrador — ${nombre || 'Nombre no especificado'}</strong>`;
+            }
+            if (switchCopy) {
+                switchCopy.dataset.name = nombre;
+                switchCopy.dataset.phone = telefono;
+            }
+        };
     }
 
-    // Inicializar listeners al vuelo (delegación o directos tras carga)
-    document.addEventListener('input', (e) => {
-        if (e.target.id === 'id_cliente_nombre_manual' || e.target.id === 'id_cliente_telefono_manual') {
-            updateManualSync();
-        }
-    });
-
-    function toggleManualClient() {
-        const clienteSelect = document.querySelector('select[name="cliente"]');
-        const manualPanel = document.getElementById('manual-client-panel');
-        const obraSelectWrapper = document.getElementById('obra-select-wrapper');
-        const obraManualFields = document.getElementById('obra-manual-fields');
-        const inputUsarManual = document.getElementById('id_usar_obra_manual');
-        
-        const setRequired = (container, state) => {
-            if (!container) return;
-            container.querySelectorAll('input, select, textarea').forEach(el => {
-                if (state) {
-                    if (el.hasAttribute('data-was-required')) el.required = true;
-                } else {
-                    if (el.required) {
-                        el.setAttribute('data-was-required', 'true');
-                        el.required = false;
+    if (typeof window.toggleManualClient !== 'function') {
+        window.toggleManualClient = function() {
+            const clienteSelect = document.querySelector('select[name="cliente"]');
+            const manualPanel = document.getElementById('manual-client-panel');
+            const obraSelectWrapper = document.getElementById('obra-select-wrapper');
+            const obraManualFields = document.getElementById('obra-manual-fields');
+            const inputUsarManual = document.getElementById('id_usar_obra_manual');
+            
+            const setRequired = (container, state) => {
+                if (!container) return;
+                container.querySelectorAll('input, select, textarea').forEach(el => {
+                    if (state) {
+                        if (el.hasAttribute('data-was-required')) el.required = true;
+                    } else {
+                        if (el.required) {
+                            el.setAttribute('data-was-required', 'true');
+                            el.required = false;
+                        }
                     }
-                }
-            });
-        };
+                });
+            };
 
-        if (clienteSelect && clienteSelect.value && clienteSelect.value !== "") {
-            manualPanel.style.display = 'none';
-            setRequired(manualPanel, false);
-            if (inputUsarManual && inputUsarManual.value === "true") {
+            if (clienteSelect && clienteSelect.value && clienteSelect.value !== "") {
+                manualPanel.style.display = 'none';
+                setRequired(manualPanel, false);
+                if (inputUsarManual && inputUsarManual.value === "true") {
+                    obraSelectWrapper.style.display = 'none';
+                    obraManualFields.style.display = 'block';
+                    setRequired(obraManualFields, true);
+                } else {
+                    obraSelectWrapper.style.display = 'block';
+                    obraManualFields.style.display = 'none';
+                    setRequired(obraManualFields, false);
+                }
+            } else {
+                manualPanel.style.display = 'block';
+                setRequired(manualPanel, true);
                 obraSelectWrapper.style.display = 'none';
                 obraManualFields.style.display = 'block';
                 setRequired(obraManualFields, true);
-            } else {
-                obraSelectWrapper.style.display = 'block';
-                obraManualFields.style.display = 'none';
-                setRequired(obraManualFields, false);
+                if (inputUsarManual) inputUsarManual.value = "true";
+                
+                // Forzar sincronización manual al activar el panel
+                if (typeof window.updateManualSync === 'function') window.updateManualSync();
             }
-        } else {
-            manualPanel.style.display = 'block';
-            setRequired(manualPanel, true);
-            obraSelectWrapper.style.display = 'none';
-            obraManualFields.style.display = 'block';
-            setRequired(obraManualFields, true);
-            if (inputUsarManual) inputUsarManual.value = "true";
-            
-            // Forzar sincronización manual al activar el panel
-            if (typeof updateManualSync === 'function') updateManualSync();
-        }
+        };
     }
 
-    function togglePartialProducts() {
-        const partialSwitch = document.querySelector('input[name="recoleccion_parcial"]');
-        const partialPanel  = document.getElementById('partial-products-panel');
-        if (!partialPanel || !partialSwitch) return;
-        
-        const isOn = partialSwitch.checked;
-        partialPanel.style.display = isOn ? 'block' : 'none';
-        
-        const ticketInput = document.getElementById('id_evidencia_ticket');
-        const productosTA = document.querySelector('textarea[name="productos_entregados_parcial"]');
-        if (ticketInput) ticketInput.required = isOn;
-        if (productosTA) productosTA.required = isOn;
+    if (typeof window.togglePartialProducts !== 'function') {
+        window.togglePartialProducts = function() {
+            const partialSwitch = document.querySelector('input[name="recoleccion_parcial"]');
+            const partialPanel  = document.getElementById('partial-products-panel');
+            if (!partialPanel || !partialSwitch) return;
+            
+            const isOn = partialSwitch.checked;
+            partialPanel.style.display = isOn ? 'block' : 'none';
+            
+            const ticketInput = document.getElementById('id_evidencia_ticket');
+            const productosTA = document.querySelector('textarea[name="productos_entregados_parcial"]');
+            if (ticketInput) ticketInput.required = isOn;
+            if (productosTA) productosTA.required = isOn;
+        };
+    }
+
+    if (typeof window.applyPhoneMask !== 'function') {
+        window.applyPhoneMask = (selector) => {
+            const input = document.querySelector(selector);
+            if (!input || input.dataset.masked) return;
+            const format = (v) => v.replace(/\D/g, '').slice(0, 10).match(/.{1,2}/g)?.join('-') || v.replace(/\D/g, '');
+            input.addEventListener("input", function() { this.value = format(this.value); });
+            input.dataset.masked = "true";
+        };
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        // --- RESTAURACIÓN DE POSICIÓN (Evita el desfase tras recarga por error) ---
+        const savedScroll = sessionStorage.getItem('pedido_form_scroll');
+        if (savedScroll) {
+            window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
+            sessionStorage.removeItem('pedido_form_scroll');
+        }
+
+        // Listener para capturar el scroll justo antes de enviar el formulario
+        const mainForm = document.querySelector('form');
+        if (mainForm) {
+            mainForm.addEventListener('submit', () => {
+                sessionStorage.setItem('pedido_form_scroll', window.scrollY);
+            });
+        }
+
         // 0. Auto-trigger de búsqueda SAE si ya hay un valor tras error de validación
         const saeInput = document.querySelector('input[name="id_sae_search"]');
         if (saeInput && saeInput.value.trim() !== "") {
@@ -432,10 +453,10 @@
         togglePartialProducts();
         
         const selectCliente = document.querySelector('select[name="cliente"]');
-        if (selectCliente) selectCliente.addEventListener('change', toggleManualClient);
+        if (selectCliente) selectCliente.addEventListener('change', window.toggleManualClient);
         
         const switchParcial = document.querySelector('input[name="recoleccion_parcial"]');
-        if (switchParcial) switchParcial.addEventListener('change', togglePartialProducts);
+        if (switchParcial) switchParcial.addEventListener('change', window.togglePartialProducts);
 
         const btnToggle = document.getElementById('btn-nueva-obra-toggle');
         const btnCancel = document.getElementById('btn-cancelar-obra-nueva');
@@ -444,7 +465,7 @@
         if (btnToggle) {
             btnToggle.addEventListener('click', () => {
                 if (inputUsarManual) inputUsarManual.value = "true";
-                toggleManualClient();
+                window.toggleManualClient();
                 const target = document.getElementById('obra-manual-fields');
                 if(target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
             });
@@ -452,9 +473,16 @@
         if (btnCancel) {
             btnCancel.addEventListener('click', () => {
                 if (inputUsarManual) inputUsarManual.value = "false";
-                toggleManualClient();
+                window.toggleManualClient();
             });
         }
+        
+        // Inicializar listeners al vuelo (delegación o directos tras carga)
+        document.addEventListener('input', (e) => {
+            if (e.target.id === 'id_cliente_nombre_manual' || e.target.id === 'id_cliente_telefono_manual') {
+                if (typeof window.updateManualSync === 'function') window.updateManualSync();
+            }
+        });
     });
 
     document.addEventListener('htmx:afterOnLoad', function(evt) {
@@ -540,18 +568,10 @@
         }
     });
 
-    // Máscara de teléfono (XX-XX-XX-XX-XX)
-    const applyPhoneMask = (selector) => {
-        const input = document.querySelector(selector);
-        if (!input) return;
-        const format = (v) => v.replace(/\D/g, '').slice(0, 10).match(/.{1,2}/g)?.join('-') || v.replace(/\D/g, '');
-        input.addEventListener("input", function() { this.value = format(this.value); });
-    };
-
     // Aplicar a los campos conocidos
-    applyPhoneMask('#id_cliente_telefono_manual'); // Mostrador manual
-    applyPhoneMask('#id_telefono_receptor');      // Nueva Obra
-    applyPhoneMask('#id_telefono_principal');     // Registro cliente
+    window.applyPhoneMask('#id_cliente_telefono_manual'); // Mostrador manual
+    window.applyPhoneMask('#id_telefono_receptor');      // Nueva Obra
+    window.applyPhoneMask('#id_telefono_principal');     // Registro cliente
 
     document.body.addEventListener('obraGuardada', function(evt) {
         const selectCliente = document.querySelector('select[name="cliente"]');
@@ -563,7 +583,7 @@
     // Re-aplicar máscara tras cargas de HTMX (si fuera necesario para fragmentos dinámicos)
     document.addEventListener('htmx:afterOnLoad', function(evt) {
         if (evt.detail.target.id === 'obras-container' || evt.detail.target.id === 'obra-manual-fields') {
-            applyPhoneMask('#id_telefono_receptor');
+            window.applyPhoneMask('#id_telefono_receptor');
         }
     });
 </script>
