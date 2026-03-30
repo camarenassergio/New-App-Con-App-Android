@@ -328,6 +328,35 @@
 </style>
 
 <script>
+    // --- SINCRONIZACIÓN MANUAL (MOSTRADOR) ---
+    function updateManualSync() {
+        const inputNombreManual = document.getElementById('id_cliente_nombre_manual');
+        const inputTelefonoManual = document.getElementById('id_cliente_telefono_manual');
+        const ownerDisplay = document.getElementById('pedido-nueva-obra-cliente-display');
+        const switchCopy = document.getElementById('pedido-nueva-obra-copy-client');
+        const clienteSelect = document.querySelector('select[name="cliente"]');
+
+        if (clienteSelect && clienteSelect.value !== "") return;
+        
+        const nombre = (inputNombreManual?.value || "").trim();
+        const telefono = (inputTelefonoManual?.value || "").trim();
+        
+        if (ownerDisplay) {
+            ownerDisplay.innerHTML = `<strong>Mostrador — ${nombre || 'Nombre no especificado'}</strong>`;
+        }
+        if (switchCopy) {
+            switchCopy.dataset.name = nombre;
+            switchCopy.dataset.phone = telefono;
+        }
+    }
+
+    // Inicializar listeners al vuelo (delegación o directos tras carga)
+    document.addEventListener('input', (e) => {
+        if (e.target.id === 'id_cliente_nombre_manual' || e.target.id === 'id_cliente_telefono_manual') {
+            updateManualSync();
+        }
+    });
+
     function toggleManualClient() {
         const clienteSelect = document.querySelector('select[name="cliente"]');
         const manualPanel = document.getElementById('manual-client-panel');
@@ -368,6 +397,9 @@
             obraManualFields.style.display = 'block';
             setRequired(obraManualFields, true);
             if (inputUsarManual) inputUsarManual.value = "true";
+            
+            // Forzar sincronización manual al activar el panel
+            if (typeof updateManualSync === 'function') updateManualSync();
         }
     }
 
