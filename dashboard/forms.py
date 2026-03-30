@@ -739,8 +739,7 @@ class PedidoForm(forms.ModelForm):
             {"nombre": "Nota de Venta", "prefijo": "N"},
             {"nombre": "Factura", "prefijo": "F"},
             {"nombre": "Cotización", "prefijo": "C"},
-            {"nombre": "Nota de Block", "prefijo": "NB"},
-            {"nombre": "Sin Prefijo", "prefijo": ""}
+            {"nombre": "Nota de Block", "prefijo": "NB"}
         ]
         self.fields['tipo_ticket'].choices = [(t['prefijo'], t['nombre']) for t in tipos]
 
@@ -909,3 +908,15 @@ class OperadorForm(forms.ModelForm):
             if qs.exists():
                 raise forms.ValidationError("Este usuario ya está asignado a otro colaborador en el directorio. Seleccione uno distinto.")
         return usuario
+
+class DatabaseRestoreForm(forms.Form):
+    backup_file = forms.FileField(
+        label="Archivo de Respaldo (.sql)",
+        help_text="Seleccione un archivo .sql generado previamente por el sistema.",
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.sql'})
+    )
+    confirmacion = forms.BooleanField(
+        label="Confirmo que deseo sobreescribir la base de datos actual",
+        required=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )

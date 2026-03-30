@@ -107,9 +107,8 @@
                                 </div>
                                 <div class="col-md-6">
                                     {{ form.tolerancia_peso_ruta_kg|as_crispy_field }}
-                                </div>
                             </div>
-
+                            
                             <!-- SECCIÓN: FOLIOS -->
                             <div class="section-badge mb-4">
                                 <span class="badge rounded-pill bg-danger-subtle text-danger border-0 px-3 py-2 x-small fw-bold shadow-xs">
@@ -144,7 +143,80 @@
                                     </div>
                                 </div>
                             </div>
-
+                        </div>
+                        
+                        <!-- SECCIÓN: MANTENIMIENTO DEL SISTEMA -->
+                        <div class="section-badge mb-4 mt-5">
+                            <span class="badge rounded-pill bg-dark-subtle text-dark border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                                <i class="fas fa-database me-2"></i>MANTENIMIENTO DEL SISTEMA
+                            </span>
+                        </div>
+                        
+                        <div class="row g-4 mb-5">
+                            <!-- Backup Card -->
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm rounded-4 h-100 bg-light bg-opacity-50">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 me-3">
+                                                <i class="fas fa-file-export fa-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-0">Respaldar Información</h6>
+                                                <small class="text-muted">Descarga un volcado completo de la base de datos (.sql)</small>
+                                            </div>
+                                        </div>
+                                        <p class="small text-muted mb-4">Se recomienda realizar respaldos periódicos antes de cambios importantes en el sistema.</p>
+                                        <a href="{% url 'dashboard:database_backup' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold">
+                                            <i class="fas fa-download me-2"></i>Generar Respaldo (.sql)
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Restore Card -->
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm rounded-4 h-100 bg-light bg-opacity-50">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3 me-3">
+                                                <i class="fas fa-file-import fa-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-0">Restaurar Información</h6>
+                                                <small class="text-muted">Cargar un archivo de respaldo (.sql)</small>
+                                            </div>
+                                        </div>
+                                        <p class="small text-muted mb-3"><i class="fas fa-exclamation-triangle text-warning me-1"></i> <strong>Aviso:</strong> Esto sobreescribirá todos los datos actuales.</p>
+                                        
+                                        <div hx-target="#restore-feedback" hx-indicator="#restore-spinner">
+                                            <form hx-post="{% url 'dashboard:database_restore' %}" 
+                                                  hx-encoding="multipart/form-data"
+                                                  onsubmit="return confirm('¿Estás COMPLETAMENTE seguro de restaurar la base de datos? Se perderán todos los datos actuales.');">
+                                                {% csrf_token %}
+                                                <div class="mb-3">
+                                                    <input type="file" name="backup_file" class="form-control form-control-sm rounded-3" accept=".sql" required>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" name="confirmacion" id="confirmRestore" required>
+                                                    <label class="form-check-label x-small text-muted" for="confirmRestore">
+                                                        Confirmo sobreescritura de datos
+                                                    </label>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <button type="submit" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold">
+                                                        <i class="fas fa-upload me-2"></i>Cargar Respaldo
+                                                    </button>
+                                                    <div id="restore-spinner" class="htmx-indicator spinner-border spinner-border-sm text-danger" role="status">
+                                                        <span class="visually-hidden">Cargando...</span>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                            <div id="restore-feedback" class="mt-2 small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Botones de Acción -->

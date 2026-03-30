@@ -424,15 +424,59 @@
             const detectedId = document.getElementById('detected-cliente-id');
             const selectCliente = document.querySelector('select[name="cliente"]');
             if (detectedId && selectCliente) {
+                const detectedSae  = document.getElementById('detected-cliente-sae');
+                const detectedName = document.getElementById('detected-cliente-name');
+                const detectedPhone = document.getElementById('detected-cliente-phone');
+
                 selectCliente.value = detectedId.value;
                 toggleManualClient();
                 htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + detectedId.value, '#obras-container');
+
+                // Sincronizar el "Cliente Propietario" en el mini-form de nueva obra
+                const ownerDisplay = document.getElementById('pedido-nueva-obra-cliente-display');
+                if (ownerDisplay && detectedSae && detectedName) {
+                    ownerDisplay.innerHTML = `<strong>${detectedSae.value} — ${detectedName.value}</strong>`;
+                }
+
+                // Sincronizar metadatos para el switch "¿Recibe el cliente?"
+                const switchCopy = document.getElementById('pedido-nueva-obra-copy-client');
+                if (switchCopy && detectedName) {
+                    switchCopy.dataset.name = detectedName.value;
+                    switchCopy.dataset.phone = detectedPhone ? detectedPhone.value : "";
+                }
+
+                // Si falta el teléfono en el registro, abrir modal automáticamente
+                if (!detectedPhone || detectedPhone.value === "") {
+                    htmx.ajax('GET', `/dashboard/mostrador/cliente/${detectedId.value}/update-telefono/`, '#modal-container');
+                }
             }
         }
     });
 
     document.addEventListener('clienteSeleccionado', function(evt) {
         const data = evt.detail;
+        
+        // 1. Sincronizar input de búsqueda visual
+        const mainInput = document.querySelector('input[name="id_sae_search"]');
+        if (mainInput) mainInput.value = data.idSae;
+
+        // NEW: Cerrar modal si estaba abierto (por actualización de teléfono)
+        const modalEl = document.getElementById('modalUpdatePhone');
+        if (modalEl) {
+            const modalObj = bootstrap.Modal.getOrCreateInstance(modalEl);
+            if (modalObj) modalObj.hide();
+        }
+
+        // 2. Forzar actualización del cuadro verde de información del cliente
+        if (window.htmx && data.idSae) {
+            htmx.ajax('GET', '{% url "dashboard:cliente_sae_busqueda" %}?id_sae_search=' + encodeURIComponent(data.idSae), '#cliente-info-box');
+        }
+
+        // 3. Si falta el teléfono, abrir automáticamente el modal de captura
+        if (!data.telefono || data.telefono.trim() === "") {
+            htmx.ajax('GET', `/dashboard/mostrador/cliente/${data.clienteId}/update-telefono/`, '#modal-container');
+        }
+
         const selectCliente = document.querySelector('select[name="cliente"]');
         if (selectCliente) {
             let option = selectCliente.querySelector(`option[value="${data.clienteId}"]`);
@@ -442,6 +486,19 @@
             if (inputUsarManual) inputUsarManual.value = "false";
             toggleManualClient();
             htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + data.clienteId + '&obra_id=' + data.obraId, '#obras-container');
+
+            // Sincronizar el "Cliente Propietario" en el mini-form de nueva obra
+            const ownerDisplay = document.getElementById('pedido-nueva-obra-cliente-display');
+            if (ownerDisplay) {
+                ownerDisplay.innerHTML = `<strong>${data.idSae} — ${data.razonSocial}</strong>`;
+            }
+
+            // Sincronizar metadatos para el switch "¿Recibe el cliente?"
+            const switchCopy = document.getElementById('pedido-nueva-obra-copy-client');
+            if (switchCopy) {
+                switchCopy.dataset.name = data.razonSocial;
+                switchCopy.dataset.phone = data.telefono || "";
+            }
         }
     });
 

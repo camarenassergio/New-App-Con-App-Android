@@ -91,7 +91,12 @@
 
         // Rellenar input de búsqueda principal para continuidad visual
         const mainInput = document.querySelector('input[name="id_sae_search"]');
-        if (mainInput) mainInput.value = idSae;
+        if (mainInput) {
+            mainInput.value = idSae;
+            // Disparar eventos para que HTMX detecte el cambio y actualice el info-box
+            mainInput.dispatchEvent(new Event('input', { bubbles: true }));
+            mainInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
 
         // Limpiar búsqueda en cliente_form si aplica
         const clientePkInput = document.getElementById('id_cliente_pk'); // ID del input oculto en pedido_form

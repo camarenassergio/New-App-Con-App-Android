@@ -636,27 +636,57 @@
         }
     });
     </script>
-    <!-- Toast auto-dismiss -->
     <script>
+    // Toast auto-dismiss
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.toast-close').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var toast = btn.closest('.toast-msg');
-                if (toast) {
+        function setupToast(toast) {
+            const closeBtn = toast.querySelector('.toast-close');
+            if (closeBtn) {
+                closeBtn.onclick = function() {
                     toast.style.transition = 'opacity 0.3s, transform 0.3s';
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateX(120%)';
-                    setTimeout(function() { toast.remove(); }, 320);
+                    setTimeout(() => toast.remove(), 320);
+                };
+            }
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.style.transition = 'opacity 0.4s, transform 0.4s';
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(120%)';
+                    setTimeout(() => toast.remove(), 420);
                 }
-            });
-        });
-        document.querySelectorAll('.toast-msg').forEach(function(toast) {
-            setTimeout(function() {
-                toast.style.transition = 'opacity 0.4s, transform 0.4s';
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(120%)';
-                setTimeout(function() { toast.remove(); }, 420);
             }, 5000);
+        }
+
+        document.querySelectorAll('.toast-msg').forEach(setupToast);
+
+        // --- GLOBAL HTMX TOAST HANDLER ---
+        document.body.addEventListener('mostrarToast', function(evt) {
+            const data = evt.detail;
+            let container = document.getElementById('django-toasts');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'django-toasts';
+                container.className = 'toast-container';
+                document.querySelector('.content-wrapper').prepend(container);
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast-msg toast-${data.tipo || 'info'}`;
+            
+            let icon = 'info-circle';
+            if (data.tipo === 'success') icon = 'check-circle';
+            if (data.tipo === 'warning') icon = 'exclamation-triangle';
+            if (data.tipo === 'error' || data.tipo === 'danger') icon = 'times-circle';
+
+            toast.innerHTML = `
+                <i class="fas fa-${icon} toast-icon"></i>
+                <span>${data.mensaje}</span>
+                <button class="toast-close" aria-label="Cerrar notificación">&times;</button>
+            `;
+            container.appendChild(toast);
+            setupToast(toast);
         });
     });
     </script>

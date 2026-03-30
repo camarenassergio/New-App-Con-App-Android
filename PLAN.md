@@ -51,6 +51,8 @@
 | Antigravity | UX Mapas: Previsualización de Ruta OSRM, Pin Centroide y Geo-Dissolve | Verificado [AUTO-HEALED] |
 | Antigravity | Fix: Búsqueda de Colonia Estricta (Municipio) — Evita zonas incorrectas en CPs ajenos | Verificado [AUTO-HEALED] |
 | Antigravity | Paso 2 (Fase 2): Logística — Command Center (Kanban Board) con HTMX Drag/Drop state | Verificado y Pulido |
+| Antigravity | Mantenimiento: Respaldo y Restauración de Base de Datos (mysqldump) | Verificado [AUTO-HEALED] |
+| Antigravity | UX: Sincronización SAE Modal, Cliente Propietario Dinámico y Captura de Teléfono | Verificado [AUTO-HEALED] |
 
 ## Reglas del Proyecto
 - **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).

@@ -17,6 +17,9 @@ import calendar
 import json
 import os
 from decimal import Decimal
+import subprocess
+import tempfile
+from django.conf import settings
 
 from .models import (
     Unidad, Operador, Viaje, ConfiguracionLogistica, GastoUnidad,
@@ -2051,6 +2054,163 @@ class ConfiguracionGeneralUpdateView(LoginRequiredMixin, NonChoferRequiredMixin,
         return ConfiguracionGeneral.get_solo()
 
 
+class DatabaseBackupView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """Genera un volcado SQL de la base de datos MySQL para descarga."""
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, "Solo los superusuarios pueden realizar respaldos completos.")
+            return redirect('dashboard:configuracion_general')
+        
+        db_settings = settings.DATABASES['default']
+        db_name = db_settings.get('NAME')
+        db_user = db_settings.get('USER')
+        db_pass = db_settings.get('PASSWORD')
+        db_host = db_settings.get('HOST', 'localhost')
+        
+        # Nombre de archivo con fecha y hora
+        filename = f"respaldo_casa_lupita_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
+        
+        # 1. Intentar localizar el binario mysqldump
+        import shutil
+        mysqldump_bin = shutil.which('mysqldump')
+        
+        # Fallback para contenedores donde el PATH pueda no estar actualizado
+        if not mysqldump_bin:
+            common_paths = ['/usr/bin/mysqldump', '/usr/local/bin/mysqldump', '/app/mysql/bin/mysqldump']
+            for p in common_paths:
+                if os.path.exists(p):
+                    mysqldump_bin = p
+                    break
+        
+        if not mysqldump_bin:
+            messages.error(request, "Error: No se encontró el comando 'mysqldump'. Por favor, ejecute: 'docker-compose build web-dev && docker-compose up -d' para instalar las herramientas necesarias.")
+            return redirect('dashboard:configuracion_general')
+        
+        try:
+            # Entorno con la contraseña seteada para evitar problemas con símbolos especiales
+            env = os.environ.copy()
+            env['MYSQL_PWD'] = db_pass
+            
+            # Comando mysqldump para exportar la base de datos
+            command = [
+                mysqldump_bin,
+                f'--host={db_host}',
+                f'--user={db_user}',
+                '--no-tablespaces',
+                '--single-transaction',
+                '--add-drop-table', # Asegurar que borre antes de crear
+                db_name
+            ]
+            
+            result = subprocess.run(
+                command, 
+                env=env, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE,
+                text=False # Queremos binario
+            )
+            
+            if result.returncode != 0:
+                error_msg = result.stderr.decode('utf-8')
+                messages.error(request, f"Error en mysqldump: {error_msg}")
+                return redirect('dashboard:configuracion_general')
+            
+            # Devolver el archivo SQL
+            response = HttpResponse(result.stdout, content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+            
+        except Exception as e:
+            messages.error(request, f"Error inesperado al generar respaldo: {str(e)}")
+            return redirect('dashboard:configuracion_general')
+
+
+class DatabaseRestoreView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """Carga un archivo SQL y lo importa a la base de datos MySQL."""
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return JsonResponse({'error': 'Acceso denegado. Se requieren permisos de superusuario.'}, status=403)
+            
+        sql_file = request.FILES.get('backup_file')
+        confirm = request.POST.get('confirmacion') == 'on'
+        
+        if not sql_file:
+            return JsonResponse({'error': 'No se seleccionó ningún archivo.'}, status=400)
+            
+        if not confirm:
+            return JsonResponse({'error': 'Debe confirmar que desea sobreescribir la base de datos.'}, status=400)
+            
+        if not sql_file.name.endswith('.sql'):
+            return JsonResponse({'error': 'Formato inválido. Debe ser un archivo .sql.'}, status=400)
+            
+        db_settings = settings.DATABASES['default']
+        db_name = db_settings.get('NAME')
+        db_user = db_settings.get('USER')
+        db_pass = db_settings.get('PASSWORD')
+        db_host = db_settings.get('HOST', 'localhost')
+        
+        # 1. Intentar localizar el binario mysql
+        import shutil
+        mysql_bin = shutil.which('mysql')
+        
+        if not mysql_bin:
+            common_paths = ['/usr/bin/mysql', '/usr/local/bin/mysql', '/app/mysql/bin/mysql']
+            for p in common_paths:
+                if os.path.exists(p):
+                    mysql_bin = p
+                    break
+                    
+        if not mysql_bin:
+            return JsonResponse({'error': "Error: No se encontró el comando 'mysql'. Por favor, reconstruya el contenedor Docker."}, status=500)
+            
+        try:
+            # Escribir el archivo subido a un archivo temporal
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.sql') as tmp:
+                for chunk in sql_file.chunks():
+                    tmp.write(chunk)
+                tmp_path = tmp.name
+                
+            # Entorno con contraseña
+            env = os.environ.copy()
+            env['MYSQL_PWD'] = db_pass
+            
+            # Comando mysql para importar el archivo
+            # Importante: Deshabilitamos checks de llaves foráneas para poder borrar tablas si hay dependencias circulares
+            command = [
+                mysql_bin,
+                f'--host={db_host}',
+                f'--user={db_user}',
+                '--init-command=SET FOREIGN_KEY_CHECKS=0;',
+                db_name
+            ]
+            
+            with open(tmp_path, 'rb') as f:
+                result = subprocess.run(
+                    command,
+                    env=env,
+                    stdin=f,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+                
+            # Limpiar archivo temporal
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            
+            if result.returncode != 0:
+                error_msg = result.stderr.decode('utf-8')
+                return JsonResponse({'error': f"Error al restaurar: {error_msg}"}, status=500)
+                
+            messages.success(request, "¡Base de datos restaurada correctamente! El sistema se ha actualizado con la información del respaldo.")
+            # HTMX Response: Recargar la página completa para ver los cambios
+            response = HttpResponse(status=204)
+            response["HX-Refresh"] = "true"
+            return response
+            
+        except Exception as e:
+            return JsonResponse({'error': f"Error inesperado al restaurar: {str(e)}"}, status=500)
+
+
 from django.http import JsonResponse
 from decimal import Decimal
 
@@ -2790,3 +2950,45 @@ class AlmacenCargaListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView)
 
     def get_queryset(self):
         return Pedido.objects.filter(estado='ASIGNADO_A_RUTA').order_by('fecha_registro')
+
+class ClienteUpdateTelefonoModalView(LoginRequiredMixin, View):
+    """Muestra el modal para capturar el teléfono del cliente"""
+    def get(self, request, pk):
+        cliente = get_object_or_404(Cliente, pk=pk)
+        return render(request, 'dashboard/mostrador/modal_update_telefono.html', {'cliente': cliente})
+
+    def post(self, request, pk):
+        cliente = get_object_or_404(Cliente, pk=pk)
+        telefono = request.POST.get('telefono', '').strip()
+        
+        # Limpiar el teléfono (solo números)
+        telefono_limpio = ''.join(filter(str.isdigit, telefono))
+        
+        if len(telefono_limpio) < 10:
+            return HttpResponse('<div class="alert alert-danger py-1 small mt-2">Ingrese un teléfono válido (10 dígitos)</div>')
+            
+        cliente.telefono_principal = telefono_limpio
+        cliente.save()
+        
+        # Respuesta HTMX: Cerrar modal y re-disparar selección del cliente
+        from django.http import HttpResponse
+        import json
+        
+        messages.success(request, f"Teléfono de {cliente.razon_social} actualizado con éxito.")
+        response = HttpResponse(status=204)
+        
+        # Disparamos eventos para que el frontend re-sincronice todo
+        response["HX-Trigger"] = json.dumps({
+            "clienteSeleccionado": {
+                "clienteId": cliente.pk,
+                "idSae": cliente.id_sae or "",
+                "razonSocial": cliente.razon_social,
+                "obraId": "",
+                "telefono": telefono_limpio
+            },
+            "mostrarToast": {
+                "mensaje": f"Teléfono de {cliente.razon_social} actualizado con éxito.",
+                "tipo": "success"
+            }
+        })
+        return response

@@ -132,11 +132,11 @@
         100% { transform: translateX(0%); }
     }
 
-    /* Form overrides */
+    /* Force visibility in both modes for the login card which is always light */
     .login-card-body label {
         font-weight: 600;
         font-size: 0.88rem;
-        color: #1e293b;
+        color: #1e293b !important; /* Force dark text regardless of global theme */
         margin-bottom: 6px;
     }
     .login-card-body .form-control {
@@ -146,7 +146,7 @@
         font-size: 0.95rem;
         background: #f8fafc;
         transition: all 0.2s;
-        color: #1e293b;
+        color: #1e293b !important;
     }
     .login-card-body .form-control:focus {
         border-color: #f36f21;
@@ -207,7 +207,7 @@
         display: block;
         font-weight: 600;
         font-size: 0.85rem;
-        color: #1e293b;
+        color: #1e293b !important;
         margin-bottom: 7px;
     }
 
@@ -219,15 +219,17 @@
         border-radius: 10px;
         padding: 11px 14px;
         font-size: 0.95rem;
-        background: #f8fafc;
-        color: #1e293b;
+        background-color: #f8fafc !important;
+        color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
         outline: none;
         transition: border-color 0.2s, box-shadow 0.2s;
     }
     .login-input:focus {
         border-color: #f36f21;
         box-shadow: 0 0 0 3px rgba(243, 111, 33, 0.15);
-        background: #fff;
+        background-color: #fff !important;
+        -webkit-text-fill-color: #1e293b !important;
     }
     .login-input::placeholder {
         color: #94a3b8;
@@ -332,18 +334,28 @@
         </form>
 
         <script>
-        document.getElementById('togglePwd').addEventListener('click', function() {
-            const input = document.getElementById('id_password');
-            const icon = document.getElementById('togglePwdIcon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
-            }
-        });
+        (function() {
+            const toggleBtn = document.getElementById('togglePwd');
+            const pwdInput = document.getElementById('id_password');
+            const pwdIcon = document.getElementById('togglePwdIcon');
+
+            toggleBtn.addEventListener('click', function() {
+                // Toggle type
+                if (pwdInput.type === 'password') {
+                    pwdInput.type = 'text';
+                    pwdIcon.classList.remove('fa-eye');
+                    pwdIcon.classList.add('fa-eye-slash');
+                } else {
+                    pwdInput.type = 'password';
+                    pwdIcon.classList.remove('fa-eye-slash');
+                    pwdIcon.classList.add('fa-eye');
+                }
+                // Maintain focus
+                pwdInput.focus();
+            });
+        })();
         </script>
+
 
     </div>
 </div>

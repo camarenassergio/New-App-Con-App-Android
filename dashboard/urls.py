@@ -66,6 +66,8 @@ urlpatterns = [
     
     # --- CONFIGURACION GENERAL ---
     path('configuraciones/', views.ConfiguracionGeneralUpdateView.as_view(), name='configuracion_general'),
+    path('configuraciones/backup/', views.DatabaseBackupView.as_view(), name='database_backup'),
+    path('configuraciones/restore/', views.DatabaseRestoreView.as_view(), name='database_restore'),
     
     # --- PERFIL DE USUARIO ---
     path('mi-perfil/', views.UsuarioPerfilView.as_view(), name='usuario_perfil'),
@@ -113,4 +115,5 @@ urlpatterns = [
     path('notificaciones/marcar-todas-leidas/', views.marcar_todas_leidas, name='notificaciones_marcar_todas_leidas'),
     path('notificaciones/count/', views.notificaciones_count_ajax, name='notificaciones_count'),
     path('api/enviar-mensaje/', views.DirectMessageView.as_view(), name='enviar_mensaje_api'),
+    path('mostrador/cliente/<int:pk>/update-telefono/', views.ClienteUpdateTelefonoModalView.as_view(), name='cliente_update_telefono_modal'),
 ]
