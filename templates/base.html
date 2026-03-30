@@ -269,7 +269,7 @@
     {% endblock %}
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main id="main-content" class="main-content">
       <!-- Top Header -->
       <header class="top-header">
         <div style="display: flex; align-items: center;">
@@ -740,6 +740,9 @@
         });
     });
     </script>
+    <!-- Contenedor para Modales Dinámicos (HTMX) -->
+    <div id="modal-container" class="modal fade" tabindex="-1" aria-hidden="true" style="z-index: 1060;"></div>
+
     {% block extra_js %}{% endblock %}
   </body>
 </html>

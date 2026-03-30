@@ -702,6 +702,18 @@ class PedidoForm(forms.ModelForm):
         required=True,
         widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_tipo_ticket'})
     )
+    
+    # Campos Virtuales para Nueva Obra (Vienen de la inclusión en pedido_form.html)
+    alias = forms.CharField(required=False)
+    zona = forms.ModelChoiceField(queryset=ZonaEntrega.objects.all(), required=False)
+    calle_numero = forms.CharField(required=False)
+    entre_calles = forms.CharField(required=False)
+    colonia = forms.CharField(required=False)
+    municipio = forms.CharField(required=False)
+    cp = forms.CharField(required=False)
+    referencias = forms.CharField(required=False, widget=forms.Textarea())
+    nombre_receptor = forms.CharField(required=False)
+    telefono_receptor = forms.CharField(required=False)
 
     class Meta:
         model = Pedido
@@ -728,7 +740,21 @@ class PedidoForm(forms.ModelForm):
             'observaciones_mostrador': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Notas adicionales...'}),
             'evidencia_ticket': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
-    
+        
+    def _validate_extra_obra(self, cleaned_data):
+        # Validaciones de los campos extra si se desea crear obra
+        alias = cleaned_data.get('alias', '').strip()
+        zona = cleaned_data.get('zona')
+        calle = cleaned_data.get('calle_numero', '').strip()
+        receptor = cleaned_data.get('nombre_receptor', '').strip()
+        tel_receptor = cleaned_data.get('telefono_receptor', '').strip()
+        
+        if not alias: self.add_error('alias', "Especifique un alias para la dirección.")
+        if not zona: self.add_error('zona', "La zona de entrega es obligatoria.")
+        if not calle: self.add_error('calle_numero', "La calle y número son obligatorios.")
+        if not receptor: self.add_error('nombre_receptor', "El nombre del receptor es obligatorio.")
+        if not tel_receptor: self.add_error('telefono_receptor', "El teléfono del receptor es obligatorio.")
+        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Cargar Tipos de Ticket desde Configuración General
@@ -772,9 +798,13 @@ class PedidoForm(forms.ModelForm):
         telefono = cleaned_data.get('cliente_telefono_manual')
         direccion_manual = cleaned_data.get('cliente_direccion_manual')
         
-        # Datos de la "Nueva Dirección" (desde el POST raw)
-        alias_obra = self.data.get('alias', '').strip()
-        colonia_obra = self.data.get('colonia', '').strip()
+        # Datos de la "Nueva Dirección" (desde el POST raw o virtuales)
+        alias_obra = cleaned_data.get('alias', '').strip()
+        usar_obra_manual = self.data.get('usar_obra_manual') == 'true'
+        
+        # 0. VALIDACIÓN DE NUEVA OBRA (Si aplica)
+        if usar_obra_manual:
+            self._validate_extra_obra(cleaned_data)
 
         # 1. VALIDACIÓN DE CLIENTE (Si no hay SAE)
         if not cliente:

@@ -7,7 +7,7 @@
 <div id="{{ FID }}-master-container" class="obra-form-partial">
     {# ── Campos Ocultos de Control ── #}
     <input type="hidden" name="zona_aprobada" value="on">
-    <input type="hidden" name="zona" id="{{ FID }}-zona-hidden" value="{% if object and object.zona %}{{ object.zona.id }}{% endif %}">
+    <input type="hidden" name="zona" id="{{ FID }}-zona-hidden" value="{{ form.zona.value|default:'' }}">
 
     <div class="row g-3">
         {# ── Fila 1: Alias + Cliente + Switch Estado ── #}
@@ -15,6 +15,9 @@
             <div class="form-group">
                 <label class="form-label fw-bold small">Alias de la Obra <span class="text-danger">*</span></label>
                 <input type="text" name="alias" id="{{ FID }}-alias" class="form-control" placeholder="Ej. Casa Blanca" value="{{ form.alias.value|default:'' }}" required>
+                {% if form.alias.errors %}
+                   <div class="text-danger x-small mt-1 ps-2 fw-bold">{{ form.alias.errors|striptags }}</div>
+                {% endif %}
             </div>
         </div>
 
@@ -94,6 +97,9 @@
                 <span class="input-group-text bg-transparent border-end-0 text-primary"><i class="fas fa-search"></i></span>
                 <input type="text" name="colonia" id="{{ FID }}-colonia" class="form-control border-start-0" placeholder="Escribe 3 letras para buscar..." value="{{ form.colonia.value|default:'' }}" autocomplete="off" required>
             </div>
+            {% if form.colonia.errors %}
+               <div class="text-danger x-small mt-1 ps-2 fw-bold">{{ form.colonia.errors|striptags }}</div>
+            {% endif %}
             <div id="{{ FID }}-sugerencias" class="list-group position-absolute shadow-lg w-100" style="display:none; z-index:2000; max-height:250px; overflow-y:auto;"></div>
         </div>
 
@@ -108,7 +114,11 @@
 
         <div class="col-md-6">
             <div class="form-group"><label class="form-label fw-bold small">Calle y Número <span class="text-danger">*</span></label>
-            <input type="text" name="calle_numero" class="form-control" value="{{ form.calle_numero.value|default:'' }}" required></div>
+            <input type="text" name="calle_numero" class="form-control" value="{{ form.calle_numero.value|default:'' }}" required>
+            {% if form.calle_numero.errors %}
+               <div class="text-danger x-small mt-1 ps-2 fw-bold">{{ form.calle_numero.errors|striptags }}</div>
+            {% endif %}
+            </div>
         </div>
         <div class="col-md-6">
             <div class="form-group"><label class="form-label fw-bold small">Entre Calles</label>
@@ -117,7 +127,11 @@
 
         <div class="col-md-12">
             <div class="form-group"><label class="form-label fw-bold small">Referencias Visuales <span class="text-danger">*</span></label>
-            <textarea name="referencias" class="form-control" rows="2" placeholder="Color de fachada, portón, etc." required>{{ form.referencias.value|default:'' }}</textarea></div>
+            <textarea name="referencias" class="form-control" rows="2" placeholder="Color de fachada, portón, etc." required>{{ form.referencias.value|default:'' }}</textarea>
+            {% if form.referencias.errors %}
+               <div class="text-danger x-small mt-1 ps-2 fw-bold">{{ form.referencias.errors|striptags }}</div>
+            {% endif %}
+            </div>
         </div>
 
         <div class="col-12 mt-4 px-3 py-2 form-section-header d-flex justify-content-between align-items-center">
@@ -134,12 +148,18 @@
             <div class="form-group">
                 <label class="form-label fw-bold small">Nombre del Receptor <span class="text-danger">*</span></label>
                 <input type="text" name="nombre_receptor" id="{{ FID }}-nombre-receptor" class="form-control" value="{{ form.nombre_receptor.value|default:'' }}" placeholder="Solo letras" required>
+                {% if form.nombre_receptor.errors %}
+                   <div class="text-danger x-small mt-1 ps-2 fw-bold">{{ form.nombre_receptor.errors|striptags }}</div>
+                {% endif %}
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
                 <label class="form-label fw-bold small">Teléfono del Receptor <span class="text-danger">*</span></label>
                 <input type="text" name="telefono_receptor" id="{{ FID }}-telefono-receptor" class="form-control" value="{{ form.telefono_receptor.value|default:'' }}" placeholder="XX-XX-XX-XX-XX" required>
+                {% if form.telefono_receptor.errors %}
+                   <div class="text-danger x-small mt-1 ps-2 fw-bold">{{ form.telefono_receptor.errors|striptags }}</div>
+                {% endif %}
             </div>
         </div>
     </div>

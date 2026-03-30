@@ -167,7 +167,7 @@
                                             {% include 'dashboard/clientes/_obra_form_fields.html' with form_id="pedido-nueva-obra" es_subform=True %}
                                         </div>
                                     </div>
-                                    <input type="hidden" name="usar_obra_manual" id="id_usar_obra_manual" value="false">
+                                    <input type="hidden" name="usar_obra_manual" id="id_usar_obra_manual" value="{{ usar_obra_manual|yesno:'true,false' }}">
                                 </div>
                             </div>
                         </div>
@@ -418,6 +418,12 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        // 0. Auto-trigger de búsqueda SAE si ya hay un valor tras error de validación
+        const saeInput = document.querySelector('input[name="id_sae_search"]');
+        if (saeInput && saeInput.value.trim() !== "") {
+            htmx.ajax('GET', '{% url "dashboard:cliente_sae_busqueda" %}?id_sae_search=' + encodeURIComponent(saeInput.value), '#cliente-info-box');
+        }
+
         document.querySelectorAll('input[required], select[required], textarea[required]').forEach(el => {
             el.setAttribute('data-was-required', 'true');
         });

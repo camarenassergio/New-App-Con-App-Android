@@ -2401,24 +2401,20 @@ class PedidoCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
                 # SI NO HAY OBRA SELECCIONADA o se marcó usar_obra_manual (Viene por los campos premium integrados)
                 usar_obra_manual = self.request.POST.get('usar_obra_manual') == 'true'
                 if not form.instance.obra or usar_obra_manual:
-                    alias = self.request.POST.get('alias', '').strip()
-                    zona_id = self.request.POST.get('zona')
-                    
-                    if alias and zona_id:
-                        obra = Obra.objects.create(
-                            cliente=form.instance.cliente,
-                            alias=alias,
-                            zona_id=zona_id,
-                            cp=self.request.POST.get('cp'),
-                            colonia=self.request.POST.get('colonia'),
-                            municipio=self.request.POST.get('municipio'),
-                            calle_numero=self.request.POST.get('calle_numero'),
-                            entre_calles=self.request.POST.get('entre_calles'),
-                            referencias=self.request.POST.get('referencias'),
-                            nombre_receptor=self.request.POST.get('nombre_receptor'),
-                            telefono_receptor=self.request.POST.get('telefono_receptor'),
-                        )
-                        form.instance.obra = obra
+                    obra = Obra.objects.create(
+                        cliente=form.instance.cliente,
+                        alias=form.cleaned_data.get('alias'),
+                        zona=form.cleaned_data.get('zona'),
+                        cp=form.cleaned_data.get('cp'),
+                        colonia=form.cleaned_data.get('colonia'),
+                        municipio=form.cleaned_data.get('municipio'),
+                        calle_numero=form.cleaned_data.get('calle_numero'),
+                        entre_calles=form.cleaned_data.get('entre_calles'),
+                        referencias=form.cleaned_data.get('referencias'),
+                        nombre_receptor=form.cleaned_data.get('nombre_receptor'),
+                        telefono_receptor=form.cleaned_data.get('telefono_receptor'),
+                    )
+                    form.instance.obra = obra
 
                 # Guardar el pedido final
                 form.instance.registrado_por = self.request.user
