@@ -502,10 +502,30 @@
         }
     });
 
+    // Máscara de teléfono (XX-XX-XX-XX-XX)
+    const applyPhoneMask = (selector) => {
+        const input = document.querySelector(selector);
+        if (!input) return;
+        const format = (v) => v.replace(/\D/g, '').slice(0, 10).match(/.{1,2}/g)?.join('-') || v.replace(/\D/g, '');
+        input.addEventListener("input", function() { this.value = format(this.value); });
+    };
+
+    // Aplicar a los campos conocidos
+    applyPhoneMask('#id_cliente_telefono_manual'); // Mostrador manual
+    applyPhoneMask('#id_telefono_receptor');      // Nueva Obra
+    applyPhoneMask('#id_telefono_principal');     // Registro cliente
+
     document.body.addEventListener('obraGuardada', function(evt) {
         const selectCliente = document.querySelector('select[name="cliente"]');
         if (selectCliente && selectCliente.value) {
             htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + selectCliente.value, '#obras-container');
+        }
+    });
+
+    // Re-aplicar máscara tras cargas de HTMX (si fuera necesario para fragmentos dinámicos)
+    document.addEventListener('htmx:afterOnLoad', function(evt) {
+        if (evt.detail.target.id === 'obras-container' || evt.detail.target.id === 'obra-manual-fields') {
+            applyPhoneMask('#id_telefono_receptor');
         }
     });
 </script>
