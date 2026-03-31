@@ -93,6 +93,8 @@
                                     <div class="d-flex align-items-center mb-4">
                                         <span class="step-num shadow-sm me-3">2</span>
                                         <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Logística y Tarifas</h5>
+                                        <span id="logistica-spinner" class="spinner-border spinner-border-sm text-primary ms-3 d-none" role="status"></span>
+                                        <span id="logistica-status" class="ms-2 small text-primary fw-bold d-none">Calculando...</span>
                                     </div>
                                     <div class="row g-3">
                                         <div class="col-md-6">{{ form.tiempo_traslado_minutos|as_crispy_field }}</div>
@@ -124,7 +126,7 @@
                                                 <small class="text-muted" style="font-size:.72rem;">Nueva zona (CP ingresados)</small>
                                             </div>
                                             <div class="d-flex align-items-center gap-1">
-                                                <span style="display:inline-block;width:22px;height:4px;background:#ff6b35;border-radius:3px;opacity:.65;"></span>
+                                                <span style="display:inline-block;width:22px;height:4px;background:#1a1a1a;border-radius:3px;opacity:.85;"></span>
                                                 <small class="text-muted" style="font-size:.72rem;">Ruta CEDIS → zona</small>
                                             </div>
                                         </div>
@@ -392,6 +394,27 @@ document.addEventListener("DOMContentLoaded", function() {
     if (distanciaInput) { distanciaInput.readOnly = true; distanciaInput.classList.add('bg-light-subtle', 'opacity-75'); }
     if (municipioInput) { municipioInput.readOnly = true; municipioInput.classList.add('bg-light-subtle', 'opacity-75'); }
 
+    // ─── HELPER DE ESTADO DE CARGA ─────────────────────────────────────────────
+    function toggleCalculando(isCalculating) {
+        const spinner = document.getElementById('logistica-spinner');
+        const status = document.getElementById('logistica-status');
+        const fleteInput = document.getElementById('id_tarifa_flete');
+        
+        if (isCalculating) {
+            if (spinner) spinner.classList.remove('d-none');
+            if (status) status.classList.remove('d-none');
+            if (tiempoInput) { tiempoInput.value = ''; tiempoInput.placeholder = 'Calculando...'; }
+            if (distanciaInput) { distanciaInput.value = ''; distanciaInput.placeholder = 'Calculando...'; }
+            if (fleteInput) { fleteInput.value = ''; fleteInput.placeholder = 'Calculando...'; }
+        } else {
+            if (spinner) spinner.classList.add('d-none');
+            if (status) status.classList.add('d-none');
+            if (tiempoInput) tiempoInput.placeholder = 'Auto';
+            if (distanciaInput) distanciaInput.placeholder = 'Auto';
+            if (fleteInput) fleteInput.placeholder = 'Auto';
+        }
+    }
+
     // ─── INIT MAP ──────────────────────────────────────────────────────────────
     const isDark = document.body.classList.contains('dark-theme');
     const darkUrl  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
@@ -459,7 +482,7 @@ document.addEventListener("DOMContentLoaded", function() {
         try {
             const geom = JSON.parse(routeGeojsonInput.value);
             const zCol = colorInput.value || '#3388ff';
-            routeLayer = L.geoJSON(geom, { style: { color: zCol, weight: 5, opacity: 0.7, dashArray: '8,12' } }).addTo(map);
+            routeLayer = L.geoJSON(geom, { style: { color: '#1a1a1a', weight: 5, opacity: 0.85, dashArray: '8,12' } }).addTo(map);
             if (routeWaypointsInput.value) {
                 const wps = JSON.parse(routeWaypointsInput.value);
                 const dest = wps[wps.length - 1];
@@ -486,7 +509,10 @@ document.addEventListener("DOMContentLoaded", function() {
         fetch(`{% url 'dashboard:geojson_por_cp_api' %}?cps=${encodeURIComponent(cpsStr)}`)
             .then(r => r.json())
             .then(data => {
-                if (!data.features || data.features.length === 0) return;
+                if (!data.features || data.features.length === 0) {
+                    toggleCalculando(false);
+                    return;
+                }
 
                 newZonePolygonLayer = L.geoJSON(data, {
                     style: {
@@ -534,40 +560,101 @@ document.addEventListener("DOMContentLoaded", function() {
                         if (centroid.lat && centroid.lon) {
                             map.setView([centroid.lat, centroid.lon], 13);
                             showRoute({ lat: centroid.lat, lng: centroid.lon });
+                        } else {
+                            toggleCalculando(false);
                         }
+                    })
+                    .catch(err => {
+                        console.error("Error Fallback centroide:", err);
+                        toggleCalculando(false);
                     });
             });
     }
 
-    // ─── RUTA OSRM ─────────────────────────────────────────────────────────────
-    function showRoute(destLatLng) {
+    // ─── RUTA OSRM Y FALLBACKS ──────────────────────────────────────────────────
+    async function showRoute(destLatLng) {
         if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
         const zCol = colorInput.value || '#ff6b35';
 
-        const urlOSRM = `https://router.project-osrm.org/route/v1/driving/${CEDIS_COORDS[1]},${CEDIS_COORDS[0]};${destLatLng.lng},${destLatLng.lat}?overview=full&geometries=geojson`;
-        fetch(urlOSRM)
-            .then(r => r.json())
-            .then(data => {
-                if (!data.routes || data.routes.length === 0) return;
-                const route = data.routes[0];
-                routeLayer = L.geoJSON(route.geometry, {
-                    style: { color: zCol, weight: 4, opacity: 0.65, dashArray: '10, 14' }
-                }).addTo(map);
+        // Helper para pintar resultados y solicitar costo a backend
+        const deployRouteData = (geometry, distance, duration) => {
+            routeLayer = L.geoJSON(geometry, {
+                style: { color: '#1a1a1a', weight: 4, opacity: 0.85, dashArray: '10, 14' }
+            }).addTo(map);
 
-                // Redondear tiempo y distancia hacia arriba (Math.ceil)
-                const tMin = Math.ceil((route.duration * 1.45) / 60);
-                const dKm  = Math.ceil(route.distance / 1000);
-                
-                if (tiempoInput) tiempoInput.value = tMin;
-                if (distanciaInput) distanciaInput.value = dKm;
-                if (routeGeojsonInput) routeGeojsonInput.value = JSON.stringify(route.geometry);
-                if (routeWaypointsInput) routeWaypointsInput.value = JSON.stringify([
-                    { lat: CEDIS_COORDS[0], lng: CEDIS_COORDS[1] },
-                    { lat: destLatLng.lat, lng: destLatLng.lng }
-                ]);
-                updateFlete(dKm, tMin);
-            })
-            .catch(e => console.warn("OSRM error:", e));
+            const tMin = Math.ceil((duration * 1.45) / 60);
+            const dKm  = Math.ceil(distance / 1000);
+            
+            if (tiempoInput) tiempoInput.value = tMin;
+            if (distanciaInput) distanciaInput.value = dKm;
+            if (routeGeojsonInput) routeGeojsonInput.value = JSON.stringify(geometry);
+            if (routeWaypointsInput) routeWaypointsInput.value = JSON.stringify([
+                { lat: CEDIS_COORDS[0], lng: CEDIS_COORDS[1] },
+                { lat: destLatLng.lat, lng: destLatLng.lng }
+            ]);
+            updateFlete(dKm, tMin);
+        };
+
+        try {
+            // INTENTO 1: OSRM Gratuito
+            const urlOSRM = `https://router.project-osrm.org/route/v1/driving/${CEDIS_COORDS[1]},${CEDIS_COORDS[0]};${destLatLng.lng},${destLatLng.lat}?overview=full&geometries=geojson`;
+            const rOSRM = await fetch(urlOSRM);
+            if (!rOSRM.ok) throw new Error("OSRM HTTP " + rOSRM.status);
+            const dataOSRM = await rOSRM.json();
+            if (!dataOSRM.routes || dataOSRM.routes.length === 0) throw new Error("OSRM vacío");
+            
+            deployRouteData(dataOSRM.routes[0].geometry, dataOSRM.routes[0].distance, dataOSRM.routes[0].duration);
+            return;
+        } catch(e) {
+            console.warn("⚠️ [Fallback #1] OSRM falló:", e.message);
+        }
+
+        try {
+            // INTENTO 2: OpenRouteService (vía API Key)
+            const ORS_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjM1MDVkOTFjY2IzMzQ4NGFhOWY0MDY1MzViMmRkOWM2IiwiaCI6Im11cm11cjY0In0=";
+            const urlORS = `https://api.openrouteservice.org/v2/directions/driving-car?start=${CEDIS_COORDS[1]},${CEDIS_COORDS[0]}&end=${destLatLng.lng},${destLatLng.lat}`;
+            const rORS = await fetch(urlORS, {
+                headers: { 'Authorization': ORS_KEY, 'Accept': 'application/json, application/geo+json' }
+            });
+            if (!rORS.ok) throw new Error("ORS HTTP " + rORS.status);
+            const dataORS = await rORS.json();
+            if (!dataORS.features || dataORS.features.length === 0) throw new Error("ORS vacío");
+            
+            const props = dataORS.features[0].properties.summary;
+            deployRouteData(dataORS.features[0].geometry, props.distance, props.duration);
+            return;
+        } catch (e) {
+            console.warn("⚠️ [Fallback #2] ORS falló:", e.message);
+        }
+
+        // INTENTO 3: Fallback Matemático (Haversine via Leaflet)
+        console.warn("🔄 [Fallback Dominante] Aplicando motor Matemático...");
+        const straightDistanceMeters = L.latLng(CEDIS_COORDS[0], CEDIS_COORDS[1]).distanceTo(L.latLng(destLatLng.lat, destLatLng.lng));
+        const dKm = Math.ceil((straightDistanceMeters / 1000) * 1.35); // 1.35 corrección urbana
+        const tMin = Math.ceil((dKm / 35.0) * 60);
+
+        if (tiempoInput) tiempoInput.value = tMin;
+        if (distanciaInput) distanciaInput.value = dKm;
+        
+        const fallbackGeoJSON = {
+            type: "LineString",
+            coordinates: [
+                [CEDIS_COORDS[1], CEDIS_COORDS[0]],
+                [destLatLng.lng, destLatLng.lat]
+            ]
+        };
+
+        if (routeGeojsonInput) routeGeojsonInput.value = JSON.stringify(fallbackGeoJSON);
+        if (routeWaypointsInput) routeWaypointsInput.value = JSON.stringify([
+            { lat: CEDIS_COORDS[0], lng: CEDIS_COORDS[1] },
+            { lat: destLatLng.lat, lng: destLatLng.lng }
+        ]);
+
+        routeLayer = L.geoJSON(fallbackGeoJSON, {
+            style: { color: '#1a1a1a', weight: 4, opacity: 0.85, dashArray: '5, 10' }
+        }).addTo(map);
+
+        updateFlete(dKm, tMin);
     }
 
     // ─── CALCULAR FLETE SUGERIDO ───────────────────────────────────────────────
@@ -577,6 +664,7 @@ document.addEventListener("DOMContentLoaded", function() {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
             body: JSON.stringify({ distancia_km: parseFloat(dKm), tiempo_minutos: parseFloat(tMin) })
         }).then(r => r.json()).then(fData => {
+            toggleCalculando(false);
             if (fData.status !== 'ok') return;
             document.getElementById('cotizaciones-container').style.display = 'block';
             const bDiv = document.getElementById('cotizaciones-badges');
@@ -606,7 +694,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     bDiv.appendChild(btn);
                 });
             }
-        }).catch(e => console.warn("Flete API error:", e));
+        }).catch(e => {
+            toggleCalculando(false);
+            console.warn("Flete API error:", e);
+        });
     }
 
     // ─── ESCUCHAR CAMBIO DE COLOR ──────────────────────────────────────────────
@@ -614,7 +705,6 @@ document.addEventListener("DOMContentLoaded", function() {
         colorInput.addEventListener('input', function() {
             const zCol = this.value || '#ff6b35';
             if (newZonePolygonLayer) newZonePolygonLayer.setStyle({ color: zCol, fillColor: zCol, dashArray: '6,8' });
-            if (routeLayer) routeLayer.setStyle({ color: zCol });
             if (centerMarker) {
                 centerMarker.setIcon(L.divIcon({
                     html: `<i class="fas fa-map-marker-alt" style="color:${zCol}; font-size:1.8rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));"></i>`,
@@ -666,6 +756,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     });
 
                 // 2. Dibujar polígono real de los CPs y calcular ruta/flete
+                toggleCalculando(true);
                 drawNewZonePolygon(val);
             }, 800);
         });
