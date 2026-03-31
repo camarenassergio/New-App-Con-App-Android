@@ -2286,14 +2286,52 @@ class CalcularFleteSugeridoView(LoginRequiredMixin, View):
 # --- VISTAS DE MOSTRADOR (PASO 1 - FASE 2) ---
 
 class MostradorHomeView(LoginRequiredMixin, ListView):
-    """Cola de pedidos recientemente registrados"""
+    """Cola de pedidos con filtros combinados: estado, urgencia y búsqueda de texto"""
     model = Pedido
     template_name = 'dashboard/mostrador_home.html'
     context_object_name = 'pedidos'
     paginate_by = 20
 
     def get_queryset(self):
-        return Pedido.objects.filter(estado='REGISTRADO').order_by('-fecha_registro')
+        qs = Pedido.objects.select_related('cliente', 'obra').order_by('-fecha_registro')
+
+        # --- Filtro por estado ---
+        estado = self.request.GET.get('estado', '')
+        if estado == 'activos':
+            qs = qs.filter(estado__in=['REGISTRADO', 'EN_PREPARACION', 'ASIGNADO_A_RUTA'])
+        elif estado and estado != 'todos':
+            qs = qs.filter(estado=estado.upper())
+        # Sin filtro (default) → solo pendientes de salir
+        elif not estado:
+            qs = qs.filter(estado='REGISTRADO')
+
+        # --- Filtro por urgencia ---
+        urgente = self.request.GET.get('urgente', '')
+        if urgente == '1':
+            qs = qs.filter(es_urgente=True)
+
+        # --- Búsqueda de texto (folio SAE o razón social del cliente) ---
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(
+                Q(folio_sae__icontains=q) | Q(cliente__razon_social__icontains=q)
+            )
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pasar los params activos al template para que los filtros y la
+        # paginación los preserven en sus links.
+        context['filtro_estado'] = self.request.GET.get('estado', '')
+        context['filtro_urgente'] = self.request.GET.get('urgente', '')
+        context['filtro_q'] = self.request.GET.get('q', '')
+        # Query string sin el param 'page' para que la paginación lo agregue solo
+        params = self.request.GET.copy()
+        params.pop('page', None)
+        context['query_params'] = params.urlencode()
+        return context
+
 
 class CotizadorFleteModalView(LoginRequiredMixin, TemplateView):
     """Renderiza el fragmento del modal para cotizar"""
@@ -2594,17 +2632,28 @@ class MostradorDashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        hoy = timezone.now().date()
-        
-        # Estadísticas de Pedidos (Personalizadas por Usuario)
+        # IMPORTANTE: usar localtime() para obtener la fecha en zona horaria
+        # de México (America/Mexico_City), NO en UTC. Sin esto, después de las
+        # 18:00 hrs (UTC-6) el contador de "pedidos hoy" marca 0 porque UTC
+        # ya cambió de día aunque en México aún sea el mismo día.
+        hoy = timezone.localtime(timezone.now()).date()
+        # Primer día del mes actual (en hora local México)
+        inicio_mes = hoy.replace(day=1)
+
+        # Estadísticas de Pedidos (Personales del Usuario hoy)
         context['pedidos_hoy'] = Pedido.objects.filter(
-            fecha_registro__date=hoy, 
+            fecha_registro__date=hoy,
             registrado_por=self.request.user
         ).count()
         context['pedidos_urgentes'] = Pedido.objects.filter(es_urgente=True, estado='REGISTRADO').count()
-        context['pedidos_cancelados'] = Pedido.objects.filter(estado='CANCELADO').count()
+        # Cancelados: solo del periodo del mes en curso (fecha local)
+        context['pedidos_cancelados'] = Pedido.objects.filter(
+            estado='CANCELADO',
+            fecha_registro__date__gte=inicio_mes,
+            fecha_registro__date__lte=hoy,
+        ).count()
         context['pedidos_en_espera'] = Pedido.objects.filter(estado='REGISTRADO').count()
-        
+
         # Resumen por estado
         context['resumen_estados'] = [
             {'label': 'Registrados', 'count': Pedido.objects.filter(estado='REGISTRADO').count(), 'color': 'info'},
@@ -2612,11 +2661,52 @@ class MostradorDashboardView(LoginRequiredMixin, TemplateView):
             {'label': 'En Ruta', 'count': Pedido.objects.filter(estado='EN_RUTA').count(), 'color': 'primary'},
             {'label': 'Entregados', 'count': Pedido.objects.filter(estado='ENTREGADO').count(), 'color': 'success'},
         ]
-        
-        # Últimos movimientos
-        context['pedidos_recientes'] = Pedido.objects.order_by('-fecha_registro')[:10]
-        
+
+        # --- FILTRO DE CARDS ---
+        # Cada card pasa ?filtro=<key> para filtrar la tabla inferior.
+        filtro = self.request.GET.get('filtro', '')
+        context['filtro_activo'] = filtro
+
+        FILTROS = {
+            'hoy': {
+                'qs': Pedido.objects.filter(
+                    fecha_registro__date=hoy,
+                    registrado_por=self.request.user
+                ).order_by('-fecha_registro'),
+                'titulo': 'Mis Pedidos del Día',
+            },
+            'urgentes': {
+                'qs': Pedido.objects.filter(
+                    es_urgente=True, estado='REGISTRADO'
+                ).order_by('-fecha_registro'),
+                'titulo': 'Urgencias Activas',
+            },
+            'pendientes': {
+                'qs': Pedido.objects.filter(
+                    estado='REGISTRADO'
+                ).order_by('-fecha_registro'),
+                'titulo': 'Pendientes de Ruta',
+            },
+            'cancelados': {
+                'qs': Pedido.objects.filter(
+                    estado='CANCELADO',
+                    fecha_registro__date__gte=inicio_mes,
+                    fecha_registro__date__lte=hoy,
+                ).order_by('-fecha_registro'),
+                'titulo': 'Cancelados del Período',
+            },
+        }
+
+        if filtro in FILTROS:
+            context['pedidos_recientes'] = FILTROS[filtro]['qs']
+            context['titulo_lista'] = FILTROS[filtro]['titulo']
+        else:
+            # Sin filtro: últimos 10 movimientos generales
+            context['pedidos_recientes'] = Pedido.objects.order_by('-fecha_registro')[:10]
+            context['titulo_lista'] = 'Últimas Entregas Registradas'
+
         return context
+
 
 class LogisticaDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, TemplateView):
     """Command Center (Kanban) para el personal de Logística"""

@@ -83,16 +83,16 @@
 
     <!-- MAIN LISTING CARD v2.3 -->
     <div class="card border-0 shadow-lg overflow-hidden mb-5" style="border-radius: 28px;">
-        <!-- Header Premium Sectioned -->
+        <!-- Header Premium -->
         <div class="card-header border-0 p-0 overflow-hidden">
-            <div class="bg-primary grad-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white">
+            <div class="grad-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white">
                 <div class="d-flex align-items-center">
                     <div class="header-icon-box bg-white bg-opacity-20 rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 58px; height: 58px;">
                         <i class="fas fa-stream text-white fs-4"></i>
                     </div>
                     <div>
                         <h4 class="fw-bold mb-0">Bandeja de Pedidos</h4>
-                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Gestión de Cargas Pendientes por Salir</p>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Gestión de Cargas — Todos los Registros</p>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-3 mt-3 mt-md-0">
@@ -102,6 +102,102 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- ═══ BARRA DE FILTROS ═══ -->
+        <div class="filter-bar px-4 py-3 border-bottom bg-light bg-opacity-50">
+            <form method="get" id="filtros-form" class="d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+
+                <!-- Búsqueda de texto -->
+                <div class="search-wrapper position-relative flex-grow-1" style="max-width: 340px;">
+                    <i class="fas fa-search position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.8rem;"></i>
+                    <input type="text" 
+                           name="q" 
+                           id="filter-search"
+                           value="{{ filtro_q }}"
+                           placeholder="  Buscar folio o cliente…"
+                           class="form-control form-control-sm rounded-pill ps-4 pe-3 border shadow-xs"
+                           style="height: 38px; font-size: 0.85rem;">
+                    {% if filtro_q %}
+                    <a href="?{% if filtro_estado %}estado={{ filtro_estado }}&{% endif %}{% if filtro_urgente %}urgente={{ filtro_urgente }}&{% endif %}" 
+                       class="position-absolute text-muted" 
+                       style="right: 12px; top: 50%; transform: translateY(-50%);" 
+                       title="Limpiar búsqueda">
+                        <i class="fas fa-times-circle"></i>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Chips de Estado -->
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="x-small text-muted fw-bold text-uppercase me-1">Estado:</span>
+
+                    {% with e=filtro_estado %}
+                    <a href="?{% if filtro_urgente %}urgente={{ filtro_urgente }}&{% endif %}{% if filtro_q %}q={{ filtro_q }}&{% endif %}"
+                       class="filter-chip {% if not e %}active{% endif %}">
+                        <i class="fas fa-layer-group me-1"></i>Pendientes
+                    </a>
+                    <a href="?estado=activos{% if filtro_urgente %}&urgente={{ filtro_urgente }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}"
+                       class="filter-chip {% if e == 'activos' %}active{% endif %}">
+                        <i class="fas fa-bolt me-1"></i>Activos
+                    </a>
+                    <a href="?estado=todos{% if filtro_urgente %}&urgente={{ filtro_urgente }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}"
+                       class="filter-chip {% if e == 'todos' %}active{% endif %}">
+                        <i class="fas fa-list me-1"></i>Todos
+                    </a>
+                    <a href="?estado=EN_RUTA{% if filtro_urgente %}&urgente={{ filtro_urgente }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}"
+                       class="filter-chip filter-chip--info {% if e == 'EN_RUTA' %}active{% endif %}">
+                        <i class="fas fa-truck me-1"></i>En Ruta
+                    </a>
+                    <a href="?estado=ENTREGADO{% if filtro_urgente %}&urgente={{ filtro_urgente }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}"
+                       class="filter-chip filter-chip--success {% if e == 'ENTREGADO' %}active{% endif %}">
+                        <i class="fas fa-check-circle me-1"></i>Entregados
+                    </a>
+                    <a href="?estado=CANCELADO{% if filtro_urgente %}&urgente={{ filtro_urgente }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}"
+                       class="filter-chip filter-chip--danger {% if e == 'CANCELADO' %}active{% endif %}">
+                        <i class="fas fa-ban me-1"></i>Cancelados
+                    </a>
+                    {% endwith %}
+                </div>
+
+                <!-- Toggle Urgentes -->
+                <div class="d-flex align-items-center gap-2 ms-lg-auto">
+                    {% if filtro_urgente == '1' %}
+                    <a href="?{% if filtro_estado %}estado={{ filtro_estado }}&{% endif %}{% if filtro_q %}q={{ filtro_q }}&{% endif %}"
+                       class="filter-chip filter-chip--danger active">
+                        <i class="fas fa-bolt me-1"></i>Solo Urgentes
+                        <i class="fas fa-times ms-1 opacity-75"></i>
+                    </a>
+                    {% else %}
+                    <a href="?urgente=1{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}"
+                       class="filter-chip filter-chip--danger">
+                        <i class="fas fa-bolt me-1"></i>Solo Urgentes
+                    </a>
+                    {% endif %}
+
+                    {% if filtro_estado or filtro_urgente or filtro_q %}
+                    <a href="{% url 'dashboard:mostrador_home' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" style="font-size: 0.75rem;">
+                        <i class="fas fa-undo me-1"></i>Limpiar todo
+                    </a>
+                    {% endif %}
+                </div>
+
+            </form>
+        </div>
+        <!-- Contador de resultados -->
+        <div class="px-4 py-2 bg-light bg-opacity-25 border-bottom d-flex align-items-center gap-2">
+            <span class="x-small text-muted">
+                <i class="fas fa-list-ol me-1 opacity-50"></i>
+                <strong>{{ paginator.count }}</strong> pedido{{ paginator.count|pluralize }} encontrado{{ paginator.count|pluralize }}
+                {% if filtro_estado or filtro_urgente or filtro_q %}
+                <span class="ms-1 opacity-60">con los filtros aplicados</span>
+                {% endif %}
+            </span>
+            {% if is_paginated %}
+            <span class="x-small text-muted opacity-60 ms-2">
+                — Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+            {% endif %}
         </div>
 
         <div class="card-body p-0">
@@ -118,7 +214,10 @@
                             <th class="text-center pe-4">Detalle</th>
                         </tr>
                     </thead>
-                    <tbody hx-get="{% url 'dashboard:mostrador_home' %}" hx-trigger="every 45s" hx-select="tbody" hx-swap="outerHTML">
+                    <tbody hx-get="{% url 'dashboard:mostrador_home' %}{% if query_params %}?{{ query_params }}{% endif %}" 
+                           hx-trigger="every 45s" 
+                           hx-select="tbody" 
+                           hx-swap="outerHTML">
                         {% for pedido in pedidos %}
                         <tr class="animate__animated animate__fadeIn">
                             <td class="ps-4">
@@ -184,14 +283,14 @@
                             <td colspan="7" class="text-center py-5">
                                 <div class="empty-state d-flex flex-column align-items-center py-5">
                                     <div class="mb-4 bg-light rounded-circle p-4 d-flex align-items-center justify-content-center shadow-xs" style="width: 120px; height: 120px;">
-                                        <i class="fas fa-inbox fa-4x text-muted opacity-25"></i>
+                                        <i class="fas fa-search fa-3x text-muted opacity-25"></i>
                                     </div>
-                                    <h4 class="fw-bold">No hay pedidos pendientes</h4>
-                                    <p class="text-muted mb-4" style="max-width: 400px;">
-                                        La bandeja de entrada está limpia. Los nuevos pedidos registrados en el SAE aparecerán aquí automáticamente para su programación.
+                                    <h5 class="fw-bold">Sin resultados</h5>
+                                    <p class="text-muted mb-4" style="max-width: 380px;">
+                                        No se encontraron pedidos con los filtros aplicados. Intenta con otros criterios o limpia los filtros.
                                     </p>
-                                    <a href="{% url 'dashboard:pedido_create' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
-                                        <i class="fas fa-plus me-2"></i>Registrar Carga
+                                    <a href="{% url 'dashboard:mostrador_home' %}" class="btn btn-outline-primary rounded-pill px-4 fw-bold">
+                                        <i class="fas fa-undo me-2"></i>Ver todos los pedidos
                                     </a>
                                 </div>
                             </td>
@@ -200,30 +299,75 @@
                     </tbody>
                 </table>
             </div>
-            
+
+            <!-- ═══ PAGINACIÓN PREMIUM ═══ -->
             {% if is_paginated %}
-            <div class="card-footer bg-white border-0 py-4 px-4 border-top">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination pagination-md justify-content-center mb-0 gap-2">
-                        {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link border rounded-circle shadow-xs" href="?page={{ page_obj.previous_page_number }}">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                        </li>
-                        {% endif %}
-                        <li class="page-item active"><span class="page-link border-0 rounded-circle shadow-sm px-3 fw-bold">{{ page_obj.number }}</span></li>
-                        {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link border rounded-circle shadow-xs" href="?page={{ page_obj.next_page_number }}">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
+            <div class="card-footer bg-transparent border-top py-4 px-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <!-- Info -->
+                    <p class="mb-0 x-small text-muted">
+                        Mostrando <strong>{{ page_obj.start_index }}</strong>–<strong>{{ page_obj.end_index }}</strong>
+                        de <strong>{{ paginator.count }}</strong> registros
+                    </p>
+
+                    <!-- Controles -->
+                    <nav aria-label="Paginación de pedidos">
+                        <ul class="pagination pagination-sm mb-0 gap-1">
+
+                            <!-- Primera página -->
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link page-ctrl rounded-circle shadow-xs border" 
+                                   href="?{% if query_params %}{{ query_params }}&{% endif %}page=1" 
+                                   title="Primera página">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link page-ctrl rounded-circle shadow-xs border" 
+                                   href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.previous_page_number }}"
+                                   title="Página anterior">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            <!-- Páginas numéricas (ventana de 5 alrededor de la actual) -->
+                            {% for num in paginator.page_range %}
+                                {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                                <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                                    <a class="page-link rounded-circle shadow-xs border fw-bold"
+                                       href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ num }}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            <!-- Siguiente / Última -->
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link page-ctrl rounded-circle shadow-xs border"
+                                   href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.next_page_number }}"
+                                   title="Página siguiente">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link page-ctrl rounded-circle shadow-xs border"
+                                   href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ paginator.num_pages }}"
+                                   title="Última página">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                        </ul>
+                    </nav>
+                </div>
             </div>
             {% endif %}
+
         </div>
     </div>
 </div>
@@ -248,6 +392,27 @@
     .premium-action-card { transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); border: 1px solid rgba(0,0,0,0.05) !important; }
     .premium-action-card:hover { transform: translateY(-12px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
     
+    /* ── Filter Bar ── */
+    .filter-bar { background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); }
+
+    .filter-chip {
+        display: inline-flex; align-items: center;
+        padding: 5px 14px; border-radius: 999px;
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+        border: 1.5px solid #dee2e6; background: white; color: #6c757d;
+        text-decoration: none; transition: all .2s ease;
+        white-space: nowrap;
+    }
+    .filter-chip:hover { border-color: var(--primary-blue); color: var(--primary-blue); background: rgba(0,59,112,0.05); transform: translateY(-1px); }
+    .filter-chip.active { background: var(--primary-blue); color: white; border-color: var(--primary-blue); box-shadow: 0 4px 12px rgba(0,59,112,0.3); }
+    .filter-chip--info.active   { background: #3b82f6; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+    .filter-chip--success.active { background: #10b981; border-color: #10b981; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+    .filter-chip--danger.active  { background: #ef4444; border-color: #ef4444; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+    .filter-chip--info:hover    { border-color: #3b82f6; color: #3b82f6; }
+    .filter-chip--success:hover { border-color: #10b981; color: #10b981; }
+    .filter-chip--danger:hover  { border-color: #ef4444; color: #ef4444; }
+
+    /* ── Table ── */
     .premium-table thead th { 
         font-weight: 700; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; 
         letter-spacing: 1px; padding: 1.5rem 1rem; border: 0; background-color: rgba(0,0,0,0.01);
@@ -255,12 +420,19 @@
     .premium-table tbody td { padding: 1.25rem 1rem; border-color: rgba(0,0,0,0.04); font-size: 0.9rem; }
     .premium-table tbody tr:hover { background-color: rgba(243, 111, 33, 0.02) !important; }
     
-    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .shadow-premium { box-shadow: 0 12px 30px -5px rgba(0, 59, 112, 0.35); }
+    /* ── Pagination ── */
+    .page-link { 
+        width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+        font-size: 0.8rem; transition: all .2s ease; color: var(--primary-blue);
+    }
+    .page-ctrl { color: #6c757d; }
+    .page-item.active .page-link { background: var(--primary-blue); border-color: var(--primary-blue); color: white; box-shadow: 0 4px 10px rgba(0,59,112,0.35); }
+    .page-link:hover:not(.active) { background: rgba(0,59,112,0.07); color: var(--primary-blue); }
 
+    /* ── Misc ── */
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .hover-primary-btn:hover { background: var(--primary-blue) !important; color: white !important; transform: scale(1.1); transition: all 0.2s; }
     .hover-primary-btn:hover i { color: white !important; }
-    
     .x-small { font-size: 0.72rem; }
     .tracking-wider { letter-spacing: 0.08em; }
 
@@ -281,12 +453,35 @@
     .bg-success-subtle { background-color: rgba(16, 185, 129, 0.08) !important; }
     .bg-info-subtle { background-color: rgba(59, 130, 246, 0.08) !important; }
     .bg-warning-subtle { background-color: rgba(245, 158, 11, 0.08) !important; }
+    .bg-danger-subtle  { background-color: rgba(239, 68, 68, 0.08) !important; }
 
-    /* Dark Mode Overrides Integrados */
+    /* Dark Mode */
     body.dark-theme .card { background-color: var(--bg-card); border-color: var(--border-color) !important; }
     body.dark-theme .bg-light { background-color: rgba(255,255,255,0.03) !important; }
-    body.dark-theme .pagination .page-link { background: var(--bg-card); border-color: var(--border-color); color: var(--text-main); }
+    body.dark-theme .filter-chip { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); }
+    body.dark-theme .filter-chip:hover { background: rgba(0,59,112,0.3); }
+    body.dark-theme .filter-chip.active { background: var(--primary-blue); }
     body.dark-theme .table-hover tbody tr:hover { background-color: rgba(255,255,255,0.03) !important; }
     body.dark-theme .text-dark { color: #fff !important; }
+    body.dark-theme .page-link { background: var(--bg-card); border-color: var(--border-color); color: var(--text-main); }
+
+    /* Search input dark mode */
+    body.dark-theme #filter-search { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); color: white; }
+    body.dark-theme #filter-search::placeholder { color: rgba(255,255,255,0.35); }
 </style>
+
+<script>
+    // Auto-submit del buscador con debounce (sin presionar Enter)
+    (function () {
+        const input = document.getElementById('filter-search');
+        if (!input) return;
+        let timer;
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                document.getElementById('filtros-form').submit();
+            }, 500);
+        });
+    })();
+</script>
 {% endblock %}

@@ -1,6 +1,7 @@
 # Plan de Proyecto: Logística Casa Lupita - Nueva App
 
 ## Hoja de Ruta Maestra
+
 - [x] Fase 1: Inicialización del Proyecto y Configuración de Infraestructura
 - [/] Fase 2: Diseño de Base de Datos e Implementación Backend
 - [ ] Fase 3: Conexión App Android y Funcionalidades Básicas
@@ -8,16 +9,19 @@
 - [x] Fase 5: Protocolos de Prevención y Plan de Contingencia
 
 ## Pendientes (Backlog)
+
 - [ ] Modificar evidencias de entrega: permitir guardar más de una evidencia fotográfica y solicitar obligatoriamente la foto del ticket.
 - [ ] **[HITO FUTURO]** Sistema Experto Predictivo de Tiempos de Maniobra: Aprenderá del historial empírico basado en familia de materiales, peso y unidad para cotizar dinámicamente.
 - [ ] **[DEUDA TÉCNICA / UX]** Migración de flujos transaccionales (ej. Gastos, Checklist) a metodología SPA/AJAX (HTMX/JS Nativo) para eliminar *page reloads*, mejorar la percepción de velocidad (Immediate Feedback <100ms) y dar sensación de app nativa.
 
 ## Trayectoria Actual
+
 - **Paso**: Desarrollo Fase 2 y 3 (Mostrador, Logística, App Chofer y Mensajería)
 - **Objetivo**: Implementar el flujo híbrido de pedidos (CEMEX), Kanban logístico con cálculos de peso, bifurcación a proveedores externos y App Móvil de Chofer (Módulo HTMX asíncrono y Motor de Mensajes).
 - **Estado**: En progreso - Validación del Plan V3 de implementación.
 
 ## Estado del Squad
+
 | Agente | Tarea | Estado |
 | :--- | :--- | :--- |
 | Antigravity | Inicialización del Proyecto | Verificado [AUTO-HEALED] |
@@ -53,8 +57,10 @@
 | Antigravity | Paso 2 (Fase 2): Logística — Command Center (Kanban Board) con HTMX Drag/Drop state | Verificado y Pulido |
 | Antigravity | Mantenimiento: Respaldo y Restauración de Base de Datos (mysqldump) | Verificado [AUTO-HEALED] |
 | Antigravity | UX: Sincronización SAE Modal, Cliente Propietario Dinámico y Captura de Teléfono | Verificado [AUTO-HEALED] |
+| Antigravity | Dashboard: Métricas Personales de Mostrador (Pedidos Hoy) | Verificado y Pulido |
 
 ## Reglas del Proyecto
+
 - **Idioma**: Español (Obligatorio en Comentarios, Commits y Documentación).
 - **Frontend — HTMX (REGLA ABSOLUTA)**: TODO formulario transaccional DEBE usar HTMX (`hx-post`, `hx-put`, etc.). PROHIBIDO usar `<form method="post">` sin atributos HTMX en vistas del dashboard. La única excepción permitida es `login.html` y `usuario_perfil.html` (upload binario multipart con cropper). Spinner obligatorio con `hx-indicator`.
 - **Frontend / UX**: Todos los NUEVOS formularios y flujos transaccionales DEBEN implementarse usando HTMX para asegurar 'Immediate Feedback < 100ms' sin recargar página completa.

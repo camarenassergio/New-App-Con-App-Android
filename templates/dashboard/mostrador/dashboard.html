@@ -5,13 +5,7 @@
 {% block page_title %}Dashboard Mostrador{% endblock %}
 
 {% block content %}
-<div id="dashboard-content" 
-     hx-get="{% url 'dashboard:mostrador_dashboard' %}" 
-     hx-trigger="every 30s" 
-     hx-select="#dashboard-content" 
-     hx-target="#dashboard-content" 
-     hx-swap="outerHTML" 
-     class="container-fluid py-4 animate__animated animate__fadeIn">
+<div class="container-fluid py-4 animate__animated animate__fadeIn">
     
     <!-- Header de Sección v2.3 -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
@@ -19,104 +13,155 @@
             <h4 class="fw-bold text-main mb-1">Resumen de Operación</h4>
             <div class="d-flex align-items-center gap-2">
                 <span class="badge rounded-pill bg-primary grad-primary px-3 py-1 x-small fw-bold">CONTROL MOSTRADOR</span>
-                <span class="x-small text-muted opacity-50 htmx-indicator spinner-border spinner-border-sm" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span>
+                <!-- Indicador de sincronización en vivo (siempre visible) -->
+                <div class="badge bg-success bg-opacity-10 border border-success border-opacity-25 rounded-pill px-3 py-1 d-flex align-items-center gap-2">
+                    <span class="pulsating-dot"></span>
+                    <span class="x-small fw-bold text-success text-uppercase tracking-wider">En Vivo</span>
+                    <!-- Spinner HTMX solo durante la petición -->
+                    <span class="htmx-indicator spinner-border spinner-border-sm text-success" role="status" 
+                          style="width: 10px; height: 10px; border-width: 2px;"></span>
+                </div>
             </div>
         </div>
         <div class="d-flex gap-2">
             <a href="{% url 'dashboard:pedido_create' %}" class="btn btn-primary grad-primary rounded-pill px-4 fw-bold shadow-lg border-0 transform-hover">
                 <i class="fas fa-plus-circle me-2"></i>NUEVO PEDIDO
             </a>
-            <button class="btn btn-outline-secondary rounded-circle shadow-sm" style="width: 42px; height: 42px;" onclick="location.reload();">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+            
         </div>
     </div>
 
-    <!-- Métrica de Alto Impacto (Tarjetas Premium) -->
-    <div class="row g-4 mb-5">
+    <!-- ═══ ZONA 1: Cards de Métricas (polling independiente) ═══
+         Mismo patrón que mostrador_home tbody: hace GET, selecciona solo este bloque
+         y lo reemplaza. Cada 30s. -->
+    <div id="metrics-section"
+         hx-get="{% url 'dashboard:mostrador_dashboard' %}{% if filtro_activo %}?filtro={{ filtro_activo }}{% endif %}"
+         hx-trigger="every 30s"
+         hx-select="#metrics-section"
+         hx-target="#metrics-section"
+         hx-swap="outerHTML"
+         class="row g-4 mb-5">
+
+        <!-- Card: Pedidos Generados HOY -->
         <div class="col-md-3">
-            <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-primary text-white">
-                <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
-                    <i class="fas fa-file-invoice"></i>
-                </div>
-                <div class="card-body p-4 position-relative">
-                    <div class="mb-4">
-                        <div class="icon-shape bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
-                            <i class="fas fa-shopping-cart fs-4 text-primary"></i>
+            <a href="?filtro=hoy" class="card-metric-link text-decoration-none d-block h-100">
+                <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-primary text-white {% if filtro_activo == 'hoy' %}card-metric--active{% endif %}">
+                    {% if filtro_activo == 'hoy' %}<div class="card-active-indicator"></div>{% endif %}
+                    <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div class="card-body p-4 position-relative">
+                        <div class="mb-4">
+                            <div class="icon-shape bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="fas fa-shopping-cart fs-4 text-primary"></i>
+                            </div>
+                        </div>
+                        <h2 class="display-5 fw-bold mb-1 tracking-tight text-white lh-1">{{ pedidos_hoy }}</h2>
+                        <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-white">Pedidos Generados</p>
+                        <div class="mt-3 d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill bg-white text-primary fw-bold x-small px-3 py-1 shadow-sm border-0">HOY</span>
+                            {% if filtro_activo == 'hoy' %}
+                            <span class="badge rounded-pill bg-white bg-opacity-25 text-white fw-bold x-small px-2 py-1"><i class="fas fa-filter me-1"></i>Activo</span>
+                            {% else %}
+                            <span class="badge rounded-pill bg-white bg-opacity-10 text-white x-small px-2 py-1 opacity-75"><i class="fas fa-hand-pointer me-1"></i>Ver lista</span>
+                            {% endif %}
                         </div>
                     </div>
-                    <h2 class="display-5 fw-bold mb-1 tracking-tight text-white lh-1">{{ pedidos_hoy }}</h2>
-                    <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-white">Pedidos Generados</p>
-                    <div class="mt-3">
-                        <span class="badge rounded-pill bg-white text-primary fw-bold x-small px-3 py-1 shadow-sm border-0">HOY</span>
-                    </div>
                 </div>
-            </div>
+            </a>
         </div>
 
+        <!-- Card: Urgencias Activas -->
         <div class="col-md-3">
-            <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-danger text-white">
-                <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
-                    <i class="fas fa-bolt"></i>
-                </div>
-                <div class="card-body p-4 position-relative">
-                    <div class="mb-4">
-                        <div class="icon-shape bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
-                            <i class="fas fa-fire fs-4 text-danger"></i>
+            <a href="?filtro=urgentes" class="card-metric-link text-decoration-none d-block h-100">
+                <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-danger text-white {% if filtro_activo == 'urgentes' %}card-metric--active{% endif %}">
+                    {% if filtro_activo == 'urgentes' %}<div class="card-active-indicator"></div>{% endif %}
+                    <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="card-body p-4 position-relative">
+                        <div class="mb-4">
+                            <div class="icon-shape bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="fas fa-fire fs-4 text-danger"></i>
+                            </div>
+                        </div>
+                        <h2 class="display-5 fw-bold mb-1 tracking-tight text-white lh-1">{{ pedidos_urgentes }}</h2>
+                        <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-white">Urgencias Activas</p>
+                        <div class="mt-3 d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill bg-white text-danger fw-bold x-small px-3 py-1 shadow-sm border-0">CRÍTICO</span>
+                            {% if filtro_activo == 'urgentes' %}
+                            <span class="badge rounded-pill bg-white bg-opacity-25 text-white fw-bold x-small px-2 py-1"><i class="fas fa-filter me-1"></i>Activo</span>
+                            {% else %}
+                            <span class="badge rounded-pill bg-white bg-opacity-10 text-white x-small px-2 py-1 opacity-75"><i class="fas fa-hand-pointer me-1"></i>Ver lista</span>
+                            {% endif %}
                         </div>
                     </div>
-                    <h2 class="display-5 fw-bold mb-1 tracking-tight text-white lh-1">{{ pedidos_urgentes }}</h2>
-                    <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-white">Urgencias Activas</p>
-                    <div class="mt-3">
-                        <span class="badge rounded-pill bg-white text-danger fw-bold x-small px-3 py-1 shadow-sm border-0">CRÍTICO</span>
-                    </div>
                 </div>
-            </div>
+            </a>
         </div>
 
+        <!-- Card: Pendientes de Ruta -->
         <div class="col-md-3">
-            <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-warning text-dark">
-                <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="card-body p-4 position-relative">
-                    <div class="mb-4">
-                        <div class="icon-shape bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
-                            <i class="fas fa-hourglass-half fs-4 text-dark"></i>
+            <a href="?filtro=pendientes" class="card-metric-link text-decoration-none d-block h-100">
+                <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-warning text-dark {% if filtro_activo == 'pendientes' %}card-metric--active{% endif %}">
+                    {% if filtro_activo == 'pendientes' %}<div class="card-active-indicator card-active-indicator--dark"></div>{% endif %}
+                    <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="card-body p-4 position-relative">
+                        <div class="mb-4">
+                            <div class="icon-shape bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="fas fa-hourglass-half fs-4 text-dark"></i>
+                            </div>
+                        </div>
+                        <h2 class="display-5 fw-bold mb-1 tracking-tight text-dark lh-1">{{ pedidos_en_espera }}</h2>
+                        <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-dark">Pendientes de Ruta</p>
+                        <div class="mt-3 d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill bg-dark text-white fw-bold x-small px-3 py-1 shadow-sm border-0">EN FILA</span>
+                            {% if filtro_activo == 'pendientes' %}
+                            <span class="badge rounded-pill bg-dark bg-opacity-25 text-dark fw-bold x-small px-2 py-1"><i class="fas fa-filter me-1"></i>Activo</span>
+                            {% else %}
+                            <span class="badge rounded-pill bg-dark bg-opacity-10 text-dark x-small px-2 py-1 opacity-75"><i class="fas fa-hand-pointer me-1"></i>Ver lista</span>
+                            {% endif %}
                         </div>
                     </div>
-                    <h2 class="display-5 fw-bold mb-1 tracking-tight text-dark lh-1">{{ pedidos_en_espera }}</h2>
-                    <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-dark">Pendientes de Ruta</p>
-                    <div class="mt-3">
-                        <span class="badge rounded-pill bg-dark text-white fw-bold x-small px-3 py-1 shadow-sm border-0">EN FILA</span>
-                    </div>
                 </div>
-            </div>
+            </a>
         </div>
 
+        <!-- Card: Cancelados (Período) -->
         <div class="col-md-3">
-            <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-secondary text-white">
-                <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
-                    <i class="fas fa-ban"></i>
-                </div>
-                <div class="card-body p-4 position-relative">
-                    <div class="mb-4">
-                        <div class="icon-shape bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
-                            <i class="fas fa-trash fs-4 text-secondary"></i>
+            <a href="?filtro=cancelados" class="card-metric-link text-decoration-none d-block h-100">
+                <div class="card border-0 shadow-premium card-metric h-100 overflow-hidden bg-secondary text-white {% if filtro_activo == 'cancelados' %}card-metric--active{% endif %}">
+                    {% if filtro_activo == 'cancelados' %}<div class="card-active-indicator"></div>{% endif %}
+                    <div class="position-absolute top-0 end-0 opacity-10 p-3" style="font-size: 5rem; transform: translate(20%, -20%);">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                    <div class="card-body p-4 position-relative">
+                        <div class="mb-4">
+                            <div class="icon-shape bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="fas fa-trash fs-4 text-secondary"></i>
+                            </div>
+                        </div>
+                        <h2 class="display-5 fw-bold mb-1 tracking-tight text-white lh-1">{{ pedidos_cancelados }}</h2>
+                        <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-white">Cancelados (Período)</p>
+                        <div class="mt-3 d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill bg-light text-dark fw-bold x-small px-3 py-1 shadow-sm border-0">ANULADOS</span>
+                            {% if filtro_activo == 'cancelados' %}
+                            <span class="badge rounded-pill bg-white bg-opacity-25 text-white fw-bold x-small px-2 py-1"><i class="fas fa-filter me-1"></i>Activo</span>
+                            {% else %}
+                            <span class="badge rounded-pill bg-white bg-opacity-10 text-white x-small px-2 py-1 opacity-75"><i class="fas fa-hand-pointer me-1"></i>Ver lista</span>
+                            {% endif %}
                         </div>
                     </div>
-                    <h2 class="display-5 fw-bold mb-1 tracking-tight text-white lh-1">{{ pedidos_cancelados }}</h2>
-                    <p class="mb-2 x-small text-uppercase fw-bold opacity-75 text-white">Cancelados (Período)</p>
-                    <div class="mt-3">
-                        <span class="badge rounded-pill bg-light text-dark fw-bold x-small px-3 py-1 shadow-sm border-0">ANULADOS</span>
-                    </div>
                 </div>
-            </div>
+            </a>
         </div>
-    </div>
+
+    </div><!-- /#metrics-section -->
 
     <div class="row g-5">
-        <!-- Resumen por Estado (Donut Style Info) -->
+        <!-- Distribución de Estados -->
         <div class="col-lg-4">
             <div class="card border-0 shadow-premium rounded-4 bg-card h-100">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
@@ -125,41 +170,60 @@
                     </h6>
                 </div>
                 <div class="card-body p-4">
-                    <div class="d-flex flex-column gap-3">
+                    <!-- ═══ ZONA 2: Resumen de estados (polling independiente) ═══ -->
+                    <div id="estados-section"
+                         hx-get="{% url 'dashboard:mostrador_dashboard' %}{% if filtro_activo %}?filtro={{ filtro_activo }}{% endif %}"
+                         hx-trigger="every 30s"
+                         hx-select="#estados-section"
+                         hx-target="#estados-section"
+                         hx-swap="outerHTML"
+                         class="d-flex flex-column gap-3">
                         {% for estado in resumen_estados %}
                         <div class="p-3 rounded-4 border bg-light bg-opacity-50 d-flex justify-content-between align-items-center transform-hover shadow-xs">
                             <div class="d-flex align-items-center">
-                                <div class="rounded-3 shadow-sm me-3 d-flex align-items-center justify-content-center" 
+                                <div class="rounded-3 shadow-sm me-3 d-flex align-items-center justify-content-center"
                                      style="width: 38px; height: 38px; background-color: var(--bg-body, #f8f9fa); border: 1px solid rgba(0,0,0,0.05);">
-                                    <div class="rounded-circle bg-{{ estado.color|default:'primary' }}" style="width: 10px; height: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);"></div>
+                                    <div class="rounded-circle bg-{{ estado.color|default:'primary' }}" style="width: 10px; height: 10px;"></div>
                                 </div>
                                 <span class="fw-bold text-main small">{{ estado.label }}</span>
                             </div>
-                            <span class="badge rounded-pill bg-primary bg-opacity-10 py-2 px-3 fw-bold shadow-xs border" style="color: var(--primary-blue, #003b70); border-color: rgba(var(--primary-blue-rgb, 0, 59, 112), 0.1) !important;">
+                            <span class="badge rounded-pill bg-primary bg-opacity-10 py-2 px-3 fw-bold shadow-xs border"
+                                  style="color: var(--primary-blue, #003b70); border-color: rgba(0,59,112,0.1) !important;">
                                 {{ estado.count }}
                             </span>
                         </div>
                         {% endfor %}
-                    </div>
-                    
-                    <div class="mt-4 p-4 rounded-4 text-white text-center shadow-lg position-relative overflow-hidden" 
+                    </div><!-- /#estados-section -->
+
+                    <div class="mt-4 p-4 rounded-4 text-white text-center shadow-lg overflow-hidden"
                          style="background: linear-gradient(135deg, #003b70 0%, #004c8c 100%);">
-                        <h6 class="fw-bold mb-2 position-relative">Consejo Logístico</h6>
-                        <p class="x-small mb-0 opacity-75 position-relative">Las urgencias despachadas antes de las 12 PM tienen 95% de probabilidad de entrega el mismo día.</p>
+                        <h6 class="fw-bold mb-2">Consejo Logístico</h6>
+                        <p class="x-small mb-0 opacity-75">Las urgencias despachadas antes de las 12 PM tienen 95% de probabilidad de entrega el mismo día.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Últimos Movimientos (Table Premium) -->
+        <!-- ═══ ZONA 3: Tabla de Pedidos (polling del tbody, igual que mostrador_home) ═══ -->
         <div class="col-lg-8">
             <div class="card border-0 shadow-premium rounded-4 bg-card h-100 overflow-hidden">
                 <div class="card-header bg-transparent border-0 py-4 px-4 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-0 fw-bold text-main small text-uppercase tracking-wider">
-                            <i class="fas fa-history text-primary me-2"></i>Últimas Entregas Registradas
+                            <i class="fas fa-{% if filtro_activo == 'hoy' %}calendar-day{% elif filtro_activo == 'urgentes' %}bolt{% elif filtro_activo == 'pendientes' %}hourglass-half{% elif filtro_activo == 'cancelados' %}ban{% else %}history{% endif %} text-primary me-2"></i>{{ titulo_lista }}
                         </h6>
-                        <p class="x-small text-muted mb-0 mt-1">Historial reciente de captura en mostrador</p>
+                        <p class="x-small text-muted mb-0 mt-1">
+                            {% if filtro_activo %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-2 py-1 me-1">
+                                    <i class="fas fa-filter me-1"></i>Filtro activo
+                                </span>
+                                <a href="{% url 'dashboard:mostrador_dashboard' %}" class="text-muted text-decoration-none x-small">
+                                    <i class="fas fa-times-circle me-1"></i>Quitar filtro
+                                </a>
+                            {% else %}
+                                Historial reciente de captura en mostrador
+                            {% endif %}
+                        </p>
                     </div>
                     <a href="{% url 'dashboard:mostrador_home' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold shadow-xs">
                         VER TODO
@@ -176,7 +240,12 @@
                                     <th class="text-end pe-4 py-3">Acción</th>
                                 </tr>
                             </thead>
-                            <tbody class="border-0">
+                            <!-- tbody con polling exactamente igual a mostrador_home -->
+                            <tbody class="border-0"
+                                   hx-get="{% url 'dashboard:mostrador_dashboard' %}{% if filtro_activo %}?filtro={{ filtro_activo }}{% endif %}"
+                                   hx-trigger="every 45s"
+                                   hx-select="tbody"
+                                   hx-swap="outerHTML">
                                 {% for pedido in pedidos_recientes %}
                                 <tr class="border-bottom-dark-soft">
                                     <td class="ps-4">
@@ -199,9 +268,10 @@
                                     </td>
                                     <td>
                                         <span class="badge border-0 rounded-pill px-3 py-2 x-small fw-bold shadow-xs
-                                            {% if pedido.estado == 'pendiente' %}bg-warning-subtle text-warning
-                                            {% elif pedido.estado == 'en_ruta' %}bg-primary-subtle text-primary
-                                            {% elif pedido.estado == 'entregado' %}bg-success-subtle text-success
+                                            {% if pedido.estado == 'REGISTRADO' or pedido.estado == 'EN_PREPARACION' %}bg-primary-subtle text-primary
+                                            {% elif pedido.estado == 'EN_RUTA' or pedido.estado == 'ASIGNADO_A_RUTA' %}bg-info-subtle text-info
+                                            {% elif pedido.estado == 'ENTREGADO' %}bg-success-subtle text-success
+                                            {% elif pedido.estado == 'CANCELADO' %}bg-danger-subtle text-danger
                                             {% else %}bg-secondary-subtle text-muted{% endif %}">
                                             <i class="fas fa-circle me-1 x-small opacity-50"></i> {{ pedido.get_estado_display|upper }}
                                         </span>
@@ -217,7 +287,7 @@
                                     <td colspan="4" class="text-center py-5">
                                         <div class="p-5 opacity-25">
                                             <i class="fas fa-folder-open fa-4x mb-3"></i>
-                                            <p class="fw-bold text-uppercase tracking-wider">Sin pedidos registrados</p>
+                                            <p class="fw-bold text-uppercase tracking-wider">Sin pedidos para este filtro</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -228,43 +298,84 @@
                 </div>
             </div>
         </div>
-    </div> <!-- End container-fluid -->
-</div> <!-- End hx-polling-content -->
+    </div><!-- /.row -->
+
+</div><!-- /.container-fluid -->
 
 <style>
-    /* Dashboard Variables v2.3 Premium */
     .x-small { font-size: 0.72rem; }
     .tracking-tight { letter-spacing: -1.5px; }
     .tracking-wider { letter-spacing: 0.05em; }
     .tracking-widest { letter-spacing: 0.12em; }
     .shadow-premium { box-shadow: 0 15px 35px -5px rgba(0, 59, 112, 0.15); }
     .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    
-    .card-metric { transition: all 0.3s ease; cursor: pointer; border-radius: 20px !important; }
-    .card-metric:hover { transform: translateY(-8px); box-shadow: 0 25px 45px -10px rgba(0,0,0,0.2) !important; }
-    
-    .bg-warning-subtle { background-color: rgba(243, 111, 33, 0.1) !important; }
-    .bg-primary-subtle { background-color: rgba(0, 59, 112, 0.1) !important; }
-    .bg-success-subtle { background-color: rgba(16, 185, 129, 0.1) !important; }
+
+    /* Pulsating dot (igual que mostrador_home) */
+    .pulsating-dot {
+        width: 7px; height: 7px; background: #10b981; border-radius: 50%;
+        display: inline-block; position: relative; flex-shrink: 0;
+    }
+    .pulsating-dot::after {
+        content: ''; width: 100%; height: 100%; background: #10b981; border-radius: 50%;
+        position: absolute; top: 0; left: 0; animation: pulse-green 2s infinite; opacity: 0.6;
+    }
+    @keyframes pulse-green {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(3.5); opacity: 0; }
+    }
+
+    /* Cards como botones */
+    .card-metric-link { cursor: pointer; }
+    .card-metric {
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        border-radius: 20px !important;
+        position: relative;
+    }
+    .card-metric-link:hover .card-metric {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 30px 50px -10px rgba(0,0,0,0.25) !important;
+    }
+    .card-metric--active {
+        transform: translateY(-6px) scale(1.015) !important;
+        box-shadow: 0 25px 50px -8px rgba(0,0,0,0.3) !important;
+        outline: 3px solid rgba(255,255,255,0.6);
+        outline-offset: 3px;
+    }
+    .card-metric-link:hover .card-metric--active {
+        transform: translateY(-12px) scale(1.03) !important;
+    }
+    .card-active-indicator {
+        position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: rgba(255,255,255,0.8); border-radius: 20px 20px 0 0;
+        animation: pulse-bar 1.5s ease-in-out infinite;
+    }
+    .card-active-indicator--dark { background: rgba(0,0,0,0.3); }
+    @keyframes pulse-bar {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    .bg-warning-subtle  { background-color: rgba(243, 111, 33, 0.1) !important; }
+    .bg-primary-subtle  { background-color: rgba(0, 59, 112, 0.1) !important; }
+    .bg-success-subtle  { background-color: rgba(16, 185, 129, 0.1) !important; }
     .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.1) !important; }
-    
+    .bg-info-subtle     { background-color: rgba(59, 130, 246, 0.1) !important; }
+    .bg-danger-subtle   { background-color: rgba(239, 68, 68, 0.1) !important; }
+
     .btn-icon-ks {
         width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;
         background: var(--bg-body); border: 1px solid var(--border-color); color: var(--primary-blue);
         transition: all 0.3s ease;
     }
     .btn-icon-ks:hover { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
-
     .border-bottom-dark-soft { border-bottom: 1px solid rgba(0,0,0,0.04) !important; }
-    
+
     body.dark-theme .bg-card { background-color: var(--bg-card) !important; }
     body.dark-theme .bg-light { background-color: rgba(255,255,255,0.03) !important; }
     body.dark-theme .text-main { color: #fff !important; }
     body.dark-theme .border-bottom-dark-soft { border-bottom: 1px solid rgba(255,255,255,0.05) !important; }
     body.dark-theme .btn-icon-ks { background: rgba(255,255,255,0.05); }
 
-    @media (max-width: 768px) {
-        .card-metric { margin-bottom: 1rem; }
-    }
+    @media (max-width: 768px) { .card-metric { margin-bottom: 1rem; } }
 </style>
 {% endblock %}
