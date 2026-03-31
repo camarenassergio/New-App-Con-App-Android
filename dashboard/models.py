@@ -403,7 +403,6 @@ class ZonaEntrega(models.Model):
     class Meta:
         verbose_name = "Zona de Entrega"
         verbose_name_plural = "Zonas de Entrega"
-        ordering = ['nombre']
 
     @property
     def text_color(self):

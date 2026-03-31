@@ -1486,7 +1486,13 @@ class ZonaEntregaListView(LoginRequiredMixin, ListView):
     model = ZonaEntrega
     template_name = "dashboard/zona_entrega_list.html"
     context_object_name = "zonas"
-    ordering = ['nombre']
+
+    def get_queryset(self):
+        from django.db.models.functions import Cast
+        from django.db.models import IntegerField
+        return ZonaEntrega.objects.annotate(
+            num_nombre=Cast('nombre', IntegerField())
+        ).order_by('num_nombre')
 
 class ZonaEntregaMapView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/zona_entrega_map.html"
@@ -1495,8 +1501,12 @@ class ZonaEntregaMapView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['tiene_zonas'] = ZonaEntrega.objects.exists()
         
-        # Agrupar por municipio para el catálogo lateral
-        zonas = ZonaEntrega.objects.all().order_by('municipio', 'nombre')
+        # Agrupar por municipio para el catálogo lateral con orden numérico
+        from django.db.models.functions import Cast
+        from django.db.models import IntegerField
+        zonas = ZonaEntrega.objects.annotate(
+            num_nombre=Cast('nombre', IntegerField())
+        ).order_by('municipio', 'num_nombre')
         zonas_por_municipio = {}
         for z in zonas:
             muni = z.municipio or "Sin Municipio"
