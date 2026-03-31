@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load dashboard_extras %}
 
 {% block page_title %}Obras de {{ cliente_obj.razon_social }}{% endblock %}
 
@@ -97,7 +98,7 @@
                             </div>
                             <div>
                                 <label class="x-small fw-bold text-muted text-uppercase tracking-widest mb-1 d-block opacity-75">Contacto Directo</label>
-                                <span class="small text-dark fw-bold d-block"><i class="fas fa-phone-alt me-2 text-info"></i>{{ obra.telefono_receptor|default:"--" }}</span>
+                                <span class="small text-dark fw-bold d-block"><i class="fas fa-phone-alt me-2 text-info"></i>{{ obra.telefono_receptor|default:"--"|phone_format }}</span>
                             </div>
                         </div>
                     </div>

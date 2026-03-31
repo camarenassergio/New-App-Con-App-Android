@@ -800,6 +800,8 @@ class PedidoForm(forms.ModelForm):
         
         # Datos de la "Nueva Dirección" (desde el POST raw o virtuales)
         alias_obra = cleaned_data.get('alias', '').strip()
+        colonia_obra = cleaned_data.get('colonia', '').strip()
+        
         usar_obra_manual = self.data.get('usar_obra_manual') == 'true'
         
         # 0. VALIDACIÓN DE NUEVA OBRA (Si aplica)

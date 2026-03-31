@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static dashboard_extras %}
 
 {% block page_title %}Administración de Clientes{% endblock %}
 
@@ -104,7 +104,7 @@
                             </td>
                             <td>
                                 <div class="x-small fw-bold text-muted">
-                                    <i class="fas fa-phone-alt text-primary me-2 opacity-50"></i>{{ cliente.telefono_principal|default:"S/TEL" }}
+                                    <i class="fas fa-phone-alt text-primary me-2 opacity-50"></i>{{ cliente.telefono_principal|default:"S/TEL"|phone_format }}
                                 </div>
                             </td>
                             <td class="text-center">

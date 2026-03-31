@@ -164,10 +164,11 @@
                             </td>
                             <td>
                                 <span class="badge rounded-pill px-3 py-2 fw-bold x-small shadow-xs border
-                                    {% if pedido.estado == 'REGISTRADO' %}bg-primary-subtle text-primary border-primary
-                                    {% elif pedido.estado == 'EN_RUTA' %}bg-primary-subtle text-primary border-primary
+                                    {% if pedido.estado == 'REGISTRADO' or pedido.estado == 'EN_PREPARACION' %}bg-primary-subtle text-primary border-primary
+                                    {% elif pedido.estado == 'EN_RUTA' or pedido.estado == 'ASIGNADO_A_RUTA' %}bg-info-subtle text-info border-info
                                     {% elif pedido.estado == 'ENTREGADO' %}bg-success-subtle text-success border-success
-                                    {% elif pedido.estado == 'PENDIENTE' %}bg-warning-subtle text-warning border-warning
+                                    {% elif pedido.estado == 'ENTREGA_PARCIAL' %}bg-warning-subtle text-warning border-warning
+                                    {% elif pedido.estado == 'CANCELADO' %}bg-danger-subtle text-danger border-danger
                                     {% else %}bg-secondary-subtle text-muted border-secondary{% endif %}">
                                     <i class="fas fa-circle me-1 x-small opacity-100"></i>{{ pedido.get_estado_display|upper }}
                                 </span>
