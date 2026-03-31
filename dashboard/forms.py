@@ -568,7 +568,11 @@ class ZonaEntregaForm(forms.ModelForm):
             'route_waypoints',
         ]
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Zona Norte'}),
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control bg-light-subtle opacity-75', 
+                'placeholder': 'Autogenerado...',
+                'readonly': 'readonly'
+            }),
             'municipio': forms.TextInput(attrs={
                 'class': 'form-control bg-light-subtle opacity-75', 
                 'placeholder': 'Autocalculado...',
@@ -576,9 +580,18 @@ class ZonaEntregaForm(forms.ModelForm):
             }),
             'codigos_postales': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ej. 50000, 50010, 50020 (Separados por coma)'}),
             'colonias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Lista de colonias representativas'}),
-            'tiempo_traslado_minutos': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
-            'distancia_km': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'min': 0}),
-            'tarifa_flete': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0}),
+            'tiempo_traslado_minutos': forms.NumberInput(attrs={
+                'class': 'form-control bg-light-subtle opacity-75',
+                'min': 0, 'readonly': 'readonly', 'placeholder': 'Auto'
+            }),
+            'distancia_km': forms.NumberInput(attrs={
+                'class': 'form-control bg-light-subtle opacity-75',
+                'min': 0, 'readonly': 'readonly', 'placeholder': 'Auto'
+            }),
+            'tarifa_flete': forms.NumberInput(attrs={
+                'class': 'form-control bg-light-subtle opacity-75',
+                'min': 0, 'readonly': 'readonly', 'placeholder': 'Auto'
+            }),
             'costo_maniobra': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0}),
             'color_hex': forms.TextInput(attrs={'class': 'form-control form-control-color', 'type': 'color'}),
             'geojson_data': forms.HiddenInput(attrs={'id': 'id_geojson_data'}),

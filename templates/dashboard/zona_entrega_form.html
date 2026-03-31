@@ -19,7 +19,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-4" id="page-root" data-modo-crear="{% if object %}false{% else %}true{% endif %}">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 24px;">
@@ -63,7 +63,7 @@
                                         <h5 class="mb-0 fw-bold text-secondary text-uppercase tracking-wide fs-6">Identidad de Zona</h5>
                                     </div>
                                     <div class="mb-4">
-                                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Nombre Identificador</label>
+                                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">ID de Zona (Autogenerado)</label>
                                         {{ form.nombre|as_crispy_field }}
                                     </div>
                                     <div class="mb-4">
@@ -106,14 +106,31 @@
                             <!-- Columna Derecha: Mapa y Previsualización -->
                             <div class="col-lg-6">
                                 <div id="preview-map-container" class="rounded-4 overflow-hidden border shadow-sm position-sticky" style="top: 2rem;">
-                                    <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0 fw-bold text-uppercase small"><i class="fas fa-eye me-2"></i>Previsualización Mapa</h6>
-                                        <span class="badge bg-white text-primary border rounded-pill shadow-xs x-small px-3 py-2">
-                                            <i class="fas fa-sync-alt fa-spin me-1"></i>Automático
-                                        </span>
+                                    <div class="p-3 border-bottom" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0 fw-bold text-uppercase small"><i class="fas fa-map me-2 text-primary"></i>Mapa de Referencia</h6>
+                                            <span class="badge bg-primary text-white rounded-pill x-small px-3 py-1">
+                                                <i class="fas fa-layer-group me-1"></i>Interactivo
+                                            </span>
+                                        </div>
+                                        <!-- Leyenda visual -->
+                                        <div class="d-flex flex-wrap gap-3 mt-1">
+                                            <div class="d-flex align-items-center gap-1">
+                                                <span style="display:inline-block;width:22px;height:10px;background:rgba(51,136,255,0.15);border:2px solid #3388ff;border-radius:3px;"></span>
+                                                <small class="text-muted" style="font-size:.72rem;">Zonas existentes</small>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <span style="display:inline-block;width:22px;height:10px;background:rgba(255,107,53,0.30);border:2px dashed #ff6b35;border-radius:3px;"></span>
+                                                <small class="text-muted" style="font-size:.72rem;">Nueva zona (CP ingresados)</small>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <span style="display:inline-block;width:22px;height:4px;background:#ff6b35;border-radius:3px;opacity:.65;"></span>
+                                                <small class="text-muted" style="font-size:.72rem;">Ruta CEDIS → zona</small>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div id="preview-map" style="height: 450px; width: 100%;"></div>
-                                    
+                                    <div id="preview-map" style="height: 480px; width: 100%;"></div>
+
                                     <!-- Cotizador Badge Dinámico -->
                                     <div id="cotizaciones-container" class="p-4 bg-white border-top" style="display: none;">
                                         <h6 class="fw-bold mb-3 small text-uppercase text-primary"><i class="fas fa-calculator me-2"></i>Tarifas Sugeridas</h6>
@@ -122,6 +139,7 @@
                                     </div>
                                 </div>
                             </div>
+
                         </div>
 
                         <div style="display: none;">
@@ -129,16 +147,131 @@
                             {{ form.route_geojson }}{{ form.route_waypoints }}
                         </div>
 
-                        <!-- Botones -->
-                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-4 mt-5 pt-4 border-top">
+                        <!-- ── Panel de Decisión ─────────────────────────────── -->
+                        <div id="decision-panel" class="mt-5 pt-4 border-top">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <i class="fas fa-lightbulb text-warning fs-5"></i>
+                                <h6 class="mb-0 fw-bold">¿Qué deseas hacer con estos CPs?</h6>
+                                <span class="badge bg-warning text-dark rounded-pill ms-auto" style="font-size:.72rem;">Acción requerida</span>
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <!-- Opción A: Nueva zona -->
+                                <div class="col-md-6">
+                                    <div id="card-nueva" class="decision-card active-nueva p-3 bg-light h-100"
+                                         onclick="setDecisionMode('nueva')">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-3 d-flex align-items-center justify-content-center"
+                                                 style="width:44px;height:44px;background:rgba(13,110,253,.12);flex-shrink:0;">
+                                                <i class="fas fa-plus-circle text-primary fs-5"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold small">Crear nueva zona</div>
+                                                <div class="text-muted" style="font-size:.78rem;">Registrar un área independiente con estos CPs</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Opción B: Agregar a existente -->
+                                <div class="col-md-6">
+                                    <div id="card-agregar" class="decision-card p-3 bg-light h-100"
+                                         onclick="setDecisionMode('agregar')">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-3 d-flex align-items-center justify-content-center"
+                                                 style="width:44px;height:44px;background:rgba(249,115,22,.12);flex-shrink:0;">
+                                                <i class="fas fa-layer-group" style="color:#f97316;font-size:1.15rem;"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold small">Agregar a zona existente</div>
+                                                <div class="text-muted" style="font-size:.78rem;">Ampliar la cobertura de una zona ya registrada</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Selector de zona (solo visible en modo agregar) -->
+                            <div id="zona-selector-wrap" class="p-3 rounded-4 border" style="border-color:#f97316 !important;background:rgba(249,115,22,.04);">
+                                <label class="form-label fw-bold small text-uppercase mb-2" style="color:#f97316;">
+                                    <i class="fas fa-search-location me-1"></i>Selecciona la zona destino
+                                </label>
+                                <select id="zona-destino-select" class="form-select mb-3">
+                                    <option value="">— Elige una zona existente —</option>
+                                    {% for zona in zonas_existentes %}
+                                    <option value="{{ zona.id }}"
+                                            data-color="{{ zona.color_hex }}"
+                                            data-nombre="{{ zona.nombre }}"
+                                            data-cps="{{ zona.codigos_postales }}">
+                                        {{ zona.nombre }} ({{ zona.municipio }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <!-- Preview de CPs a agregar -->
+                                <div id="cp-preview" class="d-none p-3 rounded-3 mb-3"
+                                     style="background:rgba(249,115,22,.08);border:1px dashed #f97316;">
+                                    <div class="small fw-bold mb-1" style="color:#ea580c;"><i class="fas fa-info-circle me-1"></i>Resumen de cambios</div>
+                                    <div id="cp-preview-content" class="small text-muted"></div>
+                                </div>
+                                <button type="button" id="btn-confirmar-agregar"
+                                        class="btn w-100 fw-bold rounded-pill py-2 disabled"
+                                        style="background:#f97316;color:#fff;">
+                                    <span id="btn-agregar-text"><i class="fas fa-check me-2"></i>Confirmar y Agregar CPs</span>
+                                    <span id="btn-agregar-loading" class="d-none">
+                                        <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Botones del formulario principal -->
+                        <div id="main-form-buttons"
+                             class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-4 mt-5 pt-4 border-top">
                             <a href="{% url 'dashboard:zona_entrega_list' %}" class="btn btn-link text-muted text-decoration-none fw-bold">
                                 <i class="fas fa-arrow-left me-2"></i>Cancelar y Volver
                             </a>
-                            <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-lg fs-5" style="min-width: 250px;">
+                            <button id="btn-guardar-zona" type="submit"
+                                    class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-lg fs-5"
+                                    style="min-width: 250px;">
                                 GUARDAR ZONA<i class="fas fa-check-circle ms-2"></i>
                             </button>
                         </div>
                     </form>
+
+                    <!-- Modal de confirmación -->
+                    <div id="confirm-overlay">
+                        <div id="confirm-box">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                     style="width:48px;height:48px;background:rgba(249,115,22,.15);flex-shrink:0;">
+                                    <i class="fas fa-exclamation-triangle" style="color:#f97316;font-size:1.2rem;"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-bold">Confirmar fusión de CPs</h5>
+                                    <small class="text-muted">Esta acción modifica una zona existente</small>
+                                </div>
+                            </div>
+                            <div id="confirm-body" class="mb-4 small"></div>
+                            <div class="d-flex gap-3">
+                                <button type="button" class="btn btn-outline-secondary flex-fill rounded-pill"
+                                        onclick="closeConfirm()">Cancelar</button>
+                                <button type="button" id="confirm-yes"
+                                        class="btn flex-fill rounded-pill fw-bold"
+                                        style="background:#f97316;color:#fff;"
+                                        onclick="ejecutarAgregarCP()">Sí, agregar CPs</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Toast de resultado -->
+                    <div id="zona-toast">
+                        <div id="zona-toast-inner" class="d-flex align-items-start gap-3 p-4">
+                            <i id="toast-icon" class="fas fa-check-circle fs-4 mt-1"></i>
+                            <div>
+                                <div id="toast-title" class="fw-bold mb-1"></div>
+                                <div id="toast-body" class="small"></div>
+                            </div>
+                            <button type="button" class="btn-close ms-auto" onclick="hideToast()"></button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -153,22 +286,93 @@
         border-radius: 10px; font-weight: 800; font-size: 0.9rem;
         box-shadow: 0 4px 12px rgba(var(--primary-blue-rgb), 0.2);
     }
-    
+
     .bg-light-subtle { background-color: rgba(var(--primary-blue-rgb), 0.03) !important; }
     body.dark-theme .bg-light-subtle { background-color: rgba(255, 255, 255, 0.05) !important; }
-    
+
     .form-control, .form-select { border-radius: 12px; }
-    
+
     #preview-map { background: #f8f9fa; }
-    .leaflet-container { font-family: 'Inter', sans-serif !important; border-radius: 0 0 24px 24px; }
-    
+    .leaflet-container { font-family: 'Inter', sans-serif !important; }
+
     .htmx-indicator { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
     .htmx-request .htmx-indicator { opacity: 1; pointer-events: auto; }
+
+    /* ── Panel de Decisión ──────────────────────────────────── */
+    #decision-panel {
+        display: none;
+        animation: slideDown 0.35s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .decision-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        border-radius: 16px;
+    }
+    .decision-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+    .decision-card.active-nueva {
+        border-color: var(--primary-blue, #0d6efd);
+        background: rgba(13,110,253,.06) !important;
+    }
+    .decision-card.active-agregar {
+        border-color: #f97316;
+        background: rgba(249,115,22,.06) !important;
+    }
+    #zona-selector-wrap {
+        display: none;
+        animation: slideDown 0.3s ease forwards;
+    }
+    /* ── Toast ─────────────────────────────────────────────── */
+    #zona-toast {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 99999;
+        min-width: 300px;
+        max-width: 420px;
+        border-radius: 14px;
+        box-shadow: 0 8px 32px rgba(0,0,0,.18);
+        opacity: 0;
+        transform: translateY(12px);
+        transition: all 0.35s ease;
+        pointer-events: none;
+    }
+    #zona-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+    /* ── Modal de Confirmación ──────────────────────────────── */
+    #confirm-overlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,.5);
+        z-index: 99998;
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+    }
+    #confirm-overlay.show { display: flex; }
+    #confirm-box {
+        background: var(--bg-card, #fff);
+        border-radius: 20px;
+        max-width: 480px;
+        width: 90%;
+        padding: 2rem;
+        box-shadow: 0 20px 60px rgba(0,0,0,.25);
+        animation: slideDown 0.3s ease;
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -178,144 +382,558 @@ document.addEventListener("DOMContentLoaded", function() {
     const colorInput = document.getElementById("id_color_hex");
     const routeGeojsonInput = document.getElementById("id_route_geojson");
     const routeWaypointsInput = document.getElementById("id_route_waypoints");
-    
-    let map = null, centerMarker = null, routeLayer = null;
+
     const CEDIS_COORDS = [19.4638, -98.8835];
 
     const tiempoInput = document.getElementById("id_tiempo_traslado_minutos");
     const distanciaInput = document.getElementById("id_distancia_km");
-    
+
     if (tiempoInput) { tiempoInput.readOnly = true; tiempoInput.classList.add('bg-light-subtle', 'opacity-75'); }
     if (distanciaInput) { distanciaInput.readOnly = true; distanciaInput.classList.add('bg-light-subtle', 'opacity-75'); }
     if (municipioInput) { municipioInput.readOnly = true; municipioInput.classList.add('bg-light-subtle', 'opacity-75'); }
 
-    function initMap() {
-        if (map) return;
-        map = L.map('preview-map').setView(CEDIS_COORDS, 11);
-        
-        const isDark = document.body.classList.contains('dark-theme');
-        const tileUrl = isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
-        L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(map);
-        
-        const cedisIcon = L.divIcon({
-            html: '<i class="fas fa-warehouse" style="color: var(--primary-red); font-size: 1.5rem;"></i>',
-            className: 'custom-div-icon', iconSize: [24, 24], iconAnchor: [12, 12]
-        });
-        L.marker(CEDIS_COORDS, {icon: cedisIcon}).addTo(map).bindPopup("CEDIS Central");
-        
-        if (routeGeojsonInput && routeGeojsonInput.value) {
-            try {
-                const geom = JSON.parse(routeGeojsonInput.value);
-                const zCol = colorInput.value || '#3388ff';
-                routeLayer = L.geoJSON(geom, { style: { color: zCol, weight: 6, opacity: 0.6 } }).addTo(map);
-                if (routeWaypointsInput.value) {
-                    const wps = JSON.parse(routeWaypointsInput.value);
-                    const dest = wps[wps.length - 1];
-                    if (dest) {
-                        centerMarker = L.marker([dest.lat, dest.lng], {
-                            icon: L.divIcon({
-                                html: `<i class="fas fa-map-marker-alt" style="color: ${zCol}; font-size: 1.8rem;"></i>`,
-                                className: 'custom-div-icon', iconSize: [30, 42], iconAnchor: [15, 42]
-                            })
-                        }).addTo(map);
-                        map.fitBounds(routeLayer.getBounds());
-                    }
+    // ─── INIT MAP ──────────────────────────────────────────────────────────────
+    const isDark = document.body.classList.contains('dark-theme');
+    const darkUrl  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    const lightUrl = 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+    let currentTileUrl = isDark ? darkUrl : lightUrl;
+
+    const map = L.map('preview-map').setView(CEDIS_COORDS, 11);
+    window._leafletMap = map;  // Exponer para el panel de decisión
+    window._zonaLayerMap = {}; // Exponer mapa zona_id → layer
+    let tileLayer = L.tileLayer(currentTileUrl, { maxZoom: 19 }).addTo(map);
+
+    // CEDIS marker
+    const cedisIcon = L.divIcon({
+        html: '<i class="fas fa-warehouse" style="color: var(--primary-red); font-size: 1.5rem;"></i>',
+        className: 'custom-div-icon', iconSize: [24, 24], iconAnchor: [12, 12]
+    });
+    L.marker(CEDIS_COORDS, {icon: cedisIcon}).addTo(map).bindPopup("CEDIS Central – Casa Lupita");
+
+    // ─── CAPAS DE ESTADO ───────────────────────────────────────────────────────
+    let existingZonesLayer = null;   // Polígonos de zonas ya registradas
+    let newZonePolygonLayer = null;  // Polígono de la zona que se está creando
+    let routeLayer = null;           // Línea de ruta OSRM
+    let centerMarker = null;         // Pin del centroide de la nueva zona
+
+    // ─── CARGAR ZONAS EXISTENTES ───────────────────────────────────────────────
+    fetch('{% url "dashboard:zonas_geojson_api" %}')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.features || data.features.length === 0) return;
+
+            existingZonesLayer = L.geoJSON(data, {
+                style: function(feature) {
+                    const zColor = feature.properties.color || '#3388ff';
+                    return {
+                        color: zColor,
+                        weight: 2,
+                        fillColor: zColor,
+                        fillOpacity: 0.12,
+                        dashArray: null
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    const p = feature.properties;
+                    const colInfo = p.colonias ? `<hr style="margin:4px 0"><small><b>Colonias:</b> ${p.colonias}</small>` : '';
+                    layer.bindTooltip(p.nombre, { permanent: false, direction: 'center' });
+                    layer.bindPopup(`
+                        <div style="font-family:'Inter',sans-serif; min-width:160px;">
+                            <h6 style="color:${p.color};margin-top:0;border-bottom:1px solid #eee;padding-bottom:4px;">${p.nombre}</h6>
+                            <b>Municipio:</b> ${p.municipio}<br>
+                            <b>Distancia:</b> ${p.distancia} km<br>
+                            <b>Tiempo:</b> ${p.tiempo} min<br>
+                            <b>Tarifa:</b> $${p.tarifa}
+                            ${colInfo}
+                        </div>
+                    `);
+                    // Registrar en window para que el panel de decisión pueda resaltar
+                    if (p.id) window._zonaLayerMap[p.id] = layer;
                 }
-            } catch(e) {}
-        }
+            }).addTo(map);
+        })
+        .catch(e => console.error("Error cargando zonas existentes:", e));
+
+    // ─── INICIALIZAR CON DATOS EXISTENTES (MODO EDICIÓN) ───────────────────────
+    if (routeGeojsonInput && routeGeojsonInput.value) {
+        try {
+            const geom = JSON.parse(routeGeojsonInput.value);
+            const zCol = colorInput.value || '#3388ff';
+            routeLayer = L.geoJSON(geom, { style: { color: zCol, weight: 5, opacity: 0.7, dashArray: '8,12' } }).addTo(map);
+            if (routeWaypointsInput.value) {
+                const wps = JSON.parse(routeWaypointsInput.value);
+                const dest = wps[wps.length - 1];
+                if (dest) {
+                    centerMarker = L.marker([dest.lat, dest.lng], {
+                        icon: L.divIcon({
+                            html: `<i class="fas fa-map-marker-alt" style="color:${zCol};font-size:1.8rem;"></i>`,
+                            className: 'custom-div-icon', iconSize: [30,42], iconAnchor: [15,42]
+                        })
+                    }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds(), { padding: [30, 30] });
+                }
+            }
+        } catch(e) { console.warn("Error cargando datos de edición", e); }
     }
 
-    function showRoute(destLatLng) {
-        const zCol = colorInput.value || '#3388ff';
-        if (centerMarker) map.removeLayer(centerMarker);
-        centerMarker = L.marker([destLatLng.lat, destLatLng.lng], {
-            icon: L.divIcon({
-                html: `<i class="fas fa-map-marker-alt" style="color: ${zCol}; font-size: 1.8rem;"></i>`,
-                className: 'custom-div-icon', iconSize: [30, 42], iconAnchor: [15, 42]
+    // ─── DIBUJAR POLÍGONO DE NUEVA ZONA ────────────────────────────────────────
+    function drawNewZonePolygon(cpsStr) {
+        // Limpiar capa anterior de la nueva zona
+        if (newZonePolygonLayer) { map.removeLayer(newZonePolygonLayer); newZonePolygonLayer = null; }
+
+        const zCol = colorInput.value || '#ff6b35';
+
+        fetch(`{% url 'dashboard:geojson_por_cp_api' %}?cps=${encodeURIComponent(cpsStr)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.features || data.features.length === 0) return;
+
+                newZonePolygonLayer = L.geoJSON(data, {
+                    style: {
+                        color: zCol,
+                        weight: 3,
+                        fillColor: zCol,
+                        fillOpacity: 0.30,
+                        dashArray: '6, 8',
+                        opacity: 1
+                    }
+                }).addTo(map);
+
+                // Guardar el GeoJSON del polígono en el campo oculto
+                const geojsonInput = document.getElementById("id_geojson_data");
+                if (geojsonInput) {
+                    geojsonInput.value = JSON.stringify(data);
+                }
+
+                // Centrar en el polígono nuevo + calcular centroide para la ruta
+                const bounds = newZonePolygonLayer.getBounds();
+                map.flyToBounds(bounds, { padding: [40, 40], duration: 1.2 });
+
+                // Calcular centroide desde el bounds y lanzar cálculo de ruta
+                const center = bounds.getCenter();
+                showRoute({ lat: center.lat, lng: center.lng });
+
+                // Actualizar el pin central
+                if (centerMarker) { map.removeLayer(centerMarker); }
+                centerMarker = L.marker([center.lat, center.lng], {
+                    icon: L.divIcon({
+                        html: `<i class="fas fa-map-marker-alt" style="color:${zCol}; font-size:1.8rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));"></i>`,
+                        className: 'custom-div-icon', iconSize: [30, 42], iconAnchor: [15, 42]
+                    })
+                }).addTo(map);
+
+                // Mostrar panel de decisión solo en MODO CREAR (no en edición)
+                if (window._modoCrear) showPanelDecision(cpsStr);
             })
-        }).addTo(map);
+            .catch(e => {
+                console.error("Error fetch polígono:", e);
+                // Fallback: sólo calcular centroide y mostrar pin
+                fetch(`{% url 'dashboard:calcular_centroide_api' %}?cps=${encodeURIComponent(cpsStr)}`)
+                    .then(r => r.json())
+                    .then(centroid => {
+                        if (centroid.lat && centroid.lon) {
+                            map.setView([centroid.lat, centroid.lon], 13);
+                            showRoute({ lat: centroid.lat, lng: centroid.lon });
+                        }
+                    });
+            });
+    }
+
+    // ─── RUTA OSRM ─────────────────────────────────────────────────────────────
+    function showRoute(destLatLng) {
+        if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+        const zCol = colorInput.value || '#ff6b35';
 
         const urlOSRM = `https://router.project-osrm.org/route/v1/driving/${CEDIS_COORDS[1]},${CEDIS_COORDS[0]};${destLatLng.lng},${destLatLng.lat}?overview=full&geometries=geojson`;
-        fetch(urlOSRM).then(r => r.json()).then(data => {
-            if (data.routes && data.routes.length > 0) {
+        fetch(urlOSRM)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.routes || data.routes.length === 0) return;
                 const route = data.routes[0];
-                if (routeLayer) map.removeLayer(routeLayer);
-                routeLayer = L.geoJSON(route.geometry, { style: { color: zCol, weight: 6, opacity: 0.6 } }).addTo(map);
-                const tMin = Math.round((route.duration * 1.45) / 60); 
-                const dKm = (route.distance / 1000).toFixed(1);
-                document.getElementById('id_tiempo_traslado_minutos').value = tMin;
-                document.getElementById('id_distancia_km').value = dKm;
-                routeGeojsonInput.value = JSON.stringify(route.geometry);
-                routeWaypointsInput.value = JSON.stringify([{lat: CEDIS_COORDS[0], lng: CEDIS_COORDS[1]}, {lat: destLatLng.lat, lng: destLatLng.lng}]);
+                routeLayer = L.geoJSON(route.geometry, {
+                    style: { color: zCol, weight: 4, opacity: 0.65, dashArray: '10, 14' }
+                }).addTo(map);
+
+                // Redondear tiempo y distancia hacia arriba (Math.ceil)
+                const tMin = Math.ceil((route.duration * 1.45) / 60);
+                const dKm  = Math.ceil(route.distance / 1000);
+                
+                if (tiempoInput) tiempoInput.value = tMin;
+                if (distanciaInput) distanciaInput.value = dKm;
+                if (routeGeojsonInput) routeGeojsonInput.value = JSON.stringify(route.geometry);
+                if (routeWaypointsInput) routeWaypointsInput.value = JSON.stringify([
+                    { lat: CEDIS_COORDS[0], lng: CEDIS_COORDS[1] },
+                    { lat: destLatLng.lat, lng: destLatLng.lng }
+                ]);
                 updateFlete(dKm, tMin);
-            }
-        });
+            })
+            .catch(e => console.warn("OSRM error:", e));
     }
 
+    // ─── CALCULAR FLETE SUGERIDO ───────────────────────────────────────────────
     function updateFlete(dKm, tMin) {
         fetch('{% url "dashboard:calcular_flete_api" %}', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
             body: JSON.stringify({ distancia_km: parseFloat(dKm), tiempo_minutos: parseFloat(tMin) })
         }).then(r => r.json()).then(fData => {
-            if(fData.status === 'ok') {
-                document.getElementById('cotizaciones-container').style.display = 'block';
-                const bDiv = document.getElementById('cotizaciones-badges');
-                const dDiv = document.getElementById('cotizacion-desglose');
-                bDiv.innerHTML = '';
-                const renderD = (c) => `<strong>${c.ejemplo_unidad}</strong>: $${c.desglose.subtotal_km.toFixed(1)} km + $${c.desglose.subtotal_tiempo.toFixed(1)} min = <strong>$${c.costo.toFixed(2)}</strong>`;
-                if (fData.cotizaciones.length > 0) {
-                    const pEsc = fData.cotizaciones[0];
-                    document.getElementById('id_tarifa_flete').value = pEsc.costo.toFixed(2);
-                    dDiv.innerHTML = renderD(pEsc);
-                    fData.cotizaciones.forEach((c, i) => {
-                        const btn = document.createElement('button'); btn.type = 'button';
-                        btn.className = i === 0 ? 'btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm' : 'btn btn-outline-secondary btn-sm rounded-pill px-3';
-                        btn.innerHTML = `🚚 ${c.tipo}: $${c.costo.toFixed(0)}`;
-                        btn.onclick = () => { [...bDiv.children].forEach(b => b.className = 'btn btn-outline-secondary btn-sm rounded-pill px-3'); btn.className = 'btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm'; document.getElementById('id_tarifa_flete').value = c.costo.toFixed(2); dDiv.innerHTML = renderD(c); };
-                        bDiv.appendChild(btn);
-                    });
-                }
+            if (fData.status !== 'ok') return;
+            document.getElementById('cotizaciones-container').style.display = 'block';
+            const bDiv = document.getElementById('cotizaciones-badges');
+            const dDiv = document.getElementById('cotizacion-desglose');
+            bDiv.innerHTML = '';
+            
+            // Render desglose visualizando el proceso interno
+            const renderD = c => `<strong>${c.ejemplo_unidad}</strong>: $${c.desglose.subtotal_km.toFixed(1)} km + $${c.desglose.subtotal_tiempo.toFixed(1)} min = <strong>$${Math.ceil(c.costo)}</strong> (redondeado)`;
+            
+            if (fData.cotizaciones.length > 0) {
+                const pEsc = fData.cotizaciones[0];
+                const fleteInput = document.getElementById('id_tarifa_flete');
+                if (fleteInput) fleteInput.value = Math.ceil(pEsc.costo);
+                dDiv.innerHTML = renderD(pEsc);
+                
+                fData.cotizaciones.forEach((c, i) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = i === 0 ? 'btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm' : 'btn btn-outline-secondary btn-sm rounded-pill px-3';
+                    btn.innerHTML = `🚚 ${c.tipo}: $${Math.ceil(c.costo)}`;
+                    btn.onclick = () => {
+                        [...bDiv.children].forEach(b => b.className = 'btn btn-outline-secondary btn-sm rounded-pill px-3');
+                        btn.className = 'btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm';
+                        if (fleteInput) fleteInput.value = Math.ceil(c.costo);
+                        dDiv.innerHTML = renderD(c);
+                    };
+                    bDiv.appendChild(btn);
+                });
+            }
+        }).catch(e => console.warn("Flete API error:", e));
+    }
+
+    // ─── ESCUCHAR CAMBIO DE COLOR ──────────────────────────────────────────────
+    if (colorInput) {
+        colorInput.addEventListener('input', function() {
+            const zCol = this.value || '#ff6b35';
+            if (newZonePolygonLayer) newZonePolygonLayer.setStyle({ color: zCol, fillColor: zCol, dashArray: '6,8' });
+            if (routeLayer) routeLayer.setStyle({ color: zCol });
+            if (centerMarker) {
+                centerMarker.setIcon(L.divIcon({
+                    html: `<i class="fas fa-map-marker-alt" style="color:${zCol}; font-size:1.8rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));"></i>`,
+                    className: 'custom-div-icon', iconSize: [30, 42], iconAnchor: [15, 42]
+                }));
             }
         });
     }
 
-    initMap();
-    
-    // Dynamic Theme Swapper for Map
+    // ─── ESCUCHAR CAMBIO DE TEMA ───────────────────────────────────────────────
     const themeObserver = new MutationObserver(() => {
-        if (map) {
-            const isDarkNow = document.body.classList.contains('dark-theme');
-            const newTileUrl = isDarkNow ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
-            
-            map.eachLayer(layer => {
-                if (layer instanceof L.TileLayer) map.removeLayer(layer);
-            });
-            L.tileLayer(newTileUrl, { maxZoom: 19 }).addTo(map);
-        }
+        const nowDark = document.body.classList.contains('dark-theme');
+        const newUrl = nowDark ? darkUrl : lightUrl;
+        map.eachLayer(l => { if (l instanceof L.TileLayer) map.removeLayer(l); });
+        tileLayer = L.tileLayer(newUrl, { maxZoom: 19 }).addTo(map);
     });
     themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
+    // ─── POLLING PARA RESIZE ───────────────────────────────────────────────────
+    const mapEl = document.getElementById('preview-map');
+    let lastW = mapEl.clientWidth, lastH = mapEl.clientHeight;
+    setInterval(() => {
+        const w = mapEl.clientWidth, h = mapEl.clientHeight;
+        if (w !== lastW || h !== lastH) { lastW = w; lastH = h; map.invalidateSize(); }
+    }, 500);
+    setTimeout(() => map.invalidateSize(), 600);
+
+    // ─── EVENTO PRINCIPAL: CODIGOS POSTALES ────────────────────────────────────
     if (cpInput) {
         let debounceTimer;
         cpInput.addEventListener("input", function() {
             clearTimeout(debounceTimer);
-            if (!this.value.trim()) return;
+            const val = this.value.trim();
+            if (!val) {
+                // Ocultar panel si se borran los CPs
+                hidePanelDecision();
+                return;
+            }
+
             debounceTimer = setTimeout(() => {
-                fetch(`{% url 'dashboard:colonias_por_cp_api' %}?cps=${encodeURIComponent(this.value)}`).then(r => r.json()).then(data => {
-                    if (data.colonias && data.colonias.length > 0) {
-                        if (coloniasInput) coloniasInput.value = data.colonias.join(', ');
-                        if (data.municipio && municipioInput) municipioInput.value = data.municipio;
-                        fetch(`{% url 'dashboard:calcular_centroide_api' %}?cps=${encodeURIComponent(this.value)}`).then(r => r.json()).then(centroid => {
-                            if (centroid.lat && centroid.lon) {
-                                map.setView([centroid.lat, centroid.lon], 12);
-                                showRoute({lat: centroid.lat, lng: centroid.lon});
-                            }
-                        });
-                    }
-                });
+                // 1. Obtener colonias y municipio
+                fetch(`{% url 'dashboard:colonias_por_cp_api' %}?cps=${encodeURIComponent(val)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.colonias && data.colonias.length > 0) {
+                            if (coloniasInput) coloniasInput.value = data.colonias.join(', ');
+                            if (data.municipio && municipioInput) municipioInput.value = data.municipio;
+                        }
+                    });
+
+                // 2. Dibujar polígono real de los CPs y calcular ruta/flete
+                drawNewZonePolygon(val);
             }, 800);
         });
     }
+
+    // Leer contexto Django desde data-attribute (sin template tags en JS)
+    window._modoCrear = document.getElementById('page-root')?.dataset.modoCrear !== 'false';
+
+    // Inicializar wiring del selector de zonas
+    _initZonaSelectorWiring();
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PANEL DE DECISIÓN — lógica fuera del DOMContentLoaded para scope global
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Estado compartido del panel
+let _panelMode = 'nueva';       // 'nueva' | 'agregar'
+let _selectedZonaId = null;     // ID de la zona destino elegida
+let _currentCPs = '';           // CPs que el usuario tiene escritos
+let _highlightedZoneLayer = null;  // Capa resaltada en el mapa (referencia externa)
+
+// Llamada desde drawNewZonePolygon cuando hay polígono válido
+function showPanelDecision(cpsStr) {
+    _currentCPs = cpsStr;
+    const panel = document.getElementById('decision-panel');
+    if (!panel) return;
+    panel.style.display = 'block';
+    // Siempre reseteamos al modo "nueva" al re-mostrar el panel
+    setDecisionMode('nueva');
+}
+
+function hidePanelDecision() {
+    const panel = document.getElementById('decision-panel');
+    if (panel) panel.style.display = 'none';
+    _selectedZonaId = null;
+}
+
+function setDecisionMode(mode) {
+    _panelMode = mode;
+    const cardNueva   = document.getElementById('card-nueva');
+    const cardAgregar = document.getElementById('card-agregar');
+    const selectorWrap = document.getElementById('zona-selector-wrap');
+    const btnGuardar  = document.getElementById('btn-guardar-zona');
+
+    if (mode === 'nueva') {
+        cardNueva.classList.add('active-nueva');
+        cardNueva.classList.remove('active-agregar');
+        cardAgregar.classList.remove('active-nueva', 'active-agregar');
+        selectorWrap.style.display = 'none';
+        // Habilitar submit del form normal
+        if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.style.opacity = '1'; }
+        // Quitar resaltado del mapa
+        clearZoneHighlight();
+    } else {
+        cardAgregar.classList.add('active-agregar');
+        cardAgregar.classList.remove('active-nueva');
+        cardNueva.classList.remove('active-nueva', 'active-agregar');
+        selectorWrap.style.display = 'block';
+        // Deshabilitar submit del form mientras se está en modo "agregar"
+        if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.style.opacity = '.45'; }
+        // Reset selector
+        const sel = document.getElementById('zona-destino-select');
+        if (sel) sel.value = '';
+        _selectedZonaId = null;
+        updateBtnAgregar();
+        hideCpPreview();
+    }
+}
+
+function clearZoneHighlight() {
+    if (_highlightedZoneLayer && window._leafletMap) {
+        // Restaurar estilo default de la zona resaltada
+        _highlightedZoneLayer.setStyle({ fillOpacity: 0.12, weight: 2 });
+        _highlightedZoneLayer = null;
+    }
+}
+
+// Wiring del selector de zonas — se ejecuta tras el DOM listo
+function _initZonaSelectorWiring() {
+    const sel = document.getElementById('zona-destino-select');
+    if (!sel) return;
+
+    sel.addEventListener('change', function() {
+        const opt = this.options[this.selectedIndex];
+        _selectedZonaId = this.value || null;
+
+        if (!_selectedZonaId) {
+            updateBtnAgregar();
+            hideCpPreview();
+            clearZoneHighlight();
+            return;
+        }
+
+        const zonaColor  = opt.dataset.color  || '#3388ff';
+        const zonaNombre = opt.dataset.nombre || '';
+        const zonaCPs    = opt.dataset.cps    || '';
+
+        highlightZoneOnMap(_selectedZonaId, zonaColor);
+
+        const cpsActuales = new Set(zonaCPs.split(',').map(s => s.trim()).filter(Boolean));
+        const cpsNuevos   = new Set(_currentCPs.split(',').map(s => s.trim()).filter(Boolean));
+        const cpsNetos    = [...cpsNuevos].filter(cp => !cpsActuales.has(cp));
+        const cpsDuplicados = [...cpsNuevos].filter(cp => cpsActuales.has(cp));
+
+        showCpPreview(zonaNombre, cpsNetos, cpsDuplicados);
+        updateBtnAgregar();
+    });
+}
+
+function highlightZoneOnMap(zonaId, color) {
+    clearZoneHighlight();
+    if (!window._zonaLayerMap) return;
+    const layer = window._zonaLayerMap[zonaId];
+    if (!layer) return;
+    layer.setStyle({ fillOpacity: 0.45, weight: 4, color: color });
+    layer.bringToFront();
+    _highlightedZoneLayer = layer;
+    if (window._leafletMap) {
+        window._leafletMap.flyToBounds(layer.getBounds(), { padding: [40, 40], duration: 1.0 });
+    }
+}
+
+function showCpPreview(zonaNombre, netos, duplicados) {
+    const wrap = document.getElementById('cp-preview');
+    const body = document.getElementById('cp-preview-content');
+    if (!wrap || !body) return;
+
+    let html = '';
+    if (netos.length > 0) {
+        html += `<p class="mb-1">✅ <strong>${netos.length} CP(s) nuevos</strong> se agregarán a <strong>${zonaNombre}</strong>:<br>
+                 <span class="font-monospace">${netos.join(', ')}</span></p>`;
+    } else {
+        html += `<p class="mb-1 text-warning">⚠️ Todos los CPs ya están en <strong>${zonaNombre}</strong>. No habrá cambios.</p>`;
+    }
+    if (duplicados.length > 0) {
+        html += `<p class="mb-0 text-muted">ℹ️ Ya existen: <span class="font-monospace">${duplicados.join(', ')}</span></p>`;
+    }
+    body.innerHTML = html;
+    wrap.classList.remove('d-none');
+}
+
+function hideCpPreview() {
+    const wrap = document.getElementById('cp-preview');
+    if (wrap) wrap.classList.add('d-none');
+}
+
+function updateBtnAgregar() {
+    const btn = document.getElementById('btn-confirmar-agregar');
+    if (!btn) return;
+    if (_selectedZonaId) {
+        btn.classList.remove('disabled');
+        btn.onclick = openConfirm;
+    } else {
+        btn.classList.add('disabled');
+        btn.onclick = null;
+    }
+}
+
+// ─── Modal de confirmación ─────────────────────────────────────────────────
+function openConfirm() {
+    if (!_selectedZonaId) return;
+    const sel  = document.getElementById('zona-destino-select');
+    const opt  = sel ? sel.options[sel.selectedIndex] : null;
+    const nombre = opt ? opt.dataset.nombre : 'la zona';
+    const zonaCPs = opt ? (opt.dataset.cps || '') : '';
+
+    const cpsActuales = new Set(zonaCPs.split(',').map(s => s.trim()).filter(Boolean));
+    const cpsNuevos   = new Set(_currentCPs.split(',').map(s => s.trim()).filter(Boolean));
+    const cpsNetos    = [...cpsNuevos].filter(cp => !cpsActuales.has(cp));
+
+    const body = document.getElementById('confirm-body');
+    if (body) {
+        if (cpsNetos.length === 0) {
+            body.innerHTML = `<div class="alert alert-warning mb-0">Todos los CPs ingresados ya pertenecen a <strong>${nombre}</strong>. No habrá cambios en el sistema.</div>`;
+        } else {
+            body.innerHTML = `
+                <p class="mb-2">Se agregarán <strong>${cpsNetos.length} código(s) postal(es)</strong> a la zona <strong>"${nombre}"</strong>:</p>
+                <div class="p-2 rounded-3 font-monospace mb-2" style="background:rgba(249,115,22,.08);border:1px dashed #f97316;">
+                    ${cpsNetos.join('&nbsp;&nbsp;')}
+                </div>
+                <p class="mb-0 text-muted">El sistema recalculará automáticamente el polígono geográfico de la zona.</p>`;
+        }
+    }
+    document.getElementById('confirm-overlay').classList.add('show');
+}
+
+function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('show');
+}
+
+// ─── Ejecutar llamada al API ───────────────────────────────────────────────
+function ejecutarAgregarCP() {
+    if (!_selectedZonaId || !_currentCPs) return;
+    closeConfirm();
+
+    // Loading state
+    document.getElementById('btn-agregar-text').classList.add('d-none');
+    document.getElementById('btn-agregar-loading').classList.remove('d-none');
+    document.getElementById('btn-confirmar-agregar').classList.add('disabled');
+
+    fetch('{% url "dashboard:agregar_cp_a_zona_api" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ zona_id: _selectedZonaId, cps: _currentCPs })
+    })
+    .then(r => r.json())
+    .then(data => {
+        // Restaurar button
+        document.getElementById('btn-agregar-text').classList.remove('d-none');
+        document.getElementById('btn-agregar-loading').classList.add('d-none');
+
+        if (data.status === 'ok') {
+            showToast('success', '¡CPs agregados!', data.message);
+            // Redirigir a edición de la zona fusionada tras 2.5s
+            setTimeout(() => {
+                window.location.href = data.redirect_url;
+            }, 2500);
+        } else if (data.status === 'info') {
+            showToast('info', 'Sin cambios', data.message);
+            document.getElementById('btn-confirmar-agregar').classList.remove('disabled');
+        } else {
+            showToast('error', 'Error', data.error || 'No se pudo completar la operación.');
+            document.getElementById('btn-confirmar-agregar').classList.remove('disabled');
+        }
+    })
+    .catch(err => {
+        document.getElementById('btn-agregar-text').classList.remove('d-none');
+        document.getElementById('btn-agregar-loading').classList.add('d-none');
+        document.getElementById('btn-confirmar-agregar').classList.remove('disabled');
+        showToast('error', 'Error de red', 'No se pudo conectar con el servidor.');
+        console.error(err);
+    });
+}
+
+// ─── Toast helper ──────────────────────────────────────────────────────────
+function showToast(type, title, body) {
+    const toast  = document.getElementById('zona-toast');
+    const inner  = document.getElementById('zona-toast-inner');
+    const icon   = document.getElementById('toast-icon');
+    const tTitle = document.getElementById('toast-title');
+    const tBody  = document.getElementById('toast-body');
+
+    const styles = {
+        success: { bg: '#dcfce7', border: '#16a34a', iconClass: 'fas fa-check-circle', iconColor: '#16a34a' },
+        info:    { bg: '#eff6ff', border: '#3b82f6', iconClass: 'fas fa-info-circle',  iconColor: '#3b82f6' },
+        error:   { bg: '#fef2f2', border: '#dc2626', iconClass: 'fas fa-times-circle', iconColor: '#dc2626' },
+    };
+    const s = styles[type] || styles.info;
+
+    toast.style.background  = s.bg;
+    toast.style.borderLeft  = `4px solid ${s.border}`;
+    icon.className = `${s.iconClass} fs-4 mt-1`;
+    icon.style.color = s.iconColor;
+    tTitle.textContent = title;
+    tBody.textContent  = body;
+
+    toast.classList.add('show');
+    // Auto-ocultar tras 5s (excepto en redirect)
+    setTimeout(hideToast, 5000);
+}
+
+function hideToast() {
+    document.getElementById('zona-toast').classList.remove('show');
+}
 </script>
 {% endblock %}
+

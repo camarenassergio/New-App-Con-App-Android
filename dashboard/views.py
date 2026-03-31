@@ -1562,6 +1562,27 @@ class ZonaEntregaCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     success_url = reverse_lazy('dashboard:zona_entrega_list')
     ajax_success_message = "¡Zona de Entrega creada exitosamente!"
 
+    def get_initial(self):
+        initial = super().get_initial()
+        
+        # Obtenemos todos los nombres, intentamos convertirlos a entero en Python
+        # para hacerlo "inteligente" robusto sin importar el motor de DB.
+        zonas = ZonaEntrega.objects.values_list('nombre', flat=True)
+        max_num = 0
+        for nombre in zonas:
+            if nombre and nombre.isdigit():
+                num = int(nombre)
+                if num > max_num:
+                    max_num = num
+        
+        initial['nombre'] = str(max_num + 1)
+        return initial
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['zonas_existentes'] = ZonaEntrega.objects.all().order_by('nombre')
+        return ctx
+
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Zona de Entrega creada exitosamente.")
@@ -1572,6 +1593,12 @@ class ZonaEntregaUpdateView(LoginRequiredMixin, AjaxSuccessMixin, UpdateView):
     form_class = ZonaEntregaForm
     template_name = "dashboard/zona_entrega_form.html"
     success_url = reverse_lazy('dashboard:zona_entrega_list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # Excluir la zona actual para no confundir al usuario
+        ctx['zonas_existentes'] = ZonaEntrega.objects.exclude(pk=self.object.pk).order_by('nombre')
+        return ctx
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -2038,6 +2065,96 @@ def calcular_centroide_zona_api(request):
         return JsonResponse({'lat': total_lat / count, 'lon': total_lon / count})
     else:
         return JsonResponse({'error': 'Geocoding failed for CPs'})
+
+def geojson_por_cp_api(request):
+    """
+    Retorna un FeatureCollection GeoJSON con los polígonos reales de los CPs indicados.
+    Útil para previsualizar la forma de una nueva zona en el formulario de alta.
+    """
+    import os
+    import json
+    from django.conf import settings
+
+    cps_param = request.GET.get('cps', '')
+    if not cps_param:
+        return JsonResponse({'type': 'FeatureCollection', 'features': []})
+
+    cps_limpios = set(cp.strip() for cp in cps_param.split(',') if cp.strip())
+    if not cps_limpios:
+        return JsonResponse({'type': 'FeatureCollection', 'features': []})
+
+    data_path = os.path.join(settings.BASE_DIR, 'dashboard', 'data', 'zonas_texcoco.json')
+    if not os.path.exists(data_path):
+        return JsonResponse({'type': 'FeatureCollection', 'features': [], 'error': 'Data missing'})
+
+    features = []
+    with open(data_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                feature = json.loads(line)
+                cp_val = feature.get('properties', {}).get('d_cp', '').strip()
+                if cp_val in cps_limpios:
+                    features.append(feature)
+            except Exception:
+                pass
+
+    return JsonResponse({'type': 'FeatureCollection', 'features': features})
+
+@login_required
+def agregar_cp_a_zona_api(request):
+    """
+    Agrega/fusiona códigos postales a una zona existente.
+    Reutiliza ZonaEntrega.save() completamente: recalcula GeoJSON, deduplica CPs
+    y limpia CPs de otras zonas de forma automática.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    import json as _json
+    try:
+        body = _json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'Payload inválido'}, status=400)
+
+    zona_id = body.get('zona_id')
+    nuevos_cps_raw = body.get('cps', '')
+
+    if not zona_id or not nuevos_cps_raw:
+        return JsonResponse({'error': 'Faltan parámetros: zona_id y cps son requeridos'}, status=400)
+
+    try:
+        zona = ZonaEntrega.objects.get(pk=zona_id)
+    except ZonaEntrega.DoesNotExist:
+        return JsonResponse({'error': 'Zona no encontrada'}, status=404)
+
+    # Calcular CPs netos a agregar (los que no están ya en la zona)
+    cps_nuevos = {cp.strip() for cp in nuevos_cps_raw.split(',') if cp.strip()}
+    cps_actuales = {cp.strip() for cp in (zona.codigos_postales or '').split(',') if cp.strip()}
+    cps_netos = cps_nuevos - cps_actuales
+
+    if not cps_netos:
+        return JsonResponse({
+            'status': 'info',
+            'message': f'Todos los CPs ingresados ya pertenecen a la zona "{zona.nombre}".',
+            'zona_nombre': zona.nombre,
+        })
+
+    # Fusionar y guardar — model.save() hace todo el resto
+    todos_cps = cps_actuales | cps_nuevos
+    zona.codigos_postales = ', '.join(sorted(todos_cps))
+    zona.save()
+
+    return JsonResponse({
+        'status': 'ok',
+        'message': f'Se agregaron {len(cps_netos)} CP(s) a la zona "{zona.nombre}" correctamente.',
+        'zona_nombre': zona.nombre,
+        'zona_id': zona.id,
+        'cps_agregados': sorted(list(cps_netos)),
+        'redirect_url': f'/dashboard/zonas/{zona.id}/editar/',
+    })
 
 from .models import ConfiguracionGeneral
 from .forms import ConfiguracionGeneralForm
