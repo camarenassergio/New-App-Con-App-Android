@@ -160,7 +160,7 @@
                                             {% include 'dashboard/clientes/_obra_form_fields.html' with form_id="pedido-nueva-obra" es_subform=True %}
                                         </div>
                                     </div>
-                                    <input type="hidden" name="usar_obra_manual" id="id_usar_obra_manual" value="{{ usar_obra_manual|yesno:'true,false' }}">
+                                    <input type="hidden" name="usar_obra_manual" id="id_usar_obra_manual" value="{% if request.POST.usar_obra_manual %}{{ request.POST.usar_obra_manual }}{% else %}{{ usar_obra_manual|yesno:'true,false' }}{% endif %}">
                                 </div>
                             </div>
                         </div>
@@ -424,17 +424,120 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        // --- RESTAURACIÓN DE POSICIÓN (Evita el desfase tras recarga por error) ---
+        // Limpiar errores visuales al interactuar
+        const inputMercancia = document.querySelector('textarea[name="productos_entregados_parcial"]');
+        if (inputMercancia) {
+            inputMercancia.addEventListener('input', () => {
+                inputMercancia.classList.remove('is-invalid');
+            });
+        }
+        const fileEvidencia = document.getElementById('id_evidencia_ticket');
+        if (fileEvidencia) {
+            fileEvidencia.addEventListener('change', () => {
+                const dz = document.getElementById('dndZone-evidencia_ticket');
+                if (dz) {
+                    dz.style.border = '';
+                    dz.style.backgroundColor = '';
+                }
+            });
+        }
+
+        // Restauración de Posición...
         const savedScroll = sessionStorage.getItem('pedido_form_scroll');
         if (savedScroll) {
             window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
             sessionStorage.removeItem('pedido_form_scroll');
         }
 
-        // Listener para capturar el scroll justo antes de enviar el formulario
-        const mainForm = document.querySelector('form');
+        // Listener para capturar el scroll justo antes de enviar el formulario y Validar Parcial frontalmente
+        const mainForm = document.querySelector('form.needs-validation');
         if (mainForm) {
-            mainForm.addEventListener('submit', () => {
+            mainForm.addEventListener('submit', (evt) => {
+                // 1. Validación interactiva de Entrega Parcial
+                const switchParcial = document.querySelector('input[name="recoleccion_parcial"]');
+                const pnlParcial = document.getElementById('partial-products-panel');
+                
+                if (switchParcial && switchParcial.checked) {
+                    const ticketInput = document.getElementById('id_evidencia_ticket');
+                    const productosTA = document.querySelector('textarea[name="productos_entregados_parcial"]');
+                    let hayError = false;
+                    let camposFaltantes = [];
+
+                    // Checar detalle de mercancía
+                    if (!productosTA || productosTA.value.trim() === '') {
+                        hayError = true;
+                        camposFaltantes.push('Detalle de Mercancía');
+                        if (productosTA) {
+                            productosTA.classList.add('is-invalid');
+                            productosTA.focus();
+                        }
+                    } else if (productosTA) {
+                        productosTA.classList.remove('is-invalid');
+                    }
+
+                    // Checar archivo (si no hay nada cargado)
+                    if (!ticketInput || ticketInput.files.length === 0) {
+                        // Verificamos si no hay un archivo previamente cargado por el backend tras un reload fallido
+                        const prevFile = document.querySelector('#dndZone-evidencia_ticket a[href]');
+                        if (!prevFile) {
+                            hayError = true;
+                            camposFaltantes.push('Escaneo de Ticket (PDF o Imagen)');
+                            const dz = document.getElementById('dndZone-evidencia_ticket');
+                            if (dz) {
+                                dz.style.border = '2px dashed #dc3545';
+                                dz.style.backgroundColor = 'rgba(220, 53, 69, 0.05)';
+                            }
+                        }
+                    } else {
+                        const dz = document.getElementById('dndZone-evidencia_ticket');
+                        if (dz) {
+                            dz.style.border = '';
+                            dz.style.backgroundColor = '';
+                        }
+                    }
+
+                    if (hayError) {
+                        evt.preventDefault(); // Evitar el envío y la recarga
+                        const toastEvt = new CustomEvent('mostrarToast', {
+                            detail: { tipo: 'warning', mensaje: `Para Entrega Parcial debe ingresar: <br><strong>${camposFaltantes.join(' y ')}</strong>.` }
+                        });
+                        document.body.dispatchEvent(toastEvt);
+                        if (pnlParcial) {
+                            pnlParcial.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        
+                        // Ocultar el overlay de carga si se había disparado (clase htmx-indicator default o custom reset)
+                        const indicator = document.getElementById('form-indicator');
+                        if (indicator) {
+                           // Aseguremos de destapar el spinner porque el submit se detuvo
+                           indicator.style.display = 'none';
+                           setTimeout(() => indicator.style.display = '', 100); 
+                        }
+
+                        return; 
+                    }
+                }
+                
+                // 2. Validación obligatoria de Maniobra Aceptada
+                const switchManiobra = document.querySelector('input[name="maniobra_aceptada"]');
+                if (switchManiobra && !switchManiobra.checked) {
+                    evt.preventDefault();
+                    document.body.dispatchEvent(new CustomEvent('mostrarToast', {
+                        detail: { tipo: 'warning', mensaje: 'Debe confirmar las condiciones de entrega de material (PIE DE CARRO / MANIOBRA).' }
+                    }));
+                    
+                    switchManiobra.classList.add('is-invalid');
+                    setTimeout(() => switchManiobra.classList.remove('is-invalid'), 5000);
+                    switchManiobra.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    const indicator = document.getElementById('form-indicator');
+                    if (indicator) {
+                        indicator.style.display = 'none';
+                        setTimeout(() => indicator.style.display = '', 100); 
+                    }
+                    return;
+                }
+                
                 sessionStorage.setItem('pedido_form_scroll', window.scrollY);
             });
         }
@@ -496,7 +599,16 @@
 
                 selectCliente.value = detectedId.value;
                 toggleManualClient();
-                htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + detectedId.value, '#obras-container');
+                
+                // Recuperar obra previamente seleccionada antes de reemplazar #obras-container
+                const selectObra = document.querySelector('select[name="obra"]');
+                const selectedObraId = selectObra ? selectObra.value : '';
+                let obrasUrl = '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + detectedId.value;
+                if (selectedObraId) {
+                    obrasUrl += '&obra_id=' + selectedObraId;
+                }
+                
+                htmx.ajax('GET', obrasUrl, '#obras-container');
 
                 // Sincronizar el "Cliente Propietario" en el mini-form de nueva obra
                 const ownerDisplay = document.getElementById('pedido-nueva-obra-cliente-display');
@@ -576,7 +688,11 @@
     document.body.addEventListener('obraGuardada', function(evt) {
         const selectCliente = document.querySelector('select[name="cliente"]');
         if (selectCliente && selectCliente.value) {
-            htmx.ajax('GET', '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + selectCliente.value, '#obras-container');
+            let url = '{% url "dashboard:obras_select_fragment" %}?cliente_id=' + selectCliente.value;
+            if (evt.detail && evt.detail.obraId) {
+                url += '&obra_id=' + evt.detail.obraId;
+            }
+            htmx.ajax('GET', url, '#obras-container');
         }
     });
 

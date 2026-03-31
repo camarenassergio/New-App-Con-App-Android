@@ -1459,6 +1459,58 @@ class ConfiguracionGeneral(models.Model):
     def save(self, *args, **kwargs):
         self.pk = 1
         super().save(*args, **kwargs)
+        self.recalcular_tarifas_flete()
+
+    def recalcular_tarifas_flete(self):
+        """Asigna y actualiza masivamente el Costo Base de Flete a cada zona cuando hay cambios en RRHH/Logística"""
+        from decimal import Decimal
+        import math
+        
+        zonas = ZonaEntrega.objects.all()
+        if not zonas.exists(): return
+        
+        costo_min_chofer = self.costo_minuto_chofer
+        costo_min_chalan = self.costo_minuto_chalan
+        t_descarga = Decimal(self.tiempo_descarga_promedio_min)
+        
+        # Obtener los tipos de unidades base como en la API
+        unidades_reales = list(Unidad.objects.filter(en_servicio=True).select_related())
+        tipos_existentes = {u.tipo: u for u in unidades_reales}
+        tipos_base = ['CAMION', 'CAMIONETA_3_5', 'CAMIONETA_1_5', 'AUTO', 'MOTO']
+        unidades_a_evaluar = []
+        
+        for tb in tipos_base:
+            if tb in tipos_existentes:
+                unidades_a_evaluar.append(tipos_existentes[tb])
+            else:
+                virtual_u = Unidad(tipo=tb, nombre_corto=f"Estimado ({tb.title()})", kilometraje_actual=0)
+                virtual_u.pk = -1
+                unidades_a_evaluar.append(virtual_u)
+                
+        for zona in zonas:
+            if not zona.distancia_km or not zona.tiempo_traslado_minutos:
+                continue
+                
+            dist = Decimal(str(zona.distancia_km))
+            tiempo_min = Decimal(str(zona.tiempo_traslado_minutos))
+            
+            km_totales = dist * 2
+            tiempo_total_viaje = (tiempo_min * 2) + t_descarga
+            
+            max_costo = Decimal('0.0')
+            for u in unidades_a_evaluar:
+                c_km = u.costo_operativo_total_por_km
+                costo_op = km_totales * c_km
+                costo_tiempo = tiempo_total_viaje * (costo_min_chofer + costo_min_chalan)
+                costo_flete = round(costo_op + costo_tiempo, 2)
+                if costo_flete > max_costo:
+                    max_costo = costo_flete
+            
+            # El dashboard frontend aproxima el costo hacia arriba
+            nueva_tarifa = Decimal(str(math.ceil(max_costo)))
+            if zona.tarifa_flete != nueva_tarifa:
+                zona.tarifa_flete = nueva_tarifa
+                zona.save(update_fields=['tarifa_flete'])
 
     @classmethod
     def get_solo(cls):

@@ -2691,9 +2691,10 @@ class ObraCreateModalView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         self.object = form.save()
         if "HX-Request" in self.request.headers:
+            import json
             messages.success(self.request, "Nueva obra registrada.")
             response = HttpResponse(status=204)
-            response["HX-Trigger"] = "obraGuardada"
+            response["HX-Trigger"] = json.dumps({"obraGuardada": {"obraId": self.object.pk}})
             return response
         return super().form_valid(form)
 

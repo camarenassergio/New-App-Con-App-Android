@@ -791,7 +791,7 @@ class PedidoForm(forms.ModelForm):
         # pueden crearse manualmente sobre la marcha (Mostrador/Nuevo SAE)
         self.fields['cliente'].required = False
         self.fields['obra'].required = False
-        self.fields['maniobra_aceptada'].required = False
+        self.fields['maniobra_aceptada'].required = True
         
         # Campos manuales para Mostrador
         self.fields['cliente_nombre_manual'].required = False
