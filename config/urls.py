@@ -17,12 +17,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
+from django.shortcuts import redirect
+
+def redirect_to_dashboard(request):
+    return redirect('dashboard:home')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('users.urls')),
     path('dashboard/', include('dashboard.urls')),
-    path('', TemplateView.as_view(template_name='home.html'), name='home'),
+    path('', redirect_to_dashboard, name='home_redirect'),
     # TODO: remove after testing/dev
     path('403/', TemplateView.as_view(template_name='403.html'), name='error_403'),
 ]

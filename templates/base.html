@@ -499,36 +499,7 @@
             }
         });
     </script>
-    <!-- Auto-Logout Script -->
-    <script>
-        (function() {
-            // Tiempo en milisegundos (60 minutos)
-            const INACTIVITY_LIMIT = 60 * 60 * 1000; 
-            let timeout;
-
-            function resetTimer() {
-                clearTimeout(timeout);
-                timeout = setTimeout(logout, INACTIVITY_LIMIT);
-            }
-
-            function logout() {
-                // Redirigir al logout o login directamente
-                // Dado que logout requiere POST en Django por seguridad, 
-                // podemos enviar un formulario oculto o redirigir si se permite GET en logout (no recomendado)
-                // O mejor, redirigir a una vista que maneje el cierre o simplemente al login y dejar que la cookie expire.
-                // Como configuramos SESSION_COOKIE_AGE, la cookie ya habrá expirado en el servidor.
-                // Forzamos la recarga para que el servidor detecte la cookie caducada.
-                window.location.href = "{% url 'login' %}"; 
-            }
-
-            // Eventos que reinician el timer
-            window.onload = resetTimer;
-            document.onmousemove = resetTimer;
-            document.onkeypress = resetTimer;
-            document.ontouchstart = resetTimer; // Para móviles
-            document.onclick = resetTimer;      // Clics
-        })();
-    </script>
+    <!-- Auto-Logout managed by SESSION_COOKIE_AGE in settings.py -->
     <!-- Global Drag & Drop Upload Handler — Hybrid Desktop/Mobile -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
