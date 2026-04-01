@@ -318,7 +318,7 @@
                         var routeGeom = (typeof p.route_geojson === 'string') ? JSON.parse(p.route_geojson) : p.route_geojson;
                         activeRouteLayer = L.geoJSON(routeGeom, {
                             style: {
-                                color: p.color,
+                                color: '#000000',
                                 weight: 5,
                                 opacity: 0.8,
                                 dashArray: '8, 12'
