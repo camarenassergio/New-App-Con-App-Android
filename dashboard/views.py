@@ -2607,7 +2607,7 @@ class PedidoCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
                     despacho = Despacho.objects.create(
                         pedido=self.object,
                         tipo_envio='INTERNO_FLOTILLA',
-                        estado='COMPLETADO', 
+                        estado='CONFIRMADO', 
                         peso_asignado_kg=Decimal('0'), 
                         observaciones_entrega=f"[RETIRO MOSTRADOR: {articulos} pzas] {detalle}",
                         foto_ticket_firmado=evidencia

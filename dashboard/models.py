@@ -727,10 +727,14 @@ class Despacho(models.Model):
         ('PROVEEDOR_EXTERNO', 'Ruta C: Proveedor Externo'),
     ]
     ESTADO_CHOICES = [
-        ('PENDIENTE', 'Pendiente'),
-        ('EN_RUTA', 'En Ruta'),
-        ('COMPLETADO', 'Completado'),
-        ('FALLIDO', 'Fallido / Rechazado'),
+        ('PENDIENTE', 'Pendiente de Surtido'),
+        ('ASIGNADO_SURTIDO', 'Surtido en Proceso'),
+        ('SURTIDO_COMPLETO', 'Surtido Físico Completo'),
+        ('LISTO_PARA_RUTA', 'Listo para Ruta'),
+        ('EN_RUTA', 'En Ruta de Entrega'),
+        ('CONFIRMADO', 'Entregado / Confirmado'),
+        ('RECHAZO_PARCIAL', 'Entregado Parcialmente'),
+        ('CANCELADO', 'Cancelado / Rechazo Total'),
     ]
 
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='despachos')
@@ -739,7 +743,9 @@ class Despacho(models.Model):
     tipo_envio = models.CharField(max_length=20, choices=TIPO_CHOICES, default='INTERNO_FLOTILLA')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
     
-    peso_asignado_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Peso Asignado (kg)")
+    peso_asignado_kg = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Peso Asignado (kg)")
+    cantidad_articulos_asignados = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Artículos Asignados")
+    cantidad_articulos_rechazados = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Artículos Rechazados")
     
     # Datos de entrega (App Chofer)
     hora_llegada = models.DateTimeField(null=True, blank=True)
@@ -775,6 +781,31 @@ class ViajeNuevo(models.Model):
 
     def __str__(self):
         return f"Viaje {self.id} - {self.fecha_creacion.date()}"
+
+class AlertaLogistica(models.Model):
+    TIPO_ALERTA_CHOICES = [
+        ('RECHAZO_PARCIAL', 'Rechazo Parcial en Sitio'),
+        ('RECHAZO_TOTAL', 'Rechazo Total en Sitio'),
+        ('DIRECCION_INCORRECTA', 'Dirección Incorrecta / No Localizada'),
+        ('AUSENCIA_CLIENTE', 'Cliente Ausente / Local Cerrado'),
+        ('OTRO', 'Incidencia General'),
+    ]
+
+    despacho = models.ForeignKey(Despacho, on_delete=models.CASCADE, related_name='alertas')
+    chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='alertas_levantadas')
+    
+    tipo_alerta = models.CharField(max_length=25, choices=TIPO_ALERTA_CHOICES)
+    comentarios = models.TextField(verbose_name="Descripción de la incidencia")
+    resuelta = models.BooleanField(default=False, verbose_name="¿Alerta Gestionada?")
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_resolucion = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Alerta {self.get_tipo_alerta_display()} - Despacho {self.despacho.id}"
 
 class MensajeInterno(models.Model):
     remitente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mensajes_enviados')
