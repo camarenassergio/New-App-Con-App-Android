@@ -1,0 +1,16 @@
+# SEGUIMIENTO DE TAREAS - FASE 3 (DIVISIÓN Y SURTIDO)
+Fecha: 03 de Abril, 2026
+
+- `[x]` Refactor de Modelos para Saldo Pendiente.
+- `[x]` Modal Armar Viaje con cantidades manuales.
+- `[x]` Lógica de Creación de Despachos en el backend.
+- `[x]` Vista de Surtido para chofer (`carga_list.html`).
+- `[x]` Notificación automática al terminar surtido.
+- `[x]` Acción "Validar Salida" en Admin.
+- `[/]` Estabilización de Pedido Form (CAMPO CANTIDAD ENTREGADA).
+    - `[x]` Hard Reset a commit estable.
+    - `[ ]` Cambio quirúrgico `required=False` (Pendiente de confirmación post-reset).
+    - `[ ]` Verificación de guardado exitoso con Obra de Catálogo.
+- `[ ]` App Chofer: Botonera de Entrega Final.
+- `[ ]` Registro de múltiples fotos de material en destino.
+- `[ ]` Cierre de ciclo: Pedido -> Entregado Total.

@@ -1,0 +1,63 @@
+# Plan Modular Fase 3: Orquestación Logística y Despachos (v3.2)
+
+Decisiones Clave Confirmadas:
+- Manejo de Incidencias: El rechazo parcial del chofer levanta una ALERTA manual a Logística. Logística decidirá si cancela o reprograma. NO se auto-genera un nuevo despacho.
+- Saldo de Pedido: La partición principal operará por "saldo de artículos", pero el "peso en kg" persistirá paralelamente porque es vital para la logística.
+- Tipos de Datos: Se usará `DecimalField` para los artículos (permite fraccionar metros, cajas, etc).
+
+---
+
+## 3.1 Refactor Core: Modelos Pedido y Despacho (`dashboard/models.py`)
+
+[ ] 3.1.1 Refactor de Modelo `Pedido`:
+  - Añadir `articulos_totales` (DecimalField).
+  - Añadir `@property def saldo_articulos()` (totales - entregados).
+  - Añadir `@property def saldo_peso_kg()` (peso_total - peso_entregado).
+  - Eliminar banderas obsoletas: `recoleccion_parcial`, `productos_entregados_parcial`.
+  - Actualizar `ESTADO_CHOICES`: PENDIENTE, CREADO, DESPACHOS_GENERADOS, EN_PROCESO, PARCIAL, ENTREGADO, CERRADO.
+
+[ ] 3.1.2 Refactor de Modelo `Despacho`:
+  - Actualizar `ESTADO_CHOICES`: PENDIENTE, ASIGNADO_SURTIDO, SURTIDO_COMPLETO, LISTO_PARA_RUTA, VALIDADO_ADMIN, EN_RUTA, ENTREGADO_PARCIAL, ENTREGADO_TOTAL, CONFIRMADO, CANCELADO, PROVEEDOR_PENDIENTE, RECHAZO_PARCIAL.
+  - Añadir campos: `cantidad_articulos_asignados` (Decimal) y `cantidad_articulos_rechazados` (Decimal).
+
+[ ] 3.1.3 Entidad de Incidencia Operativa:
+  - Crear tabla `AlertaLogistica` (relacionada al Despacho) para documentar y notificar alertas (ej: rechazo parcial).
+
+---
+
+## 3.2 Modulo de Subdivisión y Orquestación Logística (`dashboard/views.py`)
+
+[ ] 3.2.1 Motor de Saldo (Vistas Orquestador):
+  - Las vistas del dashboard deben renderizar `saldo_articulos` y `saldo_peso_kg`.
+
+[ ] 3.2.2 Refactor de Armado de Modal (`modal_armar_viaje.html` + Vista):
+  - Al armar viaje, pedir `Artículos a asignar` y `Peso a cargar`.
+  - Validar que no superen saldos.
+  - Crear instacias independientes de `Despacho` para relacionar con `ViajeNuevo`.
+
+[ ] 3.2.3 Creación de Despachos "Mostrador" (Inicial y Posterior):
+  - Al marcar entrega parcial en tienda desde el origen, generar auto-despacho en estado CONFIRMADO.
+  - Soportar que un pedido ya activo reciba un "Retiro en Mostrador" en cualquier momento: el cliente pasa por material urgente, se ingresa la cantidad, se genera el Despacho CONFIRMADO y se ajusta el saldo restante para Logística.
+
+---
+
+## 3.3 Flujo de Surtido y Validación Administrativa
+
+[ ] 3.3.1 Pantalla Asignación de Tareas (Para Operador X).
+[ ] 3.3.2 Botonera de Surtido Completo (Mobile-friendly para patio).
+[ ] 3.3.3 Checkpoint Administrativo (Admin pasa el Despacho a VALIDADO_ADMIN).
+
+---
+
+## 3.4 Ejecución de Ruta, Evidencia Móvil y Alertas (`dashboard/views_chofer.py`)
+
+[ ] 3.4.1 Dropzone para Chofer: Integrar patrón para múltiples fotos del sitio y ticket por Despacho.
+[ ] 3.4.2 Múltiples Resoluciones: Chofer decide si Entrega Total, Rechazo Parcial o Cancelado.
+[ ] 3.4.3 Disparador de Alerta: En caso de Rechazo, pedir cantidad rechazada y motivo (foto obligatoria). Levanta AlertaLogistica sin auto-crear un nuevo despacho. El despacho entra en estado RECHAZO_PARCIAL.
+
+---
+
+## 3.5 Bucle de Sincronización Automática (Hooks / signals.py)
+
+[ ] 3.5.1 Validación en cascada: Al guardar Despacho en estado terminal, revisar hermanos.
+[ ] 3.5.2 Máquina de Estados: Si artículos confirmados = totales -> PEDIDO = ENTREGADO. Si faltan artículos e incidencias abiertas -> PARCIAL.

@@ -1,0 +1,613 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" 
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" 
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+             id="Definitions_Logistics" 
+             targetNamespace="http://bpmn.io/bpmn" 
+             exporter="bpmn-js" 
+             exporterVersion="18.13.2">
+  <process id="Logistics_Process" name="Proceso Logístico - Ticket a Ruta" isExecutable="false">
+    <!-- Inicio -->
+    <startEvent id="Start_TicketCreated" name="Ticket creado (Mostrador)">
+      <outgoing>Flow_CheckTicketExists</outgoing>
+    </startEvent>
+    <task id="Task_CheckTicketExists" name="Verificar existencia de ticket (Ingestor)">
+      <incoming>Flow_CheckTicketExists</incoming>
+      <outgoing>Flow_TicketExists_Gateway</outgoing>
+    </task>
+    <sequenceFlow id="Flow_CheckTicketExists" sourceRef="Start_TicketCreated" targetRef="Task_CheckTicketExists" />
+    
+    <!-- Gateway existe ticket -->
+    <exclusiveGateway id="Gateway_TicketExists" name="¿Ticket en sistema?">
+      <incoming>Flow_TicketExists_Gateway</incoming>
+      <outgoing>Flow_NoTicket</outgoing>
+      <outgoing>Flow_TicketOk</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="Flow_TicketExists_Gateway" sourceRef="Task_CheckTicketExists" targetRef="Gateway_TicketExists" />
+    
+    <!-- No ticket -->
+    <task id="Task_RejectDelivery" name="Rechazar entrega / Notificar (Mostrador)">
+      <incoming>Flow_NoTicket</incoming>
+      <outgoing>Flow_End_NoTicket</outgoing>
+    </task>
+    <sequenceFlow id="Flow_NoTicket" sourceRef="Gateway_TicketExists" targetRef="Task_RejectDelivery" />
+    <endEvent id="End_NoTicket" name="Fin - Documento rechazado">
+      <incoming>Flow_End_NoTicket</incoming>
+    </endEvent>
+    <sequenceFlow id="Flow_End_NoTicket" sourceRef="Task_RejectDelivery" targetRef="End_NoTicket" />
+    
+    <!-- Ticket OK -->
+    <task id="Task_NotifyLogistics" name="Notificar a Logística (Orquestador)">
+      <incoming>Flow_TicketOk</incoming>
+      <outgoing>Flow_DivideIntoDispatches</outgoing>
+    </task>
+    <sequenceFlow id="Flow_TicketOk" sourceRef="Gateway_TicketExists" targetRef="Task_NotifyLogistics" />
+    
+    <task id="Task_DivideCreateRoute" name="Dividir pedido en despachos y crear Ruta (Planner)">
+      <incoming>Flow_DivideIntoDispatches</incoming>
+      <outgoing>Flow_AssignSurtido</outgoing>
+    </task>
+    <sequenceFlow id="Flow_DivideIntoDispatches" sourceRef="Task_NotifyLogistics" targetRef="Task_DivideCreateRoute" />
+    
+    <task id="Task_AssignSurtido" name="Asignar encargado de surtido (Surtido Manager)">
+      <incoming>Flow_AssignSurtido</incoming>
+      <outgoing>Flow_WaitSurtido</outgoing>
+    </task>
+    <sequenceFlow id="Flow_AssignSurtido" sourceRef="Task_DivideCreateRoute" targetRef="Task_AssignSurtido" />
+    
+    <!-- Subproceso surtido -->
+    <subProcess id="Subprocess_Surtido" name="Surtido por encargado">
+      <incoming>Flow_WaitSurtido</incoming>
+      <outgoing>Flow_SurtidoComplete</outgoing>
+      <startEvent id="Start_Surtido" name="Inicio surtido" />
+      <task id="Task_PerformSurtido" name="Realizar surtido (Almacén o Chofer)" />
+      <task id="Task_MarkSurtidoComplete" name="Marcar Surtido Completo (Encargado)" />
+      <endEvent id="End_Surtido" name="Surtido completado" />
+      <sequenceFlow id="flow1" sourceRef="Start_Surtido" targetRef="Task_PerformSurtido" />
+      <sequenceFlow id="flow2" sourceRef="Task_PerformSurtido" targetRef="Task_MarkSurtidoComplete" />
+      <sequenceFlow id="flow3" sourceRef="Task_MarkSurtidoComplete" targetRef="End_Surtido" />
+    </subProcess>
+    <sequenceFlow id="Flow_WaitSurtido" sourceRef="Task_AssignSurtido" targetRef="Subprocess_Surtido" />
+    <sequenceFlow id="Flow_SurtidoComplete" sourceRef="Subprocess_Surtido" targetRef="Task_MarkReadyForRoute" />
+    
+    <task id="Task_MarkReadyForRoute" name="Marcar Despacho listo para ruta (Orquestador)">
+      <incoming>Flow_SurtidoComplete</incoming>
+      <outgoing>Flow_ValidationAdmin</outgoing>
+    </task>
+    <sequenceFlow id="Flow_ValidationAdmin" sourceRef="Task_MarkReadyForRoute" targetRef="Task_ValidateAdmin" />
+    
+    <task id="Task_ValidateAdmin" name="Validación administrativa (Administrativo)">
+      <incoming>Flow_ValidationAdmin</incoming>
+      <outgoing>Flow_AdminValidated_Gateway</outgoing>
+    </task>
+    <exclusiveGateway id="Gateway_AdminValidated" name="¿Validado por Administrativo?">
+      <incoming>Flow_AdminValidated_Gateway</incoming>
+      <outgoing>Flow_AdminReject</outgoing>
+      <outgoing>Flow_AdminOk</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="Flow_AdminValidated_Gateway" sourceRef="Task_ValidateAdmin" targetRef="Gateway_AdminValidated" />
+    
+    <task id="Task_AdminReject" name="Registrar rechazo de validación (Administrativo)">
+      <incoming>Flow_AdminReject</incoming>
+      <outgoing>Flow_HandleRejectAfterValidation</outgoing>
+    </task>
+    <sequenceFlow id="Flow_AdminReject" sourceRef="Gateway_AdminValidated" targetRef="Task_AdminReject" />
+    <sequenceFlow id="Flow_HandleRejectAfterValidation" sourceRef="Task_AdminReject" targetRef="Task_HandleIncidence" />
+    <sequenceFlow id="Flow_AdminOk" sourceRef="Gateway_AdminValidated" targetRef="Task_AssignToDriver" />
+    
+    <task id="Task_AssignToDriver" name="Asignar a chofer y marcar EN_RUTA (Orquestador)">
+      <incoming>Flow_AdminOk</incoming>
+      <outgoing>Flow_DriverDeparture</outgoing>
+    </task>
+    <sequenceFlow id="Flow_DriverDeparture" sourceRef="Task_AssignToDriver" targetRef="Task_DriverDeparture" />
+    
+    <task id="Task_DriverDeparture" name="Registrar salida CEDIS (Chofer)">
+      <incoming>Flow_DriverDeparture</incoming>
+      <outgoing>Flow_DeliverySubprocess</outgoing>
+    </task>
+    
+    <!-- Subproceso entrega -->
+    <subProcess id="Subprocess_Delivery" name="Entrega por chofer">
+      <incoming>Flow_DeliverySubprocess</incoming>
+      <outgoing>Flow_DeliveryCompleteGateway</outgoing>
+      <startEvent id="Start_Delivery" name="Inicio entrega" />
+      <task id="Task_PerformDelivery" name="Realizar entrega; subir evidencia" />
+      <exclusiveGateway id="Gateway_DeliveryResult" name="¿Entrega total / parcial / rechazo?" />
+      <task id="Task_RegisterPartialDelivery" name="Registrar entrega parcial" />
+      <task id="Task_RegisterFullDelivery" name="Registrar entrega total" />
+      <task id="Task_RegisterRejection" name="Registrar rechazo parcial / disputa" />
+      <endEvent id="End_Delivery" name="Fin entrega" />
+      <sequenceFlow id="dflow1" sourceRef="Start_Delivery" targetRef="Task_PerformDelivery" />
+      <sequenceFlow id="dflow2" sourceRef="Task_PerformDelivery" targetRef="Gateway_DeliveryResult" />
+      <sequenceFlow id="dflow3" sourceRef="Gateway_DeliveryResult" targetRef="Task_RegisterFullDelivery" />
+      <sequenceFlow id="dflow4" sourceRef="Gateway_DeliveryResult" targetRef="Task_RegisterPartialDelivery" />
+      <sequenceFlow id="dflow5" sourceRef="Gateway_DeliveryResult" targetRef="Task_RegisterRejection" />
+      <sequenceFlow id="dflow6" sourceRef="Task_RegisterFullDelivery" targetRef="End_Delivery" />
+      <sequenceFlow id="dflow7" sourceRef="Task_RegisterPartialDelivery" targetRef="End_Delivery" />
+      <sequenceFlow id="dflow8" sourceRef="Task_RegisterRejection" targetRef="End_Delivery" />
+    </subProcess>
+    <sequenceFlow id="Flow_DeliverySubprocess" sourceRef="Task_DriverDeparture" targetRef="Subprocess_Delivery" />
+    <sequenceFlow id="Flow_DeliveryCompleteGateway" sourceRef="Subprocess_Delivery" targetRef="Gateway_DeliveryOutcome" />
+    
+    <exclusiveGateway id="Gateway_DeliveryOutcome" name="¿Incidencia?">
+      <incoming>Flow_DeliveryCompleteGateway</incoming>
+      <outgoing>Flow_NoIncidence</outgoing>
+      <outgoing>Flow_Incidence</outgoing>
+    </exclusiveGateway>
+    
+    <task id="Task_MarkConfirmed" name="Marcar despacho confirmado (Orquestador)">
+      <incoming>Flow_NoIncidence</incoming>
+      <outgoing>Flow_CheckTicketCompletion_Confirmed</outgoing>
+    </task>
+    <sequenceFlow id="Flow_NoIncidence" sourceRef="Gateway_DeliveryOutcome" targetRef="Task_MarkConfirmed" />
+    
+    <task id="Task_HandleIncidence" name="Procesar incidencia (Exception Agent)">
+      <incoming>Flow_Incidence</incoming>
+      <incoming>Flow_HandleRejectAfterValidation</incoming>
+      <incoming>Flow_NotifyRejectionForAction</incoming>
+      <incoming>Flow_EscalationBack</incoming>
+      <outgoing>Flow_IncidenceDecision</outgoing>
+    </task>
+    <sequenceFlow id="Flow_Incidence" sourceRef="Gateway_DeliveryOutcome" targetRef="Task_HandleIncidence" />
+    
+    <exclusiveGateway id="Gateway_IncidenceDecision" name="¿Reprogramar o Cancelar?">
+      <incoming>Flow_IncidenceDecision</incoming>
+      <outgoing>Flow_Reprogram</outgoing>
+      <outgoing>Flow_Cancel</outgoing>
+      <outgoing>Flow_Escalar</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="Flow_IncidenceDecision" sourceRef="Task_HandleIncidence" targetRef="Gateway_IncidenceDecision" />
+    
+    <task id="Task_CreateReprogramDispatch" name="Crear despacho de reprogramación">
+      <incoming>Flow_Reprogram</incoming>
+      <outgoing>Flow_NotifyLogistics_Reprogram</outgoing>
+    </task>
+    <sequenceFlow id="Flow_Reprogram" sourceRef="Gateway_IncidenceDecision" targetRef="Task_CreateReprogramDispatch" />
+    
+    <task id="Task_NotifyLogistics_Reprogram" name="Notificar a Logística para reprogramación">
+      <incoming>Flow_NotifyLogistics_Reprogram</incoming>
+      <outgoing>Flow_AssignSurtido_Reprogram</outgoing>
+    </task>
+    <sequenceFlow id="Flow_NotifyLogistics_Reprogram" sourceRef="Task_CreateReprogramDispatch" targetRef="Task_NotifyLogistics_Reprogram" />
+    <sequenceFlow id="Flow_AssignSurtido_Reprogram" sourceRef="Task_NotifyLogistics_Reprogram" targetRef="Task_AssignSurtido" />
+    
+    <task id="Task_RegisterCancellation" name="Registrar cancelación y evidencia">
+      <incoming>Flow_Cancel</incoming>
+      <outgoing>Flow_ToCancellationValidation</outgoing>
+    </task>
+    <sequenceFlow id="Flow_Cancel" sourceRef="Gateway_IncidenceDecision" targetRef="Task_RegisterCancellation" />
+    
+    <exclusiveGateway id="Gateway_CancellationValidation" name="¿Cancelación validada?">
+      <incoming>Flow_ToCancellationValidation</incoming>
+      <outgoing>Flow_CancellationConfirmed</outgoing>
+      <outgoing>Flow_CancellationRejected</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="Flow_ToCancellationValidation" sourceRef="Task_RegisterCancellation" targetRef="Gateway_CancellationValidation" />
+    
+    <task id="Task_AdminValidateCancellation" name="Validar cancelación (Administrativo)">
+      <incoming>Flow_CancellationConfirmed</incoming>
+      <outgoing>Flow_AdminValidatedCancellation</outgoing>
+    </task>
+    <sequenceFlow id="Flow_CancellationConfirmed" sourceRef="Gateway_CancellationValidation" targetRef="Task_AdminValidateCancellation" />
+    
+    <task id="Task_MarkCancelled" name="Marcar despacho cancelado (Orquestador)">
+      <incoming>Flow_AdminValidatedCancellation</incoming>
+      <outgoing>Flow_CheckTicketCompletion_Cancelled</outgoing>
+    </task>
+    <sequenceFlow id="Flow_AdminValidatedCancellation" sourceRef="Task_AdminValidateCancellation" targetRef="Task_MarkCancelled" />
+    
+    <task id="Task_NotifyRejectionForAction" name="Notificar rechazo de cancelación y proponer acción">
+      <incoming>Flow_CancellationRejected</incoming>
+      <outgoing>Flow_NotifyRejectionForAction</outgoing>
+    </task>
+    <sequenceFlow id="Flow_CancellationRejected" sourceRef="Gateway_CancellationValidation" targetRef="Task_NotifyRejectionForAction" />
+    <sequenceFlow id="Flow_NotifyRejectionForAction" sourceRef="Task_NotifyRejectionForAction" targetRef="Task_HandleIncidence" />
+    
+    <task id="Task_Escalation" name="Escalar a supervisor / administrativo">
+      <incoming>Flow_Escalar</incoming>
+      <outgoing>Flow_EscalationBack</outgoing>
+    </task>
+    <sequenceFlow id="Flow_Escalar" sourceRef="Gateway_IncidenceDecision" targetRef="Task_Escalation" />
+    <sequenceFlow id="Flow_EscalationBack" sourceRef="Task_Escalation" targetRef="Task_HandleIncidence" />
+    
+    <task id="Task_CheckTicketCompletion" name="Verificar si todos los despachos del ticket están completados o cancelados">
+      <incoming>Flow_CheckTicketCompletion_Confirmed</incoming>
+      <incoming>Flow_CheckTicketCompletion_Cancelled</incoming>
+      <outgoing>Flow_TicketComplete_Gateway</outgoing>
+    </task>
+    <sequenceFlow id="Flow_CheckTicketCompletion_Confirmed" sourceRef="Task_MarkConfirmed" targetRef="Task_CheckTicketCompletion" />
+    <sequenceFlow id="Flow_CheckTicketCompletion_Cancelled" sourceRef="Task_MarkCancelled" targetRef="Task_CheckTicketCompletion" />
+    
+    <exclusiveGateway id="Gateway_TicketComplete" name="¿Todos los despachos completados o cancelados?">
+      <incoming>Flow_TicketComplete_Gateway</incoming>
+      <outgoing>Flow_TicketNotComplete</outgoing>
+      <outgoing>Flow_TicketComplete</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="Flow_TicketComplete_Gateway" sourceRef="Task_CheckTicketCompletion" targetRef="Gateway_TicketComplete" />
+    
+    <task id="Task_TicketPartial" name="Marcar ticket como Parcial (Orquestador)">
+      <incoming>Flow_TicketNotComplete</incoming>
+      <outgoing>Flow_End_Partial</outgoing>
+    </task>
+    <sequenceFlow id="Flow_TicketNotComplete" sourceRef="Gateway_TicketComplete" targetRef="Task_TicketPartial" />
+    <endEvent id="End_Partial" name="Fin - Ticket Parcial">
+      <incoming>Flow_End_Partial</incoming>
+    </endEvent>
+    <sequenceFlow id="Flow_End_Partial" sourceRef="Task_TicketPartial" targetRef="End_Partial" />
+    
+    <task id="Task_MarkTicketDelivered" name="Marcar ticket ENTREGADO (Orquestador)">
+      <incoming>Flow_TicketComplete</incoming>
+      <outgoing>Flow_End_TicketDelivered</outgoing>
+    </task>
+    <sequenceFlow id="Flow_TicketComplete" sourceRef="Gateway_TicketComplete" targetRef="Task_MarkTicketDelivered" />
+    <endEvent id="End_TicketDelivered" name="Fin - Ticket Entregado">
+      <incoming>Flow_End_TicketDelivered</incoming>
+    </endEvent>
+    <sequenceFlow id="Flow_End_TicketDelivered" sourceRef="Task_MarkTicketDelivered" targetRef="End_TicketDelivered" />
+  </process>
+  
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Logistics_Process">
+      <!-- Shapes (elementos visuales) -->
+      <bpmndi:BPMNShape id="Shape_Start_TicketCreated" bpmnElement="Start_TicketCreated">
+        <omgdc:Bounds x="100" y="80" width="36" height="36" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="85" y="123" width="68" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_CheckTicketExists" bpmnElement="Task_CheckTicketExists">
+        <omgdc:Bounds x="200" y="60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Gateway_TicketExists" bpmnElement="Gateway_TicketExists">
+        <omgdc:Bounds x="350" y="70" width="50" height="50" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="340" y="127" width="70" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_RejectDelivery" bpmnElement="Task_RejectDelivery">
+        <omgdc:Bounds x="460" y="150" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_NoTicket" bpmnElement="End_NoTicket">
+        <omgdc:Bounds x="620" y="170" width="36" height="36" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="610" y="213" width="58" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_NotifyLogistics" bpmnElement="Task_NotifyLogistics">
+        <omgdc:Bounds x="460" y="20" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_DivideCreateRoute" bpmnElement="Task_DivideCreateRoute">
+        <omgdc:Bounds x="620" y="20" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_AssignSurtido" bpmnElement="Task_AssignSurtido">
+        <omgdc:Bounds x="780" y="20" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Subprocess_Surtido" bpmnElement="Subprocess_Surtido" isExpanded="true">
+        <omgdc:Bounds x="960" y="0" width="300" height="120" />
+      </bpmndi:BPMNShape>
+      <!-- Dentro del subproceso surtido (opcional pero recomendado) -->
+      <bpmndi:BPMNShape id="Shape_Start_Surtido" bpmnElement="Start_Surtido">
+        <omgdc:Bounds x="980" y="40" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_PerformSurtido" bpmnElement="Task_PerformSurtido">
+        <omgdc:Bounds x="1050" y="30" width="100" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_MarkSurtidoComplete" bpmnElement="Task_MarkSurtidoComplete">
+        <omgdc:Bounds x="1180" y="30" width="100" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_Surtido" bpmnElement="End_Surtido">
+        <omgdc:Bounds x="1210" y="110" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_MarkReadyForRoute" bpmnElement="Task_MarkReadyForRoute">
+        <omgdc:Bounds x="1320" y="20" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_ValidateAdmin" bpmnElement="Task_ValidateAdmin">
+        <omgdc:Bounds x="1500" y="20" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Gateway_AdminValidated" bpmnElement="Gateway_AdminValidated">
+        <omgdc:Bounds x="1680" y="35" width="50" height="50" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1665" y="92" width="80" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_AdminReject" bpmnElement="Task_AdminReject">
+        <omgdc:Bounds x="1780" y="120" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_AssignToDriver" bpmnElement="Task_AssignToDriver">
+        <omgdc:Bounds x="1780" y="0" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_DriverDeparture" bpmnElement="Task_DriverDeparture">
+        <omgdc:Bounds x="1960" y="0" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Subprocess_Delivery" bpmnElement="Subprocess_Delivery" isExpanded="true">
+        <omgdc:Bounds x="2120" y="-20" width="400" height="160" />
+      </bpmndi:BPMNShape>
+      <!-- Elementos internos del subproceso entrega (simplificado) -->
+      <bpmndi:BPMNShape id="Shape_Start_Delivery" bpmnElement="Start_Delivery">
+        <omgdc:Bounds x="2140" y="20" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_PerformDelivery" bpmnElement="Task_PerformDelivery">
+        <omgdc:Bounds x="2220" y="10" width="100" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Gateway_DeliveryResult" bpmnElement="Gateway_DeliveryResult">
+        <omgdc:Bounds x="2370" y="20" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_RegisterFullDelivery" bpmnElement="Task_RegisterFullDelivery">
+        <omgdc:Bounds x="2460" y="-10" width="100" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_RegisterPartialDelivery" bpmnElement="Task_RegisterPartialDelivery">
+        <omgdc:Bounds x="2460" y="40" width="100" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_RegisterRejection" bpmnElement="Task_RegisterRejection">
+        <omgdc:Bounds x="2460" y="90" width="100" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_Delivery" bpmnElement="End_Delivery">
+        <omgdc:Bounds x="2480" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Gateway_DeliveryOutcome" bpmnElement="Gateway_DeliveryOutcome">
+        <omgdc:Bounds x="2590" y="30" width="50" height="50" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2580" y="87" width="70" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_MarkConfirmed" bpmnElement="Task_MarkConfirmed">
+        <omgdc:Bounds x="2700" y="20" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_HandleIncidence" bpmnElement="Task_HandleIncidence">
+        <omgdc:Bounds x="2700" y="140" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Gateway_IncidenceDecision" bpmnElement="Gateway_IncidenceDecision">
+        <omgdc:Bounds x="2880" y="155" width="50" height="50" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2870" y="212" width="70" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_CreateReprogramDispatch" bpmnElement="Task_CreateReprogramDispatch">
+        <omgdc:Bounds x="2990" y="100" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_NotifyLogistics_Reprogram" bpmnElement="Task_NotifyLogistics_Reprogram">
+        <omgdc:Bounds x="3170" y="100" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_RegisterCancellation" bpmnElement="Task_RegisterCancellation">
+        <omgdc:Bounds x="2990" y="220" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Gateway_CancellationValidation" bpmnElement="Gateway_CancellationValidation">
+        <omgdc:Bounds x="3170" y="235" width="50" height="50" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="3155" y="292" width="80" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_AdminValidateCancellation" bpmnElement="Task_AdminValidateCancellation">
+        <omgdc:Bounds x="3280" y="220" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_MarkCancelled" bpmnElement="Task_MarkCancelled">
+        <omgdc:Bounds x="3460" y="220" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_NotifyRejectionForAction" bpmnElement="Task_NotifyRejectionForAction">
+        <omgdc:Bounds x="3280" y="340" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Escalation" bpmnElement="Task_Escalation">
+        <omgdc:Bounds x="2990" y="340" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_CheckTicketCompletion" bpmnElement="Task_CheckTicketCompletion">
+        <omgdc:Bounds x="2880" y="20" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Gateway_TicketComplete" bpmnElement="Gateway_TicketComplete">
+        <omgdc:Bounds x="3060" y="30" width="50" height="50" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="3030" y="87" width="110" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_TicketPartial" bpmnElement="Task_TicketPartial">
+        <omgdc:Bounds x="3170" y="0" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_Partial" bpmnElement="End_Partial">
+        <omgdc:Bounds x="3350" y="20" width="36" height="36" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="3340" y="63" width="58" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_MarkTicketDelivered" bpmnElement="Task_MarkTicketDelivered">
+        <omgdc:Bounds x="3170" y="120" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_TicketDelivered" bpmnElement="End_TicketDelivered">
+        <omgdc:Bounds x="3350" y="140" width="36" height="36" />
+        <bpmndi:BPMNLabel><omgdc:Bounds x="3330" y="183" width="80" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges (conexiones visuales) -->
+      <bpmndi:BPMNEdge id="Edge_Flow_CheckTicketExists" bpmnElement="Flow_CheckTicketExists">
+        <omgdi:waypoint x="136" y="98" />
+        <omgdi:waypoint x="200" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_TicketExists_Gateway" bpmnElement="Flow_TicketExists_Gateway">
+        <omgdi:waypoint x="300" y="100" />
+        <omgdi:waypoint x="350" y="95" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_NoTicket" bpmnElement="Flow_NoTicket">
+        <omgdi:waypoint x="375" y="120" />
+        <omgdi:waypoint x="375" y="190" />
+        <omgdi:waypoint x="460" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_End_NoTicket" bpmnElement="Flow_End_NoTicket">
+        <omgdi:waypoint x="560" y="190" />
+        <omgdi:waypoint x="620" y="188" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_TicketOk" bpmnElement="Flow_TicketOk">
+        <omgdi:waypoint x="375" y="70" />
+        <omgdi:waypoint x="460" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_DivideIntoDispatches" bpmnElement="Flow_DivideIntoDispatches">
+        <omgdi:waypoint x="560" y="60" />
+        <omgdi:waypoint x="620" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_AssignSurtido" bpmnElement="Flow_AssignSurtido">
+        <omgdi:waypoint x="720" y="60" />
+        <omgdi:waypoint x="780" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_WaitSurtido" bpmnElement="Flow_WaitSurtido">
+        <omgdi:waypoint x="900" y="60" />
+        <omgdi:waypoint x="960" y="60" />
+      </bpmndi:BPMNEdge>
+      <!-- Conexiones internas del subproceso surtido -->
+      <bpmndi:BPMNEdge id="Edge_flow1" bpmnElement="flow1">
+        <omgdi:waypoint x="1016" y="58" />
+        <omgdi:waypoint x="1050" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_flow2" bpmnElement="flow2">
+        <omgdi:waypoint x="1150" y="60" />
+        <omgdi:waypoint x="1180" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_flow3" bpmnElement="flow3">
+        <omgdi:waypoint x="1230" y="90" />
+        <omgdi:waypoint x="1228" y="128" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_SurtidoComplete" bpmnElement="Flow_SurtidoComplete">
+        <omgdi:waypoint x="1260" y="60" />
+        <omgdi:waypoint x="1320" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_ValidationAdmin" bpmnElement="Flow_ValidationAdmin">
+        <omgdi:waypoint x="1440" y="60" />
+        <omgdi:waypoint x="1500" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_AdminValidated_Gateway" bpmnElement="Flow_AdminValidated_Gateway">
+        <omgdi:waypoint x="1620" y="60" />
+        <omgdi:waypoint x="1680" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_AdminReject" bpmnElement="Flow_AdminReject">
+        <omgdi:waypoint x="1705" y="85" />
+        <omgdi:waypoint x="1705" y="160" />
+        <omgdi:waypoint x="1780" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_HandleRejectAfterValidation" bpmnElement="Flow_HandleRejectAfterValidation">
+        <omgdi:waypoint x="1900" y="160" />
+        <omgdi:waypoint x="2700" y="180" />
+        <omgdi:waypoint x="2760" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_AdminOk" bpmnElement="Flow_AdminOk">
+        <omgdi:waypoint x="1705" y="35" />
+        <omgdi:waypoint x="1780" y="40" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_DriverDeparture" bpmnElement="Flow_DriverDeparture">
+        <omgdi:waypoint x="1900" y="40" />
+        <omgdi:waypoint x="1960" y="40" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_DeliverySubprocess" bpmnElement="Flow_DeliverySubprocess">
+        <omgdi:waypoint x="2060" y="40" />
+        <omgdi:waypoint x="2120" y="40" />
+      </bpmndi:BPMNEdge>
+      <!-- Conexiones internas del subproceso entrega (solo algunas para no alargar) -->
+      <bpmndi:BPMNEdge id="Edge_dflow1" bpmnElement="dflow1">
+        <omgdi:waypoint x="2176" y="38" />
+        <omgdi:waypoint x="2220" y="40" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_dflow2" bpmnElement="dflow2">
+        <omgdi:waypoint x="2320" y="40" />
+        <omgdi:waypoint x="2370" y="45" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_dflow3" bpmnElement="dflow3">
+        <omgdi:waypoint x="2395" y="45" />
+        <omgdi:waypoint x="2460" y="20" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_dflow4" bpmnElement="dflow4">
+        <omgdi:waypoint x="2395" y="45" />
+        <omgdi:waypoint x="2460" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_dflow5" bpmnElement="dflow5">
+        <omgdi:waypoint x="2395" y="45" />
+        <omgdi:waypoint x="2460" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_dflow6" bpmnElement="dflow6">
+        <omgdi:waypoint x="2560" y="20" />
+        <omgdi:waypoint x="2498" y="178" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_dflow7" bpmnElement="dflow7">
+        <omgdi:waypoint x="2560" y="70" />
+        <omgdi:waypoint x="2498" y="178" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_dflow8" bpmnElement="dflow8">
+        <omgdi:waypoint x="2560" y="120" />
+        <omgdi:waypoint x="2498" y="178" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_DeliveryCompleteGateway" bpmnElement="Flow_DeliveryCompleteGateway">
+        <omgdi:waypoint x="2520" y="60" />
+        <omgdi:waypoint x="2590" y="55" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_NoIncidence" bpmnElement="Flow_NoIncidence">
+        <omgdi:waypoint x="2640" y="55" />
+        <omgdi:waypoint x="2700" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_Incidence" bpmnElement="Flow_Incidence">
+        <omgdi:waypoint x="2640" y="55" />
+        <omgdi:waypoint x="2700" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_IncidenceDecision" bpmnElement="Flow_IncidenceDecision">
+        <omgdi:waypoint x="2820" y="180" />
+        <omgdi:waypoint x="2880" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_Reprogram" bpmnElement="Flow_Reprogram">
+        <omgdi:waypoint x="2930" y="180" />
+        <omgdi:waypoint x="2990" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_NotifyLogistics_Reprogram" bpmnElement="Flow_NotifyLogistics_Reprogram">
+        <omgdi:waypoint x="3110" y="140" />
+        <omgdi:waypoint x="3170" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_AssignSurtido_Reprogram" bpmnElement="Flow_AssignSurtido_Reprogram">
+        <omgdi:waypoint x="3290" y="140" />
+        <omgdi:waypoint x="900" y="140" />
+        <omgdi:waypoint x="900" y="100" />
+        <omgdi:waypoint x="840" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_Cancel" bpmnElement="Flow_Cancel">
+        <omgdi:waypoint x="2930" y="180" />
+        <omgdi:waypoint x="2990" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_ToCancellationValidation" bpmnElement="Flow_ToCancellationValidation">
+        <omgdi:waypoint x="3110" y="260" />
+        <omgdi:waypoint x="3170" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_CancellationConfirmed" bpmnElement="Flow_CancellationConfirmed">
+        <omgdi:waypoint x="3220" y="260" />
+        <omgdi:waypoint x="3280" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_AdminValidatedCancellation" bpmnElement="Flow_AdminValidatedCancellation">
+        <omgdi:waypoint x="3400" y="260" />
+        <omgdi:waypoint x="3460" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_CancellationRejected" bpmnElement="Flow_CancellationRejected">
+        <omgdi:waypoint x="3220" y="260" />
+        <omgdi:waypoint x="3340" y="380" />
+        <omgdi:waypoint x="3280" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_NotifyRejectionForAction" bpmnElement="Flow_NotifyRejectionForAction">
+        <omgdi:waypoint x="3400" y="380" />
+        <omgdi:waypoint x="2880" y="380" />
+        <omgdi:waypoint x="2820" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_Escalar" bpmnElement="Flow_Escalar">
+        <omgdi:waypoint x="2930" y="180" />
+        <omgdi:waypoint x="2990" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_EscalationBack" bpmnElement="Flow_EscalationBack">
+        <omgdi:waypoint x="3110" y="380" />
+        <omgdi:waypoint x="2880" y="380" />
+        <omgdi:waypoint x="2820" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_CheckTicketCompletion_Confirmed" bpmnElement="Flow_CheckTicketCompletion_Confirmed">
+        <omgdi:waypoint x="2820" y="60" />
+        <omgdi:waypoint x="2880" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_CheckTicketCompletion_Cancelled" bpmnElement="Flow_CheckTicketCompletion_Cancelled">
+        <omgdi:waypoint x="3580" y="260" />
+        <omgdi:waypoint x="3580" y="100" />
+        <omgdi:waypoint x="3000" y="100" />
+        <omgdi:waypoint x="3000" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_TicketComplete_Gateway" bpmnElement="Flow_TicketComplete_Gateway">
+        <omgdi:waypoint x="3000" y="60" />
+        <omgdi:waypoint x="3060" y="55" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_TicketNotComplete" bpmnElement="Flow_TicketNotComplete">
+        <omgdi:waypoint x="3110" y="55" />
+        <omgdi:waypoint x="3170" y="40" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_End_Partial" bpmnElement="Flow_End_Partial">
+        <omgdi:waypoint x="3290" y="40" />
+        <omgdi:waypoint x="3350" y="38" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_TicketComplete" bpmnElement="Flow_TicketComplete">
+        <omgdi:waypoint x="3110" y="55" />
+        <omgdi:waypoint x="3170" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_End_TicketDelivered" bpmnElement="Flow_End_TicketDelivered">
+        <omgdi:waypoint x="3290" y="160" />
+        <omgdi:waypoint x="3350" y="158" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

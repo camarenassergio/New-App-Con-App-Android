@@ -1,0 +1,64 @@
+# PLAN MAESTRO CONSOLIDADO: LOGÍSTICA CASA LUPITA (TODAS LAS FASES)
+Fecha de Actualización: 03 de Abril, 2026
+Estado Global: Fase 3 en Ejecución (V3 corregida)
+
+---
+
+## ESTRUCTURA DEL PROYECTO (ROADMAP)
+
+### FASE 1: INFRAESTRUCTURA Y FUNDAMENTOS [COMPLETADA]
+- [x] Configuración de Docker (Web, DB, QA, Stealth).
+- [x] Red de Interconexión Remota (Tailscale).
+- [x] Base de Datos MySQL (Migración y Seed).
+- [x] Sistema de Autenticación y Roles (Puestos).
+
+### FASE 2: MÓDULOS OPERATIVOS CORE [COMPLETADA / PULIDO]
+- [x] Gestión de Unidades y Checklist de Seguridad.
+- [x] Control de Combustible y Gastos con Evidencia (DnD).
+- [x] Auditoría de Llantas (DOT, Desgaste Predictivo).
+- [x] Configuraciones Generales (Sueldos, Parámetros Operativos).
+- [x] Registro de Pedidos (Mostrador) y Sincronización SAE.
+- [x] Mapa de Zonas de Entrega y Cotizador de Fletes (OSRM).
+
+### FASE 3: GESTIÓN DE SALDO Y DIVISIÓN DE PEDIDOS (MULTI-DESPACHO) [EN PROGRESO]
+Esta fase es el "corazón" de la flexibilidad logística. Permitirá que un pedido de 1000 piezas sea dividido en varios despachos y gestionar lo que se cancela.
+
+#### Hitos de la Fase 3:
+- [x] **Refactor de Saldo**: Inclusión de `saldo_pendiente` y `total_entregado` en Pedido.
+- [x] **Modal de Armado V3**: Selección con cantidades manuales específicas por despacho.
+- [x] **Lógica de Despachos**: `LogisticaArmarViajeView` crea despachos fraccionados con cantidades `qty_ID`.
+- [x] **Surtido en Patio**: Interfaz `carga_list.html` para que el chofer marque surtido completo.
+- [x] **Validación Administrativa**: Flujo de salida con registro de usuario que autoriza.
+- [/] **Estabilización Pedido Form**: Corrección de validación opcional para `cantidad_entregada_total`.
+
+#### Reglas de Operación (Fase 3):
+- **Modal de Armado**: Ya no solo pide seleccionar pedidos; para cada uno permite ingresar la cantidad específica a cargar.
+- **Regla de Saldo**: El sistema valida que la suma de todos los despachos no supere el total del pedido.
+- **Cierre de Saldo**: Acción administrativa para "Cancelar el Restante" y cerrar pedidos incompletos.
+
+---
+
+## PLAN DE IMPLEMENTACIÓN DETALLADO (V3.1)
+
+### 1. Componente: Logística (Asignación de Carga)
+- **Refactor `views.py`**: Procesamiento de diccionario `pedido_id: cantidad_a_despachar`. Actualización del estado a `EN_PROCESO` o `LISTO_PARA_RUTA`.
+- **UI `modal_armar_viaje.html`**: Campos numéricos al lado de cada pedido y visualización de Saldo Pendiente actual (Total - Entregado - En Ruta).
+
+### 2. Componente: Cierre de Pedido (Administrativo)
+- **Nueva Vista `PedidoCerrarSaldoView`**: Botón para "Cerrar con Ajuste" pedidos que no se surtirán al 100%.
+
+### 3. Componente: Estabilización de Formulario
+- **Blindaje MySQL**: Asegurar que `cantidad_entregada_total` se guarde como `0` y no como `NULL` cuando el campo se deja vacío.
+
+---
+
+## PRÓXIMAS FASES (ROADMAP FUTURO)
+
+### FASE 4: APP CHOFER (ENTREGA Y EVIDENCIA)
+- [ ] Botonera de Entrega Final en destino.
+- [ ] Historial de tickets por despacho para el chofer.
+- [ ] Registro de múltiples fotos de material (DnD Mobile).
+
+### FASE 5: SISTEMA EXPERTO PREDICTIVO
+- [ ] Aprendizaje histórico de tiempos de maniobra por familia de material y unidad.
+- [ ] Cotización dinámica avanzada basada en datos empíricos.
