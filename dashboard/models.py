@@ -626,14 +626,13 @@ class Cliente(models.Model):
 
 class Pedido(models.Model):
     ESTADO_CHOICES = [
-        ('REGISTRADO', 'Registrado'),
-        ('EN_PREPARACION', 'En Preparación'),
-        ('ASIGNADO_A_RUTA', 'Asignado a Ruta'),
-        ('EN_RUTA', 'En Ruta'),
-        ('ENTREGADO', 'Entregado'),
-        ('ENTREGA_PARCIAL', 'Entrega Parcial'),
-        ('REPROGRAMADO', 'Reprogramado'),
-        ('CANCELADO', 'Cancelado'),
+        ('PENDIENTE', 'Pendiente / Registrado'),
+        ('CREADO', 'Pedido Creado / Ingestado'),
+        ('DESPACHOS_GENERADOS', 'Despachos Generados'),
+        ('EN_PROCESO', 'En Proceso (Múltiples Despachos)'),
+        ('PARCIAL', 'Entregado Parcial (Queda Saldo)'),
+        ('ENTREGADO', 'Entregado Totalmente'),
+        ('CERRADO', 'Cerrado Administrativamente'),
     ]
 
     METODO_PAGO_CHOICES = [
@@ -655,17 +654,14 @@ class Pedido(models.Model):
     cliente_telefono_manual = models.CharField(max_length=15, null=True, blank=True, verbose_name="Teléfono Cliente (Manual)")
     cliente_direccion_manual = models.TextField(null=True, blank=True, verbose_name="Dirección de Entrega (Manual)")
     
-    peso_total_estimado_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Peso Total (kg)")
+    peso_total_estimado_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Peso Total (kg)", default=0)
+    articulos_totales = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Artículos Totales (pzas/m/etc)", default=0)
     evidencia_ticket = models.FileField(upload_to='pedidos/tickets/', null=True, blank=True, verbose_name="Evidencia Ticket (PDF/IMG)")
     
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='REGISTRADO')
+    estado = models.CharField(max_length=30, choices=ESTADO_CHOICES, default='PENDIENTE')
     
     es_urgente = models.BooleanField(default=False, verbose_name="¿Es Urgente / Flete Pagado?")
     maniobra_aceptada = models.BooleanField(default=False, verbose_name="Maniobra a pie de camión aceptada")
-    
-    # Entrega Parcial en sitio
-    recoleccion_parcial = models.BooleanField(default=False, verbose_name="Recolección parcial en mostrador")
-    productos_entregados_parcial = models.TextField(null=True, blank=True, verbose_name="Productos entregados en Mostrador")
     
     # Finanzas y Observaciones
     metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES, default='EFECTIVO', verbose_name="Forma de Pago")
@@ -680,6 +676,36 @@ class Pedido(models.Model):
         verbose_name = "Pedido"
         verbose_name_plural = "Pedidos"
         ordering = ['-fecha_registro']
+
+    @property
+    def saldo_articulos(self):
+        from decimal import Decimal
+        if not self.articulos_totales: return Decimal('0.00')
+        # Despachos en CANCELADO devuelven su saldo. Usa getattr previendo si aun no existen los campos en la migración de Despacho
+        despachos = self.despachos.exclude(estado='CANCELADO')
+        asignado = sum((getattr(d, 'cantidad_articulos_asignados', Decimal('0')) or Decimal('0')) - (getattr(d, 'cantidad_articulos_rechazados', Decimal('0')) or Decimal('0')) for d in despachos)
+        return max(Decimal('0.00'), self.articulos_totales - asignado)
+
+    @property
+    def saldo_peso_kg(self):
+        from decimal import Decimal
+        if not self.peso_total_estimado_kg: return Decimal('0.00')
+        despachos = self.despachos.exclude(estado='CANCELADO')
+        
+        asignado_kg = Decimal('0')
+        for d in despachos:
+            peso = getattr(d, 'peso_asignado_kg', Decimal('0')) or Decimal('0')
+            art_asign = getattr(d, 'cantidad_articulos_asignados', Decimal('0')) or Decimal('0')
+            art_rechazo = getattr(d, 'cantidad_articulos_rechazados', Decimal('0')) or Decimal('0')
+            
+            # Si hay rechazo parcial, devolver proporcionalmente el peso al saldo para no perder capacidad viva
+            if art_asign > 0 and art_rechazo > 0:
+                proporcion_valida = (art_asign - art_rechazo) / art_asign
+                peso = peso * proporcion_valida
+                
+            asignado_kg += peso
+            
+        return max(Decimal('0.00'), self.peso_total_estimado_kg - asignado_kg)
 
     def __str__(self):
         cliente_nombre = self.cliente.razon_social if self.cliente else self.cliente_nombre_manual

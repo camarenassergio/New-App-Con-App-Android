@@ -2583,8 +2583,39 @@ class PedidoCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
 
                 # Guardar el pedido final
                 form.instance.registrado_por = self.request.user
+                
+                # --- NUEVA LOGICA DE RECOLECCION PARCIAL MOSTRADOR ---
+                recoleccion_parcial = self.request.POST.get('recoleccion_parcial') == 'on'
+                
+                # Guardamos la instancia primero ejecutando el super() (para tener el ID del Pedido)
+                response = super().form_valid(form)
+                
+                if recoleccion_parcial:
+                    articulos_str = self.request.POST.get('articulos_entregados_parcial', '0')
+                    from decimal import Decimal
+                    try:
+                        articulos = Decimal(articulos_str)
+                    except:
+                        articulos = Decimal('0')
+                        
+                    detalle = self.request.POST.get('productos_entregados_parcial', '')
+                    evidencia = self.request.FILES.get('evidencia_ticket')
+                    
+                    # Como aún estamos en la Fase 3.1.1 (Solo Pedido), el modelo Despacho no tiene 
+                    # cantidad_articulos_asignados nativamente. Lo inyectamos en las observaciones 
+                    # y usamos el estado COMPLETADO que es compatible con la DB actual.
+                    despacho = Despacho.objects.create(
+                        pedido=self.object,
+                        tipo_envio='INTERNO_FLOTILLA',
+                        estado='COMPLETADO', 
+                        peso_asignado_kg=Decimal('0'), 
+                        observaciones_entrega=f"[RETIRO MOSTRADOR: {articulos} pzas] {detalle}",
+                        foto_ticket_firmado=evidencia
+                    )
+                    # En la fase 3.2 y 3.5, este despacho también afectará el saldo_articulos y saldo_peso_kg autmáticamente.
+
                 messages.success(self.request, f"Pedido {form.instance.folio_sae} registrado correctamente.")
-                return super().form_valid(form)
+                return response
         except Exception as e:
             form.add_error(None, f"Error al procesar el registro triple: {str(e)}")
             return self.form_invalid(form)

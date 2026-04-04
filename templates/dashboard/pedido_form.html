@@ -173,8 +173,17 @@
                             </div>
 
                             <div class="row g-4 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Peso Total de Carga <span class="text-danger">*</span></label>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Artículos Totales <span class="text-danger">*</span></label>
+                                    <div class="input-group shadow-sm border rounded-pill overflow-hidden bg-white">
+                                        <input type="number" step="0.1" min="0.1" name="articulos_totales" id="id_articulos_totales" class="form-control border-0 py-2 ps-4" 
+                                               placeholder="Cantidad" required value="{{ form.articulos_totales.value|default:'' }}">
+                                        <span class="input-group-text bg-light border-0 px-3 fw-bold text-muted small"><i class="fas fa-boxes"></i></span>
+                                    </div>
+                                    {% if form.articulos_totales.errors %}<div class="text-danger x-small mt-2 fw-bold ps-4">{{ form.articulos_totales.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Peso de Carga (KG) <span class="text-danger">*</span></label>
                                     <div class="input-group shadow-sm border rounded-pill overflow-hidden bg-white">
                                         <input type="number" step="0.01" min="0" name="peso_total_estimado_kg" id="id_peso_total_estimado_kg" class="form-control border-0 py-2 ps-4" 
                                                placeholder="Total KG" required value="{{ form.peso_total_estimado_kg.value|default:'' }}">
@@ -182,7 +191,7 @@
                                     </div>
                                     {% if form.peso_total_estimado_kg.errors %}<div class="text-danger x-small mt-2 fw-bold ps-4">{{ form.peso_total_estimado_kg.errors|striptags }}</div>{% endif %}
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label fw-bold small text-muted text-uppercase mb-2">Método de Pago <span class="text-danger">*</span></label>
                                     <div class="shadow-sm border rounded-pill overflow-hidden">
                                         {{ form.metodo_pago }}
@@ -217,41 +226,43 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-check form-switch premium-switch">
-                                        {{ form.recoleccion_parcial }}
-                                        <label class="form-check-label ms-2 fw-bold text-success" for="{{ form.recoleccion_parcial.id_for_label }}">
-                                            <i class="fas fa-layer-group me-1"></i>ENTREGA PARCIAL
+                                        <input class="form-check-input" type="checkbox" name="recoleccion_parcial" id="id_recoleccion_parcial">
+                                        <label class="form-check-label ms-2 fw-bold text-success" for="id_recoleccion_parcial">
+                                            <i class="fas fa-store me-1"></i>RETIRO MOSTRADOR AHORA
                                         </label>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Panel Entrega Parcial -->
+                            <!-- Panel Entrega Parcial (Auto-Despacho Mostrador) -->
                             <div id="partial-products-panel" class="mb-5 animate__animated animate__fadeIn" style="display: none;">
-                                <div class="card border-info border-opacity-25 rounded-4 shadow-lg overflow-hidden">
-                                    <div class="card-header bg-info py-3 px-4 d-flex align-items-center text-white">
-                                        <i class="fas fa-camera-retro fs-4 me-3"></i>
+                                <div class="card border-success border-opacity-25 rounded-4 shadow-lg overflow-hidden">
+                                    <div class="card-header bg-success py-3 px-4 d-flex align-items-center text-white">
+                                        <i class="fas fa-store-alt fs-4 me-3"></i>
                                         <div>
-                                            <h6 class="mb-0 fw-bold">Evidencia de Carga Parcial</h6>
-                                            <p class="x-small mb-0 opacity-75">Requerido para tickets divididos</p>
+                                            <h6 class="mb-0 fw-bold">Entrega Inmediata en Mostrador</h6>
+                                            <p class="x-small mb-0 opacity-75">El cliente se lleva material ahora. Se creará un Despacho en "Confirmado".</p>
                                         </div>
                                     </div>
                                     <div class="card-body p-4 bg-body">
                                         <div class="row g-4">
-                                            <div class="col-md-5">
-                                                <label class="form-label fw-bold small text-uppercase mb-3">Escaneo de Ticket SAE</label>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold small text-uppercase mb-3">Evidencia / Ticket Firmado</label>
                                                 <div class="dnd-upload-zone rounded-4" id="dndZone-evidencia_ticket">
                                                     <input type="file" name="evidencia_ticket" id="id_evidencia_ticket" accept="image/*,application/pdf">
-                                                    <i class="fas fa-cloud-upload-alt dnd-icon text-info"></i>
+                                                    <i class="fas fa-cloud-upload-alt dnd-icon text-success"></i>
                                                     <span class="dnd-label fw-bold">Subir Ticket</span>
-                                                    <span class="dnd-sublabel">PDF o Foto legible</span>
                                                 </div>
                                                 <div class="dnd-preview-container mt-3" id="dndPreview-evidencia_ticket"></div>
                                             </div>
-                                            <div class="col-md-7">
+                                            <div class="col-md-3">
+                                                <label class="form-label fw-bold small text-uppercase mb-3">Artículos Retirados</label>
+                                                <input type="number" step="0.1" min="0.1" name="articulos_entregados_parcial" class="form-control rounded-3" placeholder="Ej. 2">
+                                                <div class="form-text x-small mt-2"><i class="fas fa-info-circle me-1"></i>Se restará del saldo logístico final.</div>
+                                            </div>
+                                            <div class="col-md-5">
                                                 <label class="form-label fw-bold small text-uppercase mb-3">Detalle de Mercancía</label>
-                                                {{ form.productos_entregados_parcial }}
-                                                {% if form.productos_entregados_parcial.errors %}<div class="text-danger x-small mt-1 fw-bold">{{ form.productos_entregados_parcial.errors|striptags }}</div>{% endif %}
-                                                <div class="form-text x-small mt-2"><i class="fas fa-info-circle me-1"></i>Especifique cantidades y códigos de producto.</div>
+                                                <textarea name="productos_entregados_parcial" class="form-control lh-sm" rows="3" placeholder="Ej. 2 Cajas de Azulejo Blanco..."></textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -408,8 +419,11 @@
             
             const ticketInput = document.getElementById('id_evidencia_ticket');
             const productosTA = document.querySelector('textarea[name="productos_entregados_parcial"]');
+            const articulosInput = document.querySelector('input[name="articulos_entregados_parcial"]');
+            
             if (ticketInput) ticketInput.required = isOn;
             if (productosTA) productosTA.required = isOn;
+            if (articulosInput) articulosInput.required = isOn;
         };
     }
 
@@ -453,20 +467,30 @@
         const mainForm = document.querySelector('form.needs-validation');
         if (mainForm) {
             mainForm.addEventListener('submit', (evt) => {
-                // 1. Validación interactiva de Entrega Parcial
+                    // 1. Validación interactiva de Entrega Parcial Mostrador
                 const switchParcial = document.querySelector('input[name="recoleccion_parcial"]');
                 const pnlParcial = document.getElementById('partial-products-panel');
                 
                 if (switchParcial && switchParcial.checked) {
                     const ticketInput = document.getElementById('id_evidencia_ticket');
                     const productosTA = document.querySelector('textarea[name="productos_entregados_parcial"]');
+                    const articulosInput = document.querySelector('input[name="articulos_entregados_parcial"]');
                     let hayError = false;
                     let camposFaltantes = [];
+
+                    // Checar artículos
+                    if (!articulosInput || articulosInput.value.trim() === '') {
+                        hayError = true;
+                        camposFaltantes.push('Canidad de Artículos Retirados');
+                        if (articulosInput) articulosInput.classList.add('is-invalid');
+                    } else if (articulosInput) {
+                        articulosInput.classList.remove('is-invalid');
+                    }
 
                     // Checar detalle de mercancía
                     if (!productosTA || productosTA.value.trim() === '') {
                         hayError = true;
-                        camposFaltantes.push('Detalle de Mercancía');
+                        camposFaltantes.push('Detalle de Mercancía a Retirar');
                         if (productosTA) {
                             productosTA.classList.add('is-invalid');
                             productosTA.focus();

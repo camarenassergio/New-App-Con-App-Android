@@ -731,9 +731,8 @@ class PedidoForm(forms.ModelForm):
     class Meta:
         model = Pedido
         fields = [
-            'tipo_ticket', 'folio_sae', 'cliente', 'obra', 'peso_total_estimado_kg', 
+            'tipo_ticket', 'folio_sae', 'cliente', 'obra', 'peso_total_estimado_kg', 'articulos_totales',
             'metodo_pago', 'es_urgente', 'maniobra_aceptada', 
-            'recoleccion_parcial', 'productos_entregados_parcial',
             'cliente_nombre_manual', 'cliente_telefono_manual', 'cliente_direccion_manual',
             'observaciones_mostrador', 'evidencia_ticket'
         ]
@@ -742,11 +741,10 @@ class PedidoForm(forms.ModelForm):
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'obra': forms.Select(attrs={'class': 'form-select'}),
             'peso_total_estimado_kg': forms.NumberInput(attrs={'class': 'form-control', 'min': '0.1', 'step': '0.1', 'required': 'required'}),
+            'articulos_totales': forms.NumberInput(attrs={'class': 'form-control', 'min': '0.1', 'step': '0.1', 'required': 'required'}),
             'metodo_pago': forms.Select(attrs={'class': 'form-select', 'required': 'required'}),
             'es_urgente': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'maniobra_aceptada': forms.CheckboxInput(attrs={'class': 'form-check-input', 'required': 'required'}),
-            'recoleccion_parcial': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'productos_entregados_parcial': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': '¿Qué se lleva el cliente ahora?'}),
             'cliente_nombre_manual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
             'cliente_telefono_manual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
             'cliente_direccion_manual': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Dirección completa'}),
@@ -785,6 +783,7 @@ class PedidoForm(forms.ModelForm):
         # Campos obligatorios obligatorios para todos los casos
         self.fields['folio_sae'].required = True
         self.fields['peso_total_estimado_kg'].required = True
+        self.fields['articulos_totales'].required = True
         self.fields['metodo_pago'].required = True
         
         # Cliente y Obra deben ser opcionales inicialmente porque 
@@ -802,8 +801,6 @@ class PedidoForm(forms.ModelForm):
         cleaned_data = super().clean()
         cliente = cleaned_data.get('cliente')
         obra = cleaned_data.get('obra')
-        recoleccion_parcial = cleaned_data.get('recoleccion_parcial')
-        productos = cleaned_data.get('productos_entregados_parcial')
         evidencia = cleaned_data.get('evidencia_ticket')
         
         # Nombre y Teléfonos manuales
@@ -842,12 +839,9 @@ class PedidoForm(forms.ModelForm):
         if not obra and not alias_obra and not direccion_manual:
             self.add_error('obra', "Debes elegir una dirección, registrar una nueva obra o escribir la dirección manual.")
 
-        # 3. VALIDACIÓN DE ENTREGA PARCIAL
-        if recoleccion_parcial:
-            if not productos:
-                self.add_error('productos_entregados_parcial', "Debe especificar qué productos se están entregando.")
-            if not evidencia and not self.instance.pk:
-                self.add_error('evidencia_ticket', "La foto del ticket es obligatoria para entregas parciales.")
+        # Ya no evaluamos recolección parcial mediante bandera en el form del Pedido.
+        # Ahora se creará un Auto-Despacho desde la vista si el usuario elige.
+
 
         return cleaned_data
 
@@ -882,6 +876,12 @@ class PedidoForm(forms.ModelForm):
         if peso <= 0:
             raise forms.ValidationError("El peso debe ser un valor positivo mayor a cero.")
         return peso
+
+    def clean_articulos_totales(self):
+        articulos = self.cleaned_data.get('articulos_totales')
+        if articulos <= 0:
+            raise forms.ValidationError("Debe haber al menos un artículo en el pedido.")
+        return articulos
 
 
 class DespachoForm(forms.ModelForm):

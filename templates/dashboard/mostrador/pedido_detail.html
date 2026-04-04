@@ -177,19 +177,19 @@
                         </div>
                     </div>
 
-                    {% if pedido.recoleccion_parcial or pedido.estado == 'ENTREGA_PARCIAL' %}
+                    {% if pedido.estado == 'PARCIAL' %}
                     <div class="alert bg-warning bg-opacity-10 border-warning border-opacity-25 rounded-4 p-4 mb-5 border-start border-4 animate__animated animate__pulse">
                         <div class="d-flex">
                             <div class="bg-warning bg-opacity-20 p-2 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
                                 <i class="fas fa-layer-group text-warning fs-5"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold text-warning mb-1 text-uppercase tracking-wider">Entrega Parcial Detectada</h6>
-                                <p class="small text-muted mb-0">Se ha registrado una entrega parcial para este pedido:</p>
+                                <h6 class="fw-bold text-warning mb-1 text-uppercase tracking-wider">Entrega Parcial Ejecutada</h6>
+                                <p class="small text-muted mb-0">Se han detectado retiros de mostrador o despachos parciales completados para este ticket:</p>
                                 <div class="mt-2 p-3 rounded bg-white bg-opacity-50 shadow-xs border">
                                     <p class="small mb-0 fw-bold text-dark italic">
                                         <i class="fas fa-clipboard-list me-2 text-warning"></i>
-                                        {{ pedido.productos_entregados_parcial|default:pedido.get_estado_display }}
+                                        Saldo Logístico Restante en Ruta: <strong class="text-primary">{{ pedido.saldo_articulos }} pzas ({{ pedido.saldo_peso_kg }} kg)</strong>.
                                     </p>
                                 </div>
                             </div>
@@ -197,37 +197,51 @@
                     </div>
                     {% endif %}
 
-                    <div class="row g-4 mb-5">
-                        <div class="col-md-4">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <div class="info-pill p-3 rounded-4 d-flex align-items-center h-100 border transform-hover bg-white shadow-xs">
+                                <div class="icon-circle bg-info bg-opacity-10 text-info rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <div>
+                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">ARTÍCULOS COMPLETOS / SALDO</p>
+                                    <h6 class="mb-0 fw-bold text-main text-info">{{ pedido.articulos_totales }} <span class="text-muted small">/ {{ pedido.saldo_articulos }} pz</span></h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="info-pill p-3 rounded-4 d-flex align-items-center h-100 border transform-hover bg-white shadow-xs">
                                 <div class="icon-circle bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
                                     <i class="fas fa-weight-hanging"></i>
                                 </div>
                                 <div>
-                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">PESO TOTAL</p>
-                                    <h6 class="mb-0 fw-bold text-main text-primary">{{ pedido.peso_total_estimado_kg }} KG</h6>
+                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">PESO TOTAL / SALDO VIVO</p>
+                                    <h6 class="mb-0 fw-bold text-main text-primary">{{ pedido.peso_total_estimado_kg }} <span class="text-muted small">/ {{ pedido.saldo_peso_kg }} KG</span></h6>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
                             <div class="info-pill p-3 rounded-4 d-flex align-items-center h-100 border transform-hover bg-white shadow-xs">
                                 <div class="icon-circle {% if pedido.es_urgente %}bg-danger bg-opacity-10 text-danger{% else %}bg-primary bg-opacity-10 text-primary{% endif %} rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
                                     <i class="{% if pedido.es_urgente %}fas fa-bolt animate__animated animate__pulse animate__infinite{% else %}fas fa-check-circle{% endif %}"></i>
                                 </div>
                                 <div>
-                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">PRIORIDAD</p>
+                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">PRIORIDAD ENVÍO</p>
                                     <h6 class="mb-0 fw-bold text-main {% if pedido.es_urgente %}text-danger{% else %}text-primary{% endif %}">{% if pedido.es_urgente %}URGENTE{% else %}ESTÁNDAR{% endif %}</h6>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="info-pill p-3 rounded-4 d-flex align-items-center h-100 border transform-hover bg-white shadow-xs">
-                                <div class="icon-circle bg-info bg-opacity-10 text-info rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                <div class="icon-circle bg-secondary bg-opacity-10 text-secondary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
                                     <i class="fas fa-truck-loading"></i>
                                 </div>
                                 <div>
-                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">MANIOBRA</p>
-                                    <h6 class="mb-0 fw-bold text-main text-info">{% if pedido.maniobra_aceptada %}SÍ (Aceptada){% else %}NO (Pie de Carro){% endif %}</h6>
+                                    <p class="x-small text-muted mb-0 fw-bold opacity-75">DESCARGA MANIOBRA</p>
+                                    <h6 class="mb-0 fw-bold text-main text-secondary">{% if pedido.maniobra_aceptada %}SÍ (Aceptada){% else %}NO (A pie de carro){% endif %}</h6>
                                 </div>
                             </div>
                         </div>
