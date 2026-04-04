@@ -43,11 +43,21 @@
         </div>
         
         <div class="d-flex gap-2">
+            <!-- BOTÓN DIVIDIR (FASE 3) -->
+            <button type="button" class="btn btn-icon-sm bg-info bg-opacity-10 text-info border-0 rounded-circle shadow-xs" 
+                    title="Dividir en Despachos" 
+                    hx-get="{% url 'dashboard:pedido_dividir' pedido.pk %}" 
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML"
+                    hx-on::after-swap="var m = new bootstrap.Modal(document.getElementById('modalDividirPedido')); m.show();">
+                <i class="fas fa-divide"></i>
+            </button>
+
             <a href="{% url 'dashboard:pedido_detail' pedido.pk %}" class="btn btn-icon-sm rounded-circle shadow-xs" title="Ver Detalle">
                 <i class="fas fa-arrow-right"></i>
             </a>
             
-            {% if pedido.estado == 'REGISTRADO' %}
+            {% if pedido.estado in 'REGISTRADO,PENDIENTE,CREADO' %}
                 <button type="button" class="btn btn-icon-sm btn-warning-soft rounded-circle shadow-xs" title="Mover a Preparación" hx-post="{% url 'dashboard:pedido_cambiar_estado' pedido.pk %}" hx-vals='{"estado": "EN_PREPARACION"}' hx-confirm="¿Mover a Preparación?">
                     <i class="fas fa-box"></i>
                 </button>

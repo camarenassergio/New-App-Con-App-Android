@@ -30,10 +30,14 @@ Decisiones Clave Confirmadas:
 [ ] 3.2.1 Motor de Saldo (Vistas Orquestador):
   - Las vistas del dashboard deben renderizar `saldo_articulos` y `saldo_peso_kg`.
 
-[ ] 3.2.2 Refactor de Armado de Modal (`modal_armar_viaje.html` + Vista):
-  - Al armar viaje, pedir `Artículos a asignar` y `Peso a cargar`.
-  - Validar que no superen saldos.
-  - Crear instacias independientes de `Despacho` para relacionar con `ViajeNuevo`.
+[ ] 3.2.2 Refactor de Modal de División y Arquitectura Inversa Logística:
+  - Al armar despacho/viaje, pedir `Artículos a asignar` y `Peso a cargar`.
+  - Validar rígidamente por backend y frontend que no superen saldos.
+  - Crear instancias independientes de `Despacho` para relacionar con el `ViajeNuevo`.
+  - 1º Se crea el Viaje (Ruta global) vacío desde el Command Center.
+  - 2º Se usa el Botón de "Dividir en Despachos" desde la Tarjeta del Pedido masivo.
+  - 3º Modal solicita la extracción, y permite elegir de un desplegable el **Viaje (Activo)** previamente creado.
+  - 4º Retención de Estatus: Si un Pedido se fracciona pero conserva un `saldo_articulos > 0`, **no** avanza su estado de origen (`REGISTRADO`/`PENDIENTE`), manteniéndolo visible. Solo cuando agota la cuota pasa a `DESPACHOS_GENERADOS`.
 
 [ ] 3.2.3 Creación de Despachos "Mostrador" (Inicial y Posterior):
   - Al marcar entrega parcial en tienda desde el origen, generar auto-despacho en estado CONFIRMADO.

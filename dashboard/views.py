@@ -2874,13 +2874,16 @@ class LogisticaDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, Templat
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Traemos todos los pedidos activos (no entregados ni cancelados) para el Kanban
-        pedidos_activos = Pedido.objects.exclude(estado__in=['ENTREGADO', 'CANCELADO']).order_by('-fecha_registro')
+        pedidos_activos = Pedido.objects.exclude(estado__in=['ENTREGADO', 'CERRADO', 'CANCELADO']).order_by('-fecha_registro')
         
-        # Agrupamos por estado para las columnas del Kanban
-        context['pedidos_registrados'] = pedidos_activos.filter(estado='REGISTRADO')
-        context['pedidos_preparacion'] = pedidos_activos.filter(estado='EN_PREPARACION')
+        # Agrupamos por estado y los mapeamos a las columnas de Logística
+        # Adicionamos los nuevos estados PENDIENTE y CREADO a la bandeja de entrada
+        context['pedidos_registrados'] = pedidos_activos.filter(estado__in=['REGISTRADO', 'PENDIENTE', 'CREADO'])
+        # A preparación ahora entran los que tienen despachos EN_PROCESO
+        context['pedidos_preparacion'] = pedidos_activos.filter(estado__in=['EN_PREPARACION', 'EN_PROCESO', 'DESPACHOS_GENERADOS'])
+        
         context['pedidos_asignados'] = pedidos_activos.filter(estado='ASIGNADO_A_RUTA')
-        context['pedidos_ruta'] = pedidos_activos.filter(estado='EN_RUTA')
+        context['pedidos_ruta'] = pedidos_activos.filter(estado__in=['EN_RUTA', 'PARCIAL'])
         
         # Opciones para despachar
         context['unidades_disponibles'] = Unidad.objects.filter(en_servicio=True)
@@ -2925,6 +2928,70 @@ class PedidoCambiarEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View):
 
 from .forms import ViajeNuevoForm
 from .models import ViajeNuevo, Despacho
+
+class PedidoDividirView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """
+    Endpoint (HTMX) para mostrar y procesar la partición de un pedido en múltiples despachos.
+    """
+    def get(self, request, pk):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        viajes_activos = ViajeNuevo.objects.filter(completado=False).order_by('-fecha_creacion')
+        return render(request, 'dashboard/logistica/modal_dividir_pedido.html', {
+            'pedido': pedido,
+            'viajes_activos': viajes_activos
+        })
+
+    def post(self, request, pk):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        from decimal import Decimal
+        
+        try:
+            articulos_str = request.POST.get('cantidad_articulos_asignados', '0')
+            peso_str = request.POST.get('peso_asignado_kg', '0')
+            
+            articulos = Decimal(articulos_str) if articulos_str else Decimal('0')
+            peso = Decimal(peso_str) if peso_str else Decimal('0')
+            
+            tipo_envio = request.POST.get('tipo_envio', 'INTERNO_FLOTILLA')
+            observaciones = request.POST.get('observaciones_entrega', '')
+            
+            # Simple server-side validation against saldo
+            if articulos <= 0 or articulos > pedido.saldo_articulos:
+                return HttpResponse(f'<div class="alert alert-danger px-3 py-2 small fw-bold"><i class="fas fa-exclamation-triangle"></i> Los artículos ({articulos}) exceden el saldo disponible ({pedido.saldo_articulos}).</div>', status=400)
+                
+            if peso < 0 or peso > pedido.saldo_peso_kg:
+                return HttpResponse(f'<div class="alert alert-danger px-3 py-2 small fw-bold"><i class="fas fa-exclamation-triangle"></i> El peso límite ({pedido.saldo_peso_kg} kg) fue excedido.</div>', status=400)
+                
+            viaje_id = request.POST.get('viaje_id')
+            viaje = None
+            if viaje_id:
+                viaje = get_object_or_404(ViajeNuevo, pk=viaje_id)
+
+            # Todo bien, crear el Despacho atómico
+            Despacho.objects.create(
+                pedido=pedido,
+                viaje=viaje,
+                tipo_envio=tipo_envio,
+                estado='PENDIENTE',  # Inicia pendiente de surtido operativo
+                cantidad_articulos_asignados=articulos,
+                peso_asignado_kg=peso,
+                observaciones_entrega=observaciones,
+            )
+            
+            # Regla de Negocio Logística: Si hay saldo vivo, NO cambiamos el ticket de estado, se queda en la bandeja
+            if pedido.saldo_articulos == 0:
+                pedido.estado = 'DESPACHOS_GENERADOS' # All capacity loaded into dispatch
+                # O EN_PREPARACION, dependiendo de la configuración del Kanban, pero dejémoslo avanzar
+                pedido.save()
+            
+            messages.success(request, f"Carga fraccionada exitosamente. Se ha generado un nuevo despacho de {articulos} pzas ({peso} kg).")
+            # Cierre exitoso y disparador HTMX para recargar
+            response = HttpResponse(status=204)
+            response["HX-Trigger"] = "boardChanged"
+            return response
+            
+        except Exception as e:
+            return HttpResponse(f'<div class="alert alert-danger px-3 py-2 small fw-bold">Error interno: {str(e)}</div>', status=400)
 
 class LogisticaArmarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, View):
     """

@@ -1,0 +1,126 @@
+<div class="modal fade animate__animated animate__fadeIn" id="modalDividirPedido" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+            <!-- Header Premium -->
+            <div class="modal-header border-0 bg-info grad-info text-white p-4 d-flex align-items-center" style="background: linear-gradient(135deg, #0284c7, #0369a1);">
+                <div class="bg-white bg-opacity-20 p-2 rounded-circle me-3 shadow-sm d-flex justify-content-center align-items-center" style="width: 48px; height: 48px;">
+                    <i class="fas fa-divide fs-4 text-white"></i>
+                </div>
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">Dividir Carga: Pedido #{{ pedido.folio_sae }}</h5>
+                    <p class="x-small mb-0 text-white opacity-75 text-uppercase tracking-wider fw-bold">Generar Despacho Individual</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form hx-post="{% url 'dashboard:pedido_dividir' pedido.pk %}" hx-target="#form-errores-dividir" hx-indicator=".btn-submit-dividir">
+                {% csrf_token %}
+                <div class="modal-body p-4 p-md-5 bg-light">
+                    <!-- Errores dinámicos -->
+                    <div id="form-errores-dividir" class="mb-3"></div>
+                    
+                    <!-- Resumen del Saldo Vivo -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="x-small text-muted text-uppercase fw-bold opacity-75 d-block mb-2">Saldo Logístico Restante en este Pedido</label>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded-3 border d-flex align-items-center shadow-xs">
+                                <div class="bg-info bg-opacity-10 text-info p-2 rounded-circle me-3" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <div>
+                                    <p class="x-small text-muted mb-0 fw-bold">ARTÍCULOS COMPLETOS</p>
+                                    <h5 class="fw-bold text-main text-info mb-0">{{ pedido.saldo_articulos }} <span class="x-small text-muted fw-normal">pzas</span></h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded-3 border d-flex align-items-center shadow-xs">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle me-3" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-weight-hanging"></i>
+                                </div>
+                                <div>
+                                    <p class="x-small text-muted mb-0 fw-bold">PESO LOGÍSTICO VIVO</p>
+                                    <h5 class="fw-bold text-main text-primary mb-0">{{ pedido.saldo_peso_kg }} <span class="x-small text-muted fw-normal">kg</span></h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Setup del Nuevo Despacho -->
+                    <div class="p-4 bg-white border border-dashed rounded-4 shadow-sm">
+                        <h6 class="fw-bold text-main mb-3 border-bottom pb-2">Configurar Nuevo Despacho</h6>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Extraer Artículos (pzas)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-clipboard-check text-muted"></i></span>
+                                    <input type="number" step="0.01" class="form-control border-start-0 ps-0" name="cantidad_articulos_asignados" max="{{ pedido.saldo_articulos|stringformat:'f' }}" required placeholder="Ej. 10.00">
+                                </div>
+                                <div class="form-text x-small">Se surtirá esta cantidad de artículos.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Peso Calculado (kg)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-balance-scale text-muted"></i></span>
+                                    <input type="number" step="0.01" class="form-control border-start-0 ps-0" name="peso_asignado_kg" max="{{ pedido.saldo_peso_kg|stringformat:'f' }}" required placeholder="Ej. 500.00">
+                                </div>
+                                <div class="form-text x-small">Este peso consumirá la capacidad del camión.</div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">Estrategia de Ruta Sugerida</label>
+                                <select name="tipo_envio" class="form-select" required>
+                                    <option value="INTERNO_FLOTILLA" selected>Ruta A: Unidad Flotilla (Logística Interna)</option>
+                                    <option value="INTERNO_PERSONAL">Ruta B: Vehículo Personal / Moto</option>
+                                    <option value="PROVEEDOR_EXTERNO">Ruta C: Proveedor Externo (Ocurre)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 mt-2">
+                                <label class="form-label small fw-bold text-muted">Vincular a Ruta / Viaje Existente (Opcional)</label>
+                                <select name="viaje_id" class="form-select border-primary bg-primary bg-opacity-10 text-primary fw-bold shadow-xs">
+                                    <option value="" selected>-- Sin asignar por ahora (Bandeja de Surtidor) --</option>
+                                    {% for viaje in viajes_activos %}
+                                        <option value="{{ viaje.id }}">Ruta #{{ viaje.id }} - F/{{ viaje.fecha_creacion|date:"d M H:i" }} | Conf: {% if viaje.unidad %}{{ viaje.unidad.alias }}{% else %}Externo/Personal{% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text x-small">Útil si armaste la ruta global antes de fraccionar este pedido.</div>
+                            </div>
+
+                            <div class="col-12 mt-3">
+                                <label class="form-label small fw-bold text-muted">Indicaciones de Surtido (Opcional)</label>
+                                <textarea name="observaciones_entrega" class="form-control" rows="2" placeholder="Instrucciones en caso de que este despacho requiera algo en particular para cargarse..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <div class="modal-footer bg-light border-top-0 px-4 pb-4 pt-0 d-flex justify-content-between">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold text-muted shadow-sm border" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="submit" class="btn btn-info bg-info text-white grad-info rounded-pill px-4 fw-bold shadow-premium border-0 btn-submit-dividir">
+                        <span class="htmx-indicator-text">
+                            <i class="fas fa-layer-group me-2"></i> GENERAR DESPACHO
+                        </span>
+                        <div class="spinner-border spinner-border-sm htmx-indicator-spinner" role="status" style="display: none;">
+                            <span class="visually-hidden">Procesando...</span>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos Premium Modal Dividir */
+    .shadow-premium { box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4); }
+    .border-dashed { border-style: dashed !important; border-width: 2px !important; border-color: rgba(0,0,0,0.1) !important; }
+    
+    .htmx-request .htmx-indicator-text { display: none; }
+    .htmx-request .htmx-indicator-spinner { display: inline-block !important; }
+</style>

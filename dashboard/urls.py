@@ -79,6 +79,7 @@ urlpatterns = [
     # --- LOGISTICA (PASO 2 - FASE 2) ---
     path('logistica/dashboard/', views.LogisticaDashboardView.as_view(), name='logistica_dashboard'),
     path('logistica/armar-viaje/', views.LogisticaArmarViajeView.as_view(), name='logistica_armar_viaje'),
+    path('logistica/pedido/<int:pk>/dividir/', views.PedidoDividirView.as_view(), name='pedido_dividir'),
 
     # --- MOSTRADOR (PASO 1 - FASE 2) ---
     path('mostrador/dashboard/', views.MostradorDashboardView.as_view(), name='mostrador_dashboard'),
