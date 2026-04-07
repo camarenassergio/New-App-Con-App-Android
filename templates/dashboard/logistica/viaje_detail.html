@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Detalle de Ruta #{{ viaje.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        transition: transform 0.2s ease;
+        border-radius: 20px;
+    }
+    .metric-card:hover {
+        transform: translateY(-5px);
+    }
+    .progress-bar-glow {
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+    .dispatch-status-badge {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 50px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-md-5">
+
+    <!-- HEADER PREMIUM -->
+    <div class="card border-0 shadow-lg mb-4 overflow-hidden" style="border-radius: 24px;">
+        <div class="card-body p-0">
+            <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="header-icon-box bg-white bg-opacity-20 rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 58px; height: 58px;">
+                        <i class="fas fa-route text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">
+                            Ruta #{{ viaje.id }}
+                            <span class="badge border border-white border-opacity-50 ms-2 rounded-pill x-small fw-bold text-uppercase" 
+                                  style="background: rgba(255,255,255,0.2); font-size: 0.6rem; vertical-align: middle; padding: 0.35rem 0.8rem; letter-spacing: 0.05em;">
+                                {{ viaje.get_estado_display }}
+                            </span>
+                        </h4>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">
+                            <i class="fas fa-calendar-alt me-1"></i> PROGRAMADA: {{ viaje.fecha_viaje|date:"d M Y" }}{% if viaje.fecha_viaje == hoy %} (HOY){% endif %}
+                            · <i class="fas fa-plus-circle me-1"></i> CREADA: {{ viaje.fecha_creacion|date:"d/m/Y H:i" }}
+                            {% if viaje.usuario_creacion %}
+                                · <i class="fas fa-user-edit me-1"></i> POR: {{ viaje.usuario_creacion.personal.nombre|default:viaje.usuario_creacion.get_full_name|default:viaje.usuario_creacion.username }}
+                            {% endif %}
+                        </p>
+                        {% if viaje.hora_salida or viaje.hora_llegada %}
+                        <p class="x-small mb-0 mt-1 opacity-75 text-uppercase tracking-wider fw-bold" style="font-size: 0.65rem;">
+                            {% if viaje.hora_salida %}<span class="text-white-50"><i class="fas fa-clock me-1"></i> SALIDA:</span> {{ viaje.hora_salida|time:"H:i" }}{% endif %}
+                            {% if viaje.hora_llegada %} · <span class="text-white-50"><i class="fas fa-check-circle me-1"></i> REGRESO:</span> {{ viaje.hora_llegada|time:"H:i" }}{% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <a href="{% url 'dashboard:logistica_dashboard' %}" class="btn btn-white bg-white text-primary rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fas fa-arrow-left me-2"></i>Regresar al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- METRICS ROW -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm metric-card h-100 p-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-id-card text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <label class="text-muted x-small text-uppercase fw-bold ls-1 d-block">Chofer</label>
+                        <span class="fw-bold text-main">
+                            {% if viaje.proveedor_externo %}
+                                {{ viaje.proveedor_externo }}
+                            {% else %}
+                                {{ viaje.chofer.personal.nombre|default:viaje.chofer.get_full_name }}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm metric-card h-100 p-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-truck text-info fs-4"></i>
+                    </div>
+                    <div>
+                        <label class="text-muted x-small text-uppercase fw-bold ls-1 d-block">Unidad</label>
+                        <span class="fw-bold text-main">
+                            {% if viaje.unidad %}
+                                {{ viaje.unidad.nUnidad }} ({{ viaje.unidad.placas }})
+                            {% elif viaje.vehiculo_personal_info %}
+                                {{ viaje.vehiculo_personal_info }}
+                            {% else %}
+                                <span class="fst-italic opacity-50">Externa/Proveedor</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm metric-card h-100 p-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-weight-hanging text-warning fs-4"></i>
+                    </div>
+                    <div>
+                        <label class="text-muted x-small text-uppercase fw-bold ls-1 d-block">Carga Total</label>
+                        <span class="fw-bold text-main">{{ total_peso_kg }} kg / {{ total_articulos }} pzas</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm metric-card h-100 p-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-tasks text-success fs-4"></i>
+                    </div>
+                    <div class="w-100 pe-3">
+                        <label class="text-muted x-small text-uppercase fw-bold ls-1 d-block">Progreso</label>
+                        <div class="d-flex align-items-center mt-1">
+                            <div class="progress w-100 me-2" style="height: 8px; border-radius: 10px;">
+                                <div class="progress-bar bg-success progress-bar-glow" role="progressbar" 
+                                     style="width: {{ progreso_porcentaje }}%;" 
+                                     aria-valuenow="{{ progreso_porcentaje }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="fw-bold text-success smaller">{{ progreso_porcentaje }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DISPATCHES TABLE -->
+    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
+        <div class="card-header bg-white py-4 px-4 border-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-primary">
+                    <i class="fas fa-boxes me-2"></i>Despachos en esta Ruta ({{ total_despachos }})
+                </h5>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 premium-table">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Folio SAP/SAE</th>
+                        <th>Cliente y Obra</th>
+                        <th class="text-center">Carga</th>
+                        <th class="text-center">Estatus</th>
+                        <th class="text-center">Horarios</th>
+                        <th class="pe-4 text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for despacho in viaje.despachos.all %}
+                    <tr class="animate__animated animate__fadeIn">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-file-invoice text-primary"></i>
+                                </div>
+                                <div>
+                                    <span class="fw-bold text-main d-block">{{ despacho.pedido.folio_sae }}</span>
+                                    <span class="text-muted x-small text-uppercase">ID #{{ despacho.id }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <span class="fw-bold text-main d-block">
+                                    {{ despacho.pedido.cliente.razon_social|default:despacho.pedido.cliente_nombre_manual }}
+                                </span>
+                                <span class="text-muted smaller">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    {{ despacho.pedido.obra.alias|default:despacho.pedido.cliente_direccion_manual|truncatechars:40 }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="badge bg-light text-primary border rounded-pill px-2 py-1 smaller mb-1 d-inline-block">
+                                    {{ despacho.cantidad_articulos_asignados }} pzas
+                                </span>
+                                <span class="text-muted x-small fw-bold">
+                                    <i class="fas fa-weight me-1"></i>{{ despacho.peso_asignado_kg }} kg
+                                </span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            {% if despacho.estado == 'CONFIRMADO' %}
+                                <span class="dispatch-status-badge bg-success-subtle text-success border-success border-opacity-25 border">
+                                    <i class="fas fa-check-circle me-1"></i> Entregado
+                                </span>
+                            {% elif despacho.estado == 'EN_RUTA' %}
+                                <span class="dispatch-status-badge bg-primary-subtle text-primary border-primary border-opacity-25 border">
+                                    <i class="fas fa-truck-moving me-1"></i> En Tránsito
+                                </span>
+                            {% elif despacho.estado == 'RECHAZO_PARCIAL' %}
+                                <span class="dispatch-status-badge bg-warning-subtle text-warning border-warning border-opacity-25 border">
+                                    <i class="fas fa-exclamation-triangle me-1"></i> Parcial
+                                </span>
+                            {% elif despacho.estado == 'CANCELADO' %}
+                                <span class="dispatch-status-badge bg-danger-subtle text-danger border-danger border-opacity-25 border">
+                                    <i class="fas fa-times-circle me-1"></i> Cancelado
+                                </span>
+                            {% else %}
+                                <span class="dispatch-status-badge bg-secondary-subtle text-muted border-secondary border-opacity-25 border">
+                                    <i class="far fa-clock me-1"></i> Pendiente
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column gap-1">
+                                <div class="x-small">
+                                    <i class="fas fa-sign-in-alt text-success me-1"></i>
+                                    <span class="fw-bold">{{ despacho.hora_llegada|time:"H:i"|default:"--:--" }}</span>
+                                </div>
+                                <div class="x-small">
+                                    <i class="fas fa-sign-out-alt text-danger me-1"></i>
+                                    <span class="fw-bold">{{ despacho.hora_entrega|time:"H:i"|default:"--:--" }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="pe-4">
+                            <div class="d-flex justify-content-center gap-2">
+                                <!-- Botón Evidencias -->
+                                <button class="btn btn-sm btn-outline-info rounded-circle shadow-sm" 
+                                        style="width: 32px; height: 32px; padding: 0;"
+                                        title="Ver Evidencias de Material"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#modalEvidencias"
+                                        onclick="cargarEvidencias('{{ despacho.id }}')">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                                
+                                <!-- Botón Firma -->
+                                <button class="btn btn-sm btn-outline-success rounded-circle shadow-sm" 
+                                        style="width: 32px; height: 32px; padding: 0;"
+                                        title="Ver Firma del Cliente"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#modalFirma"
+                                        {% if despacho.foto_ticket_firmado %}
+                                        onclick="cargarFirma('{{ despacho.foto_ticket_firmado.url }}')"
+                                        {% else %}
+                                        disabled
+                                        {% endif %}>
+                                    <i class="fas fa-signature"></i>
+                                </button>
+                                
+                                <!-- Botón Encuesta (Pendiente) -->
+                                <button class="btn btn-sm btn-outline-secondary rounded-circle shadow-sm" 
+                                        style="width: 32px; height: 32px; padding: 0;"
+                                        title="Encuesta de Satisfacción (Pendiente)"
+                                        disabled>
+                                    <i class="fas fa-poll-h"></i>
+                                </button>
+                                
+                                <div class="vr mx-1"></div>
+                                
+                                <!-- Ver Pedido Completo -->
+                                <a href="{% url 'dashboard:pedido_detail' despacho.pedido.pk %}" 
+                                   class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm fw-bold"
+                                   style="font-size: 0.7rem;"
+                                   title="Ver Detalle del Pedido">
+                                    <i class="fas fa-eye me-1"></i> PEDIDO
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <div class="empty-state d-flex flex-column align-items-center justify-content-center">
+                                <i class="fas fa-box-open mb-3 opacity-25" style="font-size: 4rem;"></i>
+                                <h6 class="fw-bold">No hay despachos asignados</h6>
+                                <p class="text-muted small">Arrastra pedidos al panel de asignación para cargar esta ruta.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- MODAL EVIDENCIAS -->
+    <div class="modal fade" id="modalEvidencias" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header bg-info text-white border-0">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-camera me-2"></i>Evidencias de Entrega</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="cuerpoEvidencias">
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FIRMA -->
+    <div class="modal fade" id="modalFirma" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header bg-success text-white border-0">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-signature me-2"></i>Firma del Cliente</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0 text-center bg-light">
+                    <img id="imgFirma" src="" class="img-fluid" alt="Firma del cliente" style="max-height: 400px;">
+                </div>
+                <div class="modal-footer border-0 bg-white">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+                    <a id="btnDescargarFirma" href="" download class="btn btn-success rounded-pill px-4 fw-bold">
+                        <i class="fas fa-download me-2"></i>Descargar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function cargarFirma(url) {
+        document.getElementById('imgFirma').src = url;
+        document.getElementById('btnDescargarFirma').href = url;
+    }
+
+    function cargarEvidencias(despachoId) {
+        const cuerpo = document.getElementById('cuerpoEvidencias');
+        cuerpo.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-info" role="status"></div></div>';
+        
+        // Usamos una pequeña lógica manual para buscar las fotos del despacho inyectadas al template o vía htmx
+        // Por ahora, como es premium, vamos a inyectarlas directamente al modal si estuviéramos usando HTMX.
+        // Pero para ser rápidos, vamos a delegar esto a un fragmento HTMX que pida las fotos.
+        
+        // Simulación o petición real vía HTMX:
+        htmx.ajax('GET', `/dashboard/logistica/despacho/${despachoId}/evidencias/`, {target: '#cuerpoEvidencias'});
+    }
+</script>
+{% endblock %}

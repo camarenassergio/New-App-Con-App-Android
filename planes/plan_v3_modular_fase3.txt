@@ -27,8 +27,15 @@ Decisiones Clave Confirmadas:
 
 ## 3.2 Modulo de Subdivisión y Orquestación Logística (`dashboard/views.py`)
 
-[ ] 3.2.1 Motor de Saldo (Vistas Orquestador):
+    3.2.1 Cambiar vista logistica/dashboard.html para que se genere primero una ruta y luego se asignen los despachos a esa ruta.
+[x] 3.2.1.1 Motor de Saldo (Vistas Orquestador):
   - Las vistas del dashboard deben renderizar `saldo_articulos` y `saldo_peso_kg`.
+
+[x] 3.2.1.2 Gestión de Estados de Ruta y Pre-agendamiento (IMPLEMENTADO):
+  - Soportar estados: `CREADO`, `EN_CURSO`, `REPROGRAMADO`, `FINALIZADO`.
+  - Filtrado dinámico por `fecha_viaje` en Command Center.
+  - Lógica de Auto-Reprogramación: Rutas vencidas pasan a REPROGRAMADO automáticamente.
+  - Registro automático de Tiempos: `hora_salida` (al iniciar) y `hora_llegada` (al finalizar).
 
 [ ] 3.2.2 Refactor de Modal de División y Arquitectura Inversa Logística:
   - Al armar despacho/viaje, pedir `Artículos a asignar` y `Peso a cargar`.
@@ -39,9 +46,20 @@ Decisiones Clave Confirmadas:
   - 3º Modal solicita la extracción, y permite elegir de un desplegable el **Viaje (Activo)** previamente creado.
   - 4º Retención de Estatus: Si un Pedido se fracciona pero conserva un `saldo_articulos > 0`, **no** avanza su estado de origen (`REGISTRADO`/`PENDIENTE`), manteniéndolo visible. Solo cuando agota la cuota pasa a `DESPACHOS_GENERADOS`.
 
+[ ] 3.2.2.1 Modificaciones Post-Creación de Despachos:
+  - Implementar lógica para permitir ajustes en la ruta (unidad/chofer) incluso después de que los despachos han sido asignados, siempre que el estado no sea FINALIZADO.
+
 [ ] 3.2.3 Creación de Despachos "Mostrador" (Inicial y Posterior):
   - Al marcar entrega parcial en tienda desde el origen, generar auto-despacho en estado CONFIRMADO.
   - Soportar que un pedido ya activo reciba un "Retiro en Mostrador" en cualquier momento: el cliente pasa por material urgente, se ingresa la cantidad, se genera el Despacho CONFIRMADO y se ajusta el saldo restante para Logística.
+
+---
+
+## 3.2.4 Análisis y Auditoría de Rutas
+
+[ ] 3.2.4.1 Perfeccionamiento de Vista Historial de Rutas:
+  - Mejorar filtros de búsqueda por rango de fecha, chofer y unidad.
+  - Visualización de tiempos de ciclo (Salida vs Llegada) y eficiencia (Entregas completadas vs Reprogramadas).
 
 ---
 

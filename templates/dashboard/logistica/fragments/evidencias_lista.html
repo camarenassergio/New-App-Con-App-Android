@@ -1,0 +1,19 @@
+<div class="row g-3">
+    {% for evidencia in evidencias %}
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-radius: 12px;">
+            <a href="{{ evidencia.foto.url }}" target="_blank">
+                <img src="{{ evidencia.foto.url }}" class="img-fluid" alt="Evidencia cargo" style="height: 150px; width: 100%; object-fit: cover;">
+            </a>
+            <div class="card-body p-2 text-center">
+                <span class="x-small text-muted">{{ evidencia.fecha_registro|date:"d/m/Y H:i" }}</span>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-4">
+        <i class="fas fa-camera mb-2 opacity-25" style="font-size: 3rem;"></i>
+        <p class="text-muted small mb-0">No se encontraron fotos de evidencia para este despacho.</p>
+    </div>
+    {% endfor %}
+</div>

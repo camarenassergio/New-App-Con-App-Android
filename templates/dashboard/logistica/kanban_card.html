@@ -38,8 +38,13 @@
 
     <!-- Pie de Tarjeta (Actions & Meta) -->
     <div class="card-meta d-flex justify-content-between align-items-center pt-3 mt-1 border-top border-dashed">
-        <div class="small fw-bold text-muted">
-            <i class="fas fa-weight-hanging me-1 opacity-50"></i> {{ pedido.peso_total_estimado_kg }} <span class="x-small opacity-75">KG</span>
+        <div class="d-flex flex-column gap-1">
+            <div class="small fw-bold {% if pedido.saldo_articulos > 0 %}text-info{% else %}text-muted{% endif %}">
+                <i class="fas fa-boxes me-1 opacity-50"></i> {{ pedido.saldo_articulos|default:"0" }} <span class="x-small opacity-75">Pz</span>
+            </div>
+            <div class="small fw-bold {% if pedido.saldo_peso_kg > 0 %}text-primary{% else %}text-muted{% endif %}">
+                <i class="fas fa-weight-hanging me-1 opacity-50"></i> {{ pedido.saldo_peso_kg|default:"0" }} <span class="x-small opacity-75">KG</span>
+            </div>
         </div>
         
         <div class="d-flex gap-2">

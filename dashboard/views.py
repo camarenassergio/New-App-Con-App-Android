@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
-from django.db.models import Sum, F, Q
+from django.db.models import Sum, F, Q, Count
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
@@ -2889,7 +2889,32 @@ class LogisticaDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, Templat
         context['unidades_disponibles'] = Unidad.objects.filter(en_servicio=True)
         # Operadores
         context['choferes'] = Operador.objects.filter(activo=True, puesto='CHOFER')
+
+        # ── PANEL DE RUTAS ───────────────────────────────────────────────────
+        # Rutas activas del día (no completadas) para las route-cards del dashboard
+        hoy = timezone.localtime(timezone.now()).date()
         
+        # Lógica de auto-rescheduling (v2.1)
+        # Rutas de días pasados que no se finalizaron pasan a REPROGRAMADO
+        vencidos = ViajeNuevo.objects.filter(
+            fecha_viaje__lt=hoy,
+            estado__in=['CREADO', 'EN_CURSO']
+        )
+        if vencidos.exists():
+            vencidos.update(estado='REPROGRAMADO')
+
+        # Filtramos rutas para hoy: las de hoy + las que hayan quedado "activas" o "reprogramadas" de antes
+        context['viajes_activos'] = (
+            ViajeNuevo.objects
+            .filter(Q(fecha_viaje=hoy) | Q(estado__in=['EN_CURSO', 'REPROGRAMADO']))
+            .exclude(estado='FINALIZADO')
+            .prefetch_related('despachos')
+            .select_related('unidad', 'chofer', 'chalan')
+            .order_by('fecha_creacion')
+        )
+        context['viajes_hoy_count'] = ViajeNuevo.objects.filter(fecha_viaje=hoy).count()
+        context['hoy'] = hoy
+
         return context
 
 class PedidoCancelView(LoginRequiredMixin, View):
@@ -2993,53 +3018,175 @@ class PedidoDividirView(LoginRequiredMixin, NonChoferRequiredMixin, View):
         except Exception as e:
             return HttpResponse(f'<div class="alert alert-danger px-3 py-2 small fw-bold">Error interno: {str(e)}</div>', status=400)
 
-class LogisticaArmarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+class LogisticaCrearViajeView(LoginRequiredMixin, NonChoferRequiredMixin, View):
     """
-    Endpoint (HTMX) para mostrar modal y procesar asignación múltiple de pedidos a un viaje.
+    Endpoint (HTMX) para mostrar modal y procesar la creación de una ruta global vacía.
     """
     def get(self, request):
-        form = ViajeNuevoForm()
-        # Filtramos pedidos listos para armar ruta pero que no tengan despacho activo
-        pedidos_disponibles = Pedido.objects.filter(estado='ASIGNADO_A_RUTA')
+        hoy = timezone.localtime(timezone.now()).date()
+        form = ViajeNuevoForm(initial={'fecha_viaje': hoy})
+        conteo_programado_hoy = ViajeNuevo.objects.filter(fecha_viaje=hoy).count()
+        next_id = conteo_programado_hoy + 1
         
-        return render(request, 'dashboard/logistica/modal_armar_viaje.html', {
+        return render(request, 'dashboard/logistica/modal_crear_viaje.html', {
             'form': form,
-            'pedidos_disponibles': pedidos_disponibles
+            'next_viaje_id': next_id,
+            'hoy': hoy
         })
 
     def post(self, request):
         form = ViajeNuevoForm(request.POST)
-        pedido_ids = request.POST.getlist('pedidos_seleccionados')
         
-        if form.is_valid() and pedido_ids:
-            viaje = form.save()
-            pedidos = Pedido.objects.filter(id__in=pedido_ids)
+        if form.is_valid():
+            viaje = form.save(commit=False)
+            viaje.usuario_creacion = request.user
+            if form.cleaned_data.get('tipo_ruta_switch') == 'EXTERNA':
+                viaje.chofer = request.user
+            viaje.save()
             
-            # Crear los despachos para cada pedido y ponerlos En Ruta
-            for pedido in pedidos:
-                Despacho.objects.create(
-                    pedido=pedido,
-                    viaje=viaje,
-                    tipo_envio='INTERNO_FLOTILLA',
-                    estado='PENDIENTE',  # Pendiente de entrega por el chofer
-                    peso_asignado_kg=pedido.peso_total_estimado_kg
-                )
-                pedido.estado = 'EN_RUTA'
-                pedido.save()
-                
-            messages.success(request, f"¡Viaje armado exitosamente! {pedidos.count()} pedidos asignados al chofer {viaje.chofer.personal.nombre}.")
+            # Calcular su número secuencial del día basado en la fecha programada
+            num_ruta = ViajeNuevo.objects.filter(fecha_viaje=viaje.fecha_viaje, id__lte=viaje.id).count()
+            
+            nombre_chofer = viaje.chofer.personal.nombre if (viaje.chofer and hasattr(viaje.chofer, 'personal') and viaje.chofer.personal.nombre) else (viaje.chofer.get_full_name() if viaje.chofer else viaje.proveedor_externo)
+            messages.success(request, f"¡Ruta #{num_ruta} creada exitosamente para el {viaje.fecha_viaje}! Reservada para: {nombre_chofer}.")
             response = HttpResponse(status=204)
             response['HX-Trigger'] = 'boardChanged'  # Refrescar Kanban
             return response
             
-        if not pedido_ids:
-            messages.error(request, "Debes seleccionar al menos un pedido para armar el viaje.")
-            
-        pedidos_disponibles = Pedido.objects.filter(estado='ASIGNADO_A_RUTA')
-        return render(request, 'dashboard/logistica/modal_armar_viaje.html', {
-            'form': form,
-            'pedidos_disponibles': pedidos_disponibles
+        return render(request, 'dashboard/logistica/modal_crear_viaje.html', {
+            'form': form
         })
+
+class ViajeCambiarEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """
+    Endpoint (HTMX) para avanzar el estado de una ruta (Creado -> En Curso -> Finalizado).
+    Registra automáticamente la hora de salida/llegada según corresponda.
+    """
+    def post(self, request, pk):
+        viaje = get_object_or_404(ViajeNuevo, pk=pk)
+        nuevo_estado = request.POST.get('estado')
+        
+        ahora = timezone.localtime(timezone.now())
+        
+        if nuevo_estado == 'EN_CURSO':
+            viaje.estado = 'EN_CURSO'
+            viaje.hora_salida = ahora.time()
+            messages.success(request, f"¡Ruta #{viaje.id} iniciada! Salida registrada a las {viaje.hora_salida.strftime('%H:%M')}.")
+        elif nuevo_estado == 'FINALIZADO':
+            viaje.estado = 'FINALIZADO'
+            viaje.completado = True
+            viaje.hora_llegada = ahora.time()
+            messages.success(request, f"Ruta #{viaje.id} finalizada. Regreso registrado a las {viaje.hora_llegada.strftime('%H:%M')}.")
+        
+        viaje.save()
+        
+        if "HX-Request" in request.headers:
+            response = HttpResponse(status=204)
+            response["HX-Trigger"] = "boardChanged"
+            return response
+        return redirect('dashboard:logistica_dashboard')
+
+class ViajeNuevoDetailView(LoginRequiredMixin, NonChoferRequiredMixin, DetailView):
+    """
+    Vista detallada de una ruta (ViajeNuevo) para seguimiento operativo.
+    Muestra los despachos asignados, chofer, unidad y métricas totales.
+    """
+    model = ViajeNuevo
+    template_name = 'dashboard/logistica/viaje_detail.html'
+    context_object_name = 'viaje'
+
+    def get_queryset(self):
+        return super().get_queryset().select_related('unidad', 'chofer', 'chalan').prefetch_related(
+            'despachos__pedido__cliente',
+            'despachos__pedido__obra__zona'
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['hoy'] = timezone.localtime(timezone.now()).date()
+        viaje = self.get_object()
+        despachos = viaje.despachos.all()
+        
+        # Calcular métricas totales de la ruta
+        context['total_peso_kg'] = sum(d.peso_asignado_kg or 0 for d in despachos)
+        context['total_articulos'] = sum(d.cantidad_articulos_asignados or 0 for d in despachos)
+        context['total_despachos'] = despachos.count()
+        
+        # Conteo de estados de entrega
+        context['entregados_count'] = despachos.filter(estado__in=['CONFIRMADO', 'RECHAZO_PARCIAL']).count()
+        
+        if context['total_despachos'] > 0:
+            context['progreso_porcentaje'] = int((context['entregados_count'] / context['total_despachos']) * 100)
+        else:
+            context['progreso_porcentaje'] = 0
+            
+        return context
+
+class DespachoEvidenciasFragmentView(LoginRequiredMixin, View):
+    """
+    Retorna un fragmento HTML con las fotos de evidencia de un despacho para el modal.
+    """
+    def get(self, request, pk):
+        despacho = get_object_or_404(Despacho, pk=pk)
+        evidencias = despacho.evidencias_material.all()
+        return render(request, 'dashboard/logistica/fragments/evidencias_lista.html', {
+            'evidencias': evidencias,
+            'despacho': despacho
+        })
+
+class ViajeNuevoListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
+    """
+    Vista de historial y auditoría de rutas (ViajeNuevo).
+    Permite filtrar por rango de fechas, chofer y estatus de completado.
+    """
+    model = ViajeNuevo
+    template_name = 'dashboard/logistica/viaje_nuevo_list.html'
+    context_object_name = 'viajes'
+    paginate_by = 25
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('unidad', 'chofer', 'chalan').prefetch_related('despachos')
+        
+        # Anotar métricas para evitar loops pesados en template
+        queryset = queryset.annotate(
+            total_peso=Sum('despachos__peso_asignado_kg'),
+            total_despachos_count=Count('despachos')
+        )
+        
+        # Filtros
+        fecha_inicio = self.request.GET.get('fecha_inicio')
+        fecha_fin = self.request.GET.get('fecha_fin')
+        chofer_id = self.request.GET.get('chofer')
+        status = self.request.GET.get('status')
+
+        if fecha_inicio:
+            queryset = queryset.filter(fecha_creacion__date__gte=fecha_inicio)
+        if fecha_fin:
+            queryset = queryset.filter(fecha_creacion__date__lte=fecha_fin)
+        if chofer_id:
+            queryset = queryset.filter(chofer_id=chofer_id)
+        if status:
+            if status == 'completed':
+                queryset = queryset.filter(completado=True)
+            elif status == 'active':
+                queryset = queryset.filter(completado=False)
+
+        return queryset.order_by('-fecha_creacion')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Lista de choferes para el filtro
+        context['choferes'] = User.objects.filter(is_active=True).order_by('username')
+        
+        # Filtros actuales para mantener el estado en el template
+        context['filtros'] = {
+            'fecha_inicio': self.request.GET.get('fecha_inicio', ''),
+            'fecha_fin': self.request.GET.get('fecha_fin', ''),
+            'chofer_id': self.request.GET.get('chofer', ''),
+            'status': self.request.GET.get('status', ''),
+        }
+        context['hoy'] = timezone.localtime(timezone.now()).date()
+        return context
 
 # --- GESTION DE CLIENTES Y OBRAS ---
 class ClienteListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):

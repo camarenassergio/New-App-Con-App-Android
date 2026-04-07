@@ -906,16 +906,59 @@ class DespachoEntregaForm(forms.ModelForm):
         }
 
 class ViajeNuevoForm(forms.ModelForm):
+    tipo_ruta_switch = forms.ChoiceField(
+        choices=[('INTERNA', 'Logística Interna (Flotilla/Personal)'), ('EXTERNA', 'Surtido Externo (Proveedor)')],
+        widget=forms.RadioSelect(attrs={'class': 'btn-check'}),
+        required=False,
+        initial='INTERNA'
+    )
     class Meta:
         model = ViajeNuevo
-        fields = ['unidad', 'vehiculo_personal_info', 'chofer', 'chalan', 'proveedor_externo']
+        fields = ['fecha_viaje', 'unidad', 'vehiculo_personal_info', 'chofer', 'chalan', 'proveedor_externo']
         widgets = {
+            'fecha_viaje': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'unidad': forms.Select(attrs={'class': 'form-select'}),
-            'vehiculo_personal_info': forms.TextInput(attrs={'class': 'form-control'}),
+            'vehiculo_personal_info': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Moto Honda o Mi Chevy'}),
             'chofer': forms.Select(attrs={'class': 'form-select'}),
             'chalan': forms.Select(attrs={'class': 'form-select'}),
-            'proveedor_externo': forms.TextInput(attrs={'class': 'form-control'}),
+            'proveedor_externo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Fletes México, TresGuerras...'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from django.contrib.auth import get_user_model
+        from .models import Unidad
+        User = get_user_model()
+        
+        # Filtro de unidad: en_servicio=True
+        self.fields['unidad'].queryset = Unidad.objects.filter(en_servicio=True).order_by('nUnidad')
+        
+        # Filtro chofer: usuarios que tengan rol de CHOFER
+        self.fields['chofer'].queryset = User.objects.filter(
+            perfil_directorio__puesto__icontains='CHOFER', 
+            perfil_directorio__activo=True
+        ).order_by('perfil_directorio__nombre')
+        self.fields['chofer'].required = False  # Opcional si es externa
+        
+        # Filtro chalan: cualquier personal activo
+        self.fields['chalan'].queryset = User.objects.filter(
+            perfil_directorio__activo=True
+        ).order_by('perfil_directorio__nombre')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        proveedor_externo = cleaned_data.get('proveedor_externo')
+        tipo_ruta_switch = cleaned_data.get('tipo_ruta_switch')
+        chofer = cleaned_data.get('chofer')
+        
+        if tipo_ruta_switch == 'EXTERNA':
+            if not proveedor_externo:
+                self.add_error('proveedor_externo', "Debes ingresar el nombre del proveedor para surtido externo.")
+        else:
+            if not chofer:
+                self.add_error('chofer', "Debes seleccionar un chofer para la ruta interna.")
+                
+        return cleaned_data
 
 class MensajeInternoForm(forms.ModelForm):
     class Meta:

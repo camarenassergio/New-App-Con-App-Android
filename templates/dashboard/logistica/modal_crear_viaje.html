@@ -1,0 +1,218 @@
+<div class="modal fade" id="modalCrearViaje" tabindex="-1" aria-labelledby="modalCrearViajeLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            
+            <!-- Header Premium v2.3 -->
+            <div class="modal-header border-0 p-4 bg-primary grad-primary text-white position-relative overflow-hidden">
+                <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 6rem; transform: translate(20%, -20%);">
+                    <i class="fas fa-route"></i>
+                </div>
+                <div class="d-flex align-items-center position-relative">
+                    <div class="header-icon-box bg-white bg-opacity-20 rounded-circle p-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 52px; height: 52px;">
+                        <i class="fas fa-map-marked-alt text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="modalCrearViajeLabel">Despliegue de Ruta Global #{{ next_viaje_id }}</h5>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Programación de Viaje y Recursos</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form id="crearViajeForm" hx-post="{% url 'dashboard:logistica_crear_viaje' %}" hx-target="#modalCrearViaje" hx-swap="outerHTML">
+                <div class="modal-body p-4 p-md-5 bg-light bg-opacity-50">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 animate__animated animate__shakeX">
+                            <div class="d-flex align-items-center gap-3 p-1">
+                                <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                                <div class="small fw-bold">Por favor, revisa los campos señalados antes de continuar.</div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- SECCIÓN: PROGRAMACIÓN -->
+                    <div class="section-badge mb-4">
+                        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border-0 px-3 py-2 x-small fw-bold shadow-xs" style="background-color: rgba(255, 193, 7, 0.15);">
+                            <i class="fas fa-calendar-alt me-2"></i>PROGRAMACIÓN DE RUTA
+                        </span>
+                    </div>
+                    <div class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4 premium-form-grid">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Fecha del Viaje <span class="text-danger">*</span></label>
+                                    {{ form.fecha_viaje }}
+                                    {% if form.fecha_viaje.errors %}<div class="text-danger x-small mt-2 fw-bold">{{ form.fecha_viaje.errors.0 }}</div>{% endif %}
+                                    <p class="x-small text-muted mt-2 mb-0"><i class="fas fa-info-circle me-1"></i> Puedes pre-agendar rutas para días futuros.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: RECURSOS -->
+                    <div class="section-badge mb-4">
+                        <span class="badge rounded-pill bg-primary-subtle text-primary border-0 px-3 py-2 x-small fw-bold shadow-xs">
+                            <i class="fas fa-id-card me-2"></i>ASIGNACIÓN DE RECURSOS
+                        </span>
+                    </div>
+
+                    <!-- SWITCH 1: TIPO DE RUTA -->
+                    <div class="mb-4 d-flex justify-content-center">
+                        <div class="btn-group shadow-sm bg-white p-1" role="group" style="border-radius: 50px; border: 2px solid var(--border-color);">
+                            <input type="radio" class="btn-check" name="tipo_ruta_switch" id="tipo_interna" value="INTERNA" autocomplete="off" checked onchange="toggleRutaUI()">
+                            <label class="btn btn-outline-primary border-0 rounded-pill px-4 py-2 fw-bold x-small" for="tipo_interna"><i class="fas fa-truck me-2"></i>Ruta Interna</label>
+
+                            <input type="radio" class="btn-check" name="tipo_ruta_switch" id="tipo_externa" value="EXTERNA" autocomplete="off" onchange="toggleRutaUI()">
+                            <label class="btn btn-outline-primary border-0 rounded-pill px-4 py-2 fw-bold x-small" for="tipo_externa"><i class="fas fa-shipping-fast me-2"></i>Surtido Externo</label>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4 mb-2">
+                        <!-- SECCIÓN INTERNA (Ruta Interna) -->
+                        <div class="card-body p-4 premium-form-grid" id="seccion-interna">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Chofer Principal <span class="text-danger">*</span></label>
+                                    {{ form.chofer }}
+                                    {% if form.chofer.errors %}<div class="text-danger x-small mt-2 fw-bold">{{ form.chofer.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Unidad (Flotilla)</label>
+                                    {{ form.unidad }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Chalán (Asistente)</label>
+                                    {{ form.chalan }}
+                                </div>
+                            </div>
+                            
+                            <!-- SWITCH 2: Mostrar/Ocultar Vehículo Personal -->
+                            <div class="mt-4 pt-2 border-top">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fas fa-motorcycle text-muted"></i>
+                                        <span class="small fw-bold text-muted">Vehículo Personal / Moto</span>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="switchVehiculoPersonal" style="width: 48px; height: 24px; cursor: pointer;" onchange="toggleVehiculoPersonal()">
+                                        <label class="form-check-label text-muted small ms-2" for="switchVehiculoPersonal" id="labelVehiculoPersonal">Usar Vehículo Personal</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contenedor del campo Vehículo Personal (oculto por defecto) -->
+                                <div class="vehiculo-personal-container d-none">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Vehículo Personal / Moto</label>
+                                            {{ form.vehiculo_personal_info }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN EXTERNA (Surtido Externo) -->
+                        <div class="card-body p-4 premium-form-grid d-none" id="seccion-externa">
+                            <div class="row g-4">
+                                <div class="col-12">
+                                    <label class="form-label">Nombre del Proveedor Externo <span class="text-danger">*</span></label>
+                                    {{ form.proveedor_externo }}
+                                    <p class="x-small text-muted mb-0 mt-2"><i class="fas fa-info-circle me-1"></i> Especifica el nombre de la fletera, paquetería o servicio externo (Ej. DHL, Mudanzas Martínez, etc).</p>
+                                    {% if form.proveedor_externo.errors %}<div class="text-danger x-small mt-2 fw-bold">{{ form.proveedor_externo.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer bg-white py-4 px-5 border-top-0 d-flex justify-content-between align-items-center shadow-lg">
+                    <button type="button" class="btn btn-link text-muted text-decoration-none fw-bold x-small" data-bs-dismiss="modal">DESCARTAR</button>
+                    <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-premium" id="btnCrearViaje">
+                        <i class="fas fa-route me-2"></i> CREAR NUEVA RUTA
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos Premium v2.3 */
+    .grad-primary { background: var(--grad-primary) !important; }
+    .bg-primary-subtle { background-color: rgba(0, 59, 112, 0.08) !important; }
+    
+    .shadow-premium { box-shadow: 0 12px 30px -5px rgba(0, 59, 112, 0.35); }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .x-small { font-size: 0.92rem; }
+    
+    .premium-form-grid label { font-weight: 700; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block; }
+    .premium-form-grid select, .premium-form-grid input { border-radius: 12px; padding: 0.75rem 1rem; border-color: var(--border-color); background-color: #fff; transition: all 0.2s; font-size: 0.9rem; }
+    .premium-form-grid select:focus, .premium-form-grid input:focus { border-color: var(--primary-orange); box-shadow: 0 4px 12px rgba(243, 111, 33, 0.1); transform: translateY(-2px); }
+
+    /* Estilo para el switch personalizado */
+    .form-switch .form-check-input {
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+    .form-switch .form-check-input:checked {
+        background-color: var(--primary-orange, #f36f21);
+        border-color: var(--primary-orange, #f36f21);
+    }
+
+    body.dark-theme .modal-content { background-color: var(--bg-card); color: var(--text-main); }
+    body.dark-theme .bg-light { background-color: rgba(255,255,255,0.02) !important; }
+    body.dark-theme .card { background-color: var(--bg-card); border-color: var(--border-color) !important; }
+</style>
+
+<script>
+    // Función para el Switch 1: Tipo de Ruta
+    function toggleRutaUI() {
+        const toggleExterna = document.getElementById('tipo_externa');
+        const secInterna = document.getElementById('seccion-interna');
+        const secExterna = document.getElementById('seccion-externa');
+        
+        if (toggleExterna && toggleExterna.checked) {
+            // Modo Surtido Externo: ocultar toda la sección interna
+            secInterna.classList.add('d-none');
+            secExterna.classList.remove('d-none');
+        } else {
+            // Modo Ruta Interna: mostrar sección interna
+            secInterna.classList.remove('d-none');
+            secExterna.classList.add('d-none');
+        }
+    }
+
+    // Función para el Switch 2: Vehículo Personal
+    function toggleVehiculoPersonal() {
+        const switchVehiculo = document.getElementById('switchVehiculoPersonal');
+        const vehiculoContainer = document.querySelector('.vehiculo-personal-container');
+        const labelVehiculo = document.getElementById('labelVehiculoPersonal');
+        
+        if (switchVehiculo.checked) {
+            // Mostrar campo de vehículo personal
+            vehiculoContainer.classList.remove('d-none');
+            labelVehiculo.textContent = 'USAR VEHÍCULO INTERNO';
+            labelVehiculo.style.color = '#f36f21';
+        } else {
+            // Ocultar campo de vehículo personal
+            vehiculoContainer.classList.add('d-none');
+            labelVehiculo.textContent = 'USAR VEHÍCULO PERSONAL';
+            labelVehiculo.style.color = '';
+        }
+    }
+
+    // Inicializar ambos switches
+    toggleRutaUI();
+    toggleVehiculoPersonal();
+
+    // Cerrar modal tras éxito
+    document.body.addEventListener("boardChanged", function() {
+        var modalEl = document.getElementById('modalCrearViaje');
+        if (modalEl) {
+            var modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }
+    });
+</script>

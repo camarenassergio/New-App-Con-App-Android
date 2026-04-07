@@ -99,6 +99,169 @@
     }
     body.dark-theme .metrics-pill { background: rgba(255,255,255,0.08); color: white; }
 
+    /* ── ROUTE CARDS PANEL ──────────────────────────────────────────── */
+    .route-panel-section {
+        margin-bottom: 2rem;
+    }
+    .route-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.1rem;
+    }
+    .route-panel-title {
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .route-panel-title i { color: var(--primary-orange); }
+    .route-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 1rem;
+    }
+
+    /* Individual route card */
+    .route-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        padding: 1.2rem 1.3rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .route-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        border-radius: 20px 20px 0 0;
+        background: var(--grad-primary);
+    }
+    .route-card.tipo-externo::before  { background: linear-gradient(90deg, #f36f21, #faad14); }
+    .route-card.tipo-personal::before { background: linear-gradient(90deg, #10b981, #00d2ff); }
+    .route-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px -4px rgba(0, 59, 112, 0.15);
+    }
+    body.dark-theme .route-card:hover {
+        box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Route number badge */
+    .route-number-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 900;
+        color: #fff;
+        background: var(--grad-primary);
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(0, 59, 112, 0.3);
+    }
+    .route-card.tipo-externo  .route-number-badge { background: linear-gradient(135deg, #f36f21, #faad14); box-shadow: 0 4px 10px rgba(243,111,33,.35); }
+    .route-card.tipo-personal .route-number-badge { background: linear-gradient(135deg, #10b981, #0a504a); box-shadow: 0 4px 10px rgba(16,185,129,.3); }
+
+    /* Chofer label */
+    .route-chofer-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+    .route-chofer-sub {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Stat pills row */
+    .route-stat-row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .route-stat-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0.28rem 0.7rem;
+        border-radius: 50px;
+        background: rgba(0, 59, 112, 0.07);
+        color: var(--primary-blue);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    body.dark-theme .route-stat-pill { background: rgba(255,255,255,0.07); color: var(--info); }
+    .route-stat-pill.pill-warning { background: rgba(245,158,11,.1); color: var(--warning); }
+    .route-stat-pill.pill-success { background: rgba(16,185,129,.1); color: var(--success); }
+    .route-stat-pill.pill-orange  { background: rgba(243,111,33,.1); color: var(--primary-orange); }
+
+    /* Unidad info */
+    .route-unidad-info {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    .route-unidad-info i { font-size: 0.8rem; }
+
+    /* Empty state for routes panel */
+    .route-empty-state {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem 1rem;
+        border: 2px dashed var(--border-color);
+        border-radius: 20px;
+        color: var(--text-muted);
+        text-align: center;
+    }
+    .route-empty-state i { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.4; }
+    
+    /* Route Status Tags */
+    .route-status-tag {
+        font-size: 0.58rem;
+        font-weight: 800;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 5;
+    }
+    .status-creado { background: rgba(59, 130, 246, 0.15); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .status-en_curso { background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .status-finalizado { background: rgba(16, 185, 129, 0.15); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .status-reprogramado { background: rgba(239, 68, 68, 0.15); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.2); }
+    
+    .btn-xs { padding: 0.15rem 0.4rem; font-size: 0.65rem; }
+
 </style>
 {% endblock %}
 
@@ -118,7 +281,19 @@
                         <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Gestión de Flujo y Asignación de Pedidos</p>
                     </div>
                 </div>
-                <div class="mt-3 mt-md-0 d-flex gap-3">
+                <div class="mt-3 mt-md-0 d-flex gap-2">
+                    <a href="{% url 'dashboard:viaje_nuevo_list' %}" class="btn btn-outline-light border-2 rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center"
+                       style="background: rgba(255,255,255,0.05); color: white; border-color: rgba(255,255,255,0.2);">
+                        <i class="fas fa-history me-2 small"></i> HISTORIAL
+                    </a>
+                    <button class="btn btn-warning rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center"
+                            id="btn-crear-ruta"
+                            hx-get="{% url 'dashboard:logistica_crear_viaje' %}" 
+                            hx-target="#modal-container"
+                            hx-swap="innerHTML"
+                            hx-indicator="#btn-crear-ruta">
+                        <i class="fas fa-plus-circle me-2"></i> CREAR NUEVA RUTA
+                    </button>
                     <div class="badge bg-white bg-opacity-10 rounded-pill px-4 py-2 border-0 d-flex align-items-center">
                          <i class="fas fa-info-circle me-2 x-small"></i>
                          <span class="x-small text-uppercase tracking-wider fw-bold">Arrastra las tarjetas para cambiar el estatus</span>
@@ -127,6 +302,218 @@
             </div>
         </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- PANEL DE RUTAS ACTIVAS                                            -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <div class="route-panel-section" id="route-panel"
+         hx-get="{{ request.path }}" hx-trigger="boardChanged from:body" hx-select="#route-panel" hx-swap="outerHTML">
+
+        <div class="route-panel-header">
+            <div class="route-panel-title">
+                <i class="fas fa-route"></i>
+                Rutas del Día
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="metrics-pill" title="Fecha de operación actual">
+                    <i class="far fa-calendar-check me-1"></i> {{ hoy|date:"d M Y" }} (HOY)
+                </span>
+                <span class="metrics-pill" style="background: rgba(16,185,129,.12); color: var(--success);">
+                    {{ viajes_activos|length }} ACTIVAS
+                </span>
+            </div>
+        </div>
+
+        <div class="route-cards-grid">
+
+            {% for viaje in viajes_activos %}
+            {# ── Determinar tipo y número secuencial del día ──────────────────── #}
+            {% with despachos_count=viaje.despachos.count %}
+
+            {# Clasificación del tipo de ruta #}
+            {% if viaje.proveedor_externo %}
+                {% with tipo_clase="tipo-externo" tipo_label="Externo" tipo_icon="fas fa-handshake" %}
+                <div class="route-card {{ tipo_clase }}" id="route-card-{{ viaje.id }}">
+                    <!-- Badge de Estado -->
+                    <div class="route-status-tag status-{{ viaje.estado|lower }}">
+                        {{ viaje.get_estado_display }}
+                    </div>
+
+                    <!-- Header de la card -->
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="route-number-badge" title="Ruta #{{ forloop.counter }}">{{ forloop.counter }}</div>
+                        <div style="min-width:0;">
+                            <div class="route-chofer-name">{{ viaje.proveedor_externo }}</div>
+                            <div class="route-chofer-sub">
+                                <i class="{{ tipo_icon }} me-1"></i>{{ tipo_label }}
+                            </div>
+                        </div>
+                        <span class="badge bg-warning text-dark ms-auto" style="font-size:0.6rem; border-radius:8px;">EXTERNO</span>
+                    </div>
+
+                    <!-- Info unidad -->
+                    <div class="route-unidad-info">
+                        <i class="fas fa-truck"></i>
+                        <span>Unidad del proveedor</span>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="route-stat-row">
+                        <span class="route-stat-pill {% if despachos_count > 0 %}pill-success{% endif %}">
+                            <i class="fas fa-boxes"></i> {{ despachos_count }} despacho{{ despachos_count|pluralize }}
+                        </span>
+                        <span class="route-stat-pill">
+                            <i class="far fa-calendar-alt"></i> {{ viaje.fecha_viaje|date:"d M" }}{% if viaje.fecha_viaje == hoy %} (HOY){% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Footer acción -->
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                        {% if viaje.estado == 'CREADO' or viaje.estado == 'REPROGRAMADO' %}
+                        <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold"
+                                style="font-size:0.65rem;"
+                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                hx-vals='{"estado": "EN_CURSO"}'
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-swap="none"
+                                title="Registrar salida de la unidad">
+                            <i class="fas fa-play me-1"></i> INICIAR
+                        </button>
+                        {% elif viaje.estado == 'EN_CURSO' %}
+                        <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
+                                style="font-size:0.65rem;"
+                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                hx-vals='{"estado": "FINALIZADO"}'
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-confirm="¿Confirmar que la unidad ha regresado y la ruta terminó?"
+                                hx-swap="none"
+                                title="Finalizar ruta y registrar llegada">
+                            <i class="fas fa-check-double me-1"></i> FINALIZAR
+                        </button>
+                        {% else %}
+                        <span class="x-small text-muted py-1 fw-bold"><i class="fas fa-check-circle me-1"></i> COMPLETADA</span>
+                        {% endif %}
+
+                        <a href="{% url 'dashboard:viaje_detail' viaje.pk %}"
+                           class="btn btn-xs text-primary fw-bold"
+                           style="font-size:0.65rem; text-decoration:none;"
+                           title="Ver detalles">
+                            DETALLE <i class="fas fa-chevron-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endwith %}
+            {% else %}
+                {% with tipo_clase="tipo-flotilla" tipo_label="Flotilla" tipo_icon="fas fa-truck-moving" %}
+                <div class="route-card {{ tipo_clase }}" id="route-card-{{ viaje.id }}">
+                    <!-- Badge de Estado -->
+                    <div class="route-status-tag status-{{ viaje.estado|lower }}">
+                        {{ viaje.get_estado_display }}
+                    </div>
+
+                    <!-- Header de la card -->
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="route-number-badge" title="Ruta #{{ forloop.counter }}">{{ forloop.counter }}</div>
+                        <div style="min-width:0;">
+                            <div class="route-chofer-name">
+                                {% if viaje.chofer.personal.nombre %}{{ viaje.chofer.personal.nombre }}{% else %}{{ viaje.chofer.get_full_name|default:viaje.chofer.username }}{% endif %}
+                            </div>
+                            <div class="route-chofer-sub">
+                                <i class="{{ tipo_icon }} me-1"></i>Chofer
+                                {% if viaje.chalan %}
+                                 · <i class="fas fa-user-friends me-1"></i>
+                                {% if viaje.chalan.personal.nombre %}{{ viaje.chalan.personal.nombre }}{% else %}{{ viaje.chalan.get_full_name|default:viaje.chalan.username }}{% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="badge ms-auto" style="font-size:0.6rem; border-radius:8px; background: rgba(0,59,112,.15); color: var(--primary-blue);">FLOTILLA</span>
+                    </div>
+
+                    <!-- Info unidad -->
+                    <div class="route-unidad-info">
+                        {% if viaje.unidad %}
+                        <i class="fas fa-truck"></i>
+                        <span>{{ viaje.unidad.nUnidad }} — {{ viaje.unidad.nombre_corto|default:viaje.unidad.marca }} {{ viaje.unidad.submarca }}</span>
+                        {% elif viaje.vehiculo_personal_info %}
+                        <i class="fas fa-car"></i>
+                        <span>{{ viaje.vehiculo_personal_info }}</span>
+                        {% else %}
+                        <i class="fas fa-question-circle"></i>
+                        <span class="fst-italic">Sin unidad asignada</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="route-stat-row">
+                        <span class="route-stat-pill {% if despachos_count > 0 %}pill-success{% endif %}">
+                            <i class="fas fa-boxes"></i> {{ despachos_count }} despacho{{ despachos_count|pluralize }}
+                        </span>
+                        {% if viaje.unidad %}
+                        <span class="route-stat-pill pill-orange">
+                            <i class="fas fa-weight"></i> {{ viaje.unidad.capacidad_kg }} kg
+                        </span>
+                        {% endif %}
+                        <span class="route-stat-pill">
+                            <i class="far fa-calendar-alt"></i> {{ viaje.fecha_viaje|date:"d M" }}{% if viaje.fecha_viaje == hoy %} (HOY){% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Footer acción -->
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                        {% if viaje.estado == 'CREADO' or viaje.estado == 'REPROGRAMADO' %}
+                        <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold"
+                                style="font-size:0.65rem;"
+                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                hx-vals='{"estado": "EN_CURSO"}'
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-swap="none"
+                                title="Registrar salida de la unidad">
+                            <i class="fas fa-play me-1"></i> INICIAR
+                        </button>
+                        {% elif viaje.estado == 'EN_CURSO' %}
+                        <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
+                                style="font-size:0.65rem;"
+                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                hx-vals='{"estado": "FINALIZADO"}'
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-confirm="¿Confirmar que la unidad ha regresado y la ruta terminó?"
+                                hx-swap="none"
+                                title="Finalizar ruta y registrar llegada">
+                            <i class="fas fa-check-double me-1"></i> FINALIZAR
+                        </button>
+                        {% else %}
+                        <span class="x-small text-muted py-1 fw-bold"><i class="fas fa-check-circle me-1"></i> COMPLETADA</span>
+                        {% endif %}
+
+                        <a href="{% url 'dashboard:viaje_detail' viaje.pk %}"
+                           class="btn btn-xs text-primary fw-bold"
+                           style="font-size:0.65rem; text-decoration:none;"
+                           title="Ver detalles">
+                            DETALLE <i class="fas fa-chevron-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endwith %}
+            {% endif %}
+            {% endwith %}
+            {% empty %}
+            <div class="route-empty-state">
+                <i class="fas fa-route"></i>
+                <h6 class="fw-bold mt-2 mb-1">Sin rutas activas hoy</h6>
+                <p class="x-small text-uppercase tracking-wider mb-3">Crea la primera ruta del día para comenzar las entregas</p>
+                <button class="btn btn-sm btn-warning rounded-pill px-4 fw-bold"
+                        hx-get="{% url 'dashboard:logistica_crear_viaje' %}"
+                        hx-target="#modal-container"
+                        hx-swap="innerHTML"
+                        aria-label="Crear nueva ruta">
+                    <i class="fas fa-plus-circle me-2"></i> CREAR PRIMERA RUTA
+                </button>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+    <!-- /PANEL DE RUTAS ACTIVAS ──────────────────────────────────────── -->
 
     <!-- Kanban Board Container -->
     <div class="kanban-board" id="kanban-board" hx-get="{{ request.path }}" hx-trigger="boardChanged from:body" hx-select="#kanban-board" hx-swap="outerHTML">
@@ -185,19 +572,6 @@
                         <span class="x-small text-uppercase tracking-wider">Sin carga pendiente</span>
                     </div>
                 {% endfor %}
-            </div>
-            
-            <!-- BOTÓN ARMAR VIAJE PREMIUM STICKY -->
-            <div class="p-3 bg-white bg-opacity-10" style="backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); position: sticky; bottom: 0; z-index: 10;">
-                <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" 
-                        hx-get="{% url 'dashboard:logistica_armar_viaje' %}" 
-                        hx-target="#modal-container"
-                        hx-swap="innerHTML"
-                        hx-on::after-swap="var m = new bootstrap.Modal(document.getElementById('modalArmarViaje')); m.show();"
-                        {% if not pedidos_asignados %}disabled{% endif %}>
-                    <i class="fas fa-map-marked-alt"></i> 
-                    ARMAR RUTA <span class="badge bg-white bg-opacity-20 ms-1 fw-bold px-2 py-1">{% if pedidos_asignados %}{{ pedidos_asignados.count }}{% else %}0{% endif %}</span>
-                </button>
             </div>
         </div>
         
@@ -264,6 +638,20 @@
                 },
             });
         });
+    });
+
+    // ── Modal opener: detecta quando HTMX termina de cargar el modal-container
+    // y lo abre automáticamente. Más confiable que hx-on::after-swap.
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        var target = evt.detail.target;
+        if (target && target.id === 'modal-container') {
+            // Busca cualquier .modal dentro del contenedor recién cargado
+            var modalEl = target.querySelector('.modal');
+            if (modalEl) {
+                var bsModal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
+                bsModal.show();
+            }
+        }
     });
 </script>
 {% endblock %}

@@ -78,7 +78,11 @@ urlpatterns = [
 
     # --- LOGISTICA (PASO 2 - FASE 2) ---
     path('logistica/dashboard/', views.LogisticaDashboardView.as_view(), name='logistica_dashboard'),
-    path('logistica/armar-viaje/', views.LogisticaArmarViajeView.as_view(), name='logistica_armar_viaje'),
+    path('logistica/crear-viaje/', views.LogisticaCrearViajeView.as_view(), name='logistica_crear_viaje'),
+    path('logistica/viaje/<int:pk>/', views.ViajeNuevoDetailView.as_view(), name='viaje_detail'),
+    path('logistica/viaje/<int:pk>/cambiar-estado/', views.ViajeCambiarEstadoView.as_view(), name='viaje_cambiar_estado'),
+    path('logistica/rutas/', views.ViajeNuevoListView.as_view(), name='viaje_nuevo_list'),
+    path('logistica/despacho/<int:pk>/evidencias/', views.DespachoEvidenciasFragmentView.as_view(), name='despacho_evidencias_fragment'),
     path('logistica/pedido/<int:pk>/dividir/', views.PedidoDividirView.as_view(), name='pedido_dividir'),
 
     # --- MOSTRADOR (PASO 1 - FASE 2) ---

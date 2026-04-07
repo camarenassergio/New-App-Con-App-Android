@@ -767,20 +767,46 @@ class EvidenciaMaterial(models.Model):
     fecha_registro = models.DateTimeField(auto_now_add=True)
 
 class ViajeNuevo(models.Model):
+    ESTADO_VIAJE_CHOICES = [
+        ('CREADO', 'Creado / Programado'),
+        ('EN_CURSO', 'En Curso / Salida'),
+        ('REPROGRAMADO', 'Reprogramado (Vencido)'),
+        ('FINALIZADO', 'Finalizado'),
+    ]
+
     # Sustituirá al Viaje anterior conforme migremos
     unidad = models.ForeignKey(Unidad, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Unidad Flotilla")
     vehiculo_personal_info = models.CharField(max_length=150, null=True, blank=True, verbose_name="Info Vehículo Personal (Motos/Particular)")
     
     chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='viajes_asignados')
     chalan = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='viajes_ayuda', verbose_name="Chalán")
+    usuario_creacion = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='viajes_creados', verbose_name="Creado por")
+
     
     proveedor_externo = models.CharField(max_length=150, null=True, blank=True, verbose_name="Proveedor Externo (Ej. Sergio Almacen)")
     
+    def get_local_date():
+        return timezone.localtime(timezone.now()).date()
+
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_viaje = models.DateField(default=get_local_date, verbose_name="Fecha Programada")
+    
+    estado = models.CharField(max_length=20, choices=ESTADO_VIAJE_CHOICES, default='CREADO')
     completado = models.BooleanField(default=False)
+    
+    hora_salida = models.TimeField(null=True, blank=True, verbose_name="Hora Salida")
+    hora_llegada = models.TimeField(null=True, blank=True, verbose_name="Hora Llegada")
+
+    def save(self, *args, **kwargs):
+        # Sincronizar completado con FINALIZADO
+        if self.estado == 'FINALIZADO':
+            self.completado = True
+        elif self.completado:
+            self.estado = 'FINALIZADO'
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Viaje {self.id} - {self.fecha_creacion.date()}"
+        return f"Viaje {self.id} ({self.estado}) - {self.fecha_viaje}"
 
 class AlertaLogistica(models.Model):
     TIPO_ALERTA_CHOICES = [
