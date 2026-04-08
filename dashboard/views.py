@@ -2879,7 +2879,13 @@ class LogisticaDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, Templat
         # Agrupamos por estado y los mapeamos a las columnas de Logística
         # Adicionamos los nuevos estados PENDIENTE y CREADO a la bandeja de entrada
         context['pedidos_registrados'] = pedidos_activos.filter(estado__in=['REGISTRADO', 'PENDIENTE', 'CREADO'])
-        # A preparación ahora entran los que tienen despachos EN_PROCESO
+        # v3.2.5: En preparación ahora mostramos directamente los DESPACHOS que están en surtido activo
+        context['despachos_preparacion'] = Despacho.objects.filter(
+            estado='ASIGNADO_SURTIDO'
+        ).select_related('pedido', 'pedido__cliente', 'surtidor').order_by('-pedido__es_urgente', 'id')
+        
+        # Mantenemos esto por compatibilidad o métricas si se usa en otros lados, 
+        # pero la columna principal usará despachos_preparacion.
         context['pedidos_preparacion'] = pedidos_activos.filter(estado__in=['EN_PREPARACION', 'EN_PROCESO', 'DESPACHOS_GENERADOS'])
         
         context['pedidos_asignados'] = pedidos_activos.filter(estado='ASIGNADO_A_RUTA')
@@ -2904,16 +2910,30 @@ class LogisticaDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, Templat
             vencidos.update(estado='REPROGRAMADO')
 
         # Filtramos rutas para hoy: las de hoy + las que hayan quedado "activas" o "reprogramadas" de antes
+        # v3.2.2: Anotamos despachos_count y total_peso_cargado para las route-cards
         context['viajes_activos'] = (
             ViajeNuevo.objects
             .filter(Q(fecha_viaje=hoy) | Q(estado__in=['EN_CURSO', 'REPROGRAMADO']))
             .exclude(estado='FINALIZADO')
-            .prefetch_related('despachos')
+            .annotate(
+                despachos_count=Count('despachos'),
+                total_peso_cargado=Sum('despachos__peso_asignado_kg')
+            )
             .select_related('unidad', 'chofer', 'chalan')
             .order_by('fecha_creacion')
         )
         context['viajes_hoy_count'] = ViajeNuevo.objects.filter(fecha_viaje=hoy).count()
         context['hoy'] = hoy
+
+        # v3.2.2: Bandeja Libre — Despachos sin ruta asignada (viaje=NULL)
+        context['despachos_libres'] = (
+            Despacho.objects
+            .filter(viaje__isnull=True)
+            .exclude(estado__in=['CONFIRMADO', 'CANCELADO'])
+            .select_related('pedido__cliente', 'pedido__obra__zona')
+            .order_by('-pedido__es_urgente', 'id')
+        )
+        context['despachos_libres_count'] = context['despachos_libres'].count()
 
         return context
 
@@ -2951,19 +2971,57 @@ class PedidoCambiarEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View):
         response["HX-Trigger"] = "boardChanged"
         return response
 
+
+class DespachoCambiarEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """View para mover el estado de un despacho individual en Almacén (HTMX)"""
+    def post(self, request, pk):
+        despacho = get_object_or_404(Despacho, pk=pk)
+        nuevo_estado = request.POST.get('estado')
+        
+        estados_validos = [e[0] for e in Despacho.ESTADO_CHOICES]
+        if nuevo_estado in estados_validos:
+            despacho.estado = nuevo_estado
+            despacho.save()
+            messages.success(request, f"Estatus del Despacho #{despacho.id} actualizado a {despacho.get_estado_display()}")
+        
+        response = HttpResponse(status=204)
+        response["HX-Trigger"] = "boardChanged"
+        return response
+
 from .forms import ViajeNuevoForm
 from .models import ViajeNuevo, Despacho
 
 class PedidoDividirView(LoginRequiredMixin, NonChoferRequiredMixin, View):
     """
     Endpoint (HTMX) para mostrar y procesar la partición de un pedido en múltiples despachos.
+    v3.2.2: viaje_id siempre opcional. Sin viaje → Bandeja Libre.
     """
     def get(self, request, pk):
+        print(f"DEBUG: PedidoDividirView.get called for pk={pk}")
         pedido = get_object_or_404(Pedido, pk=pk)
-        viajes_activos = ViajeNuevo.objects.filter(completado=False).order_by('-fecha_creacion')
+        
+        # v3.2.2: queryset enriquecido con anotaciones para el selector de rutas
+        viajes_activos = (
+            ViajeNuevo.objects
+            .filter(estado__in=['CREADO', 'EN_CURSO', 'REPROGRAMADO'])
+            .annotate(
+                despachos_count=Count('despachos'),
+                total_peso=Sum('despachos__peso_asignado_kg'),
+            )
+            .select_related('unidad', 'chofer')
+            .order_by('estado', '-fecha_viaje', 'fecha_creacion')
+        )
+
+        # v3.2.5: Listado de personal para asignar como surtidor
+        vendedores_surtidores = Personal.objects.all().order_by('nombre')
+
         return render(request, 'dashboard/logistica/modal_dividir_pedido.html', {
             'pedido': pedido,
-            'viajes_activos': viajes_activos
+            'viajes_activos': viajes_activos,
+            'vendedores_surtidores': vendedores_surtidores,
+            # Pasamos el saldo como string para el live-saldo JS del modal
+            'saldo_articulos_js': str(pedido.saldo_articulos),
+            'saldo_peso_js': str(pedido.saldo_peso_kg),
         })
 
     def post(self, request, pk):
@@ -2980,43 +3038,257 @@ class PedidoDividirView(LoginRequiredMixin, NonChoferRequiredMixin, View):
             tipo_envio = request.POST.get('tipo_envio', 'INTERNO_FLOTILLA')
             observaciones = request.POST.get('observaciones_entrega', '')
             
-            # Simple server-side validation against saldo
+            # v3.2.5: Capturar surtidor (solo si es interno)
+            surtidor_id = request.POST.get('surtidor_id', '')
+            surtidor = None
+            if surtidor_id and tipo_envio in ['INTERNO_FLOTILLA', 'INTERNO_PERSONAL']:
+                surtidor = get_object_or_404(Personal, pk=surtidor_id)
+            
+            # Validación de saldo en backend
             if articulos <= 0 or articulos > pedido.saldo_articulos:
-                return HttpResponse(f'<div class="alert alert-danger px-3 py-2 small fw-bold"><i class="fas fa-exclamation-triangle"></i> Los artículos ({articulos}) exceden el saldo disponible ({pedido.saldo_articulos}).</div>', status=400)
+                return HttpResponse(
+                    f'<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                    f'<i class="fas fa-exclamation-triangle me-2"></i>'
+                    f'Los artículos ({articulos}) exceden el saldo disponible ({pedido.saldo_articulos}).</div>',
+                    status=400
+                )
                 
             if peso < 0 or peso > pedido.saldo_peso_kg:
-                return HttpResponse(f'<div class="alert alert-danger px-3 py-2 small fw-bold"><i class="fas fa-exclamation-triangle"></i> El peso límite ({pedido.saldo_peso_kg} kg) fue excedido.</div>', status=400)
-                
-            viaje_id = request.POST.get('viaje_id')
+                return HttpResponse(
+                    f'<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                    f'<i class="fas fa-exclamation-triangle me-2"></i>'
+                    f'El peso ({peso} kg) excede el saldo disponible ({pedido.saldo_peso_kg} kg).</div>',
+                    status=400
+                )
+            
+            # v3.2.2: viaje_id siempre opcional — sin viaje = Bandeja Libre
+            viaje_id = request.POST.get('viaje_id', '').strip()
             viaje = None
             if viaje_id:
                 viaje = get_object_or_404(ViajeNuevo, pk=viaje_id)
 
-            # Todo bien, crear el Despacho atómico
-            Despacho.objects.create(
+            # Crear el Despacho
+            nuevo_despacho = Despacho.objects.create(
                 pedido=pedido,
                 viaje=viaje,
+                surtidor=surtidor,
                 tipo_envio=tipo_envio,
-                estado='PENDIENTE',  # Inicia pendiente de surtido operativo
+                estado='PENDIENTE',
                 cantidad_articulos_asignados=articulos,
                 peso_asignado_kg=peso,
                 observaciones_entrega=observaciones,
             )
+            print(f"✅ [DEBUG] Despacho ID={nuevo_despacho.id} creado para Pedido={pedido.id}")
             
-            # Regla de Negocio Logística: Si hay saldo vivo, NO cambiamos el ticket de estado, se queda en la bandeja
-            if pedido.saldo_articulos == 0:
-                pedido.estado = 'DESPACHOS_GENERADOS' # All capacity loaded into dispatch
-                # O EN_PREPARACION, dependiendo de la configuración del Kanban, pero dejémoslo avanzar
+            # REFRESH VITAL: Forzar recarga desde DB para que las properties de saldo
+            # detecten el nuevo despacho antes de evaluar el cambio de estado.
+            pedido.refresh_from_db()
+            print(f"✅ [DEBUG] Saldo actualizado del pedido: {pedido.saldo_articulos} pzas.")
+
+            # Retención de Estado: solo avanza cuando el saldo queda en 0
+            if pedido.saldo_articulos <= 0:
+                pedido.estado = 'DESPACHOS_GENERADOS'
                 pedido.save()
+                msg_destino = "Pedido completo → DESPACHOS_GENERADOS."
+            else:
+                destino = ("Ruta #" + str(viaje.id)) if viaje else "Bandeja Libre"
+                msg_destino = f"Enviado a: {destino}. Saldo restante: {pedido.saldo_articulos} pzas."
+
+            # Éxito: Preparar respuesta con triggers para el UI
+            messages.success(request, f"Despacho de {articulos} pzas generado correctamente.")
             
-            messages.success(request, f"Carga fraccionada exitosamente. Se ha generado un nuevo despacho de {articulos} pzas ({peso} kg).")
-            # Cierre exitoso y disparador HTMX para recargar
+            # Trigger múltiple: actualizar tablero, cerrar modal y mostrar Toast
             response = HttpResponse(status=204)
-            response["HX-Trigger"] = "boardChanged"
+            response["HX-Trigger"] = json.dumps({
+                "boardChanged": None,
+                "closeModal": "modalDividirPedido",
+                "mostrarToast": {
+                    "mensaje": f"¡Éxito! {articulos} pzas enviadas a {destino if 'destino' in locals() else 'Despachos'}.",
+                    "tipo": "success"
+                }
+            })
             return response
             
         except Exception as e:
-            return HttpResponse(f'<div class="alert alert-danger px-3 py-2 small fw-bold">Error interno: {str(e)}</div>', status=400)
+            import traceback
+            print("❌ [ERROR] PedidoDividirView:", traceback.format_exc())
+            return HttpResponse(
+                f'<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                f'<i class="fas fa-exclamation-circle me-2"></i> Error al guardar: {str(e)}</div>',
+                status=400
+            )
+
+
+class DespachoReasignarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """
+    v3.2.2 — Reasigna o libera un Despacho individual.
+    GET  → Renderiza modal de reasignación (HTMX target: #modal-container)
+    POST viaje_id=<id> → Asigna a esa ruta (valida que no esté FINALIZADA)
+    POST viaje_id=''   → Libera → viaje=NULL → Bandeja Libre
+    """
+    def get(self, request, pk):
+        despacho = get_object_or_404(Despacho, pk=pk)
+        viajes_activos = (
+            ViajeNuevo.objects
+            .filter(estado__in=['CREADO', 'EN_CURSO', 'REPROGRAMADO'])
+            .annotate(
+                despachos_count=Count('despachos'),
+                total_peso=Sum('despachos__peso_asignado_kg'),
+            )
+            .select_related('unidad', 'chofer')
+            .order_by('estado', '-fecha_viaje')
+        )
+        return render(request, 'dashboard/logistica/modal_reasignar_despacho.html', {
+            'despacho': despacho,
+            'viajes_activos': viajes_activos,
+        })
+
+    def post(self, request, pk):
+        despacho = get_object_or_404(Despacho, pk=pk)
+        viaje_id = request.POST.get('viaje_id', '').strip()
+
+        if viaje_id:
+            viaje = get_object_or_404(ViajeNuevo, pk=viaje_id)
+            if viaje.estado == 'FINALIZADO':
+                return HttpResponse(
+                    '<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                    '<i class="fas fa-lock me-2"></i>'
+                    'No se puede asignar a una ruta ya finalizada.</div>',
+                    status=400
+                )
+            despacho.viaje = viaje
+            msg = f"Despacho #{despacho.id} asignado a Ruta #{viaje.id}."
+        else:
+            despacho.viaje = None
+            msg = f"Despacho #{despacho.id} liberado a la Bandeja Libre."
+
+        despacho.save()
+        messages.success(request, msg)
+        response = HttpResponse(status=204)
+        response["HX-Trigger"] = "boardChanged"
+        return response
+
+
+class DespachoCancelarView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """
+    v3.2.5 — Cancela un Despacho.
+    Cambia estado a 'CANCELADO', lo que libera el saldo automáticamente 
+    en las properties del Pedido.
+    """
+    def post(self, request, pk):
+        despacho = get_object_or_404(Despacho, pk=pk)
+        pedido = despacho.pedido
+        
+        id_temp = despacho.id
+        art_temp = despacho.cantidad_articulos_asignados
+        
+        despacho.estado = 'CANCELADO'
+        despacho.save()
+        
+        # Al cancelar, el pedido podría volver de 'DESPACHOS_GENERADOS' a 'REGISTRADO' 
+        # si su saldo vuelve a ser mayor a 0
+        pedido.refresh_from_db()
+        if pedido.saldo_articulos > 0 and pedido.estado == 'DESPACHOS_GENERADOS':
+            pedido.estado = 'REGISTRADO'
+            pedido.save()
+
+        messages.warning(request, f"Despacho #{id_temp} cancelado. {art_temp} pzas devueltas al saldo del pedido.")
+        
+        response = HttpResponse(status=204)
+        response["HX-Trigger"] = json.dumps({
+            "boardChanged": None,
+            "mostrarToast": {"mensaje": f"Despacho #{id_temp} cancelado correctamente.", "tipo": "warning"}
+        })
+        return response
+
+
+class DespachoEditarView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """
+    v3.2.5 — Permite editar un despacho existente (cantidad, peso, tipo, surtidor).
+    GET  → Abre modal_editar_despacho.html
+    POST → Actualiza y refresca tablero.
+    """
+    def get(self, request, pk):
+        despacho = get_object_or_404(Despacho, pk=pk)
+        pedido = despacho.pedido
+        vendedores_surtidores = Personal.objects.all().order_by('nombre')
+        
+        # Calculamos el saldo incluyendo este despacho (para que el max del input sea correcto)
+        saldo_disponible_art = pedido.saldo_articulos + despacho.cantidad_articulos_asignados
+        saldo_disponible_peso = pedido.saldo_peso_kg + despacho.peso_asignado_kg
+
+        return render(request, 'dashboard/logistica/modal_editar_despacho.html', {
+            'despacho': despacho,
+            'pedido': pedido,
+            'vendedores_surtidores': vendedores_surtidores,
+            'saldo_articulos_js': str(saldo_disponible_art),
+            'saldo_peso_js': str(saldo_disponible_peso),
+        })
+
+    def post(self, request, pk):
+        despacho = get_object_or_404(Despacho, pk=pk)
+        pedido = despacho.pedido
+        
+        try:
+            articulos = Decimal(request.POST.get('cantidad_articulos_asignados', '0'))
+            peso = Decimal(request.POST.get('peso_asignado_kg', '0'))
+            tipo_envio = request.POST.get('tipo_envio', despacho.tipo_envio)
+            surtidor_id = request.POST.get('surtidor_id', '')
+            
+            # Validación simple de saldo (considerando lo que ya tiene este despacho)
+            max_art = pedido.saldo_articulos + despacho.cantidad_articulos_asignados
+            if articulos > max_art:
+                return HttpResponse(f"Error: Excede el saldo ({max_art} pzas)", status=400)
+
+            despacho.cantidad_articulos_asignados = articulos
+            despacho.peso_asignado_kg = peso
+            despacho.tipo_envio = tipo_envio
+            
+            if surtidor_id:
+                despacho.surtidor = get_object_or_404(Personal, pk=surtidor_id)
+            else:
+                despacho.surtidor = None
+                
+            despacho.save()
+            
+            # Recalcular estado del pedido
+            pedido.refresh_from_db()
+            if pedido.saldo_articulos <= 0:
+                pedido.estado = 'DESPACHOS_GENERADOS'
+            else:
+                pedido.estado = 'REGISTRADO'
+            pedido.save()
+
+            response = HttpResponse(status=204)
+            response["HX-Trigger"] = json.dumps({
+                "boardChanged": None,
+                "closeModal": "modalEditarDespacho",
+                "mostrarToast": {"mensaje": f"Despacho #{despacho.id} actualizado.", "tipo": "success"}
+            })
+            return response
+        except Exception as e:
+            return HttpResponse(f"Error al editar: {str(e)}", status=400)
+
+
+class ViajeNuevoLiberarDespachosView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """
+    v3.2.2 — Botón de acción en route-cards con estado=REPROGRAMADO.
+    Mueve todos los despachos activos del viaje a viaje=NULL (Bandeja Libre).
+    """
+    def post(self, request, pk):
+        viaje = get_object_or_404(ViajeNuevo, pk=pk)
+        if viaje.estado != 'REPROGRAMADO':
+            return HttpResponse(
+                '<div class="alert alert-warning small">Solo se pueden liberar despachos de rutas reprogramadas.</div>',
+                status=400
+            )
+        count = viaje.despachos.exclude(
+            estado__in=['CONFIRMADO', 'CANCELADO']
+        ).update(viaje=None)
+        messages.success(request, f"{count} despacho(s) liberados a la Bandeja Libre desde Ruta #{viaje.id}.")
+        response = HttpResponse(status=204)
+        response["HX-Trigger"] = "boardChanged"
+        return response
 
 class LogisticaCrearViajeView(LoginRequiredMixin, NonChoferRequiredMixin, View):
     """
@@ -3390,16 +3662,22 @@ class AlmacenDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, TemplateV
         return context
 
 class AlmacenPreparacionListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
-    """Lista de pedidos pendientes de surtir/preparar"""
-    model = Pedido
+    """v3.2.5 — Lista de DESPACHOS asignados al usuario para surtir/preparar"""
+    model = Despacho
     template_name = 'dashboard/almacen/preparacion_list.html'
-    context_object_name = 'pedidos'
+    context_object_name = 'despachos'
 
     def get_queryset(self):
-        # Mostramos lo registrado y lo que ya están preparando
-        return Pedido.objects.filter(
-            estado__in=['REGISTRADO', 'EN_PREPARACION', 'REPROGRAMADO']
-        ).order_by('es_urgente', 'fecha_registro')
+        # v3.2.5: Solo mostramos despachos asignados al surtidor logueado
+        # Si es superusuario, permitimos ver todo para supervisión
+        qs = Despacho.objects.filter(
+            estado__in=['PENDIENTE', 'ASIGNADO_SURTIDO']
+        ).select_related('pedido', 'pedido__cliente', 'surtidor').order_by('pedido__es_urgente', 'pedido__fecha_registro')
+        
+        if not self.request.user.is_superuser:
+            qs = qs.filter(surtidor__usuario=self.request.user)
+            
+        return qs
 
 class AlmacenCargaListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
     """Lista de pedidos que ya tienen unidad asignada y deben cargarse"""

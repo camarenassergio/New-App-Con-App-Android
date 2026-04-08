@@ -739,6 +739,7 @@ class Despacho(models.Model):
 
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='despachos')
     viaje = models.ForeignKey('ViajeNuevo', on_delete=models.SET_NULL, null=True, blank=True, related_name='despachos')
+    surtidor = models.ForeignKey('Personal', on_delete=models.SET_NULL, null=True, blank=True, related_name='despachos_surtidos')
     
     tipo_envio = models.CharField(max_length=20, choices=TIPO_CHOICES, default='INTERNO_FLOTILLA')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')

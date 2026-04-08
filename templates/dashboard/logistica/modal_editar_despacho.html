@@ -1,0 +1,184 @@
+<div class="modal fade animate__animated animate__fadeIn" id="modalEditarDespacho" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+
+            <!-- Header Premium -->
+            <div class="modal-header border-0 text-white p-4 d-flex align-items-center"
+                 style="background: linear-gradient(135deg, #10b881, #059669);">
+                <div class="bg-white bg-opacity-20 p-2 rounded-circle me-3 shadow-sm d-flex justify-content-center align-items-center"
+                     style="width: 48px; height: 48px; flex-shrink: 0;">
+                    <i class="fas fa-edit fs-4 text-white"></i>
+                </div>
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">Editar Despacho #{{ despacho.id }}</h5>
+                    <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">
+                        Ajustar cantidades o logística
+                        <span class="ms-2 opacity-60">·
+                            {{ pedido.folio_sae }}
+                        </span>
+                    </p>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="form-editar-despacho"
+                  hx-post="{% url 'dashboard:despacho_editar' despacho.pk %}"
+                  hx-target="#form-errores-editar"
+                  hx-indicator=".btn-submit-editar">
+                {% csrf_token %}
+
+                <div class="modal-body p-4 p-md-5 bg-light">
+                    <!-- Errores dinámicos -->
+                    <div id="form-errores-editar" class="mb-3"></div>
+
+                    <!-- ── CAPACIDAD DISPONIBLE ─────────────────────────────── -->
+                    <label class="x-small text-muted text-uppercase fw-bold opacity-75 d-block mb-2">
+                        Capacidad Total Ajustable (Saldo + Actual)
+                    </label>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded-3 border shadow-xs">
+                                <h5 class="fw-bold text-info mb-1" id="disp-art-label">
+                                    {{ saldo_articulos_js }} <span class="x-small text-muted fw-normal">pzas</span>
+                                </h5>
+                                <div class="progress mt-1" style="height:5px;border-radius:10px;">
+                                    <div id="barra-art" class="progress-bar bg-info" style="width:0%; transition: width 0.3s ease;"></div>
+                                </div>
+                                <div class="x-small text-muted mt-1">
+                                    Quedarán en pedido: <strong id="rest-art-label" class="text-info">--</strong> pzas
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded-3 border shadow-xs">
+                                <h5 class="fw-bold text-primary mb-1" id="disp-peso-label">
+                                    {{ saldo_peso_js }} <span class="x-small text-muted fw-normal">kg</span>
+                                </h5>
+                                <div class="progress mt-1" style="height:5px;border-radius:10px;">
+                                    <div id="barra-peso" class="progress-bar bg-primary" style="width:0%; transition: width 0.3s ease;"></div>
+                                </div>
+                                <div class="x-small text-muted mt-1">
+                                    Quedarán en pedido: <strong id="rest-peso-label" class="text-primary">--</strong> kg
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── CONFIGURAR ──────────────────────────────────────── -->
+                    <div class="p-4 bg-white border border-dashed rounded-4 shadow-sm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Artículos en este Despacho</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-boxes text-muted"></i></span>
+                                    <input type="number" step="0.01" min="0.01" max="{{ saldo_articulos_js }}"
+                                           class="form-control fw-bold" name="cantidad_articulos_asignados" id="input-art"
+                                           value="{{ despacho.cantidad_articulos_asignados|stringformat:'f' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Peso en este Despacho (kg)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-weight-hanging text-muted"></i></span>
+                                    <input type="number" step="0.01" min="0" max="{{ saldo_peso_js }}"
+                                           class="form-control fw-bold" name="peso_asignado_kg" id="input-peso"
+                                           value="{{ despacho.peso_asignado_kg|stringformat:'f' }}" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Estrategia de Envío</label>
+                                <select name="tipo_envio" id="select-tipo-envio" class="form-select" required>
+                                    <option value="INTERNO_FLOTILLA" {% if despacho.tipo_envio == 'INTERNO_FLOTILLA' %}selected{% endif %}>🚛 Ruta A — Unidad Flotilla</option>
+                                    <option value="INTERNO_PERSONAL" {% if despacho.tipo_envio == 'INTERNO_PERSONAL' %}selected{% endif %}>🏍 Ruta B — Vehículo Personal / Moto</option>
+                                    <option value="PROVEEDOR_EXTERNO" {% if despacho.tipo_envio == 'PROVEEDOR_EXTERNO' %}selected{% endif %}>📦 Ruta C — Proveedor Externo</option>
+                                </select>
+                            </div>
+
+                            <div id="container-surtidor" class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Surtidor Asignado</label>
+                                <select class="form-select text-uppercase fw-bold" name="surtidor_id" id="select-surtidor">
+                                    <option value="">-- Sin Surtidor --</option>
+                                    {% for p in vendedores_surtidores %}
+                                        <option value="{{ p.id }}" {% if despacho.surtidor_id == p.id %}selected{% endif %}>{{ p.nombre }} {{ p.apellido_paterno }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div id="impacto-estado" class="w-100 p-2 rounded-3 x-small fw-bold"
+                                     style="background: rgba(0,59,112,0.04); border: 1px dashed rgba(0,59,112,0.15); min-height: 40px; display: flex; align-items: center;">
+                                    <i class="fas fa-info-circle me-2 opacity-50"></i> Ajusta las cantidades para ver el impacto.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light border-top-0 px-4 pb-4 pt-0 d-flex justify-content-between">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold text-muted shadow-sm border" data-bs-dismiss="modal">
+                        CANCELAR
+                    </button>
+                    <button type="submit" class="btn text-white rounded-pill px-4 fw-bold shadow-premium border-0 btn-submit-editar"
+                            style="background: linear-gradient(135deg, #10b881, #059669);">
+                        <i class="fas fa-save me-2"></i> ACTUALIZAR DESPACHO
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    console.log('🚀 [Lupita Debug] Modal Editar iniciado.');
+    const SALDO_TOTAL_ART  = parseFloat("{{ saldo_articulos_js }}") || 0;
+    const SALDO_TOTAL_PESO = parseFloat("{{ saldo_peso_js }}")      || 0;
+
+    const inputArt   = document.getElementById('input-art');
+    const inputPeso  = document.getElementById('input-peso');
+    const barraArt   = document.getElementById('barra-art');
+    const barraPeso  = document.getElementById('barra-peso');
+    const restArt    = document.getElementById('rest-art-label');
+    const restPeso   = document.getElementById('rest-peso-label');
+    const impacto    = document.getElementById('impacto-estado');
+
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+
+    function actualizarLiveSaldo() {
+        const art  = parseFloat(inputArt.value)  || 0;
+        const peso = parseFloat(inputPeso.value) || 0;
+
+        const sobraArt  = Math.max(0, SALDO_TOTAL_ART  - art);
+        const sobraPeso = Math.max(0, SALDO_TOTAL_PESO - peso);
+
+        const pctArt  = SALDO_TOTAL_ART  > 0 ? clamp(art  / SALDO_TOTAL_ART  * 100, 0, 100) : 0;
+        const pctPeso = SALDO_TOTAL_PESO > 0 ? clamp(peso / SALDO_TOTAL_PESO * 100, 0, 100) : 0;
+
+        barraArt.style.width  = pctArt  + '%';
+        barraPeso.style.width = pctPeso + '%';
+
+        restArt.textContent  = sobraArt.toFixed(2);
+        restPeso.textContent = sobraPeso.toFixed(2);
+
+        if (sobraArt === 0) {
+            impacto.innerHTML = '<i class="fas fa-check-circle me-2 text-success"></i><span>Este despacho consumirá TODO el saldo restante del pedido.</span>';
+        } else {
+            impacto.innerHTML = '<i class="fas fa-info-circle me-2 text-info"></i><span>Quedarán <strong>' + sobraArt.toFixed(2) + ' pzas</strong> pendientes en el pedido original.</span>';
+        }
+    }
+
+    const selectTipo = document.getElementById('select-tipo-envio');
+    const containerSurtidor = document.getElementById('container-surtidor');
+    if (selectTipo && containerSurtidor) {
+        selectTipo.addEventListener('change', function() {
+            containerSurtidor.style.display = (this.value === 'PROVEEDOR_EXTERNO') ? 'none' : 'block';
+        });
+        selectTipo.dispatchEvent(new Event('change'));
+    }
+
+    inputArt.addEventListener('input', actualizarLiveSaldo);
+    inputPeso.addEventListener('input', actualizarLiveSaldo);
+    actualizarLiveSaldo();
+})();
+</script>

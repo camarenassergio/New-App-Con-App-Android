@@ -84,6 +84,12 @@ urlpatterns = [
     path('logistica/rutas/', views.ViajeNuevoListView.as_view(), name='viaje_nuevo_list'),
     path('logistica/despacho/<int:pk>/evidencias/', views.DespachoEvidenciasFragmentView.as_view(), name='despacho_evidencias_fragment'),
     path('logistica/pedido/<int:pk>/dividir/', views.PedidoDividirView.as_view(), name='pedido_dividir'),
+    # v3.2.2: Bandeja Libre — reasignación individual y liberación masiva
+    path('logistica/despacho/<int:pk>/reasignar/', views.DespachoReasignarViajeView.as_view(), name='despacho_reasignar_viaje'),
+    path('logistica/despacho/<int:pk>/cancelar/', views.DespachoCancelarView.as_view(), name='despacho_cancelar'),
+    path('logistica/despacho/<int:pk>/editar/', views.DespachoEditarView.as_view(), name='despacho_editar'),
+    path('logistica/despacho/<int:pk>/cambiar-estado/', views.DespachoCambiarEstadoView.as_view(), name='despacho_cambiar_estado'),
+    path('logistica/viaje/<int:pk>/liberar-despachos/', views.ViajeNuevoLiberarDespachosView.as_view(), name='viaje_liberar_despachos'),
 
     # --- MOSTRADOR (PASO 1 - FASE 2) ---
     path('mostrador/dashboard/', views.MostradorDashboardView.as_view(), name='mostrador_dashboard'),

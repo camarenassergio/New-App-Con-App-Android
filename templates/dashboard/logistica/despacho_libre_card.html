@@ -1,0 +1,194 @@
+{% load static %}
+{# ─── Despacho Libre Card v3.2.2 ───────────────────────────────────────── #}
+{# Mini-tarjeta horizontal para el Panel de Bandeja Libre en el dashboard   #}
+<div class="despacho-libre-card {% if despacho.pedido.es_urgente %}urgent-desp{% endif %}" 
+     id="despacho-libre-{{ despacho.id }}">
+
+    {# Indicador de urgencia #}
+    {% if despacho.pedido.es_urgente %}
+    <div class="despacho-urgente-dot" title="Pedido Urgente"></div>
+    {% endif %}
+
+    {# Folio e ID del Despacho #}
+    <div class="desp-col desp-col-id">
+        <span class="desp-badge-id">#{{ despacho.id }}</span>
+        <span class="desp-folio">{{ despacho.pedido.folio_sae }}</span>
+    </div>
+
+    {# Cliente y destino #}
+    <div class="desp-col desp-col-cliente">
+        <span class="desp-cliente-name">
+            {{ despacho.pedido.cliente.razon_social|default:despacho.pedido.cliente_nombre_manual|truncatechars:22 }}
+        </span>
+        <span class="desp-destino">
+            <i class="fas fa-map-marker-alt me-1 opacity-50"></i>
+            {% if despacho.pedido.obra %}
+                {{ despacho.pedido.obra.alias|truncatechars:18 }}
+            {% else %}
+                Mostrador
+            {% endif %}
+        </span>
+    </div>
+
+    {# Artículos y Peso #}
+    <div class="desp-col desp-col-metricas">
+        <span class="desp-metric">
+            <i class="fas fa-boxes me-1 text-info opacity-75"></i>
+            <strong>{{ despacho.cantidad_articulos_asignados|floatformat:"-2" }}</strong>
+            <span class="desp-unit">pzas</span>
+        </span>
+        <span class="desp-metric">
+            <i class="fas fa-weight-hanging me-1 text-primary opacity-75"></i>
+            <strong>{{ despacho.peso_asignado_kg|floatformat:"-2" }}</strong>
+            <span class="desp-unit">kg</span>
+        </span>
+    </div>
+
+    {# Tipo de envío #}
+    <div class="desp-col desp-col-tipo d-none d-md-flex">
+        <span class="desp-tipo-pill">
+            {% if despacho.tipo_envio == 'INTERNO_FLOTILLA' %}
+                <i class="fas fa-truck me-1"></i> Flotilla
+            {% elif despacho.tipo_envio == 'INTERNO_PERSONAL' %}
+                <i class="fas fa-car me-1"></i> Personal
+            {% else %}
+                <i class="fas fa-handshake me-1"></i> Externo
+            {% endif %}
+        </span>
+    </div>
+
+    {# Acción: Grupo de Acciones (v3.2.5) #}
+    <div class="desp-col desp-col-action d-flex flex-row align-items-center gap-2">
+        <button class="btn-icon-action btn-edit"
+                hx-get="{% url 'dashboard:despacho_editar' despacho.pk %}"
+                hx-target="#lupita-modal-container"
+                hx-swap="innerHTML"
+                title="Editar cantidades o surtidor">
+            <i class="fas fa-edit"></i>
+        </button>
+
+        <button class="btn-icon-action btn-cancel"
+                hx-post="{% url 'dashboard:despacho_cancelar' despacho.pk %}"
+                hx-confirm="¿Seguro que deseas CANCELAR este despacho? Las unidades volverán al saldo del pedido."
+                title="Cancelar despacho y devolver unidades al pedido">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+
+        <button class="btn-asignar-desp ms-2"
+                hx-get="{% url 'dashboard:despacho_reasignar_viaje' despacho.pk %}"
+                hx-target="#lupita-modal-container"
+                hx-swap="innerHTML"
+                title="Asignar a una Ruta activa">
+            <i class="fas fa-link me-1 d-none d-lg-inline"></i>
+            <span>Asignar</span>
+        </button>
+    </div>
+</div>
+
+<style>
+/* ── Despacho Libre Card · v3.2.2 ──────────────────────────────── */
+.despacho-libre-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--info);
+    border-radius: 14px;
+    padding: 0.75rem 1.1rem;
+    position: relative;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.despacho-libre-card.urgent-desp {
+    border-left-color: var(--danger);
+    background: rgba(239, 68, 68, 0.015);
+}
+.despacho-libre-card:hover {
+    box-shadow: 0 6px 18px rgba(0,59,112,0.10);
+    transform: translateX(3px);
+}
+body.dark-theme .despacho-libre-card:hover {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+
+.despacho-urgente-dot {
+    position: absolute;
+    top: 8px; left: -2px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 6px var(--danger);
+    animation: pulse-dot 1.5s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+
+.desp-col { display: flex; flex-direction: column; justify-content: center; }
+
+.desp-col-id { min-width: 80px; }
+.desp-badge-id {
+    font-size: 0.6rem; font-weight: 900;
+    background: rgba(2,132,199,0.12); color: #0284c7;
+    border-radius: 6px; padding: 2px 7px;
+    width: fit-content; letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.desp-folio { font-size: 0.72rem; font-weight: 700; color: var(--text-main); margin-top: 2px; }
+
+.desp-col-cliente { flex: 1; min-width: 0; }
+.desp-cliente-name { font-size: 0.82rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.desp-destino { font-size: 0.65rem; color: var(--text-muted); }
+
+.desp-col-metricas { flex-direction: row; gap: 0.75rem; flex-shrink: 0; }
+.desp-metric { display: flex; align-items: center; font-size: 0.78rem; color: var(--text-main); }
+.desp-unit { font-size: 0.6rem; color: var(--text-muted); margin-left: 2px; }
+
+.desp-col-tipo { flex-shrink: 0; }
+.desp-tipo-pill {
+    font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 3px 8px; border-radius: 30px;
+    background: rgba(0,59,112,0.07); color: var(--text-muted);
+}
+body.dark-theme .desp-tipo-pill { background: rgba(255,255,255,0.06); }
+
+.desp-col-action { margin-left: auto; flex-shrink: 0; }
+.btn-asignar-desp {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white; border: none; border-radius: 30px;
+    padding: 0.35rem 0.9rem; font-size: 0.68rem; font-weight: 800;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(2,132,199,0.3);
+}
+.btn-asignar-desp:hover {
+    background: linear-gradient(135deg, #0369a1, #1e40af);
+    box-shadow: 0 6px 16px rgba(2,132,199,0.45);
+    transform: translateY(-1px);
+}
+
+/* Estilos Botones de Acción Iconográficos (v3.2.5) */
+.btn-icon-action {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+.btn-edit {
+    background: rgba(16, 185, 129, 0.1); color: var(--success);
+}
+.btn-edit:hover {
+    background: var(--success); color: white;
+    transform: scale(1.1);
+}
+.btn-cancel {
+    background: rgba(239, 68, 68, 0.1); color: var(--danger);
+}
+.btn-cancel:hover {
+    background: var(--danger); color: white;
+    transform: scale(1.1);
+}
+</style>

@@ -1,112 +1,241 @@
 <div class="modal fade animate__animated animate__fadeIn" id="modalDividirPedido" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+
             <!-- Header Premium -->
-            <div class="modal-header border-0 bg-info grad-info text-white p-4 d-flex align-items-center" style="background: linear-gradient(135deg, #0284c7, #0369a1);">
-                <div class="bg-white bg-opacity-20 p-2 rounded-circle me-3 shadow-sm d-flex justify-content-center align-items-center" style="width: 48px; height: 48px;">
+            <div class="modal-header border-0 text-white p-4 d-flex align-items-center"
+                 style="background: linear-gradient(135deg, #0284c7, #0369a1);">
+                <div class="bg-white bg-opacity-20 p-2 rounded-circle me-3 shadow-sm d-flex justify-content-center align-items-center"
+                     style="width: 48px; height: 48px; flex-shrink: 0;">
                     <i class="fas fa-divide fs-4 text-white"></i>
                 </div>
                 <div>
-                    <h5 class="modal-title fw-bold mb-0">Dividir Carga: Pedido #{{ pedido.folio_sae }}</h5>
-                    <p class="x-small mb-0 text-white opacity-75 text-uppercase tracking-wider fw-bold">Generar Despacho Individual</p>
+                    <h5 class="modal-title fw-bold mb-0">Dividir Carga: {{ pedido.folio_sae }}</h5>
+                    <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">
+                        Generar Despacho Individual
+                        <span class="ms-2 opacity-60">·
+                            {{ pedido.cliente.razon_social|default:pedido.cliente_nombre_manual|truncatechars:20 }}
+                        </span>
+                    </p>
                 </div>
-                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
             </div>
 
-            <form hx-post="{% url 'dashboard:pedido_dividir' pedido.pk %}" hx-target="#form-errores-dividir" hx-indicator=".btn-submit-dividir">
+            <form id="form-dividir-pedido"
+                  hx-post="{% url 'dashboard:pedido_dividir' pedido.pk %}"
+                  hx-target="#form-errores-dividir"
+                  hx-indicator=".btn-submit-dividir">
                 {% csrf_token %}
+
                 <div class="modal-body p-4 p-md-5 bg-light">
                     <!-- Errores dinámicos -->
                     <div id="form-errores-dividir" class="mb-3"></div>
-                    
-                    <!-- Resumen del Saldo Vivo -->
+
+                    <!-- ── SALDO VIVO ───────────────────────────────────────── -->
+                    <label class="x-small text-muted text-uppercase fw-bold opacity-75 d-block mb-2">
+                        Saldo Logístico Restante en este Pedido
+                    </label>
                     <div class="row g-3 mb-4">
-                        <div class="col-12">
-                            <label class="x-small text-muted text-uppercase fw-bold opacity-75 d-block mb-2">Saldo Logístico Restante en este Pedido</label>
-                        </div>
+                        <!-- Artículos -->
                         <div class="col-md-6">
-                            <div class="p-3 bg-white rounded-3 border d-flex align-items-center shadow-xs">
-                                <div class="bg-info bg-opacity-10 text-info p-2 rounded-circle me-3" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-boxes"></i>
+                            <div class="p-3 bg-white rounded-3 border shadow-xs">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-info bg-opacity-10 text-info p-2 rounded-circle me-2"
+                                         style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
+                                        <i class="fas fa-boxes"></i>
+                                    </div>
+                                    <p class="x-small text-muted mb-0 fw-bold">ARTÍCULOS DISPONIBLES</p>
                                 </div>
-                                <div>
-                                    <p class="x-small text-muted mb-0 fw-bold">ARTÍCULOS COMPLETOS</p>
-                                    <h5 class="fw-bold text-main text-info mb-0">{{ pedido.saldo_articulos }} <span class="x-small text-muted fw-normal">pzas</span></h5>
+                                <h5 class="fw-bold text-info mb-1" id="disp-art-label">
+                                    {{ pedido.saldo_articulos }} <span class="x-small text-muted fw-normal">pzas</span>
+                                </h5>
+                                <!-- Barra de extracción live -->
+                                <div class="progress mt-1" style="height:5px;border-radius:10px;">
+                                    <div id="barra-art"
+                                         class="progress-bar bg-info"
+                                         style="width:0%; transition: width 0.3s ease;">
+                                    </div>
+                                </div>
+                                <div class="x-small text-muted mt-1">
+                                    Quedarán: <strong id="rest-art-label" class="text-info">{{ pedido.saldo_articulos }}</strong> pzas
                                 </div>
                             </div>
                         </div>
+                        <!-- Peso -->
                         <div class="col-md-6">
-                            <div class="p-3 bg-white rounded-3 border d-flex align-items-center shadow-xs">
-                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle me-3" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-weight-hanging"></i>
-                                </div>
-                                <div>
+                            <div class="p-3 bg-white rounded-3 border shadow-xs">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle me-2"
+                                         style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
+                                        <i class="fas fa-weight-hanging"></i>
+                                    </div>
                                     <p class="x-small text-muted mb-0 fw-bold">PESO LOGÍSTICO VIVO</p>
-                                    <h5 class="fw-bold text-main text-primary mb-0">{{ pedido.saldo_peso_kg }} <span class="x-small text-muted fw-normal">kg</span></h5>
+                                </div>
+                                <h5 class="fw-bold text-primary mb-1" id="disp-peso-label">
+                                    {{ pedido.saldo_peso_kg }} <span class="x-small text-muted fw-normal">kg</span>
+                                </h5>
+                                <div class="progress mt-1" style="height:5px;border-radius:10px;">
+                                    <div id="barra-peso"
+                                         class="progress-bar bg-primary"
+                                         style="width:0%; transition: width 0.3s ease;">
+                                    </div>
+                                </div>
+                                <div class="x-small text-muted mt-1">
+                                    Quedarán: <strong id="rest-peso-label" class="text-primary">{{ pedido.saldo_peso_kg }}</strong> kg
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Setup del Nuevo Despacho -->
+                    <!-- ── CONFIGURAR DESPACHO ─────────────────────────────── -->
                     <div class="p-4 bg-white border border-dashed rounded-4 shadow-sm">
-                        <h6 class="fw-bold text-main mb-3 border-bottom pb-2">Configurar Nuevo Despacho</h6>
-                        
+                        <h6 class="fw-bold text-main mb-3 border-bottom pb-2">
+                            <i class="fas fa-box-open me-2 text-info opacity-75"></i>
+                            Configurar Nuevo Despacho
+                        </h6>
                         <div class="row g-3">
+
+                            <!-- Artículos a extraer -->
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-muted">Extraer Artículos (pzas)</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-clipboard-check text-muted"></i></span>
-                                    <input type="number" step="0.01" class="form-control border-start-0 ps-0" name="cantidad_articulos_asignados" max="{{ pedido.saldo_articulos|stringformat:'f' }}" required placeholder="Ej. 10.00">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-clipboard-check text-muted"></i>
+                                    </span>
+                                    <input type="number"
+                                           step="0.01"
+                                           min="0.01"
+                                           max="{{ pedido.saldo_articulos|stringformat:'f' }}"
+                                           class="form-control border-start-0 ps-0"
+                                           name="cantidad_articulos_asignados"
+                                           id="input-art"
+                                           required
+                                           placeholder="Ej. 10.00">
                                 </div>
-                                <div class="form-text x-small">Se surtirá esta cantidad de artículos.</div>
+                                <div class="form-text x-small">Máx: {{ pedido.saldo_articulos }} pzas disponibles.</div>
                             </div>
-                            
+
+                            <!-- Peso a cargar -->
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-muted">Peso Calculado (kg)</label>
+                                <label class="form-label small fw-bold text-muted">Peso a Cargar (kg)</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-balance-scale text-muted"></i></span>
-                                    <input type="number" step="0.01" class="form-control border-start-0 ps-0" name="peso_asignado_kg" max="{{ pedido.saldo_peso_kg|stringformat:'f' }}" required placeholder="Ej. 500.00">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-balance-scale text-muted"></i>
+                                    </span>
+                                    <input type="number"
+                                           step="0.01"
+                                           min="0"
+                                           max="{{ pedido.saldo_peso_kg|stringformat:'f' }}"
+                                           class="form-control border-start-0 ps-0"
+                                           name="peso_asignado_kg"
+                                           id="input-peso"
+                                           required
+                                           placeholder="Ej. 500.00">
                                 </div>
-                                <div class="form-text x-small">Este peso consumirá la capacidad del camión.</div>
+                                <div class="form-text x-small">Consumirá capacidad del camión.</div>
                             </div>
 
+                            <!-- Selector de Viaje — SIEMPRE opcional -->
                             <div class="col-12">
-                                <label class="form-label small fw-bold text-muted">Estrategia de Ruta Sugerida</label>
-                                <select name="tipo_envio" class="form-select" required>
-                                    <option value="INTERNO_FLOTILLA" selected>Ruta A: Unidad Flotilla (Logística Interna)</option>
-                                    <option value="INTERNO_PERSONAL">Ruta B: Vehículo Personal / Moto</option>
-                                    <option value="PROVEEDOR_EXTERNO">Ruta C: Proveedor Externo (Ocurre)</option>
-                                </select>
-                            </div>
-
-                            <div class="col-12 mt-2">
-                                <label class="form-label small fw-bold text-muted">Vincular a Ruta / Viaje Existente (Opcional)</label>
-                                <select name="viaje_id" class="form-select border-primary bg-primary bg-opacity-10 text-primary fw-bold shadow-xs">
-                                    <option value="" selected>-- Sin asignar por ahora (Bandeja de Surtidor) --</option>
+                                <label class="form-label small fw-bold text-muted">
+                                    <i class="fas fa-route me-1"></i> Ruta / Viaje Destino
+                                </label>
+                                <select name="viaje_id"
+                                        class="form-select border-primary bg-primary bg-opacity-10 text-primary fw-bold shadow-xs"
+                                        id="select-viaje-dividir"
+                                        style="border-color: rgba(0,59,112,0.25) !important;">
+                                    <option value="" selected>
+                                        ⏳ Sin asignar — Bandeja Libre
+                                    </option>
                                     {% for viaje in viajes_activos %}
-                                        <option value="{{ viaje.id }}">Ruta #{{ viaje.id }} - F/{{ viaje.fecha_creacion|date:"d M H:i" }} | Conf: {% if viaje.unidad %}{{ viaje.unidad.alias }}{% else %}Externo/Personal{% endif %}</option>
+                                    <option value="{{ viaje.id }}"
+                                        {% if viaje.estado == 'REPROGRAMADO' %}style="color:#dc2626"{% endif %}>
+                                        {% if viaje.estado == 'CREADO' %}✅
+                                        {% elif viaje.estado == 'EN_CURSO' %}🚛
+                                        {% else %}⚠️{% endif %}
+                                        {% if viaje.proveedor_externo %}
+                                            Externo: {{ viaje.proveedor_externo }}
+                                        {% else %}
+                                            {% if viaje.chofer.personal.nombre %}{{ viaje.chofer.personal.nombre }}{% else %}{{ viaje.chofer.get_full_name|default:viaje.chofer.username }}{% endif %}
+                                            {% if viaje.unidad %} · {{ viaje.unidad.nUnidad }}{% endif %}
+                                        {% endif %}
+                                        · {{ viaje.fecha_viaje|date:"d M" }}
+                                        · {{ viaje.despachos_count|default:"0" }} desp.
+                                        {% if viaje.estado == 'REPROGRAMADO' %} ⚠️ REPROG.{% endif %}
+                                    </option>
                                     {% endfor %}
                                 </select>
-                                <div class="form-text x-small">Útil si armaste la ruta global antes de fraccionar este pedido.</div>
+                                <div class="form-text x-small mt-1">
+                                    <i class="fas fa-info-circle me-1 text-info opacity-75"></i>
+                                    Crea la ruta primero en el Command Center, luego selecciónala aquí.
+                                    Si la dejas sin asignar, aparecerá en la <strong>Bandeja Libre</strong>.
+                                </div>
                             </div>
 
-                            <div class="col-12 mt-3">
+                            <!-- Estrategia de Ruta -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Estrategia de Envío</label>
+                                <select name="tipo_envio" id="select-tipo-envio" class="form-select" required>
+                                    <option value="INTERNO_FLOTILLA" selected>🚛 Ruta A — Unidad Flotilla</option>
+                                    <option value="INTERNO_PERSONAL">🏍 Ruta B — Vehículo Personal / Moto</option>
+                                    <option value="PROVEEDOR_EXTERNO">📦 Ruta C — Proveedor Externo</option>
+                                </select>
+                            </div>
+
+                            <!-- Indicador de Impacto en Estado del Pedido (dinámico) -->
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div id="impacto-estado" class="w-100 p-2 rounded-3 x-small fw-bold"
+                                     style="background: rgba(0,59,112,0.04); border: 1px dashed rgba(0,59,112,0.15); min-height: 52px; display:flex; align-items:center;">
+                                    <i class="fas fa-info-circle me-2 opacity-50"></i>
+                                    Ingresa la cantidad para ver el impacto.
+                                </div>
+                            </div>
+
+                            <!-- Asignar Surtidor (v3.2.5) - Solo para Internos -->
+                            <div class="col-md-6" id="container-surtidor">
+                                <label class="form-label small fw-bold text-muted">¿Quién va a surtir?</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-user-tag text-muted"></i>
+                                    </span>
+                                    <select class="form-select border-start-0 ps-0 text-uppercase fw-bold" 
+                                            name="surtidor_id"
+                                            id="select-surtidor"
+                                            style="border-color: rgba(0,59,112,0.25) !important;">
+                                        <option value="">-- Elige Surtidor --</option>
+                                        {% for p in vendedores_surtidores %}
+                                            <option value="{{ p.id }}">{{ p.nombre }} {{ p.apellido_paterno }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Observaciones -->
+                            <div class="col-12">
                                 <label class="form-label small fw-bold text-muted">Indicaciones de Surtido (Opcional)</label>
-                                <textarea name="observaciones_entrega" class="form-control" rows="2" placeholder="Instrucciones en caso de que este despacho requiera algo en particular para cargarse..."></textarea>
+                                <textarea name="observaciones_entrega"
+                                          class="form-control"
+                                          rows="2"
+                                          placeholder="Instrucciones particulares para este despacho..."></textarea>
                             </div>
                         </div>
                     </div>
 
                 </div>
-                
+
                 <div class="modal-footer bg-light border-top-0 px-4 pb-4 pt-0 d-flex justify-content-between">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold text-muted shadow-sm border" data-bs-dismiss="modal">CANCELAR</button>
-                    <button type="submit" class="btn btn-info bg-info text-white grad-info rounded-pill px-4 fw-bold shadow-premium border-0 btn-submit-dividir">
+                    <button type="button"
+                            class="btn btn-light rounded-pill px-4 fw-bold text-muted shadow-sm border"
+                            data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> CANCELAR
+                    </button>
+                    <button type="submit"
+                            class="btn text-white rounded-pill px-4 fw-bold shadow-premium border-0 btn-submit-dividir"
+                            style="background: linear-gradient(135deg, #0284c7, #0369a1);">
                         <span class="htmx-indicator-text">
                             <i class="fas fa-layer-group me-2"></i> GENERAR DESPACHO
                         </span>
-                        <div class="spinner-border spinner-border-sm htmx-indicator-spinner" role="status" style="display: none;">
+                        <div class="spinner-border spinner-border-sm htmx-indicator-spinner" role="status" style="display:none;">
                             <span class="visually-hidden">Procesando...</span>
                         </div>
                     </button>
@@ -116,11 +245,110 @@
     </div>
 </div>
 
+<script>
+(function() {
+    console.log('🚀 [Lupita Debug] Script del modal inicializado con éxito.');
+    // ── Constantes de saldo inyectadas desde el contexto Django ──────────
+    const SALDO_ART  = parseFloat("{{ saldo_articulos_js }}") || 0;
+    const SALDO_PESO = parseFloat("{{ saldo_peso_js }}")      || 0;
+
+    const inputArt   = document.getElementById('input-art');
+    const inputPeso  = document.getElementById('input-peso');
+    const barraArt   = document.getElementById('barra-art');
+    const barraPeso  = document.getElementById('barra-peso');
+    const restArt    = document.getElementById('rest-art-label');
+    const restPeso   = document.getElementById('rest-peso-label');
+    const impacto    = document.getElementById('impacto-estado');
+
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+
+    function actualizarLiveSaldo() {
+        const art  = parseFloat(inputArt.value)  || 0;
+        const peso = parseFloat(inputPeso.value) || 0;
+
+        // Saldos resultantes
+        const sobraArt  = Math.max(0, SALDO_ART  - art);
+        const sobraPeso = Math.max(0, SALDO_PESO - peso);
+
+        // Porcentajes para barras
+        const pctArt  = SALDO_ART  > 0 ? clamp(art  / SALDO_ART  * 100, 0, 100) : 0;
+        const pctPeso = SALDO_PESO > 0 ? clamp(peso / SALDO_PESO * 100, 0, 100) : 0;
+
+        barraArt.style.width  = pctArt  + '%';
+        barraPeso.style.width = pctPeso + '%';
+
+        // Color de barra según nivel
+        barraArt.className  = 'progress-bar ' + (pctArt  > 90 ? 'bg-danger' : pctArt > 60 ? 'bg-warning' : 'bg-info');
+        barraPeso.className = 'progress-bar ' + (pctPeso > 90 ? 'bg-danger' : pctPeso > 60 ? 'bg-warning' : 'bg-primary');
+
+        // Labels de saldo restante
+        restArt.textContent  = sobraArt.toFixed(2);
+        restPeso.textContent = sobraPeso.toFixed(2);
+
+        // Colores de los labels
+        restArt.className  = sobraArt  === 0 ? 'text-success fw-bold' : 'text-info';
+        restPeso.className = sobraPeso === 0 ? 'text-success fw-bold' : 'text-primary';
+
+        // Indicador de impacto en estado del pedido
+        if (art <= 0) {
+            impacto.innerHTML = '<i class="fas fa-info-circle me-2 opacity-50"></i>Ingresa la cantidad para ver el impacto.';
+            impacto.style.background = 'rgba(0,59,112,0.04)';
+            impacto.style.borderColor = 'rgba(0,59,112,0.15)';
+        } else if (art > SALDO_ART) {
+            impacto.innerHTML = '<i class="fas fa-exclamation-circle me-2 text-danger"></i><span class="text-danger">Excede el saldo disponible.</span>';
+            impacto.style.background = 'rgba(239,68,68,0.06)';
+            impacto.style.borderColor = 'rgba(239,68,68,0.3)';
+        } else if (sobraArt === 0) {
+            impacto.innerHTML = '<i class="fas fa-check-circle me-2 text-success"></i><span>Pedido completo. Pasará a <strong>DESPACHOS_GENERADOS</strong>.</span>';
+            impacto.style.background = 'rgba(16,185,129,0.06)';
+            impacto.style.borderColor = 'rgba(16,185,129,0.3)';
+        } else {
+            impacto.innerHTML = '<i class="fas fa-circle me-2 text-info"></i><span>Quedarán <strong>' + sobraArt.toFixed(2) + ' pzas</strong> de saldo vivo. El pedido permanecerá en la bandeja.</span>';
+            impacto.style.background = 'rgba(2,132,199,0.04)';
+            impacto.style.borderColor = 'rgba(2,132,199,0.2)';
+        }
+    }
+
+    // Evento: cambio en selector de viaje (alerta de REPROGRAMADO)
+    const selViaje = document.getElementById('select-viaje-dividir');
+    if (selViaje) {
+        selViaje.addEventListener('change', function() {
+            const txt = this.options[this.selectedIndex].text;
+            if (txt.includes('REPROG.')) {
+                impacto.innerHTML += ' <span class="text-warning fw-bold ms-1"><i class="fas fa-exclamation-triangle"></i> Ruta reprogramada.</span>';
+            }
+        });
+    }
+
+    // Evento: cambio en estrategia de envío (v3.2.5)
+    const selectTipo = document.getElementById('select-tipo-envio');
+    const containerSurtidor = document.getElementById('container-surtidor');
+    const selectSurtidor = document.getElementById('select-surtidor');
+
+    if (selectTipo && containerSurtidor) {
+        selectTipo.addEventListener('change', function() {
+            // Solo mostrar surtidor si es Interno (Ruta A o B)
+            if (this.value === 'INTERNO_FLOTILLA' || this.value === 'INTERNO_PERSONAL') {
+                containerSurtidor.style.display = 'block';
+            } else {
+                containerSurtidor.style.display = 'none';
+                if (selectSurtidor) selectSurtidor.value = ''; // Resetear valor
+            }
+        });
+        // Ejecutar una vez al inicio por si el default no es el esperado
+        selectTipo.dispatchEvent(new Event('change'));
+    }
+
+    // Escuchar inputs
+    if (inputArt)  inputArt.addEventListener('input', actualizarLiveSaldo);
+    if (inputPeso) inputPeso.addEventListener('input', actualizarLiveSaldo);
+})();
+</script>
+
 <style>
-    /* Estilos Premium Modal Dividir */
-    .shadow-premium { box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4); }
-    .border-dashed { border-style: dashed !important; border-width: 2px !important; border-color: rgba(0,0,0,0.1) !important; }
-    
-    .htmx-request .htmx-indicator-text { display: none; }
-    .htmx-request .htmx-indicator-spinner { display: inline-block !important; }
+.shadow-premium { box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4); }
+.border-dashed { border-style: dashed !important; border-width: 2px !important; border-color: rgba(0,0,0,0.09) !important; }
+.htmx-request .htmx-indicator-text { display: none; }
+.htmx-request .htmx-indicator-spinner { display: inline-block !important; }
+.shadow-xs { box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
 </style>

@@ -242,7 +242,7 @@
     }
     .route-empty-state i { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.4; }
     
-    /* Route Status Tags */
+    /* ROUTE STATUS TAGS */
     .route-status-tag {
         font-size: 0.58rem;
         font-weight: 800;
@@ -261,6 +261,46 @@
     .status-reprogramado { background: rgba(239, 68, 68, 0.15); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.2); }
     
     .btn-xs { padding: 0.15rem 0.4rem; font-size: 0.65rem; }
+
+    /* ── BANDEJA LIBRE — DESPACHOS SIN RUTA ─────────────────────────── */
+    .bandeja-libre-panel {
+        margin-bottom: 2rem;
+        animation: slideInDown 0.4s ease;
+    }
+    .bandeja-libre-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding: 0.85rem 1.25rem;
+        background: var(--bg-card);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        border-left: 4px solid var(--warning);
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(245,158,11,0.07);
+    }
+    body.dark-theme .bandeja-libre-header {
+        border-color: rgba(245,158,11,0.15);
+    }
+    .bandeja-libre-title {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--warning);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .bandeja-libre-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+    /* Barra de capacidad en route-cards */
+    .route-capacity-bar { margin-top: 0.5rem; }
+    .route-capacity-bar .progress { height: 4px; border-radius: 10px; background: rgba(0,0,0,0.06); }
+    body.dark-theme .route-capacity-bar .progress { background: rgba(255,255,255,0.08); }
 
 </style>
 {% endblock %}
@@ -367,11 +407,11 @@
                         </span>
                     </div>
 
-                    <!-- Footer acción -->
-                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                        <!-- Footer acción -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 pt-2 border-top gap-2">
                         {% if viaje.estado == 'CREADO' or viaje.estado == 'REPROGRAMADO' %}
                         <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold"
-                                style="font-size:0.65rem;"
+                                style="font-size:0.95rem;"
                                 hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
                                 hx-vals='{"estado": "EN_CURSO"}'
                                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
@@ -381,7 +421,7 @@
                         </button>
                         {% elif viaje.estado == 'EN_CURSO' %}
                         <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
-                                style="font-size:0.65rem;"
+                                style="font-size:0.95rem;"
                                 hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
                                 hx-vals='{"estado": "FINALIZADO"}'
                                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
@@ -394,9 +434,21 @@
                         <span class="x-small text-muted py-1 fw-bold"><i class="fas fa-check-circle me-1"></i> COMPLETADA</span>
                         {% endif %}
 
+                        {# v3.2.2: Liberar despachos si está REPROGRAMADO y tiene carga #}
+                        {% if viaje.estado == 'REPROGRAMADO' and viaje.despachos_count > 0 %}
+                        <button class="btn btn-xs btn-outline-warning rounded-pill fw-bold"
+                                hx-post="{% url 'dashboard:viaje_liberar_despachos' viaje.pk %}"
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-confirm="¿Liberar {{ viaje.despachos_count }} despacho(s) a la Bandeja Libre?"
+                                hx-swap="none"
+                                title="Desasignar todos los despachos de esta ruta">
+                            <i class="fas fa-unlink me-1"></i> LIBERAR
+                        </button>
+                        {% endif %}
+
                         <a href="{% url 'dashboard:viaje_detail' viaje.pk %}"
                            class="btn btn-xs text-primary fw-bold"
-                           style="font-size:0.65rem; text-decoration:none;"
+                           style="font-size:0.95rem; text-decoration:none;"
                            title="Ver detalles">
                             DETALLE <i class="fas fa-chevron-right ms-1"></i>
                         </a>
@@ -445,12 +497,12 @@
 
                     <!-- Stats -->
                     <div class="route-stat-row">
-                        <span class="route-stat-pill {% if despachos_count > 0 %}pill-success{% endif %}">
-                            <i class="fas fa-boxes"></i> {{ despachos_count }} despacho{{ despachos_count|pluralize }}
+                        <span class="route-stat-pill {% if viaje.despachos_count > 0 %}pill-success{% endif %}">
+                            <i class="fas fa-boxes"></i> {{ viaje.despachos_count|default:0 }} despacho{{ viaje.despachos_count|default:0|pluralize }}
                         </span>
                         {% if viaje.unidad %}
                         <span class="route-stat-pill pill-orange">
-                            <i class="fas fa-weight"></i> {{ viaje.unidad.capacidad_kg }} kg
+                            <i class="fas fa-weight"></i> {{ viaje.unidad.capacidad_kg }} kg máx
                         </span>
                         {% endif %}
                         <span class="route-stat-pill">
@@ -458,8 +510,25 @@
                         </span>
                     </div>
 
+                    {# v3.2.2: Barra de capacidad de carga #}
+                    {% if viaje.unidad and viaje.total_peso_cargado %}
+                    {% widthratio viaje.total_peso_cargado viaje.unidad.capacidad_kg 100 as pct_kg %}
+                    <div class="route-capacity-bar">
+                        <div class="d-flex justify-content-between x-small text-muted mb-1">
+                            <span><i class="fas fa-truck-loading me-1"></i>Carga</span>
+                            <span>{{ viaje.total_peso_cargado|floatformat:0 }} / {{ viaje.unidad.capacidad_kg|floatformat:0 }} kg</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar {% if pct_kg > 90 %}bg-danger{% elif pct_kg > 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                 style="width:{{ pct_kg }}%; transition: width 0.4s ease;"
+                                 title="{{ pct_kg }}% de capacidad utilizada">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Footer acción -->
-                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 pt-2 border-top gap-2">
                         {% if viaje.estado == 'CREADO' or viaje.estado == 'REPROGRAMADO' %}
                         <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold"
                                 style="font-size:0.65rem;"
@@ -483,6 +552,18 @@
                         </button>
                         {% else %}
                         <span class="x-small text-muted py-1 fw-bold"><i class="fas fa-check-circle me-1"></i> COMPLETADA</span>
+                        {% endif %}
+
+                        {# v3.2.2: Liberar despachos si está REPROGRAMADO y tiene carga #}
+                        {% if viaje.estado == 'REPROGRAMADO' and viaje.despachos_count > 0 %}
+                        <button class="btn btn-xs btn-outline-warning rounded-pill fw-bold"
+                                hx-post="{% url 'dashboard:viaje_liberar_despachos' viaje.pk %}"
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-confirm="¿Liberar {{ viaje.despachos_count }} despacho(s) a la Bandeja Libre?"
+                                hx-swap="none"
+                                title="Desasignar todos los despachos de esta ruta">
+                            <i class="fas fa-unlink me-1"></i> LIBERAR
+                        </button>
                         {% endif %}
 
                         <a href="{% url 'dashboard:viaje_detail' viaje.pk %}"
@@ -515,6 +596,44 @@
     </div>
     <!-- /PANEL DE RUTAS ACTIVAS ──────────────────────────────────────── -->
 
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- BANDEJA LIBRE: DESPACHOS SIN RUTA ASIGNADA (v3.2.2)              -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <div class="bandeja-libre-panel" id="bandeja-libre-panel"
+         hx-get="{{ request.path }}" hx-trigger="boardChanged from:body"
+         hx-select="#bandeja-libre-panel" hx-swap="outerHTML">
+
+        <div class="bandeja-libre-header">
+            <div class="bandeja-libre-title">
+                <i class="fas fa-inbox text-warning"></i>
+                Bandeja Libre — Despachos Sin Ruta [DEBUG: VERSION 3.2.2.B]
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="metrics-pill" style="background: rgba(245,158,11,.15); color: var(--warning);">
+                    {{ despachos_libres_count|default:0 }} sin asignar
+                </span>
+                <span class="x-small text-muted opacity-75">
+                    <i class="fas fa-magic me-1"></i>
+                    Divide un pedido para empezar
+                </span>
+            </div>
+        </div>
+
+        <div class="bandeja-libre-grid">
+            {% for despacho in despachos_libres %}
+                {% include 'dashboard/logistica/despacho_libre_card.html' %}
+            {% empty %}
+                <div class="text-center p-3 border rounded-4 bg-white bg-opacity-50 dashed-border shadow-xs">
+                    <div class="x-small text-muted fw-bold">
+                        <i class="fas fa-info-circle me-1 text-warning opacity-75"></i>
+                        No hay despachos pendientes de asignación.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <!-- /BANDEJA LIBRE ───────────────────────────────────────────────── -->
+
     <!-- Kanban Board Container -->
     <div class="kanban-board" id="kanban-board" hx-get="{{ request.path }}" hx-trigger="boardChanged from:body" hx-select="#kanban-board" hx-swap="outerHTML">
         
@@ -537,20 +656,20 @@
             </div>
         </div>
         
-        <!-- 2. EN PREPARACIÓN -->
+        <!-- 2. EN PREPARACIÓN (Despachos en Surtido Activo) -->
         <div class="kanban-column">
             <div class="kanban-header column-preparacion">
                 <h6 class="mb-0 fw-bold"><i class="fas fa-box-open me-2" style="color: var(--warning);"></i> Preparación</h6>
-                <div class="metrics-pill">{{ pedidos_preparacion.count }} Activos</div>
+                <div class="metrics-pill">{{ despachos_preparacion.count }} Surtidos</div>
             </div>
             <div class="kanban-body sortable-list" data-estado="EN_PREPARACION">
-                {% for pedido in pedidos_preparacion %}
-                    {% include 'dashboard/logistica/kanban_card.html' with pedido=pedido %}
+                {% for despacho in despachos_preparacion %}
+                    {% include 'dashboard/logistica/kanban_card_despacho.html' with despacho=despacho %}
                 {% empty %}
                     <div class="text-center p-4 text-muted small empty-indicator" style="pointer-events: none; opacity: 0.5;">
                         <i class="fas fa-box d-block mb-3" style="font-size: 3rem;"></i>
                         <h6 class="fw-bold">Almacén Listo</h6>
-                        <span class="x-small text-uppercase tracking-wider">Nada en preparación</span>
+                        <span class="x-small text-uppercase tracking-wider">Nada en preparación activa</span>
                     </div>
                 {% endfor %}
             </div>
@@ -597,9 +716,7 @@
     </div>
 </div>
 
-<!-- Contenedor dinámico HTMX para los modales -->
-<div id="modal-container"></div>
-
+<!-- El contenedor #modal-container ahora está centralizado en base.html para evitar duplicados -->
 {% endblock %}
 
 {% block extra_js %}
@@ -640,16 +757,57 @@
         });
     });
 
-    // ── Modal opener: detecta quando HTMX termina de cargar el modal-container
-    // y lo abre automáticamente. Más confiable que hx-on::after-swap.
+    // ── Controlador Global de Modales Lupita ────────────────────────────
     document.body.addEventListener('htmx:afterSwap', function(evt) {
-        var target = evt.detail.target;
-        if (target && target.id === 'modal-container') {
-            // Busca cualquier .modal dentro del contenedor recién cargado
-            var modalEl = target.querySelector('.modal');
+        const target = evt.detail.target;
+        if (target && target.id === 'lupita-modal-container') {
+            const xhr = evt.detail.xhr;
+            const responseText = xhr ? xhr.responseText : '';
+            console.log('[Lupita Debug] Swap detectado. Status:', xhr ? xhr.status : 'N/A');
+            console.log('[Lupita Debug] Response Text Length:', responseText.length);
+
+            // FALLBACK DE EMERGENCIA: Si HTMX no hizo el swap (innerHTML vacío) pero hay respuesta
+            if (target.innerHTML.trim() === '' && responseText.length > 0) {
+                console.warn('⚠️ [Lupita Debug] HTMX no realizó el swap automáticamente. Forzando swap manual con fragment...');
+                target.innerHTML = ''; 
+                const fragment = document.createRange().createContextualFragment(responseText);
+                target.appendChild(fragment);
+                // htmx.process para asegurar que los atributos hx- también se activen
+                htmx.process(target);
+            }
+
+            // Detectar el modal
+            let modalEl = target.querySelector('.modal');
             if (modalEl) {
-                var bsModal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
-                bsModal.show();
+                console.log('✅ [Lupita Debug] Modal listo:', modalEl.id);
+                try {
+                    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    bsModal.show();
+                } catch (err) {
+                    console.error('❌ [Lupita Debug] Error al mostrar modal:', err);
+                }
+            } else {
+                console.warn('⚠️ [Lupita Debug] No se encontró clase .modal despues del swap.');
+                console.warn('⚠️ [Lupita Debug] HTML en contenedor:', target.innerHTML.substring(0, 100));
+            }
+        }
+    });
+
+    // ── Listener para cerrar modales desde HTMX ─────────────────────────
+    document.body.addEventListener('closeModal', function(evt) {
+        const modalId = evt.detail.value;
+        const modalEl = document.getElementById(modalId);
+        if (modalEl) {
+            const bsModal = bootstrap.Modal.getInstance(modalEl);
+            if (bsModal) {
+                bsModal.hide();
+                console.log('✅ [Lupita Debug] Modal cerrado por evento:', modalId);
+            }
+        } else {
+            // Si no hay ID, cerrar cualquier modal abierto (fallback)
+            const openModal = document.querySelector('.modal.show');
+            if (openModal) {
+                bootstrap.Modal.getOrCreateInstance(openModal).hide();
             }
         }
     });

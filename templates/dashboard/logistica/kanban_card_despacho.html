@@ -1,0 +1,85 @@
+<div class="kanban-card {% if despacho.pedido.es_urgente %}urgente{% else %}normal{% endif %} mb-3 shadow-sm border-left-surtido" 
+     id="despacho-kanban-{{ despacho.id }}" 
+     data-id="{{ despacho.id }}">
+    
+    <!-- Encabezado de Tarjeta -->
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="d-flex flex-column">
+            <span class="x-small text-uppercase fw-800 tracking-wider text-muted opacity-75">DESPACHO #{{ despacho.id }}</span>
+            <h6 class="mb-0 fw-bold fs-6 text-primary">#{{ despacho.pedido.folio_sae }}</h6>
+        </div>
+        {% if despacho.pedido.es_urgente %}
+            <span class="badge bg-danger text-white rounded-pill px-2 py-1 x-small fw-bold animate__animated animate__pulse animate__infinite">
+                <i class="fas fa-bolt me-1"></i>URGENTE
+            </span>
+        {% endif %}
+    </div>
+    
+    <!-- Cliente y Surtidor -->
+    <div class="mb-3">
+        <div class="fw-bold small text-truncate text-main mb-1">
+            {{ despacho.pedido.cliente.razon_social|default:despacho.pedido.cliente_nombre_manual|truncatechars:28 }}
+        </div>
+        
+        <!-- Badge de Surtidor (v3.2.5) -->
+        <div class="d-flex align-items-center bg-warning bg-opacity-10 p-2 rounded-3 border border-warning border-opacity-10">
+            <div class="bg-warning text-white p-1 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px;">
+                <i class="fas fa-user-tag x-small"></i>
+            </div>
+            <div class="d-flex flex-column">
+                <span class="x-small text-muted fw-bold">SURTIENDO:</span>
+                <span class="x-small fw-bold text-dark">{{ despacho.surtidor.nombre|default:"Sin Asignar" }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Metricas Granulares -->
+    <div class="card-meta d-flex justify-content-between align-items-center pt-2 mt-1 border-top border-dashed">
+        <div class="d-flex gap-3">
+            <div class="small fw-bold text-info">
+                <i class="fas fa-boxes me-1 opacity-50"></i> {{ despacho.cantidad_articulos_asignados|floatformat:"-2" }} <span class="x-small opacity-75">Pz</span>
+            </div>
+            <div class="small fw-bold text-primary">
+                <i class="fas fa-weight-hanging me-1 opacity-50"></i> {{ despacho.peso_asignado_kg|floatformat:"-2" }} <span class="x-small opacity-75">KG</span>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <button type="button" class="btn-icon-sm rounded-circle shadow-xs" 
+                    title="Editar Despacho" 
+                    hx-get="{% url 'dashboard:despacho_editar' despacho.pk %}" 
+                    hx-target="#lupita-modal-container"
+                    hx-swap="innerHTML">
+                <i class="fas fa-edit"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .kanban-card {
+        background: var(--bg-card);
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 18px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        border-left: 6px solid #ccc;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        cursor: grab;
+    }
+    .kanban-card:active { cursor: grabbing; }
+    .kanban-card.urgente { border-left-color: var(--danger) !important; }
+    .kanban-card.normal { border-left-color: #003b70; }
+    .border-left-surtido { border-left-color: #f59e0b !important; }
+    
+    .x-small { font-size: 0.75rem; }
+    .fw-800 { font-weight: 800; }
+    .border-dashed { border-top-style: dashed !important; border-top-width: 2px !important; }
+
+    .btn-icon-sm {
+        width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;
+        background: var(--bg-body); color: var(--text-muted); border: 1px solid var(--border-color);
+        transition: all 0.2s; font-size: 0.8rem;
+    }
+    .btn-icon-sm:hover { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+</style>

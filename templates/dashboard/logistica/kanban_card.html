@@ -45,6 +45,15 @@
             <div class="small fw-bold {% if pedido.saldo_peso_kg > 0 %}text-primary{% else %}text-muted{% endif %}">
                 <i class="fas fa-weight-hanging me-1 opacity-50"></i> {{ pedido.saldo_peso_kg|default:"0" }} <span class="x-small opacity-75">KG</span>
             </div>
+            {# v3.2.2: Badge de despachos generados #}
+            {% with d_count=pedido.despachos.count %}
+            {% if d_count > 0 %}
+            <div class="x-small fw-bold text-muted mt-1" style="opacity:0.8;">
+                <i class="fas fa-layer-group me-1 opacity-50"></i>
+                {{ d_count }} despacho{{ d_count|pluralize }}
+            </div>
+            {% endif %}
+            {% endwith %}
         </div>
         
         <div class="d-flex gap-2">
@@ -52,9 +61,8 @@
             <button type="button" class="btn btn-icon-sm bg-info bg-opacity-10 text-info border-0 rounded-circle shadow-xs" 
                     title="Dividir en Despachos" 
                     hx-get="{% url 'dashboard:pedido_dividir' pedido.pk %}" 
-                    hx-target="#modal-container"
-                    hx-swap="innerHTML"
-                    hx-on::after-swap="var m = new bootstrap.Modal(document.getElementById('modalDividirPedido')); m.show();">
+                    hx-target="#lupita-modal-container"
+                    hx-swap="innerHTML">
                 <i class="fas fa-divide"></i>
             </button>
 
