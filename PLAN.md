@@ -58,6 +58,10 @@
 | Antigravity | Mantenimiento: Respaldo y Restauración de Base de Datos (mysqldump) | Verificado [AUTO-HEALED] |
 | Antigravity | UX: Sincronización SAE Modal, Cliente Propietario Dinámico y Captura de Teléfono | Verificado [AUTO-HEALED] |
 | Antigravity | Dashboard: Métricas Personales de Mostrador (Pedidos Hoy) | Verificado y Pulido |
+| Antigravity | Gestión de Despachos: Edición, Cancelación y División de Saldos | Verificado y Pulido |
+| Antigravity | Kanban Logístico: Transición a Flujo Granular (Despacho > Ruta) | Verificado [AUTO-HEALED] |
+| Antigravity | Almacén: Panel de Surtido Personalizado (Filtro por Surtidor) | Verificado y Pulido |
+| Antigravity | UX Modales: Centralización de lupita-modal-container y Stándar Global | Verificado [AUTO-HEALED] |
 
 ## Reglas del Proyecto
 

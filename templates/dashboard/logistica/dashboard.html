@@ -329,7 +329,7 @@
                     <button class="btn btn-warning rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center"
                             id="btn-crear-ruta"
                             hx-get="{% url 'dashboard:logistica_crear_viaje' %}" 
-                            hx-target="#modal-container"
+                            hx-target="#lupita-modal-container"
                             hx-swap="innerHTML"
                             hx-indicator="#btn-crear-ruta">
                         <i class="fas fa-plus-circle me-2"></i> CREAR NUEVA RUTA
@@ -584,7 +584,7 @@
                 <p class="x-small text-uppercase tracking-wider mb-3">Crea la primera ruta del día para comenzar las entregas</p>
                 <button class="btn btn-sm btn-warning rounded-pill px-4 fw-bold"
                         hx-get="{% url 'dashboard:logistica_crear_viaje' %}"
-                        hx-target="#modal-container"
+                        hx-target="#lupita-modal-container"
                         hx-swap="innerHTML"
                         aria-label="Crear nueva ruta">
                     <i class="fas fa-plus-circle me-2"></i> CREAR PRIMERA RUTA
@@ -675,39 +675,39 @@
             </div>
         </div>
         
-        <!-- 3. ASIGNADOS (Esperando despacho) -->
+        <!-- 3. RUTAS LISTAS (Todo el camión está surtido) -->
         <div class="kanban-column">
             <div class="kanban-header column-asignado">
-                <h6 class="mb-0 fw-bold"><i class="fas fa-clipboard-list me-2" style="color: var(--primary-blue);"></i> Listos para Ruta</h6>
-                <div class="metrics-pill">{{ pedidos_asignados.count }} Pendientes</div>
+                <h6 class="mb-0 fw-bold"><i class="fas fa-truck-loading me-2" style="color: var(--primary-blue);"></i> Listos para Salir</h6>
+                <div class="metrics-pill">{{ viajes_listos.count }} Camiones</div>
             </div>
-            <div class="kanban-body sortable-list" data-estado="ASIGNADO_A_RUTA" style="padding-bottom: 0.5rem;">
-                {% for pedido in pedidos_asignados %}
-                    {% include 'dashboard/logistica/kanban_card.html' with pedido=pedido %}
+            <div class="kanban-body sortable-list" data-estado="VIAJE_LISTO" style="padding-bottom: 0.5rem;">
+                {% for viaje in viajes_listos %}
+                    {% include 'dashboard/logistica/kanban_card_viaje.html' with viaje=viaje %}
                 {% empty %}
                     <div class="text-center p-4 text-muted small empty-indicator" style="pointer-events: none; opacity: 0.5;">
-                        <i class="fas fa-truck-loading d-block mb-3" style="font-size: 3rem;"></i>
-                        <h6 class="fw-bold">Totalmente Asignado</h6>
-                        <span class="x-small text-uppercase tracking-wider">Sin carga pendiente</span>
+                        <i class="fas fa-clock d-block mb-3" style="font-size: 3rem;"></i>
+                        <h6 class="fw-bold">Preparando Cargas</h6>
+                        <span class="x-small text-uppercase tracking-wider">Esperando que almacén termine</span>
                     </div>
                 {% endfor %}
             </div>
         </div>
         
-        <!-- 4. EN RUTA -->
+        <!-- 4. EN RUTA (Unidades en tránsito) -->
         <div class="kanban-column">
             <div class="kanban-header column-ruta">
                 <h6 class="mb-0 fw-bold"><i class="fas fa-truck-moving me-2" style="color: var(--primary-orange);"></i> En Tránsito</h6>
-                <div class="metrics-pill">{{ pedidos_ruta.count }} Camiones</div>
+                <div class="metrics-pill">{{ viajes_en_transito.count }} Activos</div>
             </div>
-            <div class="kanban-body sortable-list" data-estado="EN_RUTA">
-                {% for pedido in pedidos_ruta %}
-                    {% include 'dashboard/logistica/kanban_card.html' with pedido=pedido %}
+            <div class="kanban-body sortable-list" data-estado="VIAJE_EN_RUTA">
+                {% for viaje in viajes_en_transito %}
+                    {% include 'dashboard/logistica/kanban_card_viaje.html' with viaje=viaje %}
                 {% empty %}
                     <div class="text-center p-4 text-muted small empty-indicator" style="pointer-events: none; opacity: 0.5;">
-                        <i class="fas fa-road d-block mb-3" style="font-size: 3rem;"></i>
-                        <h6 class="fw-bold">Sin Entregas Pendientes</h6>
-                        <span class="x-small text-uppercase tracking-wider">Flotilla disponible</span>
+                        <i class="fas fa-map-marked-alt d-block mb-3" style="font-size: 3rem;"></i>
+                        <h6 class="fw-bold">Patio Lleno</h6>
+                        <span class="x-small text-uppercase tracking-wider">Toda la flotilla disponible</span>
                     </div>
                 {% endfor %}
             </div>

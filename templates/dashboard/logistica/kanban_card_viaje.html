@@ -1,0 +1,92 @@
+<div class="kanban-card mb-3 shadow-sm border-left-viaje {% if viaje.estado == 'EN_CURSO' %}en-transito{% endif %}" 
+     id="viaje-kanban-{{ viaje.id }}" 
+     data-id="{{ viaje.id }}">
+    
+    <!-- Encabezado de Tarjeta -->
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="d-flex flex-column">
+            <span class="x-small text-uppercase fw-800 tracking-wider text-muted opacity-75">RUTA #{{ viaje.id }}</span>
+            <div class="d-flex align-items-center gap-2">
+                <h6 class="mb-0 fw-bold fs-6 text-dark">
+                    <i class="fas fa-truck me-1 text-primary"></i>
+                    {% if viaje.unidad %}{{ viaje.unidad.placas }}{% else %}Personal{% endif %}
+                </h6>
+            </div>
+        </div>
+        {% if viaje.estado == 'EN_CURSO' %}
+            <span class="badge bg-info text-white rounded-pill px-2 py-1 x-small fw-bold">
+                <i class="fas fa-road me-1"></i>EN TRÁNSITO
+            </span>
+        {% else %}
+            <span class="badge bg-success text-white rounded-pill px-2 py-1 x-small fw-bold">
+                <i class="fas fa-check-circle me-1"></i>LISTA
+            </span>
+        {% endif %}
+    </div>
+    
+    <!-- Operadores -->
+    <div class="mb-3">
+        <div class="d-flex align-items-center bg-light p-2 rounded-3 border">
+            <div class="bg-primary text-white p-1 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                <i class="fas fa-user-tie x-small"></i>
+            </div>
+            <div class="d-flex flex-column" style="min-width:0;">
+                <span class="x-small text-muted fw-bold">CHOFER:</span>
+                <span class="x-small fw-bold text-dark text-truncate">
+                    {% if viaje.chofer.personal.nombre %}{{ viaje.chofer.personal.nombre }}{% else %}{{ viaje.chofer.username }}{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Metricas de la Ruta (v3.2.5) -->
+    <div class="card-meta d-flex justify-content-between align-items-center pt-2 mt-1 border-top border-dashed">
+        <div class="d-flex gap-3">
+            <div class="small fw-bold text-dark">
+                <i class="fas fa-boxes me-1 opacity-50"></i> {{ viaje.despachos.count }} <span class="x-small opacity-75">Surtidos</span>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+            {% if viaje.estado == 'CREADO' %}
+                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold x-small" 
+                        hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                        hx-vals='{"estado": "EN_CURSO"}'
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-confirm="¿Dar salida a esta ruta?"
+                        hx-swap="none">
+                    <i class="fas fa-play me-1"></i> SALIDA
+                </button>
+            {% else %}
+                <a href="{% url 'dashboard:viaje_detail' viaje.pk %}" class="btn btn-icon-sm rounded-circle shadow-xs" title="Ver Detalle">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .kanban-card {
+        background: var(--bg-card);
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 18px;
+        padding: 1.1rem;
+        transition: all 0.3s ease;
+        border-left: 8px solid #00d2ff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .border-left-viaje { border-left-color: #003b70 !important; }
+    .en-transito { border-left-color: var(--primary-orange) !important; background: rgba(243, 111, 33, 0.01); }
+    
+    .x-small { font-size: 0.75rem; }
+    .fw-800 { font-weight: 800; }
+    .border-dashed { border-top-style: dashed !important; border-top-width: 2px !important; }
+
+    .btn-icon-sm {
+        width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;
+        background: var(--bg-body); color: var(--text-muted); border: 1px solid var(--border-color);
+        transition: all 0.2s; font-size: 0.8rem;
+    }
+    .btn-icon-sm:hover { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+</style>

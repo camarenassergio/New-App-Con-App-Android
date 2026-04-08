@@ -1,11 +1,19 @@
-<div class="kanban-card {% if despacho.pedido.es_urgente %}urgente{% else %}normal{% endif %} mb-3 shadow-sm border-left-surtido" 
+<div class="kanban-card {% if despacho.pedido.es_urgente %}urgente{% else %}normal{% endif %} mb-3 shadow-sm 
+     {% if listos %}border-left-listo{% elif en_ruta %}border-left-ruta{% else %}border-left-surtido{% endif %}" 
      id="despacho-kanban-{{ despacho.id }}" 
      data-id="{{ despacho.id }}">
     
     <!-- Encabezado de Tarjeta -->
     <div class="d-flex justify-content-between align-items-start mb-2">
         <div class="d-flex flex-column">
-            <span class="x-small text-uppercase fw-800 tracking-wider text-muted opacity-75">DESPACHO #{{ despacho.id }}</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="x-small text-uppercase fw-800 tracking-wider text-muted opacity-75">DESPACHO #{{ despacho.id }}</span>
+                {% if listos %}
+                    <span class="badge bg-success bg-opacity-10 text-success x-small border border-success border-opacity-25 rounded-pill px-2">SURTIDO</span>
+                {% elif en_ruta %}
+                    <span class="badge bg-info bg-opacity-10 text-info x-small border border-info border-opacity-25 rounded-pill px-2">EN RUTA</span>
+                {% endif %}
+            </div>
             <h6 class="mb-0 fw-bold fs-6 text-primary">#{{ despacho.pedido.folio_sae }}</h6>
         </div>
         {% if despacho.pedido.es_urgente %}
@@ -15,22 +23,35 @@
         {% endif %}
     </div>
     
-    <!-- Cliente y Surtidor -->
+    <!-- Cliente y Metadata -->
     <div class="mb-3">
         <div class="fw-bold small text-truncate text-main mb-1">
             {{ despacho.pedido.cliente.razon_social|default:despacho.pedido.cliente_nombre_manual|truncatechars:28 }}
         </div>
         
-        <!-- Badge de Surtidor (v3.2.5) -->
-        <div class="d-flex align-items-center bg-warning bg-opacity-10 p-2 rounded-3 border border-warning border-opacity-10">
-            <div class="bg-warning text-white p-1 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px;">
-                <i class="fas fa-user-tag x-small"></i>
+        {% if en_ruta %}
+            <!-- Badge de Ruta (v3.2.5) -->
+            <div class="d-flex align-items-center bg-info bg-opacity-10 p-2 rounded-3 border border-info border-opacity-10">
+                <div class="bg-info text-white p-1 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px;">
+                    <i class="fas fa-truck x-small"></i>
+                </div>
+                <div class="d-flex flex-column">
+                    <span class="x-small text-muted fw-bold">EN RUTA:</span>
+                    <span class="x-small fw-bold text-dark">VIAJE #{{ despacho.viaje.id }}</span>
+                </div>
             </div>
-            <div class="d-flex flex-column">
-                <span class="x-small text-muted fw-bold">SURTIENDO:</span>
-                <span class="x-small fw-bold text-dark">{{ despacho.surtidor.nombre|default:"Sin Asignar" }}</span>
+        {% else %}
+            <!-- Badge de Surtidor (v3.2.5) -->
+            <div class="d-flex align-items-center bg-warning bg-opacity-10 p-2 rounded-3 border border-warning border-opacity-10">
+                <div class="bg-warning text-white p-1 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px;">
+                    <i class="fas fa-user-tag x-small"></i>
+                </div>
+                <div class="d-flex flex-column">
+                    <span class="x-small text-muted fw-bold">SURTIENDO:</span>
+                    <span class="x-small fw-bold text-dark">{{ despacho.surtidor.nombre|default:despacho.surtidor.usuario.username|default:"Almacén" }}</span>
+                </div>
             </div>
-        </div>
+        {% endif %}
     </div>
     
     <!-- Metricas Granulares -->
@@ -71,6 +92,8 @@
     .kanban-card.urgente { border-left-color: var(--danger) !important; }
     .kanban-card.normal { border-left-color: #003b70; }
     .border-left-surtido { border-left-color: #f59e0b !important; }
+    .border-left-listo   { border-left-color: #10b981 !important; }
+    .border-left-ruta    { border-left-color: #00d2ff !important; }
     
     .x-small { font-size: 0.75rem; }
     .fw-800 { font-weight: 800; }

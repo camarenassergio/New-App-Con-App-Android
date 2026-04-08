@@ -2879,15 +2879,30 @@ class LogisticaDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, Templat
         # Agrupamos por estado y los mapeamos a las columnas de Logística
         # Adicionamos los nuevos estados PENDIENTE y CREADO a la bandeja de entrada
         context['pedidos_registrados'] = pedidos_activos.filter(estado__in=['REGISTRADO', 'PENDIENTE', 'CREADO'])
-        # v3.2.5: En preparación ahora mostramos directamente los DESPACHOS que están en surtido activo
+        # v3.2.5: En preparación mostramos DESPACHOS en surtido activo (Proceso de Almacén)
         context['despachos_preparacion'] = Despacho.objects.filter(
             estado='ASIGNADO_SURTIDO'
         ).select_related('pedido', 'pedido__cliente', 'surtidor').order_by('-pedido__es_urgente', 'id')
         
-        # Mantenemos esto por compatibilidad o métricas si se usa en otros lados, 
-        # pero la columna principal usará despachos_preparacion.
-        context['pedidos_preparacion'] = pedidos_activos.filter(estado__in=['EN_PREPARACION', 'EN_PROCESO', 'DESPACHOS_GENERADOS'])
+        # v3.2.5: MEGA CORRECCIÓN - Columnas 3 y 4 centradas en RUTA (VIAJE)
+        # Una ruta está "LISTA" si tiene despachos y TODOS están SURTIDO_COMPLETO
+        hoy = timezone.localtime(timezone.now()).date()
+        context['viajes_listos'] = ViajeNuevo.objects.filter(
+            estado='CREADO',
+            fecha_viaje=hoy
+        ).annotate(
+            total_d=Count('despachos', distinct=True),
+            surtidos_d=Count('despachos', filter=Q(despachos__estado__in=['SURTIDO_COMPLETO', 'LISTO_PARA_RUTA']), distinct=True)
+        ).filter(total_d__gt=0, total_d=F('surtidos_d')).select_related('chofer', 'unidad').order_by('id')
         
+        # Columna 4: RUTAS que ya están en curso
+        context['viajes_en_transito'] = ViajeNuevo.objects.filter(
+            estado='EN_CURSO',
+            fecha_viaje=hoy
+        ).select_related('chofer', 'unidad').order_by('id')
+        
+        # Mantenemos estos para compatibilidad si las plantillas antiguas los usan en otros bloques
+        context['pedidos_preparacion'] = pedidos_activos.filter(estado__in=['EN_PREPARACION', 'EN_PROCESO', 'DESPACHOS_GENERADOS'])
         context['pedidos_asignados'] = pedidos_activos.filter(estado='ASIGNADO_A_RUTA')
         context['pedidos_ruta'] = pedidos_activos.filter(estado__in=['EN_RUTA', 'PARCIAL'])
         
