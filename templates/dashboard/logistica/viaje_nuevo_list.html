@@ -100,10 +100,12 @@
                         <td>
                             <div>
                                 <span class="fw-bold text-main d-block">
-                                    {% if viaje.proveedor_externo %}
+                                    {% if viaje.proveedor_servicio %}
+                                        {{ viaje.proveedor_servicio.nombre_comercial }} <span class="badge bg-primary bg-opacity-10 text-primary ms-1 smaller">PROVEEDOR</span>
+                                    {% elif viaje.proveedor_externo %}
                                         {{ viaje.proveedor_externo }} <span class="badge bg-warning text-dark ms-1 smaller">EXTERNO</span>
                                     {% else %}
-                                        {{ viaje.chofer.personal.nombre|default:viaje.chofer.get_full_name }}
+                                        {{ viaje.chofer.personal.nombre|default:viaje.chofer.get_full_name|default:"-- Sin Chofer --" }}
                                     {% endif %}
                                 </span>
                                 <span class="text-muted smaller">
@@ -146,6 +148,18 @@
                                 <span class="badge bg-success-subtle text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">
                                     <i class="fas fa-check-circle me-1"></i> Finalizada
                                 </span>
+                            {% elif viaje.estado == 'CANCELADO' %}
+                                <span class="badge bg-secondary-subtle text-muted border border-secondary border-opacity-25 px-3 py-2 rounded-pill">
+                                    <i class="fas fa-ban me-1"></i> Cancelada
+                                </span>
+                            {% endif %}
+                            
+                            {% if viaje.es_reprogramado %}
+                                <div class="mt-1">
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1 rounded-pill" style="font-size: 0.55rem;">
+                                        <i class="fas fa-history me-1"></i> REPROGRAMADA
+                                    </span>
+                                </div>
                             {% endif %}
                         </td>
                         <td class="pe-4 text-center">

@@ -62,6 +62,7 @@
 | Antigravity | Kanban Logístico: Transición a Flujo Granular (Despacho > Ruta) | Verificado [AUTO-HEALED] |
 | Antigravity | Almacén: Panel de Surtido Personalizado (Filtro por Surtidor) | Verificado y Pulido |
 | Antigravity | UX Modales: Centralización de lupita-modal-container y Stándar Global | Verificado [AUTO-HEALED] |
+| Antigravity | Catálogo de Proveedores e Integración de Fletes Externos | Verificado [AUTO-HEALED] |
 
 ## Reglas del Proyecto
 

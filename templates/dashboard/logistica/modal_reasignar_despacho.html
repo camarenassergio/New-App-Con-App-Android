@@ -73,8 +73,10 @@
                                 {% if viaje.estado == 'CREADO' %}✅
                                 {% elif viaje.estado == 'EN_CURSO' %}🚛
                                 {% else %}⚠️{% endif %}
-                                {% if viaje.proveedor_externo %}
-                                    Externo: {{ viaje.proveedor_externo }}
+                                {% if viaje.proveedor_servicio %}
+                                    🚛 EXT: {{ viaje.proveedor_servicio.nombre_comercial }}
+                                {% elif viaje.proveedor_externo %}
+                                    📦 EXT: {{ viaje.proveedor_externo }}
                                 {% else %}
                                     {{ viaje.chofer.personal.nombre|default:viaje.chofer.get_full_name|default:viaje.chofer.username }}
                                     {% if viaje.unidad %} · {{ viaje.unidad.nUnidad }}{% endif %}

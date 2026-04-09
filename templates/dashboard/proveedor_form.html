@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}{% if form.instance.pk %}Editar Proveedor{% else %}Alta de Proveedor{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5 px-md-5 animate__animated animate__fadeIn">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            
+            <!-- CABECERA PREMIUM -->
+            <div class="card border-0 shadow-premium rounded-5 overflow-hidden mb-5 bg-white">
+                <div class="card-header p-4 border-0 grad-primary position-relative overflow-hidden" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;">
+                    <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 7rem; transform: translate(20%, -30%);">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    
+                    <div class="row align-items-center position-relative">
+                        <div class="col-12 text-white">
+                            <div class="d-flex align-items-center gap-4">
+                                <div class="header-icon-box shadow-lg" style="background: rgba(255,255,255,0.2); width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; border-radius: 18px; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px);">
+                                    <i class="fas fa-handshake fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h2 class="mb-1 fw-800 text-uppercase tracking-tight">
+                                        {% if form.instance.pk %}Actualizar Socio{% else %}Registro de Proveedor{% endif %}
+                                    </h2>
+                                    <p class="mb-0 opacity-75 fw-bold x-small tracking-widest text-uppercase">
+                                        Directorio de Suministros y Servicios
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" class="needs-validation">
+                {% csrf_token %}
+                
+                <div class="card border-0 shadow-premium rounded-4 overflow-hidden bg-white mb-5">
+                    <div class="card-body p-4 p-md-5">
+                        
+                        <!-- SECCIÓN 1: IDENTIDAD COMERCIAL -->
+                        <div class="premium-step-v2 mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num-v2 me-3">1</span>
+                                <h5 class="mb-0 fw-800 text-primary text-uppercase tracking-wider fs-6">Identidad Comercial</h5>
+                            </div>
+                            <div class="row g-4 px-2">
+                                <div class="col-md-7">
+                                    {{ form.nombre_comercial|as_crispy_field }}
+                                </div>
+                                <div class="col-md-5">
+                                    {{ form.especialidad|as_crispy_field }}
+                                </div>
+                                <div class="col-md-8">
+                                    {{ form.razon_social|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.rfc|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN 2: CONTACTO -->
+                        <div class="premium-step-v2 mb-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <span class="step-num-v2 me-3" style="background: #f36f21;">2</span>
+                                <h5 class="mb-0 fw-800 text-warning text-uppercase tracking-wider fs-6" style="color: #f36f21 !important;">Información de Contacto</h5>
+                            </div>
+                            <div class="row g-4 px-2">
+                                <div class="col-md-6">
+                                    {{ form.contacto_nombre|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.telefono|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.email|as_crispy_field }}
+                                </div>
+                                <div class="col-12">
+                                    {{ form.direccion|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN 3: ESTADO -->
+                        <div class="premium-step-v2">
+                            <div class="row g-4 px-2">
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-light rounded-4 border d-flex align-items-center justify-content-between h-100">
+                                        <label class="fw-800 x-small text-muted text-uppercase tracking-wider mb-0">Estatus Activo</label>
+                                        {{ form.activo }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- FOOTER DE ACCIONES -->
+                    <div class="card-footer bg-light border-0 p-4 p-md-5 d-flex justify-content-between align-items-center">
+                        <a href="{% url 'dashboard:proveedores_list' %}" class="btn btn-link text-muted text-decoration-none fw-bold">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-lg grad-navy border-0 hover-scale">
+                            <i class="fas fa-save me-2"></i>{% if form.instance.pk %}GUARDAR CAMBIOS{% else %}REGISTRAR PROVEEDOR{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fw-800 { font-weight: 800; }
+    .x-small { font-size: 0.72rem; }
+    .tracking-widest { letter-spacing: 0.15em; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    .shadow-premium { box-shadow: 0 10px 40px rgba(0, 59, 112, 0.12); }
+    .grad-navy { background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important; }
+    
+    .step-num-v2 {
+        background: #003b70; color: white; width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 10px; font-weight: 800; font-size: 0.8rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 12px !important;
+        padding: 0.8rem 1rem !important;
+        border: 1px solid #e2e8f0 !important;
+        font-weight: 600 !important;
+        background-color: #f8fafc !important;
+        transition: all 0.2s ease !important;
+    }
+    .form-control:focus {
+        border-color: #003b70 !important;
+        background-color: #fff !important;
+        box-shadow: 0 4px 12px rgba(0,59,112,0.08) !important;
+    }
+
+    label.form-label {
+        font-weight: 800 !important;
+        font-size: 0.72rem !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .rounded-5 { border-radius: 2rem !important; }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.02); }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputTel = document.getElementById('id_telefono');
+    
+    const formatPhone = (v) => {
+        // Solo números, máx 10 dígitos, agrupar por pares con guiones
+        const numbers = v.replace(/\D/g, '').slice(0, 10);
+        const matches = numbers.match(/.{1,2}/g);
+        return matches ? matches.join('-') : numbers;
+    };
+
+    if (inputTel) {
+        inputTel.addEventListener('input', function() {
+            const start = this.selectionStart;
+            const prevLen = this.value.length;
+            
+            this.value = formatPhone(this.value);
+            
+            // Ajustar posición del cursor si es necesario
+            const diff = this.value.length - prevLen;
+            this.setSelectionRange(start + diff, start + diff);
+        });
+    }
+});
+</script>
+{% endblock %}

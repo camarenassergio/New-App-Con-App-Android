@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load dashboard_extras %}
+
+{% block page_title %}Directorio de Proveedores{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-md-5">
+    
+    <!-- HEADER PREMIUM -->
+    <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+        <div class="card-body p-0">
+            <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;">
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="header-icon-box me-3" style="background: rgba(255,255,255,0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 18px; border: 1px solid rgba(255,255,255,0.2);">
+                        <i class="fas fa-handshake fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">Directorio de Proveedores</h4>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Gestión de Alianzas y Suministros</p>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <!-- Buscador Inteligente -->
+                    <div class="search-box position-relative" style="min-width: 250px;">
+                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-white opacity-50"></i>
+                        <input type="text" id="providerSearch" class="form-control bg-white bg-opacity-10 border-white border-opacity-20 rounded-pill ps-5 text-white placeholder-white-50" placeholder="Buscar por nombre, rfc..." style="padding-top: 10px; padding-bottom: 10px;">
+                    </div>
+                    
+                    <!-- Filtro Especialidad -->
+                    <select id="specialtyFilter" class="form-select bg-white bg-opacity-10 border-white border-opacity-20 rounded-pill text-white" style="width: auto; padding-right: 40px; background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22 fill=%22white%22><path d=%22M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z%22/></svg>');">
+                        <option value="ALL" class="text-dark">Todas las especialidades</option>
+                        <option value="FLETES" class="text-dark">Fletes / Transportistas</option>
+                        <option value="MERCANCIAS CON FLETE" class="text-dark">Mercancías con Flete</option>
+                        <option value="MANTENIMIENTO" class="text-dark">Mantenimiento</option>
+                        <option value="MERCANCIAS" class="text-dark">Mercancías Varios</option>
+                        <option value="OTROS" class="text-dark">Otros</option>
+                    </select>
+
+                    <div class="bg-white bg-opacity-10 rounded-pill px-4 py-2 border border-white border-opacity-10 d-flex align-items-center">
+                        <span class="fw-bold me-2" id="providerCount">{{ proveedores.count|default:"0" }}</span>
+                        <span class="x-small text-uppercase opacity-75">Socios</span>
+                    </div>
+                    <a href="{% url 'dashboard:proveedor_create' %}" class="btn btn-white rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fas fa-plus-circle me-2 text-primary"></i>Nuevo Proveedor
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CARDS GRID -->
+    <div class="row g-4" id="providersGrid">
+        {% for p in proveedores %}
+        <div class="col-md-6 col-lg-4 provider-card-container" 
+             data-name="{{ p.nombre_comercial|lower }} {{ p.razon_social|default:''|lower }} {{ p.rfc|default:''|lower }}"
+             data-specialty="{{ p.especialidad }}"
+             data-contact="{{ p.contacto_nombre|lower }}">
+            <div class="card border-0 shadow-lg h-100 premium-user-card animate__animated animate__zoomIn" style="border-radius: 24px; border: 1px solid #f0f0f0 !important;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-lg bg-light rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm border border-white" style="width: 60px; height: 60px; overflow: hidden; background: #f1f5f9 !important;">
+                                {% if p.especialidad == 'FLETES' %}
+                                    <i class="fas fa-truck text-primary fs-3"></i>
+                                {% elif p.especialidad == 'MANTENIMIENTO' %}
+                                    <i class="fas fa-tools text-warning fs-3"></i>
+                                {% elif p.especialidad == 'COMBUSTIBLE' %}
+                                    <i class="fas fa-gas-pump text-danger fs-3"></i>
+                                {% elif p.especialidad == 'LLANTAS' %}
+                                    <i class="fas fa-life-ring text-info fs-3"></i>
+                                {% elif p.especialidad == 'MERCANCIAS CON FLETE' %}
+                                    <i class="fas fa-dolly text-success fs-3"></i>
+                                {% elif p.especialidad == 'MERCANCIAS' %}
+                                    <i class="fas fa-boxes text-info fs-3"></i>
+                                {% else %}
+                                    <i class="fas fa-building text-secondary fs-3"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">{{ p.nombre_comercial|truncatechars:25 }}</h5>
+                                <div class="d-flex align-items-center mt-1">
+                                    <span class="badge bg-secondary-subtle text-secondary x-small fw-bold rounded-pill px-2 me-2">{{ p.get_especialidad_display|upper }}</span>
+                                    {% if not p.activo %}
+                                    <span class="badge bg-danger-subtle text-danger x-small fw-bold rounded-pill px-2">INACTIVO</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{% url 'dashboard:proveedor_update' p.pk %}" class="btn btn-light btn-sm rounded-circle p-2 shadow-xs hover-scale">
+                            <i class="fas fa-pencil-alt text-muted small"></i>
+                        </a>
+                    </div>
+
+                    <div class="contact-details p-3 rounded-4 bg-light bg-opacity-50 mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-user-tie text-muted me-3" style="width: 15px;"></i>
+                            <span class="small fw-semibold text-dark">{{ p.contacto_nombre }}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-phone text-muted me-3" style="width: 15px;"></i>
+                            <span class="small fw-semibold text-dark">{{ p.telefono }}</span>
+                        </div>
+                        {% if p.email %}
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-envelope text-muted me-3" style="width: 15px;"></i>
+                            <span class="small text-muted text-truncate">{{ p.email }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if p.direccion %}
+                    <div class="p-2 px-3 rounded-4 bg-white border border-light mb-3">
+                        <p class="x-small mb-0 text-muted">
+                            <i class="fas fa-map-marker-alt me-1 text-danger opacity-50"></i>
+                            {{ p.direccion|truncatechars:80 }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                        <div class="x-small text-muted">
+                            Desde: {{ p.fecha_registro|date:"d M Y" }}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="tel:{{ p.telefono }}" class="btn btn-light btn-sm rounded-pill px-3 shadow-xs border">
+                                <i class="fas fa-phone-alt me-1"></i> Llamar
+                            </a>
+                            <a href="https://wa.me/{{ p.telefono|cut:' ' }}" target="_blank" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm d-flex align-items-center bg-whatsapp border-0">
+                                <i class="fab fa-whatsapp me-2 fs-6"></i>WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 py-5 text-center">
+            <div class="py-5">
+                <i class="fas fa-handshake-slash fa-5x text-muted opacity-25 mb-4"></i>
+                <h5 class="fw-bold text-muted">No hay proveedores</h5>
+                <p class="text-muted small">Comienza registrando tus socios comerciales de transporte y servicios.</p>
+                <a href="{% url 'dashboard:proveedor_create' %}" class="btn btn-primary rounded-pill px-5 py-3 mt-3 fw-bold shadow-lg">
+                    <i class="fas fa-plus-circle me-2"></i>REGISTRAR PRIMER PROVEEDOR
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .btn-white { background: white; color: #1e293b; }
+    .btn-white:hover { background: #f8f9fa; color: #1e293b; }
+
+    .premium-user-card { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .premium-user-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important; }
+    
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.1); }
+    
+    .x-small { font-size: 0.72rem; }
+    .tracking-wider { letter-spacing: 0.1em; }
+    .bg-whatsapp { background-color: #25D366 !important; color: white !important; }
+    
+    .avatar-lg {
+        border: 2px solid white;
+    }
+
+    .placeholder-white-50::placeholder { color: rgba(255,255,255,0.6); }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('providerSearch');
+    const specialtyFilter = document.getElementById('specialtyFilter');
+    const cards = document.querySelectorAll('.provider-card-container');
+    const counter = document.getElementById('providerCount');
+
+    function filterProviders() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const specialtyTerm = specialtyFilter.value;
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            const contact = card.getAttribute('data-contact');
+            const specialty = card.getAttribute('data-specialty');
+
+            const matchesSearch = !searchTerm || name.includes(searchTerm) || contact.includes(searchTerm);
+            const matchesSpecialty = specialtyTerm === 'ALL' || specialty === specialtyTerm;
+
+            if (matchesSearch && matchesSpecialty) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (counter) counter.textContent = visibleCount;
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterProviders);
+    if (specialtyFilter) specialtyFilter.addEventListener('change', filterProviders);
+});
+</script>
+{% endblock %}

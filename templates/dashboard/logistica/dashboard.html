@@ -122,8 +122,8 @@
     .route-panel-title i { color: var(--primary-orange); }
     .route-cards-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.25rem;
     }
 
     /* Individual route card */
@@ -131,14 +131,15 @@
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: 20px;
-        padding: 1.2rem 1.3rem;
+        padding: 1.5rem;
         display: flex;
         flex-direction: column;
-        gap: 0.65rem;
+        gap: 0.8rem;
         box-shadow: var(--card-shadow);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         position: relative;
         overflow: hidden;
+        min-height: 240px;
     }
     .route-card::before {
         content: '';
@@ -371,7 +372,7 @@
             {% with despachos_count=viaje.despachos.count %}
 
             {# Clasificación del tipo de ruta #}
-            {% if viaje.proveedor_externo %}
+            {% if viaje.proveedor_externo or viaje.proveedor_servicio %}
                 {% with tipo_clase="tipo-externo" tipo_label="Externo" tipo_icon="fas fa-handshake" %}
                 <div class="route-card {{ tipo_clase }}" id="route-card-{{ viaje.id }}">
                     <!-- Badge de Estado -->
@@ -383,7 +384,9 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="route-number-badge" title="Ruta #{{ forloop.counter }}">{{ forloop.counter }}</div>
                         <div style="min-width:0;">
-                            <div class="route-chofer-name">{{ viaje.proveedor_externo }}</div>
+                            <div class="route-chofer-name">
+                                {{ viaje.proveedor_servicio.nombre_comercial|default:viaje.proveedor_externo }}
+                            </div>
                             <div class="route-chofer-sub">
                                 <i class="{{ tipo_icon }} me-1"></i>{{ tipo_label }}
                             </div>
@@ -408,50 +411,75 @@
                     </div>
 
                         <!-- Footer acción -->
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 pt-2 border-top gap-2">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-auto pt-3 border-top gap-2">
+                        <div class="d-flex gap-2">
                         {% if viaje.estado == 'CREADO' or viaje.estado == 'REPROGRAMADO' %}
-                        <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold"
-                                style="font-size:0.95rem;"
-                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
-                                hx-vals='{"estado": "EN_CURSO"}'
-                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                hx-swap="none"
-                                title="Registrar salida de la unidad">
-                            <i class="fas fa-play me-1"></i> INICIAR
-                        </button>
+                            <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold"
+                                    style="font-size:0.85rem;"
+                                    hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                    hx-vals='{"estado": "EN_CURSO"}'
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-swap="none"
+                                    title="Registrar salida de la unidad">
+                                <i class="fas fa-play me-1"></i> INICIAR
+                            </button>
+                            
+                            <button class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold"
+                                    style="font-size:0.85rem;"
+                                    hx-get="{% url 'dashboard:viaje_editar' viaje.pk %}"
+                                    hx-target="#lupita-modal-container"
+                                    hx-swap="innerHTML"
+                                    title="Modificar datos de la ruta">
+                                <i class="fas fa-edit me-1"></i> EDITAR
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                                    style="font-size:0.85rem;"
+                                    hx-post="{% url 'dashboard:viaje_cancelar' viaje.pk %}"
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-confirm="¿Estás seguro de cancelar esta ruta? Los despachos serán liberados."
+                                    hx-swap="none"
+                                    title="Cancelar ruta y liberar despachos">
+                                <i class="fas fa-times me-1"></i> CANCELAR
+                            </button>
                         {% elif viaje.estado == 'EN_CURSO' %}
-                        <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
-                                style="font-size:0.95rem;"
-                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
-                                hx-vals='{"estado": "FINALIZADO"}'
-                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                hx-confirm="¿Confirmar que la unidad ha regresado y la ruta terminó?"
-                                hx-swap="none"
-                                title="Finalizar ruta y registrar llegada">
-                            <i class="fas fa-check-double me-1"></i> FINALIZAR
-                        </button>
+                            <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
+                                    style="font-size:0.85rem;"
+                                    hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                    hx-vals='{"estado": "FINALIZADO"}'
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-confirm="¿Confirmar que la unidad ha regresado y la ruta terminó?"
+                                    hx-swap="none"
+                                    title="Finalizar ruta y registrar llegada">
+                                <i class="fas fa-check-double me-1"></i> FINALIZAR
+                            </button>
                         {% else %}
-                        <span class="x-small text-muted py-1 fw-bold"><i class="fas fa-check-circle me-1"></i> COMPLETADA</span>
+                            <span class="badge bg-light text-muted p-2 rounded-pill fw-bold x-small">
+                                <i class="fas fa-check-circle me-1 text-success"></i> RUTA COMPLETADA
+                            </span>
                         {% endif %}
+                        </div>
 
-                        {# v3.2.2: Liberar despachos si está REPROGRAMADO y tiene carga #}
-                        {% if viaje.estado == 'REPROGRAMADO' and viaje.despachos_count > 0 %}
-                        <button class="btn btn-xs btn-outline-warning rounded-pill fw-bold"
-                                hx-post="{% url 'dashboard:viaje_liberar_despachos' viaje.pk %}"
-                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                hx-confirm="¿Liberar {{ viaje.despachos_count }} despacho(s) a la Bandeja Libre?"
-                                hx-swap="none"
-                                title="Desasignar todos los despachos de esta ruta">
-                            <i class="fas fa-unlink me-1"></i> LIBERAR
-                        </button>
-                        {% endif %}
+                        <div class="d-flex gap-2">
+                            {# v3.2.2: Liberar despachos si está REPROGRAMADO y tiene carga #}
+                            {% if viaje.estado == 'REPROGRAMADO' and despachos_count > 0 %}
+                            <button class="btn btn-xs btn-outline-warning rounded-pill fw-bold"
+                                    hx-post="{% url 'dashboard:viaje_liberar_despachos' viaje.pk %}"
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-confirm="¿Liberar {{ despachos_count }} despacho(s) a la Bandeja Libre?"
+                                    hx-swap="none"
+                                    title="Desasignar todos los despachos de esta ruta">
+                                <i class="fas fa-unlink me-1"></i> LIBERAR
+                            </button>
+                            {% endif %}
 
-                        <a href="{% url 'dashboard:viaje_detail' viaje.pk %}"
-                           class="btn btn-xs text-primary fw-bold"
-                           style="font-size:0.95rem; text-decoration:none;"
-                           title="Ver detalles">
-                            DETALLE <i class="fas fa-chevron-right ms-1"></i>
-                        </a>
+                            <a href="{% url 'dashboard:viaje_detail' viaje.pk %}"
+                               class="btn btn-xs btn-light rounded-pill border fw-bold text-primary px-3 d-flex align-items-center"
+                               style="font-size:0.85rem; text-decoration:none;"
+                               title="Ver detalles operativos">
+                                DETALLE <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
                 {% endwith %}
@@ -528,50 +556,75 @@
                     {% endif %}
 
                     <!-- Footer acción -->
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 pt-2 border-top gap-2">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-auto pt-3 border-top gap-2">
+                        <div class="d-flex gap-2">
                         {% if viaje.estado == 'CREADO' or viaje.estado == 'REPROGRAMADO' %}
-                        <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold"
-                                style="font-size:0.65rem;"
-                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
-                                hx-vals='{"estado": "EN_CURSO"}'
-                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                hx-swap="none"
-                                title="Registrar salida de la unidad">
-                            <i class="fas fa-play me-1"></i> INICIAR
-                        </button>
+                            <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold"
+                                    style="font-size:0.85rem;"
+                                    hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                    hx-vals='{"estado": "EN_CURSO"}'
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-swap="none"
+                                    title="Registrar salida de la unidad">
+                                <i class="fas fa-play me-1"></i> INICIAR
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold"
+                                    style="font-size:0.85rem;"
+                                    hx-get="{% url 'dashboard:viaje_editar' viaje.pk %}"
+                                    hx-target="#lupita-modal-container"
+                                    hx-swap="innerHTML"
+                                    title="Modificar datos de la ruta">
+                                <i class="fas fa-edit me-1"></i> EDITAR
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                                    style="font-size:0.85rem;"
+                                    hx-post="{% url 'dashboard:viaje_cancelar' viaje.pk %}"
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-confirm="¿Estás seguro de cancelar esta ruta? Los despachos serán liberados."
+                                    hx-swap="none"
+                                    title="Cancelar ruta y liberar despachos">
+                                <i class="fas fa-times me-1"></i> CANCELAR
+                            </button>
                         {% elif viaje.estado == 'EN_CURSO' %}
-                        <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
-                                style="font-size:0.65rem;"
-                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
-                                hx-vals='{"estado": "FINALIZADO"}'
-                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                hx-confirm="¿Confirmar que la unidad ha regresado y la ruta terminó?"
-                                hx-swap="none"
-                                title="Finalizar ruta y registrar llegada">
-                            <i class="fas fa-check-double me-1"></i> FINALIZAR
-                        </button>
+                            <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
+                                    style="font-size:0.85rem;"
+                                    hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                    hx-vals='{"estado": "FINALIZADO"}'
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-confirm="¿Confirmar que la unidad ha regresado y la ruta terminó?"
+                                    hx-swap="none"
+                                    title="Finalizar ruta y registrar llegada">
+                                <i class="fas fa-check-double me-1"></i> FINALIZAR
+                            </button>
                         {% else %}
-                        <span class="x-small text-muted py-1 fw-bold"><i class="fas fa-check-circle me-1"></i> COMPLETADA</span>
+                            <span class="badge bg-light text-muted p-2 rounded-pill fw-bold x-small">
+                                <i class="fas fa-check-circle me-1 text-success"></i> RUTA COMPLETADA
+                            </span>
                         {% endif %}
+                        </div>
 
-                        {# v3.2.2: Liberar despachos si está REPROGRAMADO y tiene carga #}
-                        {% if viaje.estado == 'REPROGRAMADO' and viaje.despachos_count > 0 %}
-                        <button class="btn btn-xs btn-outline-warning rounded-pill fw-bold"
-                                hx-post="{% url 'dashboard:viaje_liberar_despachos' viaje.pk %}"
-                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                hx-confirm="¿Liberar {{ viaje.despachos_count }} despacho(s) a la Bandeja Libre?"
-                                hx-swap="none"
-                                title="Desasignar todos los despachos de esta ruta">
-                            <i class="fas fa-unlink me-1"></i> LIBERAR
-                        </button>
-                        {% endif %}
+                        <div class="d-flex gap-2">
+                             {# v3.2.2: Liberar despachos si está REPROGRAMADO y tiene carga #}
+                            {% if viaje.estado == 'REPROGRAMADO' and viaje.despachos_count > 0 %}
+                            <button class="btn btn-xs btn-outline-warning rounded-pill fw-bold"
+                                    hx-post="{% url 'dashboard:viaje_liberar_despachos' viaje.pk %}"
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-confirm="¿Liberar {{ viaje.despachos_count }} despacho(s) a la Bandeja Libre?"
+                                    hx-swap="none"
+                                    title="Desasignar todos los despachos de esta ruta">
+                                <i class="fas fa-unlink me-1"></i> LIBERAR
+                            </button>
+                            {% endif %}
 
-                        <a href="{% url 'dashboard:viaje_detail' viaje.pk %}"
-                           class="btn btn-xs text-primary fw-bold"
-                           style="font-size:0.65rem; text-decoration:none;"
-                           title="Ver detalles">
-                            DETALLE <i class="fas fa-chevron-right ms-1"></i>
-                        </a>
+                            <a href="{% url 'dashboard:viaje_detail' viaje.pk %}"
+                               class="btn btn-xs btn-light rounded-pill border fw-bold text-primary px-3 d-flex align-items-center"
+                               style="font-size:0.85rem; text-decoration:none;"
+                               title="Ver detalles operativos">
+                                DETALLE <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
                 {% endwith %}

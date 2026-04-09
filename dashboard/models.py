@@ -564,6 +564,38 @@ class Operador(models.Model):
     class Meta:
         verbose_name = "Operador"
         verbose_name_plural = "Operadores"
+
+class Proveedor(models.Model):
+    ESPECIALIDAD_CHOICES = [
+        ('FLETES', 'Fletes / Transportista'),
+        ('MANTENIMIENTO', 'Taller / Mantenimiento'),
+        ('MERCANCIAS', 'Mercancias Varios'),
+        ('MERCANCIAS CON FLETE', 'Mercancias con Flete'),
+        ('OTROS', 'Otros Servicios'),
+    ]
+
+    nombre_comercial = models.CharField(max_length=150, verbose_name="Nombre Comercial")
+    razon_social = models.CharField(max_length=255, null=True, blank=True, verbose_name="Razón Social")
+    rfc = models.CharField(max_length=15, null=True, blank=True, verbose_name="RFC")
+    especialidad = models.CharField(max_length=20, choices=ESPECIALIDAD_CHOICES, default='OTROS', verbose_name="Especialidad")
+    
+    # Contacto
+    contacto_nombre = models.CharField(max_length=150, verbose_name="Nombre del Contacto")
+    telefono = models.CharField(max_length=15, verbose_name="Teléfono")
+    email = models.EmailField(null=True, blank=True, verbose_name="Correo Electrónico")
+    
+    direccion = models.TextField(null=True, blank=True, verbose_name="Dirección Física")
+    
+    activo = models.BooleanField(default=True, verbose_name="¿Activo?")
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.nombre_comercial} ({self.get_especialidad_display()})"
+
+    class Meta:
+        verbose_name = "Proveedor"
+        verbose_name_plural = "Proveedores"
+        ordering = ['nombre_comercial']
 class Obra(models.Model):
     alias = models.CharField(max_length=100, verbose_name="Alias de la Obra (Ej. Casa Blanca)")
     cliente = models.ForeignKey('Cliente', on_delete=models.CASCADE, related_name='obras')
@@ -773,18 +805,20 @@ class ViajeNuevo(models.Model):
         ('EN_CURSO', 'En Curso / Salida'),
         ('REPROGRAMADO', 'Reprogramado (Vencido)'),
         ('FINALIZADO', 'Finalizado'),
+        ('CANCELADO', 'Cancelado'),
     ]
 
     # Sustituirá al Viaje anterior conforme migremos
     unidad = models.ForeignKey(Unidad, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Unidad Flotilla")
     vehiculo_personal_info = models.CharField(max_length=150, null=True, blank=True, verbose_name="Info Vehículo Personal (Motos/Particular)")
     
-    chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='viajes_asignados')
+    chofer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='viajes_asignados')
     chalan = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='viajes_ayuda', verbose_name="Chalán")
     usuario_creacion = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='viajes_creados', verbose_name="Creado por")
 
     
-    proveedor_externo = models.CharField(max_length=150, null=True, blank=True, verbose_name="Proveedor Externo (Ej. Sergio Almacen)")
+    proveedor_servicio = models.ForeignKey(Proveedor, on_delete=models.SET_NULL, null=True, blank=True, related_name='rutas_asignadas', verbose_name="Proveedor de Servicio")
+    proveedor_externo = models.CharField(max_length=150, null=True, blank=True, verbose_name="Proveedor Externo (Legacy/Manual)")
     
     def get_local_date():
         return timezone.localtime(timezone.now()).date()
@@ -797,6 +831,11 @@ class ViajeNuevo(models.Model):
     
     hora_salida = models.TimeField(null=True, blank=True, verbose_name="Hora Salida")
     hora_llegada = models.TimeField(null=True, blank=True, verbose_name="Hora Llegada")
+
+    # Auditoría y Historial v3.2.6
+    es_reprogramado = models.BooleanField(default=False, help_text="Indica si la ruta fue reprogramada en algún punto")
+    usuario_cancelacion = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='viajes_cancelados')
+    fecha_cancelacion = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         # Sincronizar completado con FINALIZADO

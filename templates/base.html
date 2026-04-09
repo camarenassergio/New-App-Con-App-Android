@@ -232,6 +232,13 @@
         </li>
 
         <li class="nav-item">
+          <a href="{% url 'dashboard:proveedores_list' %}" class="nav-link {% if 'proveedores' in request.path %}active{% endif %}">
+            <i class="fas fa-handshake nav-icon"></i>
+            <span>Proveedores</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
           <a href="{% url 'dashboard:cliente_list' %}" class="nav-link {% if 'clientes' in request.path %}active{% endif %}">
             <i class="fas fa-user-friends nav-icon"></i>
             <span>Clientes / Obras</span>

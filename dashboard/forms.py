@@ -1,6 +1,8 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from django import forms
+from django.db.models import Q
+from django.utils import timezone
 from .models import Unidad, RegistroCombustible, Personal
 
 User = get_user_model()
@@ -299,8 +301,8 @@ class GastoUnidadForm(forms.ModelForm):
             'kilometraje'
         ]
         widgets = {
-            'fecha': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'vigencia_permiso': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+            'vigencia_permiso': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'unidad': forms.Select(attrs={'class': 'form-select'}),
             'tipo': forms.Select(attrs={'class': 'form-select', 'id': 'id_tipo_gasto'}),
             'chofer': forms.Select(attrs={'class': 'form-select'}),
@@ -407,7 +409,7 @@ class OrdenServicioForm(forms.ModelForm):
             'comentarios'
         ]
         widgets = {
-            'fecha': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'hora_entrada': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'hora_salida': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'tipo_mantenimiento': forms.Select(attrs={'class': 'form-select'}),
@@ -415,7 +417,7 @@ class OrdenServicioForm(forms.ModelForm):
             'comentarios': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'nombre_responsable_externo': forms.TextInput(attrs={'class': 'form-control'}),
             'proximo_servicio_km': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Km recomendado'}),
-            'proximo_servicio_fecha': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'proximo_servicio_fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'nombre_solicitante': forms.TextInput(attrs={'class': 'form-control'}),
             'nombre_autorizante': forms.TextInput(attrs={'class': 'form-control'}),
         }
@@ -625,7 +627,7 @@ class ConfiguracionGeneralForm(forms.ModelForm):
             'tolerancia_peso_ruta_kg': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
 
-from .models import Cliente, Obra, Pedido, Despacho, ViajeNuevo, MensajeInterno, Operador
+from .models import Cliente, Obra, Pedido, Despacho, ViajeNuevo, MensajeInterno, Operador, Proveedor
 
 class ClienteForm(forms.ModelForm):
     class Meta:
@@ -907,57 +909,130 @@ class DespachoEntregaForm(forms.ModelForm):
 
 class ViajeNuevoForm(forms.ModelForm):
     tipo_ruta_switch = forms.ChoiceField(
-        choices=[('INTERNA', 'Logística Interna (Flotilla/Personal)'), ('EXTERNA', 'Surtido Externo (Proveedor)')],
+        choices=[
+            ('INTERNA', 'Ruta Interna (Flotilla)'), 
+            ('PERSONAL', 'Vehículo Personal (Moto/Auto)'),
+            ('EXTERNA', 'Surtido Externo (Fletera)')
+        ],
         widget=forms.RadioSelect(attrs={'class': 'btn-check'}),
-        required=False,
+        required=True, # v3.5: Obligatorio para evitar caídas en clean()
         initial='INTERNA'
     )
+    # Campo temporal para filtro estricto de choferes aptos (Flotilla)
+    chofer_flotilla = forms.ModelChoiceField(
+        queryset=None, 
+        required=False,
+        label="Chofer Apto (Flotilla)",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     class Meta:
         model = ViajeNuevo
-        fields = ['fecha_viaje', 'unidad', 'vehiculo_personal_info', 'chofer', 'chalan', 'proveedor_externo']
+        fields = ['fecha_viaje', 'unidad', 'vehiculo_personal_info', 'chofer', 'chalan', 'proveedor_servicio', 'proveedor_externo']
         widgets = {
-            'fecha_viaje': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'fecha_viaje': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
             'unidad': forms.Select(attrs={'class': 'form-select'}),
             'vehiculo_personal_info': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Moto Honda o Mi Chevy'}),
             'chofer': forms.Select(attrs={'class': 'form-select'}),
             'chalan': forms.Select(attrs={'class': 'form-select'}),
-            'proveedor_externo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Fletes México, TresGuerras...'}),
+            'proveedor_servicio': forms.Select(attrs={'class': 'form-select'}),
+            'proveedor_externo': forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         from django.contrib.auth import get_user_model
-        from .models import Unidad
+        from .models import Unidad, Proveedor
         User = get_user_model()
+        hoy = timezone.now().date()
         
-        # Filtro de unidad: en_servicio=True
+        # 1. Filtro de Proveedores (Fleteros)
+        self.fields['proveedor_servicio'].queryset = Proveedor.objects.filter(
+            Q(especialidad='FLETES') | Q(especialidad='MERCANCIAS CON FLETE'),
+            activo=True
+        ).order_by('nombre_comercial')
+        self.fields['proveedor_servicio'].empty_label = "--- Seleccione Proveedor ---"
+        self.fields['proveedor_servicio'].required = False
+        
+        # 2. Filtro de Unidades
         self.fields['unidad'].queryset = Unidad.objects.filter(en_servicio=True).order_by('nUnidad')
+        self.fields['unidad'].required = False
         
-        # Filtro chofer: usuarios que tengan rol de CHOFER
-        self.fields['chofer'].queryset = User.objects.filter(
-            perfil_directorio__puesto__icontains='CHOFER', 
-            perfil_directorio__activo=True
-        ).order_by('perfil_directorio__nombre')
-        self.fields['chofer'].required = False  # Opcional si es externa
+        # 3. Filtro de Choferes Flotilla (Requisitos estrictos)
+        self.fields['chofer_flotilla'].queryset = User.objects.filter(
+            Q(perfil_directorio__vigencia_licencia__gte=hoy) | Q(perfil_directorio__vigencia_licencia__isnull=True),
+            is_active=True,
+            perfil_directorio__licencia__isnull=False
+        ).exclude(perfil_directorio__licencia="").select_related('perfil_directorio').order_by('perfil_directorio__nombre')
         
-        # Filtro chalan: cualquier personal activo
-        self.fields['chalan'].queryset = User.objects.filter(
-            perfil_directorio__activo=True
-        ).order_by('perfil_directorio__nombre')
+        self.fields['chofer_flotilla'].label_from_instance = lambda obj: f"✅ {obj.perfil_directorio.nombre}"
+
+        # 4. Filtro de Choferes General (Para vehículo personal, más flexible)
+        self.fields['chofer'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
+        self.fields['chofer'].label_from_instance = lambda obj: (
+            obj.perfil_directorio.nombre if hasattr(obj, 'perfil_directorio') and obj.perfil_directorio 
+            else (obj.get_full_name() or obj.username)
+        )
+        self.fields['chofer'].required = False
+        
+        # 5. Filtro de Chalanes
+        self.fields['chalan'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
+        self.fields['chalan'].label_from_instance = lambda obj: (
+            obj.perfil_directorio.nombre if hasattr(obj, 'perfil_directorio') and obj.perfil_directorio 
+            else (obj.get_full_name() or obj.username)
+        )
+        self.fields['chalan'].required = False
+
+        # Inicializar estado del switch
+        if self.instance and self.instance.pk:
+            if self.instance.proveedor_servicio:
+                self.fields['tipo_ruta_switch'].initial = 'EXTERNA'
+            elif self.instance.vehiculo_personal_info:
+                self.fields['tipo_ruta_switch'].initial = 'PERSONAL'
+            else:
+                self.fields['tipo_ruta_switch'].initial = 'INTERNA'
+                self.fields['chofer_flotilla'].initial = self.instance.chofer
 
     def clean(self):
         cleaned_data = super().clean()
-        proveedor_externo = cleaned_data.get('proveedor_externo')
-        tipo_ruta_switch = cleaned_data.get('tipo_ruta_switch')
-        chofer = cleaned_data.get('chofer')
+        # v3.5: Asegurar que tipo_ruta_switch tenga siempre un valor (default INTERNA si falla el radio)
+        tipo_ruta_switch = cleaned_data.get('tipo_ruta_switch') or self.data.get('tipo_ruta_switch') or 'INTERNA'
         
+        chofer_flexible = cleaned_data.get('chofer')
+        chofer_estricto = cleaned_data.get('chofer_flotilla')
+        unidad = cleaned_data.get('unidad')
+        vehiculo_info = cleaned_data.get('vehiculo_personal_info')
+        proveedor_servicio = cleaned_data.get('proveedor_servicio')
+
         if tipo_ruta_switch == 'EXTERNA':
-            if not proveedor_externo:
-                self.add_error('proveedor_externo', "Debes ingresar el nombre del proveedor para surtido externo.")
-        else:
-            if not chofer:
-                self.add_error('chofer', "Debes seleccionar un chofer para la ruta interna.")
-                
+            if not proveedor_servicio:
+                self.add_error('proveedor_servicio', "Debes seleccionar un proveedor del catálogo para flete externo.")
+            cleaned_data['chofer'] = None
+            cleaned_data['unidad'] = None
+            cleaned_data['chalan'] = None
+            cleaned_data['vehiculo_personal_info'] = None
+            cleaned_data['proveedor_externo'] = None
+            
+        elif tipo_ruta_switch == 'PERSONAL':
+            if not chofer_flexible:
+                self.add_error('chofer', "Debes seleccionar un responsable para el vehículo personal.")
+            if not vehiculo_info:
+                self.add_error('vehiculo_personal_info', "Especifica la información del vehículo (Moto/Auto).")
+            cleaned_data['chofer'] = chofer_flexible
+            cleaned_data['unidad'] = None
+            cleaned_data['proveedor_servicio'] = None
+            cleaned_data['proveedor_externo'] = None
+            
+        else: # INTERNA (Flotilla)
+            if not chofer_estricto:
+                self.add_error('chofer_flotilla', "Selecciona un chofer apto para flotilla.")
+            if not unidad:
+                self.add_error('unidad', "Asigna una unidad de flotilla.")
+            cleaned_data['chofer'] = chofer_estricto
+            cleaned_data['vehiculo_personal_info'] = None
+            cleaned_data['proveedor_servicio'] = None
+            cleaned_data['proveedor_externo'] = None
+
         return cleaned_data
 
 class MensajeInternoForm(forms.ModelForm):
@@ -979,7 +1054,7 @@ class OperadorForm(forms.ModelForm):
             'telefono': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'licencia': forms.TextInput(attrs={'class': 'form-control'}),
-            'vigencia_licencia': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'vigencia_licencia': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'usuario_asociado': forms.Select(attrs={'class': 'form-select'}),
             'usa_sistema': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -1008,3 +1083,21 @@ class DatabaseRestoreForm(forms.Form):
         required=True,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
+class ProveedorForm(forms.ModelForm):
+    class Meta:
+        model = Proveedor
+        fields = [
+            'nombre_comercial', 'razon_social', 'rfc', 'especialidad',
+            'contacto_nombre', 'telefono', 'email', 'direccion', 'activo'
+        ]
+        widgets = {
+            'nombre_comercial': forms.TextInput(attrs={'class': 'form-control'}),
+            'razon_social': forms.TextInput(attrs={'class': 'form-control'}),
+            'rfc': forms.TextInput(attrs={'class': 'form-control'}),
+            'especialidad': forms.Select(attrs={'class': 'form-select'}),
+            'contacto_nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

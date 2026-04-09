@@ -26,7 +26,7 @@ from .models import (
     RegistroCombustible, Personal, OrdenServicio, ChecklistUnidad,
     InventarioLlanta, ConfiguracionGeneral, MedicionNeumatico,
     ZonaEntrega, Cliente, Obra, Pedido, Despacho, EvidenciaMaterial,
-    ViajeNuevo, MensajeInterno
+    ViajeNuevo, MensajeInterno, Proveedor
 )
 from .forms import (
     UnidadForm, RegistroCombustibleForm, PersonalCreationForm,
@@ -35,7 +35,7 @@ from .forms import (
     InventarioLlantaForm, EvaluacionEntregaForm, ZonaEntregaForm,
     ConfiguracionGeneralForm, ClienteForm, ObraForm, PedidoForm,
     DespachoForm, DespachoEntregaForm, ViajeNuevoForm, MensajeInternoForm,
-    OperadorForm
+    OperadorForm, ProveedorForm
 )
 
 class AjaxSuccessMixin:
@@ -429,6 +429,40 @@ class OperadorUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccess
     template_name = "dashboard/operador_form.html"
     success_url = reverse_lazy('dashboard:operadores_list')
     ajax_success_message = "Registro actualizado correctamente."
+
+from django.db.models import (
+    Count, Sum, Q, Avg, OuterRef, Subquery, Prefetch, F,
+    Case, When, Value, IntegerField
+)
+
+class ProveedorListView(LoginRequiredMixin, NonChoferRequiredMixin, ListView):
+    model = Proveedor
+    template_name = "dashboard/proveedor_list.html"
+    context_object_name = "proveedores"
+
+    def get_queryset(self):
+        return Proveedor.objects.annotate(
+            priority=Case(
+                When(especialidad='FLETES', then=Value(1)),
+                When(especialidad='MERCANCIAS CON FLETE', then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            )
+        ).order_by('priority', 'nombre_comercial')
+
+class ProveedorCreateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, CreateView):
+    model = Proveedor
+    form_class = ProveedorForm
+    template_name = "dashboard/proveedor_form.html"
+    success_url = reverse_lazy('dashboard:proveedores_list')
+    ajax_success_message = "Proveedor registrado exitosamente."
+
+class ProveedorUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, AjaxSuccessMixin, UpdateView):
+    model = Proveedor
+    form_class = ProveedorForm
+    template_name = "dashboard/proveedor_form.html"
+    success_url = reverse_lazy('dashboard:proveedores_list')
+    ajax_success_message = "Datos del proveedor actualizados correctamente."
 
 class ViajeListView(LoginRequiredMixin, ListView):
     model = Viaje
@@ -2922,14 +2956,14 @@ class LogisticaDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, Templat
             estado__in=['CREADO', 'EN_CURSO']
         )
         if vencidos.exists():
-            vencidos.update(estado='REPROGRAMADO')
+            vencidos.update(estado='REPROGRAMADO', es_reprogramado=True)
 
         # Filtramos rutas para hoy: las de hoy + las que hayan quedado "activas" o "reprogramadas" de antes
         # v3.2.2: Anotamos despachos_count y total_peso_cargado para las route-cards
         context['viajes_activos'] = (
             ViajeNuevo.objects
             .filter(Q(fecha_viaje=hoy) | Q(estado__in=['EN_CURSO', 'REPROGRAMADO']))
-            .exclude(estado='FINALIZADO')
+            .exclude(estado__in=['FINALIZADO', 'CANCELADO'])
             .annotate(
                 despachos_count=Count('despachos'),
                 total_peso_cargado=Sum('despachos__peso_asignado_kg')
@@ -3150,7 +3184,7 @@ class DespachoReasignarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, Vie
                 despachos_count=Count('despachos'),
                 total_peso=Sum('despachos__peso_asignado_kg'),
             )
-            .select_related('unidad', 'chofer')
+            .select_related('unidad', 'chofer', 'proveedor_servicio')
             .order_by('estado', '-fecha_viaje')
         )
         return render(request, 'dashboard/logistica/modal_reasignar_despacho.html', {
@@ -3325,24 +3359,95 @@ class LogisticaCrearViajeView(LoginRequiredMixin, NonChoferRequiredMixin, View):
         form = ViajeNuevoForm(request.POST)
         
         if form.is_valid():
-            viaje = form.save(commit=False)
-            viaje.usuario_creacion = request.user
-            if form.cleaned_data.get('tipo_ruta_switch') == 'EXTERNA':
-                viaje.chofer = request.user
-            viaje.save()
-            
-            # Calcular su número secuencial del día basado en la fecha programada
-            num_ruta = ViajeNuevo.objects.filter(fecha_viaje=viaje.fecha_viaje, id__lte=viaje.id).count()
-            
-            nombre_chofer = viaje.chofer.personal.nombre if (viaje.chofer and hasattr(viaje.chofer, 'personal') and viaje.chofer.personal.nombre) else (viaje.chofer.get_full_name() if viaje.chofer else viaje.proveedor_externo)
-            messages.success(request, f"¡Ruta #{num_ruta} creada exitosamente para el {viaje.fecha_viaje}! Reservada para: {nombre_chofer}.")
-            response = HttpResponse(status=204)
-            response['HX-Trigger'] = 'boardChanged'  # Refrescar Kanban
-            return response
+            try:
+                viaje = form.save(commit=False)
+                viaje.usuario_creacion = request.user
+                viaje.save()
+                
+                # Calcular su número secuencial del día basado en la fecha programada
+                num_ruta = ViajeNuevo.objects.filter(fecha_viaje=viaje.fecha_viaje, id__lte=viaje.id).count()
+                
+                if viaje.proveedor_servicio:
+                    nombre_entidad = viaje.proveedor_servicio.nombre_comercial
+                elif viaje.chofer:
+                     nombre_entidad = viaje.chofer.personal.nombre if hasattr(viaje.chofer, 'personal') else viaje.chofer.get_full_name()
+                else:
+                    nombre_entidad = viaje.proveedor_externo or "Sin asignar"
+
+                messages.success(request, f"¡Ruta #{num_ruta} creada exitosamente para el {viaje.fecha_viaje}! Reservada para: {nombre_entidad}.")
+                response = HttpResponse(status=204)
+                response['HX-Trigger'] = 'boardChanged'  # Refrescar Kanban
+                return response
+            except Exception as e:
+                return HttpResponse(f'<div class="alert alert-danger">Error al guardar en DB: {str(e)}</div>', status=400)
             
         return render(request, 'dashboard/logistica/modal_crear_viaje.html', {
-            'form': form
+            'form': form,
+            'editing': False
         })
+
+class ViajeNuevoUpdateView(LoginRequiredMixin, NonChoferRequiredMixin, UpdateView):
+    """
+    Endpoint (HTMX) para editar una ruta existente.
+    Solo permitido si el estado NO es EN_CURSO ni FINALIZADO.
+    """
+    model = ViajeNuevo
+    form_class = ViajeNuevoForm
+    template_name = 'dashboard/logistica/modal_crear_viaje.html' # Reutilizamos el modal
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editing'] = True
+        context['viaje_id_num'] = self.object.id
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if self.object.estado in ['EN_CURSO', 'FINALIZADO']:
+            return HttpResponse(
+                '<div class="alert alert-danger small">No se puede editar una ruta que ya inició o finalizó.</div>',
+                status=400
+            )
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        try:
+            viaje = form.save()
+            messages.success(self.request, f"Ruta #{viaje.id} actualizada correctamente.")
+            response = HttpResponse(status=204)
+            response['HX-Trigger'] = 'boardChanged'
+            return response
+        except Exception as e:
+            return HttpResponse(f'<div class="alert alert-danger">Error al actualizar en DB: {str(e)}</div>', status=400)
+
+class ViajeCancelarView(LoginRequiredMixin, NonChoferRequiredMixin, View):
+    """
+    Cancela una ruta y libera sus despachos.
+    """
+    def post(self, request, pk):
+        viaje = get_object_or_404(ViajeNuevo, pk=pk)
+        
+        if viaje.estado in ['EN_CURSO', 'FINALIZADO']:
+            return HttpResponse(
+                '<div class="alert alert-danger small">No se puede cancelar una ruta en tránsito o finalizada.</div>',
+                status=400
+            )
+            
+        # 1. Cambiar estado y registrar auditoría
+        viaje.estado = 'CANCELADO'
+        viaje.usuario_cancelacion = request.user
+        viaje.fecha_cancelacion = timezone.now()
+        viaje.save()
+        
+        # 2. Liberar despachos (volverlos asignables)
+        despachos_count = viaje.despachos.count()
+        viaje.despachos.update(viaje=None)
+        
+        messages.warning(request, f"Ruta #{viaje.id} cancelada. {despachos_count} despachos liberados.")
+        
+        response = HttpResponse(status=204)
+        response["HX-Trigger"] = "boardChanged"
+        return response
 
 class ViajeCambiarEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View):
     """

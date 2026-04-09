@@ -43,6 +43,12 @@
                                   style="background: rgba(255,255,255,0.2); font-size: 0.6rem; vertical-align: middle; padding: 0.35rem 0.8rem; letter-spacing: 0.05em;">
                                 {{ viaje.get_estado_display }}
                             </span>
+                            {% if viaje.es_reprogramado %}
+                            <span class="badge border border-warning border-opacity-50 ms-2 rounded-pill x-small fw-bold text-uppercase" 
+                                  style="background: rgba(255, 193, 7, 0.2); color: #ffc107; font-size: 0.6rem; vertical-align: middle; padding: 0.35rem 0.8rem; letter-spacing: 0.05em;">
+                                <i class="fas fa-history me-1"></i> REPROGRAMADA
+                            </span>
+                            {% endif %}
                         </h4>
                         <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">
                             <i class="fas fa-calendar-alt me-1"></i> PROGRAMADA: {{ viaje.fecha_viaje|date:"d M Y" }}{% if viaje.fecha_viaje == hoy %} (HOY){% endif %}
@@ -60,13 +66,66 @@
                     </div>
                 </div>
                 <div class="d-flex gap-3 align-items-center">
+                    {% if viaje.estado == 'CREADO' or viaje.estado == 'REPROGRAMADO' %}
+                        <button class="btn btn-outline-light border-2 rounded-pill px-3 fw-bold shadow-sm"
+                                hx-get="{% url 'dashboard:viaje_editar' viaje.pk %}"
+                                hx-target="#lupita-modal-container"
+                                hx-swap="innerHTML">
+                            <i class="fas fa-edit me-2"></i>EDITAR RUTA
+                        </button>
+                        
+                        <button class="btn btn-danger rounded-pill px-3 fw-bold shadow-sm"
+                                hx-post="{% url 'dashboard:viaje_cancelar' viaje.pk %}"
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-confirm="¿Estás seguro de cancelar esta ruta? Los despachos serán liberados.">
+                            <i class="fas fa-times-circle me-2"></i>CANCELAR
+                        </button>
+
+                        <button class="btn btn-success rounded-pill px-4 fw-bold shadow-sm"
+                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                hx-vals='{"estado": "EN_CURSO"}'
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-swap="none">
+                            <i class="fas fa-play me-2"></i>INICIAR RUTA
+                        </button>
+                    {% elif viaje.estado == 'EN_CURSO' %}
+                        <button class="btn btn-success rounded-pill px-4 fw-bold shadow-sm"
+                                hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
+                                hx-vals='{"estado": "FINALIZADO"}'
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-confirm="¿Confirmar que la unidad ha regresado y la ruta terminó?"
+                                hx-swap="none">
+                            <i class="fas fa-check-double me-2"></i>FINALIZAR RUTA
+                        </button>
+                    {% endif %}
+
                     <a href="{% url 'dashboard:logistica_dashboard' %}" class="btn btn-white bg-white text-primary rounded-pill px-4 fw-bold shadow-sm">
-                        <i class="fas fa-arrow-left me-2"></i>Regresar al Dashboard
+                        <i class="fas fa-arrow-left me-2"></i>Regresar
                     </a>
                 </div>
             </div>
         </div>
     </div>
+
+    {% if viaje.estado == 'CANCELADO' %}
+    <div class="alert alert-danger border-0 shadow-lg mb-4 p-4 d-flex align-items-center animate__animated animate__fadeInDown" style="border-radius: 20px;">
+        <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
+            <i class="fas fa-ban text-danger fs-4"></i>
+        </div>
+        <div>
+            <h6 class="fw-bold mb-1">AUDITORÍA: Esta ruta ha sido CANCELADA</h6>
+            <p class="mb-0 x-small text-muted text-uppercase fw-bold">
+                <i class="fas fa-user-shield me-1"></i> Responsable: 
+                {% if viaje.usuario_cancelacion %}
+                    {{ viaje.usuario_cancelacion.personal.nombre|default:viaje.usuario_cancelacion.get_full_name|default:viaje.usuario_cancelacion.username }}
+                {% else %}
+                    <span class="opacity-50">No registrado (Acción previa)</span>
+                {% endif %}
+                · <i class="far fa-calendar-times me-1"></i> Fecha: {{ viaje.fecha_cancelacion|date:"d/m/Y H:i"|default:"--" }}
+            </p>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- METRICS ROW -->
     <div class="row g-4 mb-5">
@@ -79,10 +138,12 @@
                     <div>
                         <label class="text-muted x-small text-uppercase fw-bold ls-1 d-block">Chofer</label>
                         <span class="fw-bold text-main">
-                            {% if viaje.proveedor_externo %}
+                            {% if viaje.proveedor_servicio %}
+                                {{ viaje.proveedor_servicio.nombre_comercial }}
+                            {% elif viaje.proveedor_externo %}
                                 {{ viaje.proveedor_externo }}
                             {% else %}
-                                {{ viaje.chofer.personal.nombre|default:viaje.chofer.get_full_name }}
+                                {{ viaje.chofer.personal.nombre|default:viaje.chofer.get_full_name|default:"-- Sin Asignar --" }}
                             {% endif %}
                         </span>
                     </div>
