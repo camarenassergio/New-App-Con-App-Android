@@ -5,6 +5,13 @@
 
 {% block extra_css %}
 <style>
+    :root {
+        --primary-blue: #003b70;
+        --grad-primary: linear-gradient(135deg, #003b70, #005aab);
+    }
+    .grad-primary {
+        background: var(--grad-primary) !important;
+    }
     .metric-card {
         transition: transform 0.2s ease;
         border-radius: 20px;
@@ -21,6 +28,10 @@
         border-radius: 50px;
         font-weight: 700;
         text-transform: uppercase;
+    }
+    .header-icon-box {
+        background: rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(4px);
     }
 </style>
 {% endblock %}
@@ -89,7 +100,8 @@
                                 hx-post="{% url 'dashboard:viaje_cambiar_estado' viaje.pk %}"
                                 hx-vals='{"estado": "EN_CURSO"}'
                                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                hx-swap="none">
+                                hx-swap="none"
+                                {% if total_despachos == 0 %}disabled title="Asigna pedidos a esta ruta para poder iniciarla"{% else %}title="Registrar salida de la unidad"{% endif %}>
                             <i class="fas fa-play me-2"></i>INICIAR RUTA
                         </button>
                     {% elif viaje.estado == 'EN_CURSO' %}

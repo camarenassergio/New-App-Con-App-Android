@@ -420,7 +420,7 @@
                                     hx-vals='{"estado": "EN_CURSO"}'
                                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                     hx-swap="none"
-                                    title="Registrar salida de la unidad">
+                                    {% if despachos_count == 0 %}disabled title="Asigna al menos un despacho para iniciar"{% else %}title="Registrar salida de la unidad"{% endif %}>
                                 <i class="fas fa-play me-1"></i> INICIAR
                             </button>
                             
@@ -565,7 +565,7 @@
                                     hx-vals='{"estado": "EN_CURSO"}'
                                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                     hx-swap="none"
-                                    title="Registrar salida de la unidad">
+                                    {% if viaje.despachos_count == 0 %}disabled title="Asigna al menos un despacho para iniciar"{% else %}title="Registrar salida de la unidad"{% endif %}>
                                 <i class="fas fa-play me-1"></i> INICIAR
                             </button>
 

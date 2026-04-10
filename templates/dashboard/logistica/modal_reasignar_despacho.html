@@ -68,11 +68,20 @@
 
                             {% for viaje in viajes_activos %}
                             <option value="{{ viaje.id }}"
+                                data-es-externo="{% if viaje.proveedor_servicio or viaje.proveedor_externo %}true{% else %}false{% endif %}"
                                 {% if viaje.id == despacho.viaje_id %}selected{% endif %}
-                                {% if viaje.estado == 'REPROGRAMADO' %}class="text-danger"{% endif %}>
+                                {% if viaje.estado == 'REPROGRAMADO' %}class="text-danger"{% endif %}
+                                {% if despacho.tipo_envio != 'PROVEEDOR_EXTERNO' and viaje.proveedor_servicio %}disabled{% endif %}
+                                {% if despacho.tipo_envio != 'PROVEEDOR_EXTERNO' and viaje.proveedor_externo %}disabled{% endif %}
+                                {% if despacho.tipo_envio == 'PROVEEDOR_EXTERNO' and not viaje.proveedor_servicio and not viaje.proveedor_externo %}disabled{% endif %}>
+                                
+                                {% if despacho.tipo_envio != 'PROVEEDOR_EXTERNO' and viaje.proveedor_servicio or despacho.tipo_envio != 'PROVEEDOR_EXTERNO' and viaje.proveedor_externo %}🚫 [Solo Ruta C] {% endif %}
+                                {% if despacho.tipo_envio == 'PROVEEDOR_EXTERNO' and not viaje.proveedor_servicio and not viaje.proveedor_externo %}🚫 [Solo Ruta A/B] {% endif %}
+
                                 {% if viaje.estado == 'CREADO' %}✅
                                 {% elif viaje.estado == 'EN_CURSO' %}🚛
                                 {% else %}⚠️{% endif %}
+                                
                                 {% if viaje.proveedor_servicio %}
                                     🚛 EXT: {{ viaje.proveedor_servicio.nombre_comercial }}
                                 {% elif viaje.proveedor_externo %}

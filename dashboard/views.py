@@ -3111,10 +3111,22 @@ class PedidoDividirView(LoginRequiredMixin, NonChoferRequiredMixin, View):
                 )
             
             # v3.2.2: viaje_id siempre opcional — sin viaje = Bandeja Libre
-            viaje_id = request.POST.get('viaje_id', '').strip()
-            viaje = None
             if viaje_id:
                 viaje = get_object_or_404(ViajeNuevo, pk=viaje_id)
+                # Candado de Ruta C (Proveedor Externo)
+                es_ruta_externa = bool(viaje.proveedor_externo or viaje.proveedor_servicio)
+                if es_ruta_externa and tipo_envio != 'PROVEEDOR_EXTERNO':
+                    return HttpResponse(
+                        '<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                        '<i class="fas fa-lock me-2"></i> Error: Ruta externa solo acepta estrategia "Ruta C".</div>',
+                        status=400
+                    )
+                if not es_ruta_externa and tipo_envio == 'PROVEEDOR_EXTERNO':
+                    return HttpResponse(
+                        '<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                        '<i class="fas fa-lock me-2"></i> Error: Despacho externo solo puede ir en una ruta externa.</div>',
+                        status=400
+                    )
 
             # Crear el Despacho
             nuevo_despacho = Despacho.objects.create(
@@ -3205,6 +3217,23 @@ class DespachoReasignarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, Vie
                     'No se puede asignar a una ruta ya finalizada.</div>',
                     status=400
                 )
+            
+            # Candado de Ruta C (Proveedor Externo)
+            es_ruta_externa = bool(viaje.proveedor_externo or viaje.proveedor_servicio)
+            if es_ruta_externa and despacho.tipo_envio != 'PROVEEDOR_EXTERNO':
+                return HttpResponse(
+                    '<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                    '<i class="fas fa-exclamation-triangle me-2"></i>'
+                    'Este despacho no es de tipo "Ruta C" y no puede asignarse a una ruta externa.</div>',
+                    status=400
+                )
+            if not es_ruta_externa and despacho.tipo_envio == 'PROVEEDOR_EXTERNO':
+                return HttpResponse(
+                    '<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                    '<i class="fas fa-exclamation-triangle me-2"></i>'
+                    'Un despacho de tipo "Ruta C" solo puede asignarse a una ruta externa.</div>',
+                    status=400
+                )
             despacho.viaje = viaje
             msg = f"Despacho #{despacho.id} asignado a Ruta #{viaje.id}."
         else:
@@ -3213,8 +3242,13 @@ class DespachoReasignarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, Vie
 
         despacho.save()
         messages.success(request, msg)
+        
+        # Enviar múltiples triggers: actualizar tablero y cerrar modal
         response = HttpResponse(status=204)
-        response["HX-Trigger"] = "boardChanged"
+        response["HX-Trigger"] = json.dumps({
+            "boardChanged": None,
+            "closeModal": "modalReasignarDespacho"
+        })
         return response
 
 

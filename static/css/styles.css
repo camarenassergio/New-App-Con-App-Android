@@ -1,6 +1,7 @@
 :root {
   /* Construrama Inspired Palette */
   --primary-blue: #003b70;
+  --grad-primary: linear-gradient(135deg, #003b70, #005aab);
   --primary-orange: #f36f21;
   --secondary-blue: #00284d;
   --secondary-orange: #d35400;

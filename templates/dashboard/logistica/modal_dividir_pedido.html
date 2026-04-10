@@ -149,12 +149,17 @@
                                     </option>
                                     {% for viaje in viajes_activos %}
                                     <option value="{{ viaje.id }}"
+                                        data-es-externo="{% if viaje.proveedor_externo or viaje.proveedor_servicio %}true{% else %}false{% endif %}"
                                         {% if viaje.estado == 'REPROGRAMADO' %}style="color:#dc2626"{% endif %}>
                                         {% if viaje.estado == 'CREADO' %}✅
                                         {% elif viaje.estado == 'EN_CURSO' %}🚛
                                         {% else %}⚠️{% endif %}
-                                        {% if viaje.proveedor_externo %}
-                                            Externo: {{ viaje.proveedor_externo }}
+                                        {% if viaje.proveedor_externo or viaje.proveedor_servicio %}
+                                            {% if viaje.proveedor_servicio %}
+                                                Externo: {{ viaje.proveedor_servicio.nombre_comercial }}
+                                            {% else %}
+                                                Externo: {{ viaje.proveedor_externo }}
+                                            {% endif %}
                                         {% else %}
                                             {% if viaje.chofer.personal.nombre %}{{ viaje.chofer.personal.nombre }}{% else %}{{ viaje.chofer.get_full_name|default:viaje.chofer.username }}{% endif %}
                                             {% if viaje.unidad %} · {{ viaje.unidad.nUnidad }}{% endif %}
@@ -309,14 +314,48 @@
         }
     }
 
-    // Evento: cambio en selector de viaje (alerta de REPROGRAMADO)
+    // Evento: cambio en selector de viaje (alerta de REPROGRAMADO y validación de Ruta C)
     const selViaje = document.getElementById('select-viaje-dividir');
-    if (selViaje) {
+    const selectTipo = document.getElementById('select-tipo-envio');
+
+    if (selViaje && selectTipo) {
         selViaje.addEventListener('change', function() {
-            const txt = this.options[this.selectedIndex].text;
+            const selectedOption = this.options[this.selectedIndex];
+            const txt = selectedOption.text;
+            const esExterno = selectedOption.getAttribute('data-es-externo') === 'true';
+
+            // 1. Alerta de reprogramado
             if (txt.includes('REPROG.')) {
                 impacto.innerHTML += ' <span class="text-warning fw-bold ms-1"><i class="fas fa-exclamation-triangle"></i> Ruta reprogramada.</span>';
             }
+
+            // 2. Candado de Ruta C (Proveedor Externo)
+            if (esExterno) {
+                // Forzar a PROVEEDOR_EXTERNO
+                selectTipo.value = 'PROVEEDOR_EXTERNO';
+                
+                // Deshabilitar las otras opciones para evitar errores
+                Array.from(selectTipo.options).forEach(opt => {
+                    if (opt.value !== 'PROVEEDOR_EXTERNO') opt.disabled = true;
+                });
+
+                // Feedback visual
+                impacto.innerHTML = '<div class="alert alert-info py-2 mb-0 x-small"><i class="fas fa-lock me-2"></i><strong>Ruta Externa Detectada:</strong> Se ha bloqueado la estrategia a "Ruta C".</div>';
+                impacto.style.background = 'rgba(2,132,199,0.08)';
+            } else {
+                // Re-habilitar opciones
+                Array.from(selectTipo.options).forEach(opt => opt.disabled = false);
+                
+                // Si estaba en PROVEEDOR_EXTERNO por el bloqueo anterior, mejor lo regresamos a flotilla para que el usuario elija
+                if (selectTipo.value === 'PROVEEDOR_EXTERNO' && this.value !== "") {
+                     // Solo lo cambiamos si el usuario no ha tocado el select de tipo aún? 
+                     // Para simplicidad, si no es externo, permitimos todo.
+                }
+                actualizarLiveSaldo(); // Restaurar el mensaje de impacto estándar
+            }
+
+            // Disparar cambio de tipo para ocultar/mostrar surtidor
+            selectTipo.dispatchEvent(new Event('change'));
         });
     }
 
