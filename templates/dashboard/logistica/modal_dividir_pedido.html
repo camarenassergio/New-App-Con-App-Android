@@ -151,9 +151,11 @@
                                     <option value="{{ viaje.id }}"
                                         data-es-externo="{% if viaje.proveedor_externo or viaje.proveedor_servicio %}true{% else %}false{% endif %}"
                                         {% if viaje.estado == 'REPROGRAMADO' %}style="color:#dc2626"{% endif %}>
+                                        <span class="lock-indicator"></span>
                                         {% if viaje.estado == 'CREADO' %}✅
                                         {% elif viaje.estado == 'EN_CURSO' %}🚛
                                         {% else %}⚠️{% endif %}
+                                        
                                         {% if viaje.proveedor_externo or viaje.proveedor_servicio %}
                                             {% if viaje.proveedor_servicio %}
                                                 Externo: {{ viaje.proveedor_servicio.nombre_comercial }}
@@ -342,39 +344,76 @@
                 // Feedback visual
                 impacto.innerHTML = '<div class="alert alert-info py-2 mb-0 x-small"><i class="fas fa-lock me-2"></i><strong>Ruta Externa Detectada:</strong> Se ha bloqueado la estrategia a "Ruta C".</div>';
                 impacto.style.background = 'rgba(2,132,199,0.08)';
+            } else if (this.value !== "") {
+                // RUTA INTERNA (Flotilla/Personal)
+                // Deshabilitar PROVEEDOR_EXTERNO
+                Array.from(selectTipo.options).forEach(opt => {
+                    if (opt.value === 'PROVEEDOR_EXTERNO') {
+                        opt.disabled = true;
+                        if (selectTipo.value === 'PROVEEDOR_EXTERNO') selectTipo.value = 'INTERNO_FLOTILLA';
+                    } else {
+                        opt.disabled = false;
+                    }
+                });
+
+                // User request: "ni quien va a surtir"
+                // Si seleccionamos ruta de flotilla/interno, parece que no quieren habilitar el surtidor aquí o la estrategia C
+                impacto.innerHTML = '<div class="alert alert-primary py-2 mb-0 x-small"><i class="fas fa-truck me-2"></i><strong>Ruta Interna Seleccionada:</strong> Estrategia "Ruta C" bloqueada.</div>';
+                impacto.style.background = 'rgba(0,59,112,0.05)';
             } else {
-                // Re-habilitar opciones
+                // Sin ruta seleccionada
                 Array.from(selectTipo.options).forEach(opt => opt.disabled = false);
-                
-                // Si estaba en PROVEEDOR_EXTERNO por el bloqueo anterior, mejor lo regresamos a flotilla para que el usuario elija
-                if (selectTipo.value === 'PROVEEDOR_EXTERNO' && this.value !== "") {
-                     // Solo lo cambiamos si el usuario no ha tocado el select de tipo aún? 
-                     // Para simplicidad, si no es externo, permitimos todo.
-                }
-                actualizarLiveSaldo(); // Restaurar el mensaje de impacto estándar
+                actualizarLiveSaldo();
             }
 
-            // Disparar cambio de tipo para ocultar/mostrar surtidor
+            // Disparar cambio de tipo para ocultar/mostrar surtidor y validar congruencia
             selectTipo.dispatchEvent(new Event('change'));
         });
     }
 
     // Evento: cambio en estrategia de envío (v3.2.5)
-    const selectTipo = document.getElementById('select-tipo-envio');
-    const containerSurtidor = document.getElementById('container-surtidor');
-    const selectSurtidor = document.getElementById('select-surtidor');
-
+    // Se ha mejorado para bloqueo bidireccional (Ruta C vs A/B)
     if (selectTipo && containerSurtidor) {
         selectTipo.addEventListener('change', function() {
-            // Solo mostrar surtidor si es Interno (Ruta A o B)
-            if (this.value === 'INTERNO_FLOTILLA' || this.value === 'INTERNO_PERSONAL') {
+            const isExternalStrategy = (this.value === 'PROVEEDOR_EXTERNO');
+
+            // 1. Mostrar/Ocultar Surtidor
+            // User request: No disponible si se elige ruta. Solo disponible en Bandeja Libre.
+            if ((this.value === 'INTERNO_FLOTILLA' || this.value === 'INTERNO_PERSONAL') && (selViaje && selViaje.value === "")) {
                 containerSurtidor.style.display = 'block';
             } else {
                 containerSurtidor.style.display = 'none';
                 if (selectSurtidor) selectSurtidor.value = ''; // Resetear valor
             }
+
+            // 2. Filtrar/Validar Rutas Compatibles en el selector de viajes
+            if (selViaje) {
+                Array.from(selViaje.options).forEach(opt => {
+                    const isExternalRoute = opt.getAttribute('data-es-externo') === 'true';
+                    const isFreeBandeja = opt.value === '';
+
+                    if (isFreeBandeja) return; // La bandeja libre siempre es válida
+
+                    // Bloqueo lógico
+                    if (isExternalStrategy && !isExternalRoute) {
+                        opt.disabled = true;
+                        if (!opt.text.startsWith('🚫')) opt.text = '🚫 [Solo A/B] ' + opt.text;
+                    } else if (!isExternalStrategy && isExternalRoute) {
+                        opt.disabled = true;
+                        if (!opt.text.startsWith('🚫')) opt.text = '🚫 [Solo Ruta C] ' + opt.text;
+                    } else {
+                        opt.disabled = false;
+                        opt.text = opt.text.replace('🚫 [Solo A/B] ', '').replace('🚫 [Solo Ruta C] ', '');
+                    }
+                });
+
+                // Si la ruta seleccionada quedó deshabilitada, des-seleccionarla
+                if (selViaje.selectedOptions[0] && selViaje.selectedOptions[0].disabled) {
+                    selViaje.value = '';
+                }
+            }
         });
-        // Ejecutar una vez al inicio por si el default no es el esperado
+        // Ejecutar una vez al inicio para sincronizar estados
         selectTipo.dispatchEvent(new Event('change'));
     }
 
