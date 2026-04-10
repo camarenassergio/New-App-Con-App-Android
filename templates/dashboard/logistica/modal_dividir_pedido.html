@@ -199,7 +199,7 @@
                             </div>
 
                             <!-- Asignar Surtidor (v3.2.5) - Solo para Internos -->
-                            <div class="col-md-6" id="container-surtidor">
+                            <div class="col-md-6" id="container-surtidor" style="display: none;">
                                 <label class="form-label small fw-bold text-muted">¿Quién va a surtir?</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-end-0">
@@ -319,6 +319,8 @@
     // Evento: cambio en selector de viaje (alerta de REPROGRAMADO y validación de Ruta C)
     const selViaje = document.getElementById('select-viaje-dividir');
     const selectTipo = document.getElementById('select-tipo-envio');
+    const containerSurtidor = document.getElementById('container-surtidor');
+    const selectSurtidor = document.getElementById('select-surtidor');
 
     if (selViaje && selectTipo) {
         selViaje.addEventListener('change', function() {
@@ -378,8 +380,11 @@
             const isExternalStrategy = (this.value === 'PROVEEDOR_EXTERNO');
 
             // 1. Mostrar/Ocultar Surtidor
-            // User request: No disponible si se elige ruta. Solo disponible en Bandeja Libre.
-            if ((this.value === 'INTERNO_FLOTILLA' || this.value === 'INTERNO_PERSONAL') && (selViaje && selViaje.value === "")) {
+            // User request: No disponible si es Ruta C (Externo). 
+            // Disponible para Ruta A e Interno (aunque se elija ruta).
+            const isInternal = (this.value === 'INTERNO_FLOTILLA' || this.value === 'INTERNO_PERSONAL');
+
+            if (isInternal) {
                 containerSurtidor.style.display = 'block';
             } else {
                 containerSurtidor.style.display = 'none';
