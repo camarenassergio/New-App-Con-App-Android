@@ -705,6 +705,63 @@
     <!-- Contenedor Único para Modales Dinámicos (HTMX) - Renombrado para evitar conflictos -->
     <div id="lupita-modal-container"></div>
 
+    <script>
+    // ── Controlador Global de Modales Lupita ────────────────────────────
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        const target = evt.detail.target;
+        if (target && target.id === 'lupita-modal-container') {
+            const xhr = evt.detail.xhr;
+            const responseText = xhr ? xhr.responseText : '';
+            console.log('[Lupita Debug] Swap detectado. Status:', xhr ? xhr.status : 'N/A');
+            console.log('[Lupita Debug] Response Text Length:', responseText.length);
+
+            // FALLBACK DE EMERGENCIA: Si HTMX no hizo el swap (innerHTML vacío) pero hay respuesta
+            if (target.innerHTML.trim() === '' && responseText.length > 0) {
+                console.warn('⚠️ [Lupita Debug] HTMX no realizó el swap automáticamente. Forzando swap manual con fragment...');
+                target.innerHTML = ''; 
+                const fragment = document.createRange().createContextualFragment(responseText);
+                target.appendChild(fragment);
+                // htmx.process para asegurar que los atributos hx- también se activen
+                htmx.process(target);
+            }
+
+            // Detectar el modal
+            let modalEl = target.querySelector('.modal');
+            if (modalEl) {
+                console.log('✅ [Lupita Debug] Modal listo:', modalEl.id);
+                try {
+                    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    bsModal.show();
+                } catch (err) {
+                    console.error('❌ [Lupita Debug] Error al mostrar modal:', err);
+                }
+            } else {
+                console.warn('⚠️ [Lupita Debug] No se encontró clase .modal despues del swap.');
+                console.warn('⚠️ [Lupita Debug] HTML en contenedor:', target.innerHTML.substring(0, 100));
+            }
+        }
+    });
+
+    // ── Listener para cerrar modales desde HTMX ─────────────────────────
+    document.body.addEventListener('closeModal', function(evt) {
+        const modalId = evt.detail.value;
+        const modalEl = document.getElementById(modalId);
+        if (modalEl) {
+            const bsModal = bootstrap.Modal.getInstance(modalEl);
+            if (bsModal) {
+                bsModal.hide();
+                console.log('✅ [Lupita Debug] Modal cerrado por evento:', modalId);
+            }
+        } else {
+            // Si no hay ID, cerrar cualquier modal abierto (fallback)
+            const openModal = document.querySelector('.modal.show');
+            if (openModal) {
+                bootstrap.Modal.getOrCreateInstance(openModal).hide();
+            }
+        }
+    });
+    </script>
+
     {% block extra_js %}{% endblock %}
   </body>
 </html>

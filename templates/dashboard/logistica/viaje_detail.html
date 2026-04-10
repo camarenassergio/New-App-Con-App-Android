@@ -26,7 +26,11 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 px-md-5">
+<div class="container-fluid py-4 px-md-5" 
+     hx-get="{{ request.path }}" 
+     hx-trigger="boardChanged from:body" 
+     hx-target="this" 
+     hx-select=".container-fluid">
 
     <!-- HEADER PREMIUM -->
     <div class="card border-0 shadow-lg mb-4 overflow-hidden" style="border-radius: 24px;">
