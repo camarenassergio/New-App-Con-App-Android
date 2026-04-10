@@ -270,8 +270,25 @@
     function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
 
     function actualizarLiveSaldo() {
-        const art  = parseFloat(inputArt.value)  || 0;
-        const peso = parseFloat(inputPeso.value) || 0;
+        let art  = parseFloat(inputArt.value)  || 0;
+        
+        // ── LOGICA PRO: AUTO-FILL PESO SI ES CARGA COMPLETA ──────────────
+        // Si extrae el total de piezas, el peso debe ser el total vivo y se bloquea
+        if (Math.abs(art - SALDO_ART) < 0.001 && SALDO_ART > 0) {
+            inputPeso.value = SALDO_PESO.toFixed(2);
+            inputPeso.readOnly = true;
+            inputPeso.style.backgroundColor = '#f8fafc'; // bg-slate-50
+            inputPeso.style.cursor = 'not-allowed';
+        } else {
+            if (inputPeso.readOnly) {
+                // Si estaba bloqueado y bajó la cantidad, lo liberamos
+                inputPeso.readOnly = false;
+                inputPeso.style.backgroundColor = '';
+                inputPeso.style.cursor = '';
+            }
+        }
+
+        let peso = parseFloat(inputPeso.value) || 0;
 
         // Saldos resultantes
         const sobraArt  = Math.max(0, SALDO_ART  - art);
@@ -420,6 +437,30 @@
         });
         // Ejecutar una vez al inicio para sincronizar estados
         selectTipo.dispatchEvent(new Event('change'));
+    }
+
+    // ── VALIDACIÓN FINAL ANTES DE ENVIAR (v3.2.7) ────────────────────────
+    const formDividir = document.getElementById('form-dividir-pedido');
+    if (formDividir) {
+        formDividir.addEventListener('htmx:confirm', function(evt) {
+            const isInternal = (selectTipo.value === 'INTERNO_FLOTILLA' || selectTipo.value === 'INTERNO_PERSONAL');
+            const hasSurtidor = (selectSurtidor && selectSurtidor.value !== "");
+
+            if (isInternal && !hasSurtidor) {
+                evt.preventDefault(); // Detener el envío de HTMX
+                
+                const containerErrores = document.getElementById('form-errores-dividir');
+                if (containerErrores) {
+                    containerErrores.innerHTML = `
+                        <div class="alert alert-danger animate__animated animate__shakeX border-0 shadow-sm x-small fw-bold">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            DATO REQUERIDO: Debes seleccionar un surtidor para rutas internas.
+                        </div>
+                    `;
+                    containerErrores.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
     }
 
     // Escuchar inputs

@@ -3093,6 +3093,14 @@ class PedidoDividirView(LoginRequiredMixin, NonChoferRequiredMixin, View):
             if surtidor_id and tipo_envio in ['INTERNO_FLOTILLA', 'INTERNO_PERSONAL']:
                 surtidor = get_object_or_404(Personal, pk=surtidor_id)
             
+            # --- CANDADO v3.2.7: Surtidor Obligatorio para Rutas A y B ---
+            if tipo_envio in ['INTERNO_FLOTILLA', 'INTERNO_PERSONAL'] and not surtidor:
+                return HttpResponse(
+                    '<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                    '<i class="fas fa-user-tag me-2"></i> Error: Debes asignar un surtidor para rutas internas.</div>',
+                    status=400
+                )
+
             # Validación de saldo en backend
             if articulos <= 0 or articulos > pedido.saldo_articulos:
                 return HttpResponse(
@@ -3199,9 +3207,13 @@ class DespachoReasignarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, Vie
             .select_related('unidad', 'chofer', 'proveedor_servicio')
             .order_by('estado', '-fecha_viaje')
         )
+        # v3.2.7: Personal para surtido
+        vendedores_surtidores = Personal.objects.all().order_by('nombre')
+
         return render(request, 'dashboard/logistica/modal_reasignar_despacho.html', {
             'despacho': despacho,
             'viajes_activos': viajes_activos,
+            'vendedores_surtidores': vendedores_surtidores,
         })
 
     def post(self, request, pk):
@@ -3236,6 +3248,19 @@ class DespachoReasignarViajeView(LoginRequiredMixin, NonChoferRequiredMixin, Vie
                 )
             despacho.viaje = viaje
             msg = f"Despacho #{despacho.id} asignado a Ruta #{viaje.id}."
+
+            # --- CANDADO v3.2.7: Surtidor Obligatorio para Rutas A y B ---
+            surtidor_id = request.POST.get('surtidor_id', '').strip()
+            if not es_ruta_externa:
+                if not surtidor_id and not despacho.surtidor:
+                    return HttpResponse(
+                        '<div class="alert alert-danger px-3 py-2 small fw-bold">'
+                        '<i class="fas fa-user-tag me-2"></i> Error: Debes asignar un surtidor para rutas internas.</div>',
+                        status=400
+                    )
+                if surtidor_id:
+                    surtidor = get_object_or_404(Personal, pk=surtidor_id)
+                    despacho.surtidor = surtidor
         else:
             despacho.viaje = None
             msg = f"Despacho #{despacho.id} liberado a la Bandeja Libre."

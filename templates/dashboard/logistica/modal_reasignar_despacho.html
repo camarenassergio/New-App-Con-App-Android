@@ -110,6 +110,19 @@
                         <strong>Ruta Reprogramada.</strong> Puedes asignarlo, pero la ruta aún no tiene fecha nueva confirmada.
                     </div>
 
+                    <!-- Asignar Surtidor (v3.2.7) -->
+                    <div id="container-surtidor-reasignar" class="mb-3" {% if despacho.tipo_envio == 'PROVEEDOR_EXTERNO' %}style="display:none;"{% endif %}>
+                        <label class="form-label small fw-bold text-muted text-uppercase">
+                            <i class="fas fa-user-tag me-1"></i> ¿Quién va a surtir?
+                        </label>
+                        <select name="surtidor_id" class="form-select border-primary bg-primary bg-opacity-10 text-primary fw-bold shadow-xs" id="select-surtidor-reasignar">
+                            <option value="">{% if despacho.surtidor %}📌 MANTENER: {{ despacho.surtidor.nombre }} {{ despacho.surtidor.apellido_paterno }}{% else %}-- Seleccionar Surtidor --{% endif %}</option>
+                            {% for p in vendedores_surtidores %}
+                                <option value="{{ p.id }}">{{ p.nombre }} {{ p.apellido_paterno }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
                 </div>
 
                 <div class="modal-footer bg-light border-top-0 px-4 pb-4 pt-0 d-flex justify-content-between">
@@ -137,10 +150,56 @@
     // Mostrar alerta si se elige una ruta REPROGRAMADA
     const sel = document.getElementById('select-viaje-reasignar');
     const alerta = document.getElementById('alerta-reprog-reasignar');
+    const contSurtidor = document.getElementById('container-surtidor-reasignar');
+    const selSurtidor = document.getElementById('select-surtidor-reasignar');
+
     if (sel && alerta) {
         sel.addEventListener('change', function() {
-            const txt = this.options[this.selectedIndex].text;
+            const selectedOpt = this.options[this.selectedIndex];
+            const txt = selectedOpt.text;
+            const esExterno = selectedOpt.getAttribute('data-es-externo') === 'true';
+            
+            // 1. Mostrar/Ocultar Alerta Repro
             alerta.classList.toggle('d-none', !txt.includes('[REPROG.]'));
+
+            // 2. Mostrar/Ocultar Surtidor según Ruta
+            if (contSurtidor) {
+                if (esExterno || this.value === "") {
+                    contSurtidor.style.display = 'none';
+                    if (selSurtidor) selSurtidor.value = '';
+                } else {
+                    contSurtidor.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    // Validación final antes de confirmar
+    const formReasignar = document.querySelector('#modalReasignarDespacho form');
+    if (formReasignar) {
+        formReasignar.addEventListener('htmx:confirm', function(evt) {
+            const selectedOpt = sel.options[sel.selectedIndex];
+            const esExterno = selectedOpt.getAttribute('data-es-externo') === 'true';
+            const isBandejaLibre = (sel.value === "");
+
+            // Solo validar surtidor si NO es externo y NO es bandeja libre (o sea, es interna)
+            if (!esExterno && !isBandejaLibre) {
+                // Si no hay surtidor seleccionado Y el despacho no tiene uno ya
+                const hasSurtidorInput = (selSurtidor && selSurtidor.value !== "");
+                const hasPreviousSurtidor = ("{% if despacho.surtidor %}true{% else %}false{% endif %}" === "true");
+
+                if (!hasSurtidorInput && !hasPreviousSurtidor) {
+                    evt.preventDefault();
+                    const errCont = document.getElementById('errores-reasignar');
+                    if (errCont) {
+                        errCont.innerHTML = `
+                            <div class="alert alert-danger animate__animated animate__shakeX x-small fw-bold">
+                                <i class="fas fa-user-tag me-2"></i> ERROR: Debes asignar un surtidor para rutas internas.
+                            </div>
+                        `;
+                    }
+                }
+            }
         });
     }
 })();
