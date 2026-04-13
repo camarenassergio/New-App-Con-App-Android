@@ -3086,6 +3086,8 @@ class PedidoDividirView(LoginRequiredMixin, NonChoferRequiredMixin, View):
             
             tipo_envio = request.POST.get('tipo_envio', 'INTERNO_FLOTILLA')
             observaciones = request.POST.get('observaciones_entrega', '')
+            viaje_id = request.POST.get('viaje_id', '')
+            viaje = None
             
             # v3.2.5: Capturar surtidor (solo si es interno)
             surtidor_id = request.POST.get('surtidor_id', '')
@@ -3822,13 +3824,24 @@ class AlmacenDashboardView(LoginRequiredMixin, NonChoferRequiredMixin, TemplateV
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Pedidos que Mostrador ya capturó pero Almacén no ha empezado
+        
+        # v3.2.7: Cantidad de despachos asignados específicamente al usuario logueado
+        # Priorizamos mostrar lo que "el usuario tiene que hacer" en lugar del global
+        qs_mis_despachos = Despacho.objects.filter(
+            estado__in=['PENDIENTE', 'ASIGNADO_SURTIDO']
+        )
+        if not self.request.user.is_superuser:
+            qs_mis_despachos = qs_mis_despachos.filter(surtidor__usuario=self.request.user)
+        
+        context['count_mis_despachos'] = qs_mis_despachos.count()
+
+        # Pedidos que Mostrador ya capturó pero Almacén no ha empezado (Global)
         context['count_por_preparar'] = Pedido.objects.filter(estado='REGISTRADO').count()
         
-        # Pedidos siendo preparados físicamente
+        # Pedidos siendo preparados físicamente (Global)
         context['count_preparacion'] = Pedido.objects.filter(estado='EN_PREPARACION').count()
         
-        # Pedidos ya asignados a una unidad, listos para subir al camión
+        # Pedidos ya asignados a una unidad, listos para subir al camión (Global)
         context['count_por_cargar'] = Pedido.objects.filter(estado='ASIGNADO_A_RUTA').count()
         
         # Historial de preparaciones de hoy

@@ -101,7 +101,8 @@
                                 hx-vals='{"estado": "EN_CURSO"}'
                                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                 hx-swap="none"
-                                {% if total_despachos == 0 %}disabled title="Asigna pedidos a esta ruta para poder iniciarla"{% else %}title="Registrar salida de la unidad"{% endif %}>
+                                {% if viaje.estado == 'REPROGRAMADO' %}disabled title="Ruta vencida (REPROGRAMADA). Edite la fecha para poder iniciar."
+                                {% elif total_despachos == 0 %}disabled title="Asigna pedidos a esta ruta para poder iniciarla"{% else %}title="Registrar salida de la unidad"{% endif %}>
                             <i class="fas fa-play me-2"></i>INICIAR RUTA
                         </button>
                     {% elif viaje.estado == 'EN_CURSO' %}
