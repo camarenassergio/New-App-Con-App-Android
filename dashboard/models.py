@@ -780,6 +780,10 @@ class Despacho(models.Model):
     cantidad_articulos_asignados = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Artículos Asignados")
     cantidad_articulos_rechazados = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Artículos Rechazados")
     
+    # Tiempos de Surtido (Auditoría y Métricas)
+    hora_inicio_surtido = models.DateTimeField(null=True, blank=True, verbose_name="Inicio Surtido")
+    hora_finalizacion_surtido = models.DateTimeField(null=True, blank=True, verbose_name="Fin Surtido")
+    
     # Datos de entrega (App Chofer)
     hora_llegada = models.DateTimeField(null=True, blank=True)
     hora_entrega = models.DateTimeField(null=True, blank=True)

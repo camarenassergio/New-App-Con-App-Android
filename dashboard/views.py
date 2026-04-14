@@ -3029,6 +3029,13 @@ class DespachoCambiarEstadoView(LoginRequiredMixin, NonChoferRequiredMixin, View
         
         estados_validos = [e[0] for e in Despacho.ESTADO_CHOICES]
         if nuevo_estado in estados_validos:
+            # Registrar tiempos de surtido para métricas
+            ahora = timezone.now()
+            if nuevo_estado == 'ASIGNADO_SURTIDO' and not despacho.hora_inicio_surtido:
+                despacho.hora_inicio_surtido = ahora
+            elif nuevo_estado == 'SURTIDO_COMPLETO' and not despacho.hora_finalizacion_surtido:
+                despacho.hora_finalizacion_surtido = ahora
+                
             despacho.estado = nuevo_estado
             despacho.save()
             messages.success(request, f"Estatus del Despacho #{despacho.id} actualizado a {despacho.get_estado_display()}")

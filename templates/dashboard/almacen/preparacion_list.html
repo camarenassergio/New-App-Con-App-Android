@@ -78,6 +78,11 @@
                                     {% else %}bg-secondary-subtle text-muted{% endif %}">
                                     <i class="fas fa-circle me-1 x-small opacity-50"></i> {{ despacho.get_estado_display|upper }}
                                 </span>
+                                {% if despacho.hora_inicio_surtido %}
+                                    <div class="x-small text-muted mt-1 fw-bold">
+                                        <i class="fas fa-clock me-1 opacity-50"></i> {{ despacho.hora_inicio_surtido|date:"H:i" }}
+                                    </div>
+                                {% endif %}
                             </td>
                             <td class="text-end pe-4">
                                 {% if despacho.estado == 'PENDIENTE' %}

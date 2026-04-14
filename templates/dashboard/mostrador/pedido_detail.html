@@ -376,6 +376,16 @@
                                 <i class="fas fa-box-open text-muted x-small me-2 opacity-50"></i>
                                 <span class="x-small text-muted fw-bold opacity-75 text-uppercase">{{ despacho.get_tipo_envio_display }}</span>
                             </div>
+                            {% if despacho.hora_inicio_surtido %}
+                            <div class="mt-2 pt-2 border-top x-small text-muted d-flex justify-content-between">
+                                <span><i class="fas fa-user-tag me-1 opacity-50"></i> Surtidor:</span>
+                                <span class="fw-bold">{{ despacho.surtidor.nombre|default:"N/A" }}</span>
+                            </div>
+                            <div class="mt-1 x-small text-muted d-flex justify-content-between">
+                                <span><i class="fas fa-clock me-1 opacity-50"></i> Surtido:</span>
+                                <span class="fw-bold">{{ despacho.hora_inicio_surtido|date:"H:i"|default:"--" }} - {{ despacho.hora_finalizacion_surtido|date:"H:i"|default:"--" }}</span>
+                            </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>

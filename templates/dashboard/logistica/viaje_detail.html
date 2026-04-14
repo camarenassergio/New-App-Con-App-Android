@@ -312,6 +312,14 @@
                                     <i class="fas fa-sign-out-alt text-danger me-1"></i>
                                     <span class="fw-bold">{{ despacho.hora_entrega|time:"H:i"|default:"--:--" }}</span>
                                 </div>
+                                <div class="mt-1 border-top pt-1 x-small text-muted" title="Surtido (Surtidor, Inicio - Fin)">
+                                    <div class="fw-bold mb-1">
+                                        <i class="fas fa-user-tag me-1 opacity-50"></i>
+                                        {{ despacho.surtidor.nombre|default:"N/A" }} {{ despacho.surtidor.apellido_paterno|default:"" }}
+                                    </div>
+                                    <i class="fas fa-box-open me-1 opacity-50"></i>
+                                    {{ despacho.hora_inicio_surtido|time:"H:i"|default:"--" }} - {{ despacho.hora_finalizacion_surtido|time:"H:i"|default:"--" }}
+                                </div>
                             </div>
                         </td>
                         <td class="pe-4">
