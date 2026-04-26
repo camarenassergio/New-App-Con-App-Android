@@ -83,7 +83,7 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
         if not request.user.is_superuser and hasattr(request.user, 'personal'):
             puesto = request.user.personal.puesto
             if puesto == 'CHOFER':
-                return redirect('dashboard:viajes_list')
+                return redirect('dashboard:chofer_home')
             elif puesto == 'MOSTRADOR':
                 return redirect('dashboard:mostrador_dashboard')
             elif puesto == 'ALMACEN':
@@ -1251,8 +1251,12 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
     model = ChecklistUnidad
     form_class = ChecklistUnidadForm
     template_name = "dashboard/checklist_unidad_form.html"
-    success_url = reverse_lazy('dashboard:checklist_unidad_list')
     ajax_success_message = "¡Checklist diario guardado correctamente. Buen viaje!"
+
+    def get_success_url(self):
+        if self.request.user.personal.puesto == 'CHOFER':
+            return reverse('dashboard:chofer_home')
+        return super().get_success_url()
 
     def get_context_data(self, **kwargs):
          context = super().get_context_data(**kwargs)
@@ -1270,15 +1274,17 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
              
              datos_mediciones[u.id] = {
                  'ultima_fecha': ultima_medicion.fecha.isoformat() if ultima_medicion else None,
-                 'ultimo_km': ultima_medicion.km_medicion if ultima_medicion else 0,
+                 'ultimo_km_medicion': ultima_medicion.km_medicion if ultima_medicion else 0,
+                 'km_actual_db': u.kilometraje_actual or 0,
                  'llantas': llantas_list
              }
              
          context['datos_mediciones_json'] = json.dumps(datos_mediciones)
+         context['unidad_preseleccionada'] = self.request.GET.get('u')
          return context
 
     def form_valid(self, form):
-        # Asignar chofer, unidad seleccionada y fecha
+        # Asignar chofer y fecha
         form.instance.chofer = self.request.user
         form.instance.fecha = timezone.now().date()
         
@@ -1287,7 +1293,12 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
             form.add_error(None, "Debes seleccionar una unidad.")
             return self.form_invalid(form)
             
-        form.instance.unidad_id = unidad_id
+        # Asignar objeto Unidad explícitamente para evitar problemas de relación
+        try:
+            form.instance.unidad = Unidad.objects.get(id=unidad_id)
+        except Unidad.DoesNotExist:
+            form.add_error(None, "La unidad seleccionada no es válida.")
+            return self.form_invalid(form)
         
         # Validar si ya hizo un checklist HOY para ESA unidad (Opcional, pero buena práctica)
         # SDC pide revisión diaria antes del inicio. Si hace 2 viajes, quizás sólo se requiere 1 al día.
@@ -1388,7 +1399,82 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
             messages.info(self.request, "Mediciones de seguridad de neumáticos registradas exitosamente y validadas.")
             
         messages.success(self.request, "Checklist diario guardado correctamente. ¡Buen viaje!")
+        
+        # --- Lógica de Notificaciones por Falla/Observación ---
+        tiene_falla = False
+        campos_bool = [
+            'aceite_motor', 'aceite_caja', 'aceite_diferencial', 'aceite_direccion', 
+            'anticongelante', 'llantas_birlos', 'carroceria_golpes', 'luces', 'cinturon', 
+            'frenos', 'liquido_frenos', 'clutch', 'bateria_arranque', 'agua_bateria', 
+            'limpiaparabrisas', 'agua_limpiabrisas', 'claxon', 'alerta_reversa', 
+            'retrovisores', 'lona', 'bandas_sujecion'
+        ]
+        
+        for campo in campos_bool:
+            if not getattr(form.instance, campo):
+                tiene_falla = True
+                break
+        
+        if not tiene_falla:
+            if form.instance.equipo_seguridad != 'COMPLETO' or form.instance.documentacion != 'COMPLETO':
+                tiene_falla = True
+            elif form.instance.limpieza_interiores == 'MALA' or form.instance.limpieza_exteriores == 'MALA':
+                tiene_falla = True
+            elif form.instance.observaciones:
+                tiene_falla = True
+
+        if tiene_falla:
+            from .models import Notificacion, Personal
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            # Obtener usuarios a notificar (Administradores y personal de Rutas/Logística)
+            usuarios_notificar = User.objects.filter(
+                personal__puesto__in=['ADMIN', 'RUTAS'],
+                personal__esta_activo=True
+            ).distinct()
+            
+            titulo_notif = f"⚠️ Alerta Checklist: {form.instance.unidad.nUnidad}"
+            desc_notif = f"El chofer {self.request.user.get_full_name() or self.request.user.username} ha reportado fallas u observaciones en la unidad {form.instance.unidad.nUnidad}."
+            link_notif = reverse('dashboard:checklist_unidad_detail', kwargs={'pk': form.instance.pk})
+            
+            for user_notif in usuarios_notificar:
+                Notificacion.objects.create(
+                    usuario=user_notif,
+                    tipo='ALERTA',
+                    titulo=titulo_notif,
+                    descripcion=desc_notif,
+                    link=link_notif
+                )
+        
         return response
+
+class ChecklistUnidadDetailView(LoginRequiredMixin, DetailView):
+    model = ChecklistUnidad
+    template_name = "dashboard/checklist_unidad_detail.html"
+    context_object_name = "checklist"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from .models import MedicionNeumatico
+        # Obtener mediciones de neumáticos realizadas en este checklist
+        context['mediciones_llantas'] = MedicionNeumatico.objects.filter(
+            unidad=self.object.unidad,
+            km_medicion=self.object.km_actual,
+            fecha=self.object.fecha
+        ).select_related('llanta')
+        return context
+
+class ChecklistUnidadEnteradoView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        from django.shortcuts import redirect
+        checklist = get_object_or_404(ChecklistUnidad, pk=self.kwargs.get('pk'))
+        checklist.revisado_admin = True
+        checklist.fecha_revision_admin = timezone.now()
+        checklist.usuario_revision_admin = request.user
+        checklist.save()
+        messages.success(request, "Se ha registrado que estás enterado de la situación de esta unidad.")
+        return redirect('dashboard:checklist_unidad_detail', pk=checklist.pk)
 
 # --- INVENTARIO DE LLANTAS ---
 from .models import InventarioLlanta
@@ -2898,6 +2984,116 @@ class MostradorDashboardView(LoginRequiredMixin, TemplateView):
             context['pedidos_recientes'] = Pedido.objects.order_by('-fecha_registro')[:10]
             context['titulo_lista'] = 'Últimas Entregas Registradas'
 
+        return context
+
+class ChoferDashboardView(LoginRequiredMixin, TemplateView):
+    """Hub central optimizado para smartphones para el equipo de Choferes con bloqueo de seguridad"""
+    template_name = 'dashboard/chofer/dashboard.html'
+
+    def get_assigned_units_today(self, user):
+        """
+        Lógica de Redistribución Dinámica (Dirección General):
+        Asigna a cada chofer activo sus unidades base + una parte proporcional de las unidades
+        cuyos responsables están inactivos (vacaciones, etc).
+        """
+        # 1. Obtener todas las unidades operativas
+        unidades_totales = list(Unidad.objects.filter(en_servicio=True).order_by('id'))
+        
+        # 2. Obtener choferes activos hoy
+        choferes_activos = list(Personal.objects.filter(puesto='CHOFER', esta_activo=True).select_related('usuario').order_by('id'))
+        
+        if not choferes_activos:
+            return [] # No hay choferes activos (bloqueo total)
+
+        # 3. Clasificar unidades
+        unidades_asignadas_propias = []
+        pool_huerfanas = []
+        
+        active_user_ids = [c.usuario.id for c in choferes_activos]
+        
+        for u in unidades_totales:
+            if u.responsable_mantenimiento_id in active_user_ids:
+                if u.responsable_mantenimiento_id == user.id:
+                    unidades_asignadas_propias.append(u)
+            else:
+                # El responsable no existe o no está activo hoy
+                pool_huerfanas.append(u)
+        
+        # 4. Repartir las huérfanas proporcionalmente entre los choferes activos
+        # Usamos el índice del chofer actual en la lista de activos para tomar su "tanda"
+        try:
+            mi_index = next(i for i, c in enumerate(choferes_activos) if c.usuario.id == user.id)
+        except StopIteration:
+            return [] # El usuario logueado no está activo hoy
+
+        num_activos = len(choferes_activos)
+        for i, u_huerfana in enumerate(pool_huerfanas):
+            if i % num_activos == mi_index:
+                unidades_asignadas_propias.append(u_huerfana)
+        
+        return unidades_asignadas_propias
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        ahora = timezone.localtime(timezone.now())
+        hoy = ahora.date()
+        user = self.request.user
+        
+        # --- NUEVA LÓGICA DE BLOQUEO DE SEGURIDAD (Lunes a Sábado) ---
+        es_domingo = (hoy.weekday() == 6)
+        context['es_dia_laboral'] = not es_domingo
+        
+        unidades_a_cargo = []
+        checklist_pendientes = []
+        bloqueo_mantenimiento = False
+        
+        if not es_domingo:
+            unidades_a_cargo = self.get_assigned_units_today(user)
+            
+            # Verificar cuáles ya tienen checklist hoy
+            checklists_hoy = ChecklistUnidad.objects.filter(fecha=hoy).values_list('unidad_id', flat=True)
+            
+            for u in unidades_a_cargo:
+                if u.id not in checklists_hoy:
+                    checklist_pendientes.append(u)
+            
+            # Si hay pendientes, activamos el bloqueo
+            if checklist_pendientes:
+                bloqueo_mantenimiento = True
+        
+        context['unidades_a_cargo'] = unidades_a_cargo
+        context['checklist_pendientes'] = checklist_pendientes
+        context['bloqueo_mantenimiento'] = bloqueo_mantenimiento
+        
+        # --- DATOS OPERATIVOS ---
+        # 1. Rutas del día asignadas al chofer (Solo si no hay bloqueo o si es domingo)
+        if not bloqueo_mantenimiento:
+            context['mis_rutas'] = ViajeNuevo.objects.filter(
+                chofer=user,
+                fecha_viaje=hoy
+            ).exclude(estado='CANCELADO').select_related('unidad').prefetch_related('despachos')
+            
+            # 2. Despachos en preparación
+            context['en_preparacion'] = Despacho.objects.filter(
+                viaje__chofer=user,
+                viaje__fecha_viaje=hoy,
+                estado__in=['PENDIENTE', 'ASIGNADO_SURTIDO']
+            ).select_related('pedido', 'pedido__cliente', 'pedido__obra')
+        else:
+            context['mis_rutas'] = []
+            context['en_preparacion'] = []
+        
+        # 3. Estado del Checklist General (Para el botón del Hub)
+        context['ya_lleno_checklist'] = not bloqueo_mantenimiento
+        
+        # 4. Mensajes no leídos
+        from .models import Notificacion
+        context['mensajes_pendientes'] = Notificacion.objects.filter(
+            usuario=user,
+            leido=False
+        ).count()
+        
+        context['hoy'] = hoy
         return context
 
 

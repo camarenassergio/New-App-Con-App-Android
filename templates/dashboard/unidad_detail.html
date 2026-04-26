@@ -118,6 +118,16 @@
                             <span class="small text-muted fw-bold">Tipo de Unidad:</span>
                             <span class="fw-800 text-primary">{{ unidad.get_tipo_display }}</span>
                         </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="small text-muted fw-bold">Responsable Mantenimiento:</span>
+                            <span class="fw-800 text-primary">
+                                {% if unidad.responsable_mantenimiento %}
+                                    🚚 {{ unidad.responsable_mantenimiento.get_full_name|default:unidad.responsable_mantenimiento.username }}
+                                {% else %}
+                                    <span class="text-muted opacity-50">Sin asignar</span>
+                                {% endif %}
+                            </span>
+                        </li>
                     </ul>
                 </div>
             </div>

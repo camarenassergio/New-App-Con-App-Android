@@ -1,0 +1,57 @@
+{
+  "name": "Logística Casa Lupita",
+  "short_name": "Casa Lupita",
+  "description": "Sistema de gestión logística y control de flotilla para Casa Lupita.",
+  "start_url": "/dashboard/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00158a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/pwa/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/pwa/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/pwa/maskable-icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/pwa/screenshot-mobile.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "label": "Dashboard Móvil - Gestión de Rutas"
+    },
+    {
+      "src": "/static/pwa/screenshot-desktop.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Centro de Mando Logístico - Escritorio"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Checklists",
+      "url": "/dashboard/checklist-unidades/",
+      "icons": [{ "src": "/static/pwa/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Viajes",
+      "url": "/dashboard/viajes/",
+      "icons": [{ "src": "/static/pwa/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

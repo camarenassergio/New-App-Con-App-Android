@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 from . import views
 
 app_name = 'dashboard'
@@ -37,6 +38,8 @@ urlpatterns = [
     # --- CHECKLIST DIARIO ---
     path('checklist/', views.ChecklistUnidadListView.as_view(), name='checklist_unidad_list'),
     path('checklist/nuevo/', views.ChecklistUnidadCreateView.as_view(), name='checklist_unidad_create'),
+    path('checklist/<int:pk>/', views.ChecklistUnidadDetailView.as_view(), name='checklist_unidad_detail'),
+    path('checklist/<int:pk>/enterado/', views.ChecklistUnidadEnteradoView.as_view(), name='checklist_unidad_enterado'),
     
     # --- INVENTARIO LLANTAS ---
     path('llantas/', views.InventarioLlantaListView.as_view(), name='inventario_llanta_list'),
@@ -134,4 +137,10 @@ urlpatterns = [
     path('notificaciones/count/', views.notificaciones_count_ajax, name='notificaciones_count'),
     path('api/enviar-mensaje/', views.DirectMessageView.as_view(), name='enviar_mensaje_api'),
     path('mostrador/cliente/<int:pk>/update-telefono/', views.ClienteUpdateTelefonoModalView.as_view(), name='cliente_update_telefono_modal'),
+
+    # --- APP CHOFER (FASE 3) ---
+    path('chofer/dashboard/', views.ChoferDashboardView.as_view(), name='chofer_home'),
+
+    # --- PWA ---
+    path('offline/', TemplateView.as_view(template_name='offline.html'), name='offline'),
 ]

@@ -132,6 +132,7 @@ class UnidadForm(forms.ModelForm):
             'capacidad_kg',             # 10. Capacidad
             'capacidad_tanque',         # (Extra) Capacidad Tanque
             'numero_llantas',           # (Extra) Número de Llantas
+            'responsable_mantenimiento', # (Nuevo) Responsable Asignado
             'tarjeta_circulacion',      # 11. Tarjeta de Circulación
             'vencimiento_placa',        # 12. Vencimiento Placa
             'poliza_seguro',            # 13. Número de Póliza
@@ -158,10 +159,21 @@ class UnidadForm(forms.ModelForm):
             'ultimo_pago_tenencia': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'vencimiento_verificacion': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'observaciones': forms.Textarea(attrs={'rows': 3}),
+            'responsable_mantenimiento': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        # Filtrar responsables para que solo aparezcan CHOFERES
+        self.fields['responsable_mantenimiento'].queryset = User.objects.filter(
+            personal__puesto='CHOFER',
+            is_active=True
+        ).order_by('first_name', 'last_name')
+        self.fields['responsable_mantenimiento'].label_from_instance = lambda obj: f"🚚 {obj.get_full_name() or obj.username}"
+        self.fields['responsable_mantenimiento'].required = False
+        self.fields['responsable_mantenimiento'].empty_label = "--- Sin Responsable Asignado ---"
+
         # Campos obligatorios según solicitud del usuario
         for field_name in [
             'nombre_corto', 'descripcion_vehiculo', 'placas',
@@ -434,8 +446,44 @@ class ChecklistUnidadForm(forms.ModelForm):
         widgets = {
             'observaciones': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Opcional: Detalles de alguna anomalía...'}),
             'km_actual': forms.NumberInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Ej. 125000', 'required': 'required'}),
-            # Los campos booleanos se manejarán manualmente en el template para la UI de switches/botones
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.daily_fields = [
+            # Fluidos
+            'aceite_motor', 'urea', 'anticongelante', 'liquido_frenos', 'agua_limpiabrisas',
+            # Seguridad Activa
+            'luces', 'claxon', 'alerta_reversa', 'limpiaparabrisas',
+            # Controles Base
+            'frenos', 'clutch', 'bateria_arranque',
+            # Estado Exterior y Carga
+            'llantas_presion', 'carroceria_golpes', 'lona', 'bandas_sujecion',
+            # Otros obligatorios (Documentación y Seguridad básica)
+            'equipo_seguridad', 'documentacion', 'cinturon'
+        ]
+        
+        self.biweekly_fields = [
+            'birlos_ajuste', 'limpieza_interiores', 'limpieza_exteriores',
+            'aceite_direccion'
+        ]
+
+        # Todos los campos booleanos deben ser required=False para permitir el valor False (Falla)
+        for name, field in self.fields.items():
+            if isinstance(field, forms.BooleanField):
+                field.required = False
+            
+            # Ajuste de labels según el nuevo protocolo (limpieza de "OK")
+            if field.label and ' OK' in field.label:
+                field.label = field.label.replace(' OK', '')
+            
+            if name == 'cinturon':
+                field.label = "Cinturón de Seguridad"
+            elif name == 'carroceria_golpes':
+                field.label = "Carrocería sin golpes nuevos"
+            elif name == 'birlos_ajuste':
+                field.label = "Ajuste de Birlos"
 
     def clean(self):
         cleaned_data = super().clean()
@@ -453,6 +501,10 @@ class ChecklistUnidadForm(forms.ModelForm):
             unidad = Unidad.objects.get(id=unidad_id)
         except Unidad.DoesNotExist:
             return cleaned_data
+
+        # VALIDACIÓN SOLICITADA: No puede ser menor al actual de la BD
+        if km_actual < unidad.kilometraje_actual:
+            self.add_error('km_actual', f"El kilometraje no puede ser menor al último registrado ({unidad.kilometraje_actual} km).")
             
         ultima_medicion = MedicionNeumatico.objects.filter(unidad=unidad).order_by('-fecha').first()
         requiere_inspeccion = False

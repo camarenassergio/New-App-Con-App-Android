@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load dashboard_extras %}
 
 {% block page_title %}Revision Diaria de Unidad (Checklist){% endblock %}
 
@@ -56,48 +57,92 @@
     /* Toggle Switches for Booleans */
     .checklist-item {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 0;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px 0;
         border-bottom: 1px solid var(--border-color);
+        gap: 12px;
     }
     .checklist-item:last-child {
         border-bottom: none;
     }
     .checklist-label {
-        font-size: 1rem;
+        font-size: 0.95rem;
+        font-weight: 600;
         color: var(--text-main);
-        flex: 1;
-        padding-right: 15px;
+        width: 100%;
     }
     
-    .switch-container {
+    /* Segmented Control (Premium UI) */
+    .segmented-control {
         display: flex;
         background: var(--bg-body);
-        border-radius: 30px;
-        overflow: hidden;
+        border-radius: 12px;
+        padding: 3px;
         border: 1px solid var(--border-color);
-        width: 120px;
-        height: 40px;
+        width: 100%;
+        position: relative;
+        gap: 4px;
     }
-    .switch-option {
+    .segment {
         flex: 1;
+        padding: 6px 4px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--text-muted);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 0.85rem;
-        color: var(--text-muted);
-        transition: 0.3s;
+        gap: 2px;
+        min-height: 48px;
+        line-height: 1.1;
     }
-    .switch-option[data-val="true"].active {
-        background: #16a34a; /* Verde robusto para oscuro */
-        color: white;
+    .segment:hover {
+        background: rgba(255,255,255,0.05);
     }
-    .switch-option[data-val="false"].active {
-        background: #ef4444; /* Rojo fuerte para oscuro */
-        color: white;
+    .segment.active {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        color: white !important;
+    }
+
+    /* Colors for different states */
+    .segment.active[data-color="success"], .segment.active[data-color="buena"], .segment.active[data-color="completo"] {
+        background: #16a34a; /* Verde */
+    }
+    .segment.active[data-color="danger"], .segment.active[data-color="mala"], .segment.active[data-color="falla"] {
+        background: #ef4444; /* Rojo */
+    }
+    .segment.active[data-color="warning"], .segment.active[data-color="regular"], .segment.active[data-color="incompleto"] {
+        background: #f59e0b; /* Ámbar/Amarillo */
+    }
+    .segment.active[data-color="info"], .segment.active[data-color="no_cuenta"] {
+        background: #f63b3b; /* Azul */
+    }
+    .sub-section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: var(--primary-blue);
+        opacity: 0.7;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+    }
+
+    .biweekly-section {
+        border-left: 4px solid var(--primary-orange);
+        padding-left: 15px;
+        background: rgba(245, 158, 11, 0.03);
+    }
+
+    body.dark-theme .biweekly-section {
+        background: rgba(245, 158, 11, 0.05);
     }
 </style>
 {% endblock %}
@@ -139,13 +184,21 @@
 
     <!-- 1. Identificación y Unidad -->
     <div class="checklist-section">
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
         <h4><i class="fas fa-truck"></i> Unidad a Operar</h4>
         <div class="mb-3">
             <label class="form-label" style="font-weight:bold;">Selecciona tu vehículo para hoy:</label>
             <select name="unidad_id" class="form-select form-select-lg" required>
                 <option value="">-- Elige la unidad --</option>
                 {% for u in unidades_activas %}
-                <option value="{{ u.id }}">{{ u.nUnidad }} - {{ u.marca }} ({{ u.placas }})</option>
+                <option value="{{ u.id }}" {% if unidad_preseleccionada|add:"0" == u.id %}selected{% endif %}>{{ u.nUnidad }} - {{ u.marca }} ({{ u.placas }})</option>
                 {% endfor %}
             </select>
         </div>
@@ -181,26 +234,60 @@
         {% endif %}
     </div>
 
-    <!-- 3. Elementos a Revisar -->
+    <!-- 3. Puntos de Revisión Diaria -->
     <div class="checklist-section">
-        <h4><i class="fas fa-clipboard-list"></i> Puntos de Revisión Obligatorios</h4>
-        <p class="text-muted small mb-3">Verifica físicamente que los siguientes puntos se encuentren en orden antes de iniciar tu ruta.</p>
+        <h4><i class="fas fa-clipboard-check"></i> 1. Revisión Diaria (3-5 min)</h4>
+        <p class="text-muted small mb-3">Seguridad inmediata para la ruta del día. Revisión visual y táctil.</p>
 
-        <!-- Dynamic Generation of Boolean Fields -->
+        <!-- Fluidos -->
+        <div class="sub-section-title mt-3">Fluidos (Cofre abierto)</div>
         {% for field in form %}
-            {% if field.name != 'nivel_combustible' and field.name != 'observaciones' %}
-            <div class="checklist-item">
-                <div class="checklist-label">{{ field.label }}</div>
-                
-                <!-- Hidden Checkbox for Django -->
-                <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}" style="display:none;" {% if field.value %}checked{% endif %}>
-                
-                <!-- Custom UI Switch -->
-                <div class="switch-container" data-target="{{ field.id_for_label }}">
-                    <div class="switch-option {% if not field.value %}active{% endif %}" data-val="false"><i class="fas fa-times"></i> Falla</div>
-                    <div class="switch-option {% if field.value %}active{% endif %}" data-val="true"><i class="fas fa-check"></i> OK</div>
-                </div>
-            </div>
+            {% if field.name in "aceite_motor,urea,anticongelante,liquido_frenos,agua_limpiabrisas" %}
+                {% include "dashboard/chofer/checklist_field_item.html" %}
+            {% endif %}
+        {% endfor %}
+
+        <!-- Seguridad Activa -->
+        <div class="sub-section-title mt-3">Seguridad Activa (Visibilidad)</div>
+        {% for field in form %}
+            {% if field.name in "luces,claxon,alerta_reversa,limpiaparabrisas" %}
+                {% include "dashboard/chofer/checklist_field_item.html" %}
+            {% endif %}
+        {% endfor %}
+
+        <!-- Controles Base -->
+        <div class="sub-section-title mt-3">Controles Base (Pedales y Encendido)</div>
+        {% for field in form %}
+            {% if field.name in "frenos,clutch,bateria_arranque" %}
+                {% include "dashboard/chofer/checklist_field_item.html" %}
+            {% endif %}
+        {% endfor %}
+
+        <!-- Exterior y Carga -->
+        <div class="sub-section-title mt-3">Exterior y Carga</div>
+        {% for field in form %}
+            {% if field.name in "llantas_presion,carroceria_golpes,lona,bandas_sujecion" %}
+                {% include "dashboard/chofer/checklist_field_item.html" %}
+            {% endif %}
+        {% endfor %}
+
+        <!-- Documentación -->
+        <div class="sub-section-title mt-3">Documentación y Otros</div>
+        {% for field in form %}
+            {% if field.name in "equipo_seguridad,documentacion,cinturon" %}
+                {% include "dashboard/chofer/checklist_field_item.html" %}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- 4. Puntos de Revisión Quincenal -->
+    <div class="checklist-section biweekly-section" id="biweekly-section">
+        <h4 class="text-warning"><i class="fas fa-tools"></i> 2. Revisión Quincenal (Mantenimiento)</h4>
+        <p class="text-muted small mb-3">Mantenimiento preventivo básico. Requerido cada 15 días o 5,000 km.</p>
+
+        {% for field in form %}
+            {% if field.name in "birlos_ajuste,limpieza_interiores,limpieza_exteriores,aceite_direccion,agua_bateria" %}
+                {% include "dashboard/chofer/checklist_field_item.html" %}
             {% endif %}
         {% endfor %}
     </div>
@@ -280,24 +367,28 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
 
-    // --- Lógica de Toggles de Revisión ---
-    const switchContainers = document.querySelectorAll('.switch-container');
+    // --- Lógica de Controles Segmentados ---
+    const segmentedControls = document.querySelectorAll('.segmented-control');
     
-    switchContainers.forEach(container => {
+    segmentedControls.forEach(container => {
         const targetId = container.getAttribute('data-target');
-        const checkbox = document.getElementById(targetId);
-        const options = container.querySelectorAll('.switch-option');
+        const targetInput = document.getElementById(targetId);
+        const type = container.getAttribute('data-type');
+        const segments = container.querySelectorAll('.segment');
 
-        options.forEach(opt => {
-            opt.addEventListener('click', function() {
-                // Remove active de ambos
-                options.forEach(o => o.classList.remove('active'));
+        segments.forEach(seg => {
+            seg.addEventListener('click', function() {
+                // Remove active de todos los segmentos en este contenedor
+                segments.forEach(s => s.classList.remove('active'));
                 // Add active al cliqueado
                 this.classList.add('active');
                 
-                // Set checkbox state
                 const val = this.getAttribute('data-val');
-                checkbox.checked = (val === 'true');
+                if (type === 'checkbox') {
+                    targetInput.checked = (val === 'true');
+                } else {
+                    targetInput.value = val;
+                }
             });
         });
     });
@@ -310,6 +401,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const submitBtn = document.getElementById('submitBtn');
     let requiereInspeccion = false;
     let modalLlantasInstance = null;
+    const biweeklySection = document.getElementById('biweekly-section');
 
     function verificarLlantas() {
         if (!unidadSelectUI.value || !kmInputUI.value) return;
@@ -323,7 +415,28 @@ document.addEventListener("DOMContentLoaded", function() {
         
         if (datos) {
             let ultimaFechaStr = datos.ultima_fecha;
-            let ultimoKm = parseInt(datos.ultimo_km || "0");
+            let ultimoKmMedicion = parseInt(datos.ultimo_km_medicion || "0");
+            let kmActualDB = parseInt(datos.km_actual_db || "0");
+
+            // VALIDACIÓN SOLICITADA: No puede ser menor al de la BD
+            if (kmActual < kmActualDB) {
+                kmInputUI.classList.add('is-invalid');
+                // Mostrar un pequeño tooltip o error si no existe uno
+                let errorSpan = document.getElementById('km-error-msg');
+                if(!errorSpan) {
+                    errorSpan = document.createElement('div');
+                    errorSpan.id = 'km-error-msg';
+                    errorSpan.className = 'text-danger small mt-1';
+                    kmInputUI.parentNode.appendChild(errorSpan);
+                }
+                errorSpan.innerText = `⚠️ El kilometraje no puede ser menor al registrado (${kmActualDB} km).`;
+                submitBtn.disabled = true;
+                return; // Detener aquí si el km es inválido
+            } else {
+                kmInputUI.classList.remove('is-invalid');
+                let errorSpan = document.getElementById('km-error-msg');
+                if(errorSpan) errorSpan.innerText = '';
+            }
             
             if (!ultimaFechaStr) {
                 // Nunca se ha medido, fuerza inspección
@@ -334,8 +447,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 let hoy = new Date();
                 let diferenciaDias = Math.floor((hoy - ultimaFecha) / (1000 * 60 * 60 * 24));
                 
-                // Condición B: km_actual ingresado >= 5000 superior al ultimoKm
-                let kmTranscurridos = kmActual - ultimoKm;
+                // Condición B: km_actual ingresado >= 5000 superior al ultimoKmMedicion
+                let kmTranscurridos = kmActual - ultimoKmMedicion;
                 
                 if (diferenciaDias >= 15 || kmTranscurridos >= 5000) {
                     requiereInspeccion = true;
@@ -349,8 +462,10 @@ document.addEventListener("DOMContentLoaded", function() {
         if (requiereInspeccion) {
             submitBtn.disabled = true;
             mostrarModalLlantas(datos ? datos.llantas : []);
+            if(biweeklySection) biweeklySection.style.display = 'block';
         } else {
             submitBtn.disabled = false;
+            if(biweeklySection) biweeklySection.style.display = 'none';
         }
     }
 

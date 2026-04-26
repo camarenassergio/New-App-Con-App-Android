@@ -1194,7 +1194,10 @@ body.dark-theme .dnd-preview-item.is-file {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--primary-blue);
+  line-height: 1.2;
 }
+
+
 
 .user-profile {
   display: flex;
@@ -1408,7 +1411,15 @@ tr:hover {
     /* Hidden by default */
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   }
-
+  .page-title {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+    padding: 5px;
+  }
+   .top-header {
+    padding: 0 12px;
+  }
+ 
   .sidebar.open {
     transform: translateX(0);
     /* Slides in */
@@ -1430,9 +1441,7 @@ tr:hover {
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
   }
 
-  .page-title {
-    font-size: 1.1rem;
-  }
+
 
   .user-profile span {
     display: none;

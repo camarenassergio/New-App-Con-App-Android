@@ -1,0 +1,477 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Panel de Chofer{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chofer-bg: #f4f7f6;
+        --card-radius: 20px;
+        --accent-color: #003b70;
+    }
+    
+    body.dark-theme {
+        --chofer-bg: #0f172a;
+        --accent-color: #38bdf8;
+    }
+
+    .mobile-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 15px;
+    }
+
+    .header-driver {
+        padding: 20px 0;
+        margin-bottom: 10px;
+    }
+
+    .welcome-text {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 5px;
+    }
+
+    .date-text {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Action Cards Grid */
+    .action-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .action-card {
+        background: var(--bg-card);
+        border-radius: var(--card-radius);
+        padding: 25px 20px;
+        text-decoration: none !important;
+        color: inherit !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--accent-color);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .action-card:active {
+        transform: scale(0.96) translateY(2px);
+        background: rgba(0,0,0,0.02);
+    }
+
+    body.dark-theme .action-card:active {
+        background: rgba(255,255,255,0.05);
+    }
+
+    .action-card:hover::before {
+        opacity: 1;
+    }
+
+    body.dark-theme .action-card {
+        border-color: rgba(255,255,255,0.05);
+    }
+
+    .action-card:active {
+        transform: scale(0.95);
+    }
+
+    .action-icon {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    .action-label {
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-notif {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #ef4444;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Route Card */
+    .section-title {
+        font-weight: 800;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        padding-left: 5px;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title i {
+        margin-right: 10px;
+        color: var(--accent-color);
+    }
+
+    .route-card {
+        background: var(--grad-primary, linear-gradient(135deg, #003b70, #005aab));
+        color: white;
+        border-radius: var(--card-radius);
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 20px rgba(0, 59, 112, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .route-card::after {
+        content: '\f4df';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        right: -10px;
+        bottom: -20px;
+        font-size: 6rem;
+        opacity: 0.1;
+        transform: rotate(-15deg);
+    }
+
+    .route-folio {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        font-weight: 800;
+        opacity: 0.8;
+    }
+
+    .route-unit {
+        font-size: 1.3rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+    }
+
+    .route-stats {
+        display: flex;
+        gap: 20px;
+    }
+
+    .route-stat-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .route-stat-val {
+        font-weight: 800;
+        font-size: 1.1rem;
+    }
+
+    .route-stat-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        opacity: 0.7;
+        font-weight: bold;
+    }
+
+    .btn-route {
+        background: white;
+        color: #003b70;
+        border: none;
+        border-radius: 12px;
+        width: 100%;
+        padding: 12px;
+        font-weight: 800;
+        margin-top: 20px;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+
+    .btn-route:active {
+        background: #f0f0f0;
+    }
+
+    /* Preparation List */
+    .prep-list {
+        background: var(--bg-card);
+        border-radius: var(--card-radius);
+        padding: 5px;
+        margin-bottom: 25px;
+    }
+
+    .prep-item {
+        padding: 15px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    body.dark-theme .prep-item {
+        border-color: rgba(255,255,255,0.05);
+    }
+
+    .prep-item:last-child {
+        border-bottom: none;
+    }
+
+    .prep-info {
+        flex: 1;
+    }
+
+    .prep-client {
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .prep-meta {
+        font-size: 0.75rem;
+        opacity: 0.6;
+        font-weight: bold;
+    }
+
+    .prep-status {
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 50px;
+        text-transform: uppercase;
+    }
+
+    .status-pending { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+    .status-surtido { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+        opacity: 0.5;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+    /* Lockdown Styles */
+    .lockdown-overlay {
+        background: #fef2f2;
+        border: 2px solid #ef4444;
+        border-radius: var(--card-radius);
+        padding: 25px 20px;
+        margin-bottom: 25px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.15);
+    }
+
+    body.dark-theme .lockdown-overlay {
+        background: rgba(239, 68, 68, 0.05);
+        border-color: #f87171;
+    }
+
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .lockdown-title {
+        color: #b91c1c;
+        font-weight: 900;
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+    }
+
+    body.dark-theme .lockdown-title {
+        color: #f87171;
+    }
+
+    .pending-unit-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+
+    .pending-unit-card:active {
+        background: var(--chofer-bg);
+    }
+
+    .btn-disabled {
+        opacity: 0.4;
+        pointer-events: none;
+        filter: grayscale(1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mobile-container">
+    <!-- HEADER -->
+    <div class="header-driver">
+        <div class="date-text">{{ hoy|date:"l, d F Y" }}</div>
+        <div class="welcome-text">¡Hola, {{ user.first_name }}! 👋</div>
+    </div>
+
+    <!-- LOCKDOWN SECTION (Candado de Dirección General) -->
+    {% if bloqueo_mantenimiento %}
+    <div class="lockdown-overlay">
+        <i class="fas fa-user-shield fs-1 mb-3 text-danger"></i>
+        <div class="lockdown-title">ACCESO RESTRINGIDO</div>
+        <p class="small mb-4 fw-bold">Por seguridad operativa, debes realizar el checklist de todas las unidades a tu cargo hoy antes de iniciar cualquier otra actividad.</p>
+        
+        <div class="text-start">
+            <label class="x-small text-uppercase fw-bold opacity-75 mb-2 px-2">Pendientes de inspección:</label>
+            {% for u in checklist_pendientes %}
+            <a href="{% url 'dashboard:checklist_unidad_create' %}?u={{ u.id }}" class="pending-unit-card">
+                <div>
+                    <span class="d-block fw-bold">{{ u.nUnidad }}</span>
+                    <span class="x-small opacity-75">{{ u.marca }} · {{ u.placas }}</span>
+                </div>
+                <i class="fas fa-chevron-right text-danger"></i>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- QUICK ACTIONS -->
+    <div class="action-grid">
+        <a href="{% url 'dashboard:checklist_unidad_create' %}" class="action-card">
+            <div class="action-icon">
+                {% if ya_lleno_checklist %}
+                    <i class="fas fa-check-circle text-success"></i>
+                {% else %}
+                    <i class="fas fa-clipboard-check"></i>
+                {% endif %}
+            </div>
+            <div class="action-label">Checklist</div>
+            {% if not ya_lleno_checklist %}
+                <div class="badge-notif">!</div>
+            {% endif %}
+        </a>
+
+        <a href="{% url 'dashboard:combustible_create' %}" class="action-card {% if bloqueo_mantenimiento %}btn-disabled{% endif %}">
+            <div class="action-icon"><i class="fas fa-gas-pump"></i></div>
+            <div class="action-label">Combustible</div>
+        </a>
+
+        <a href="{% url 'dashboard:notificaciones_list' %}" class="action-card">
+            <div class="action-icon"><i class="fas fa-comment-alt"></i></div>
+            <div class="action-label">Mensajería</div>
+            {% if mensajes_pendientes > 0 %}
+                <div class="badge-notif">{{ mensajes_pendientes }}</div>
+            {% endif %}
+        </a>
+
+        <a href="{% url 'dashboard:gastos_create' %}" class="action-card {% if bloqueo_mantenimiento %}btn-disabled{% endif %}">
+            <div class="action-icon"><i class="fas fa-receipt"></i></div>
+            <div class="action-label">Gastos/Casetas</div>
+        </a>
+    </div>
+
+    <!-- ACTIVE ROUTES -->
+    <div class="section-title">
+        <i class="fas fa-route"></i> Mis Rutas de Hoy
+    </div>
+
+    {% for ruta in mis_rutas %}
+    <div class="route-card animate__animated animate__fadeInUp">
+        <div class="route-folio">RUTA #{{ ruta.id }}</div>
+        <div class="route-unit">{{ ruta.unidad.nUnidad|default:"Vehículo Personal" }}</div>
+        
+        <div class="route-stats">
+            <div class="route-stat-item">
+                <span class="route-stat-val">{{ ruta.despachos.count }}</span>
+                <span class="route-stat-label">Paradas</span>
+            </div>
+            <div class="route-stat-item">
+                <span class="route-stat-val">{{ ruta.estado|capfirst }}</span>
+                <span class="route-stat-label">Estatus</span>
+            </div>
+        </div>
+
+        <a href="{% url 'dashboard:viaje_detail' ruta.pk %}" class="btn-route">
+            Ver Detalles y Paradas
+        </a>
+    </div>
+    {% empty %}
+    <div class="prep-list">
+        <div class="empty-state">
+            {% if bloqueo_mantenimiento %}
+                <i class="fas fa-lock opacity-25"></i>
+                <p class="mb-0 fw-bold">Funciones Bloqueadas</p>
+                <small>Termina tus revisiones para ver rutas.</small>
+            {% else %}
+                <i class="fas fa-truck-loading"></i>
+                <p class="mb-0 fw-bold">Sin rutas asignadas hoy</p>
+                <small>Espera a que logística asigne tu unidad.</small>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- PREPARATION TRACKING -->
+    <div class="section-title">
+        <i class="fas fa-box-open"></i> En Preparación (Almacén)
+    </div>
+
+    <div class="prep-list">
+        {% for desp in en_preparacion %}
+        <div class="prep-item">
+            <div class="prep-info">
+                <span class="prep-client">{{ desp.pedido.cliente.razon_social|default:desp.pedido.cliente_nombre_manual|truncatechars:30 }}</span>
+                <span class="prep-meta">Folio: {{ desp.pedido.folio_sae }} · {{ desp.peso_asignado_kg }} kg</span>
+            </div>
+            <div class="prep-status {% if desp.estado == 'ASIGNADO_SURTIDO' %}status-surtido{% else %}status-pending{% endif %}">
+                {% if desp.estado == 'ASIGNADO_SURTIDO' %}Surtido{% else %}Pendiente{% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-stream"></i>
+            <p class="mb-0 fw-bold">Nada en preparación</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- FOOTER SPACER -->
+    <div style="height: 50px;"></div>
+</div>
+{% endblock %}

@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Auditoría de Inspección: {{ checklist.unidad.nUnidad }}{% endblock %}
+
+{% block content %}
+<div class="container py-4 px-md-5">
+    
+    <!-- HEADER AUDITORÍA -->
+    <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+        <div class="card-body p-0">
+            <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="header-icon-box me-3">
+                        <i class="fas fa-file-invoice fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">Reporte de Auditoría</h4>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">ID Inspección: #{{ checklist.id }} | {{ checklist.fecha|date:"d M Y" }}</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'dashboard:checklist_unidad_list' %}" class="btn btn-glass-white rounded-pill px-4 fw-bold">
+                        <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
+                    </a>
+                    <button onclick="window.print()" class="btn btn-white rounded-pill px-4 fw-bold text-primary shadow-sm">
+                        <i class="fas fa-print me-2"></i>Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- COLUMNA IZQUIERDA: RESUMEN Y ESTADOS -->
+        <div class="col-lg-8">
+            
+            <!-- TARJETA DE ESTADO GENERAL -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h5 class="fw-bold mb-1">Estado de la Unidad</h5>
+                            <p class="text-muted small">Resumen ejecutivo del cumplimiento SDC 2.0</p>
+                        </div>
+                        <div class="text-end">
+                            {% if checklist.aceite_motor and checklist.anticongelante and checklist.llantas_birlos and checklist.carroceria_golpes and checklist.luces and checklist.cinturon and checklist.equipo_seguridad == 'COMPLETO' and checklist.documentacion == 'COMPLETO' and checklist.frenos and checklist.bateria_arranque and checklist.limpiaparabrisas and checklist.claxon %}
+                                <span class="badge bg-success-subtle text-success p-3 rounded-4 border-0 shadow-xs">
+                                    <i class="fas fa-check-circle fa-2x d-block mb-2"></i>
+                                    <span class="fw-800 text-uppercase">100% OPERATIVA</span>
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger p-3 rounded-4 border-0 shadow-xs">
+                                    <i class="fas fa-exclamation-triangle fa-2x d-block mb-2"></i>
+                                    <span class="fw-800 text-uppercase">OBSERVACIONES PENDIENTES</span>
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-4 border">
+                                <div class="x-small text-muted fw-bold text-uppercase mb-2 opacity-75">Nivel de Combustible</div>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1" style="height: 10px; border-radius: 10px;">
+                                        <div class="progress-bar {% if checklist.nivel_combustible < 25 %}bg-danger{% else %}bg-success{% endif %} progress-bar-striped progress-bar-animated" 
+                                             style="width: {{ checklist.nivel_combustible }}%"></div>
+                                    </div>
+                                    <span class="ms-3 fw-bold">{{ checklist.nivel_combustible }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-4 border">
+                                <div class="x-small text-muted fw-bold text-uppercase mb-2 opacity-75">Kilometraje Reportado</div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                                    <span class="fw-bold fs-5">{{ checklist.km_actual|default:"0" }} <span class="small text-muted fw-normal">KM</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DETALLE TÉCNICO GRUPOS -->
+            <div class="row g-4">
+                <!-- MECÁNICA Y FLUIDOS -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
+                        <div class="card-header bg-transparent border-0 pt-4 px-4">
+                            <h6 class="fw-bold text-muted mb-0 x-small text-uppercase tracking-widest"><i class="fas fa-cogs me-2"></i>Mecánica y Fluidos</h6>
+                        </div>
+                        <div class="card-body px-4 pb-4">
+                            <div class="detail-list">
+                                {% include 'dashboard/components/audit_item.html' with label="Aceite Motor" val=checklist.aceite_motor type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Aceite Caja" val=checklist.aceite_caja type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Aceite Diferencial" val=checklist.aceite_diferencial type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Aceite Dirección" val=checklist.aceite_direccion type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Anticongelante" val=checklist.anticongelante type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Líquido de Frenos" val=checklist.liquido_frenos type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Agua Batería" val=checklist.agua_bateria type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Frenos (Pie/Mano)" val=checklist.frenos type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Clutch / Embrague" val=checklist.clutch type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Batería y Arranque" val=checklist.bateria_arranque type="bool" %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEGURIDAD Y OTROS -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
+                        <div class="card-header bg-transparent border-0 pt-4 px-4">
+                            <h6 class="fw-bold text-muted mb-0 x-small text-uppercase tracking-widest"><i class="fas fa-shield-alt me-2"></i>Seguridad y Equipo</h6>
+                        </div>
+                        <div class="card-body px-4 pb-4">
+                            <div class="detail-list">
+                                {% include 'dashboard/components/audit_item.html' with label="Equipo de Seguridad" val=checklist.equipo_seguridad type="choice" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Documentación" val=checklist.documentacion type="choice" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Llantas y Birlos" val=checklist.llantas_birlos type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Carrocería" val=checklist.carroceria_golpes type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Luces (Gral)" val=checklist.luces type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Cinturón Seg." val=checklist.cinturon type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Limpiaparabrisas" val=checklist.limpiaparabrisas type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Agua Limpiabrisas" val=checklist.agua_limpiabrisas type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Claxon" val=checklist.claxon type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Alerta Reversa" val=checklist.alerta_reversa type="bool" %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEUMÁTICOS (Movido aquí para mayor visibilidad) -->
+            <div class="card border-0 shadow-sm mt-4" style="border-radius: 20px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold text-muted mb-0 x-small text-uppercase tracking-widest"><i class="fas fa-tire me-2"></i>Estado de Neumáticos</h6>
+                    <span class="badge bg-info-subtle text-info rounded-pill x-small px-3">SDC 2.0</span>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    {% if mediciones_llantas %}
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="text-muted x-small text-uppercase">
+                                    <tr>
+                                        <th class="border-0">Posición</th>
+                                        <th class="border-0 text-center">Presión (PSI)</th>
+                                        <th class="border-0 text-center">Profundidad (mm)</th>
+                                        <th class="border-0">Observaciones SDC</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for m in mediciones_llantas %}
+                                    <tr>
+                                        <td class="fw-bold text-dark">{{ m.llanta.get_posicion_display }}</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-light text-dark border rounded-pill px-3">{{ m.presion_psi }} PSI</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="fw-bold fs-6 {% if m.profundidad_mm < 2 %}text-danger{% elif m.profundidad_mm < 4 %}text-warning{% else %}text-success{% endif %}">
+                                                {{ m.profundidad_mm }} mm
+                                            </span>
+                                        </td>
+                                        <td class="small text-muted">{{ m.observaciones|default:"Sin alertas" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4 bg-light rounded-4 border border-dashed">
+                            <i class="fas fa-history fa-2x mb-2 d-block text-muted opacity-50"></i>
+                            <p class="small mb-0 text-muted">No se requirió medición de llantas en este registro.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- OBSERVACIONES -->
+            <div class="card border-0 shadow-sm mt-4 mb-5" style="border-radius: 20px;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-muted mb-0 x-small text-uppercase tracking-widest"><i class="fas fa-comment-dots me-2"></i>Comentarios del Chofer</h6>
+                        {% if checklist.revisado_admin %}
+                            <span class="badge bg-success-subtle text-success rounded-pill px-3">
+                                <i class="fas fa-check-double me-1"></i> Enterado por {{ checklist.usuario_revision_admin.username }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="p-3 bg-light rounded-4 min-vh-10 border">
+                        {% if checklist.observaciones %}
+                            <p class="mb-0 text-dark">{{ checklist.observaciones }}</p>
+                        {% else %}
+                            <p class="mb-0 text-muted italic">Sin observaciones adicionales registradas.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- BOTÓN ENTERADO (Solo si hay fallas o observaciones y no está revisado) -->
+                    {% if not checklist.revisado_admin and request.user.personal.puesto == 'ADMIN' %}
+                        <div class="mt-4 pt-3 border-top text-end">
+                            <form action="{% url 'dashboard:checklist_unidad_enterado' checklist.id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning rounded-pill px-5 fw-bold shadow-sm">
+                                    <i class="fas fa-check-circle me-2"></i>ESTOY ENTERADO DE LA FALLA
+                                </button>
+                                <p class="x-small text-muted mt-2 mb-0">Haz clic para confirmar que has leído el reporte de falla.</p>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: INFO E HIGIENE -->
+        <div class="col-lg-4">
+            <!-- INFO CHOFER Y UNIDAD -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px;">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-muted mb-4 x-small text-uppercase tracking-widest">Responsables</h6>
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="avatar-md bg-success-subtle rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 48px; height: 48px;">
+                            <i class="fas fa-user-tie text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="x-small text-muted fw-bold text-uppercase">Chofer</div>
+                            <div class="fw-bold text-dark">{{ checklist.chofer.get_full_name|default:checklist.chofer.username }}</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-md bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 48px; height: 48px;">
+                            <i class="fas fa-truck text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="x-small text-muted fw-bold text-uppercase">Vehículo</div>
+                            <div class="fw-bold text-dark">{{ checklist.unidad.nUnidad }}</div>
+                            <div class="x-small text-muted">{{ checklist.unidad.placas }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIMPIEZA (Movido a la derecha) -->
+            <div class="card border-0 shadow-sm" style="border-radius: 20px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h6 class="fw-bold text-muted mb-0 x-small text-uppercase tracking-widest"><i class="fas fa-broom me-2"></i>Estado de Higiene</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="detail-list">
+                        {% include 'dashboard/components/audit_item.html' with label="Interiores" val=checklist.limpieza_interiores type="choice" %}
+                        {% include 'dashboard/components/audit_item.html' with label="Exteriores" val=checklist.limpieza_exteriores type="choice" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .grad-primary { background: linear-gradient(135deg, #4b6cb7, #182848) !important; }
+    .btn-glass-white { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; }
+    .btn-glass-white:hover { background: rgba(255,255,255,0.25); color: white; }
+    .btn-white { background: white; border: 0; }
+    .btn-white:hover { background: #f8f9fa; }
+    
+    .detail-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .x-small { font-size: 0.72rem; }
+    .fw-800 { font-weight: 800; }
+    .tracking-widest { letter-spacing: 0.2em; }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    
+    @media print {
+        .btn, nav, .card-header-actions { display: none !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        body { background: white !important; }
+        .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; }
+    }
+</style>
+{% endblock %}

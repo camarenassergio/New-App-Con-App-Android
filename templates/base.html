@@ -19,9 +19,17 @@
       rel="stylesheet"
     />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.60" />
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.61" />
     <!-- Favicon -->
-    <link rel="icon" href="data:,">
+    <link rel="icon" href="{% static 'pwa/icon-192.png' %}">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="{% static 'pwa/manifest.json' %}">
+    <meta name="theme-color" content="#00158a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Casa Lupita">
+    <link rel="apple-touch-icon" href="{% static 'pwa/icon-192.png' %}">
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
     <!-- Bootstrap JS (Head for earlier availability) -->
@@ -38,6 +46,7 @@
     <!-- Skip to content (keyboard / screen reader) -->
     <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
     <!-- Sidebar -->
+    {% if request.user.personal.puesto != 'CHOFER' %}
     {% block sidebar %}
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -278,15 +287,22 @@
       </ul>
     </aside>
     {% endblock %}
+    {% endif %}
 
     <!-- Main Content -->
-    <main id="main-content" class="main-content">
+    <main id="main-content" class="main-content {% if request.user.personal.puesto == 'CHOFER' %}full-width{% endif %}">
       <!-- Top Header -->
       <header class="top-header">
         <div style="display: flex; align-items: center;">
-            <button id="menu-toggle" class="menu-toggle">
-                <i class="fas fa-bars"></i>
-            </button>
+            {% if request.user.personal.puesto == 'CHOFER' %}
+                <a href="{% url 'dashboard:chofer_home' %}" class="btn btn-link text-decoration-none" style="padding: 10px; color: var(--primary-blue); font-size: 1.2rem;" title="Inicio">
+                    <i class="fas fa-home"></i>
+                </a>
+            {% else %}
+                <button id="menu-toggle" class="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            {% endif %}
             <h1 class="page-title">
               {% block page_title %}Resumen General{% endblock %}
             </h1>
@@ -763,5 +779,16 @@
     </script>
 
     {% block extra_js %}{% endblock %}
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register("{% static 'js/service-worker.js' %}")
+            .then((reg) => console.log('[PWA] Service worker registered.', reg))
+            .catch((err) => console.log('[PWA] Service worker registration failed.', err));
+        });
+      }
+    </script>
   </body>
 </html>

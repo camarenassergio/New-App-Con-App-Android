@@ -79,6 +79,10 @@ class Unidad(models.Model):
     HOLOGRAMA_CHOICES = [('00', '00'), ('0', '0'), ('1', '1'), ('2', '2')]
     holograma = models.CharField(max_length=2, choices=HOLOGRAMA_CHOICES, default='00', editable=False)
     vencimiento_verificacion = models.DateField(null=True, blank=True)
+    
+    # Responsable de Mantenimiento (Chofer asignado para cuidado diario)
+    responsable_mantenimiento = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='unidades_a_cargo', verbose_name="Responsable de Mantenimiento")
+    
     observaciones = models.TextField(verbose_name="Observaciones", null=True, blank=True)
 
     def __str__(self):
@@ -616,6 +620,11 @@ class Obra(models.Model):
     # Reglas de Negocio
     esta_activa = models.BooleanField(default=True, verbose_name="Obra Activa")
     zona_aprobada = models.BooleanField(default=True, verbose_name="¿Zona autorizada por Logística?", help_text="Si se desmarca, el pedido quedará bloqueado hasta revisión.")
+    # Geocalización (Memoria de Obra)
+    latitud = models.DecimalField(max_digits=12, decimal_places=9, null=True, blank=True, verbose_name="Latitud GPS")
+    longitud = models.DecimalField(max_digits=12, decimal_places=9, null=True, blank=True, verbose_name="Longitud GPS")
+    ubicacion_verificada = models.BooleanField(default=False, verbose_name="¿Ubicación Verificada?")
+    
     fecha_ultimo_pedido = models.DateTimeField(null=True, blank=True, verbose_name="Fecha del último pedido")
     
     class Meta:
@@ -1078,6 +1087,7 @@ class Personal(models.Model):
     usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     puesto = models.CharField(max_length=20, choices=PUESTO_CHOICES)
     roles_secundarios = models.CharField(max_length=255, blank=True, null=True, help_text="Separados por coma (Ej. MOSTRADOR,CAJA,LOGISTICA)")
+    esta_activo = models.BooleanField(default=True, verbose_name="¿Está activo hoy?", help_text="Si se desmarca, sus unidades a cargo se repartirán entre otros choferes.")
     
     
     nombre = models.CharField(max_length=100, verbose_name="Nombre(s)")
@@ -1459,19 +1469,57 @@ class ChecklistUnidad(models.Model):
     
     # Toggles binarios de verificación (True = OK, False = Requiere atención / No verificado)
     aceite_motor = models.BooleanField(default=False, verbose_name="Nivel Aceite Motor OK")
+    aceite_direccion = models.BooleanField(default=False, verbose_name="Aceite de Dirección OK")
+    
+    NIVEL_UREA = [
+        ('NA', 'No aplica'),
+        ('BAJO', 'Bajo'),
+        ('ALTO', 'Alto'),
+    ]
+    urea = models.CharField(max_length=10, choices=NIVEL_UREA, default='NA', verbose_name="Nivel de Urea (AdBlue)")
     anticongelante = models.BooleanField(default=False, verbose_name="Nivel Anticongelante/Agua OK")
-    llantas_birlos = models.BooleanField(default=False, verbose_name="Presión Llantas y Ajuste Birlos OK")
+    llantas_presion = models.BooleanField(default=False, verbose_name="Presión de Llantas (Visual)")
+    birlos_ajuste = models.BooleanField(default=False, verbose_name="Ajuste Físico de Birlos")
     carroceria_golpes = models.BooleanField(default=False, verbose_name="Carrocería sin golpes evidentes")
     luces = models.BooleanField(default=False, verbose_name="Luces (altas, bajas, cuartos, dir.) OK")
     cinturon = models.BooleanField(default=False, verbose_name="Cinturón de seguridad OK")
-    equipo_seguridad = models.BooleanField(default=False, verbose_name="Gato, palanca, cruceta, refacción, triángulo OK")
-    documentacion = models.BooleanField(default=False, verbose_name="Circulación, Póliza, Licencia OK")
+    
+    ESTADO_EQUIPO = [
+        ('NO_CUENTA', 'No se cuenta'),
+        ('INCOMPLETO', 'Incompleto'),
+        ('COMPLETO', 'Completo'),
+    ]
+    equipo_seguridad = models.CharField(max_length=20, choices=ESTADO_EQUIPO, default='COMPLETO', verbose_name="Gato, palanca, cruceta, refacción, triángulo")
+    documentacion = models.CharField(max_length=20, choices=ESTADO_EQUIPO, default='COMPLETO', verbose_name="Circulación, Póliza, Licencia")
+    
     frenos = models.BooleanField(default=False, verbose_name="Freno pie y mano OK")
+    liquido_frenos = models.BooleanField(default=False, verbose_name="Líquido de Frenos OK")
+    clutch = models.BooleanField(default=False, verbose_name="Clutch / Embrague OK")
     bateria_arranque = models.BooleanField(default=False, verbose_name="Batería y Arranque OK")
-    limpiaparabrisas = models.BooleanField(default=False, verbose_name="Limpiaparabrisas OK")
+    limpiaparabrisas = models.BooleanField(default=False, verbose_name="Limpiaparabrisas (Wipers) OK")
+    agua_limpiabrisas = models.BooleanField(default=False, verbose_name="Agua de Limpiaparabrisas OK")
     claxon = models.BooleanField(default=False, verbose_name="Claxon OK")
+    
+    # Limpieza
+    ESTADO_REALIZADO = [
+        ('NO_REALIZADO', 'No Realizado'),
+        ('REALIZADO', 'Realizado'),
+    ]
+    limpieza_interiores = models.CharField(max_length=20, choices=ESTADO_REALIZADO, default='REALIZADO', verbose_name="Limpieza de Interiores")
+    limpieza_exteriores = models.CharField(max_length=20, choices=ESTADO_REALIZADO, default='REALIZADO', verbose_name="Limpieza de Exteriores")
+
+    # Nuevos puntos solicitados
+    alerta_reversa = models.BooleanField(default=False, verbose_name="Alerta de Reversa OK")
+    retrovisores = models.BooleanField(default=False, verbose_name="Espejos Retrovisores OK")
+    lona = models.BooleanField(default=False, verbose_name="Lona en buen estado / Disponible")
+    bandas_sujecion = models.BooleanField(default=False, verbose_name="Bandas de Sujeción / Matracas OK")
 
     observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones / Falla reportada")
+
+    # Auditoría / Seguimiento
+    revisado_admin = models.BooleanField(default=False, verbose_name="Revisado por Administración")
+    fecha_revision_admin = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de Revisión Admin")
+    usuario_revision_admin = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="checklists_revisados", verbose_name="Admin que revisó")
 
     class Meta:
         verbose_name = "Checklist Diario de Unidad"

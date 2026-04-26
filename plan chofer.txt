@@ -1,0 +1,96 @@
+# Plan de Implementación: App Chofer - Ecosistema Móvil Casa Lupita
+
+Este plan redefine la experiencia del chofer integrando flujos operativos críticos (Checklist, Mensajería, Gastos) y optimizando la navegación inteligente mediante la "Memoria de Obra".
+
+## User Review Required
+
+> [!NOTE]
+> Se ha confirmado el uso de la **API de Geolocalización del Navegador** (Smartphone) para capturar la ubicación de la obra al momento de la llegada, permitiendo al chofer "Registrar o Confirmar Ubicación" de forma sencilla.
+
+> [!IMPORTANT]
+> Los gastos de casetas/peajes registrados por el chofer serán validados posteriormente por un supervisor contra el recibo físico/digital, permitiendo fluidez operativa en ruta.
+
+## Hitos de Desarrollo
+
+### Hito 1: Hub del Chofer y Preparación de Jornada
+**Objetivo**: Centralizar las herramientas necesarias para iniciar el día.
+- **Redirección de Perfil**: Al loguearse, si `puesto == 'CHOFER'`, enviar a `dashboard:chofer_home`.
+- **Dashboard Hub**:
+    - Tarjeta de **Checklist Diario**: Acceso directo para cumplir con la revisión de la unidad.
+    - **Mensajería Interna**: Bandeja de entrada simplificada para instrucciones de logística.
+    - **Registro de Combustible**: Vista móvil para subir tickets y niveles de tanque.
+- **Lista de Preparación**: Vista de los despachos que Almacén está surtiendo actualmente para sus rutas asignadas (Visibilidad proactiva).
+
+### Hito 2: Gestión de Rutas y Navegación Inteligente
+**Objetivo**: Optimizar el traslado y la localización de clientes.
+- **Listado de Rutas (`ViajeNuevo`)**: Visualización cronológica de las rutas del día.
+- **Navegación con "Memoria de Obra"**:
+    - Botones para Google Maps y Waze.
+    - **Captura de Coordenadas (GPS Smartphone)**: Al marcar "Llegué a la Obra", se utiliza el GPS del dispositivo para capturar la posición exacta. Si la `Obra` no tiene coordenadas, se guardan automáticamente (Ubicación verificada).
+    - Opción para "Confirmar Ubicación" si ya existe una previa, asegurando precisión.
+
+### Hito 3: Ejecución de Entrega y Evidencias
+**Objetivo**: Asegurar la trazabilidad y calidad de la entrega.
+- **Check-in de Parada**: Registro de llegada con timestamp.
+- **Evidencias Premium**:
+    - Captura de múltiples fotos del material descargado.
+    - Captura de firma digital del receptor.
+    - Foto del ticket/remisión firmado físicamente.
+- **Reporte de Incidencias**: Botón rápido para reportar problemas (Cliente no está, obra cerrada, material rechazado).
+
+### Hito 4: Gastos en Ruta y Liquidación
+**Objetivo**: Facilitar el registro de egresos operativos.
+- **Módulo de Casetas/Peajes**: Registro rápido de gastos de casetas con foto del comprobante.
+- **Gastos Menores**: Habilitar registro de otros gastos operativos habilitados por administración.
+- **Resumen de Liquidación**: Pantalla final para el chofer al terminar su jornada con el resumen de gastos y entregas realizadas.
+
+## Propuestos Cambios Técnicos
+
+### Modelos
+#### [MODIFY] [dashboard/models.py](file:///home/sscamarenas/Proyectos/Logistica%20Casa%20Lupita/New%20App%20Con%20App%20Android/dashboard/models.py)
+- Añadir `latitud` y `longitud` (DecimalField) a `Obra`.
+- Asegurar que `GastoUnidad` soporte los nuevos tipos de gasto desde la App Chofer.
+
+### Vistas
+#### [NEW] `ChoferHomeView`, `ChoferPreparacionListView`, `ChoferViajeDetailView`, `ChoferGastoCreateView`.
+
+## Plan de Verificación
+
+### Pruebas de Campo (Emulación)
+1. **Flujo de Inicio**: Login -> Checklist -> Revisar Preparación.
+2. **Geolocalización**: Simular captura de GPS en una obra nueva y verificar que se guarde en la BD.
+3. **Multimodal**: Probar la carga de evidencias y firma en una sola transacción HTMX.
+
+
+--- TASKS ---
+
+
+# Tareas: Implementación App Chofer (Smartphone Optimized)
+
+## Hito 1: Hub del Chofer y Preparación de Jornada [/]
+- [ ] Base de Datos: Añadir `latitud` y `longitud` a `Obra`
+- [ ] Backend: Crear `ChoferDashboardView` (Filtrado por usuario y fecha)
+- [ ] Backend: Actualizar `DashboardHomeView` para redirección de CHOFER
+- [ ] URL: Registrar `chofer/dashboard/` y otras rutas iniciales
+- [ ] Template: Crear `dashboard/chofer/dashboard.html` (Premium Mobile Hub)
+- [ ] Integración: Link a Checklist Diario y Registro de Combustible
+- [ ] Integración: Bandeja de entrada de Mensajería Interna
+
+## Hito 2: Gestión de Rutas y Navegación Inteligente [ ]
+- [ ] Backend: Crear `ChoferViajeDetailView`
+- [ ] Template: Crear `dashboard/chofer/viaje_detail.html`
+- [ ] Funcionalidad GPS: Script JS para captura de ubicación al llegar
+- [ ] Backend: Endpoint para guardar coordenadas en `Obra`
+- [ ] Integración: Botones de navegación Maps/Waze con coordenadas guardadas
+
+## Hito 3: Ejecución de Entrega y Evidencias [ ]
+- [ ] Backend: Crear `ChoferDespachoDetailView` (Modo parada)
+- [ ] Template: Crear `dashboard/chofer/despacho_detail.html`
+- [ ] Funcionalidad Evidencia: Captura múltiple de fotos
+- [ ] Funcionalidad Firma: Canvas JS para firma digital
+- [ ] Lógica: Actualización de estado de despacho a "ENTREGADO" con evidencias
+
+## Hito 4: Gastos en Ruta y Liquidación [ ]
+- [ ] Backend: Vista para registro de Casetas/Peajes
+- [ ] Template: Formulario móvil para gastos con carga de ticket
+- [ ] Pantalla: Resumen de liquidación de jornada

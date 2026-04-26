@@ -29,3 +29,8 @@ def clean_phone(value):
     if not value:
         return ""
     return re.sub(r'\D', '', str(value))
+@register.filter(name='replace_ok')
+def replace_ok(value):
+    if not value:
+        return ""
+    return str(value).replace(" OK", "").strip()

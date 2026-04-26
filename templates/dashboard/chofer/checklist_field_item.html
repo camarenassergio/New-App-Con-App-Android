@@ -1,0 +1,50 @@
+{% load dashboard_extras %}
+<div class="checklist-item">
+    <div class="checklist-label">{{ field.label|replace_ok }}</div>
+    
+    {% if field.field.choices %}
+        <!-- Hidden Select for Django -->
+        <select name="{{ field.name }}" id="{{ field.id_for_label }}" style="display:none;">
+            {% for val, label in field.field.choices %}
+                {% if val %}
+                    <option value="{{ val }}" {% if field.value == val %}selected{% endif %}>{{ label }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        
+        <!-- Segmented Control for Choices -->
+        <div class="segmented-control" data-target="{{ field.id_for_label }}" data-type="select">
+            {% for val, label in field.field.choices %}
+                {% if val %}
+                    <div class="segment {% if field.value == val %}active{% endif %}" 
+                         data-val="{{ val }}" 
+                         data-color="{{ val|lower }}">
+                        {{ label }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Hidden Checkbox for Django -->
+        <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}" style="display:none;" {% if field.value %}checked{% endif %}>
+        
+        <!-- Segmented Control for Booleans -->
+        <div class="segmented-control" data-target="{{ field.id_for_label }}" data-type="checkbox">
+            {% if field.name == 'birlos_ajuste' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-times"></i> No Realizado
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check"></i> Realizado
+                </div>
+            {% else %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-times"></i> Falla
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check"></i> OK
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
