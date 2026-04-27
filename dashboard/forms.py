@@ -262,6 +262,10 @@ class RegistroCombustibleForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super(RegistroCombustibleForm, self).__init__(*args, **kwargs)
+        
+        # Solo mostrar unidades activas (en servicio) para carga de combustible
+        self.fields['unidad'].queryset = Unidad.objects.filter(en_servicio=True).order_by('nUnidad')
+        
         # Hacer obligatoria la evidencia fotográfica solo cuando se está creando un nuevo registro
         if not self.instance.pk:
             self.fields['evidencia_antes'].required = True
