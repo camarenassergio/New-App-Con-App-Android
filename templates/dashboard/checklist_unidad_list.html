@@ -117,7 +117,7 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    {% if check.aceite_motor and check.anticongelante and check.llantas_birlos and check.carroceria_golpes and check.luces and check.cinturon and check.equipo_seguridad and check.documentacion and check.frenos and check.bateria_arranque and check.limpiaparabrisas and check.claxon %}
+                                    {% if check.aceite_motor and check.anticongelante and check.llantas_presion and check.birlos_ajuste and check.carroceria_golpes and check.luces and check.cinturon and check.equipo_seguridad == 'COMPLETO' and check.documentacion == 'COMPLETO' and check.frenos and check.clutch and check.bateria_arranque and check.limpiaparabrisas and check.claxon and check.urea != 'BAJO' %}
                                         <span class="badge rounded-pill bg-success-subtle text-success border-0 px-3 py-2 fw-bold shadow-xs">
                                             <i class="fas fa-check-circle me-1"></i> 100% OPERATIVA
                                         </span>

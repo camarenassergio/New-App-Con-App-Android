@@ -1403,9 +1403,9 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
         # --- Lógica de Notificaciones por Falla/Observación ---
         tiene_falla = False
         campos_bool = [
-            'aceite_motor', 'aceite_caja', 'aceite_diferencial', 'aceite_direccion', 
-            'anticongelante', 'llantas_birlos', 'carroceria_golpes', 'luces', 'cinturon', 
-            'frenos', 'liquido_frenos', 'clutch', 'bateria_arranque', 'agua_bateria', 
+            'aceite_motor', 'aceite_direccion', 
+            'anticongelante', 'llantas_presion', 'birlos_ajuste', 'carroceria_golpes', 'luces', 'cinturon', 
+            'frenos', 'liquido_frenos', 'clutch', 'bateria_arranque', 
             'limpiaparabrisas', 'agua_limpiabrisas', 'claxon', 'alerta_reversa', 
             'retrovisores', 'lona', 'bandas_sujecion'
         ]
@@ -1414,6 +1414,9 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
             if not getattr(form.instance, campo):
                 tiene_falla = True
                 break
+        
+        if form.instance.urea == 'BAJO':
+            tiene_falla = True
         
         if not tiene_falla:
             if form.instance.equipo_seguridad != 'COMPLETO' or form.instance.documentacion != 'COMPLETO':

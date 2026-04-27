@@ -1489,8 +1489,8 @@ class ChecklistUnidad(models.Model):
         ('INCOMPLETO', 'Incompleto'),
         ('COMPLETO', 'Completo'),
     ]
-    equipo_seguridad = models.CharField(max_length=20, choices=ESTADO_EQUIPO, default='COMPLETO', verbose_name="Gato, palanca, cruceta, refacción, triángulo")
-    documentacion = models.CharField(max_length=20, choices=ESTADO_EQUIPO, default='COMPLETO', verbose_name="Circulación, Póliza, Licencia")
+    equipo_seguridad = models.CharField(max_length=20, choices=ESTADO_EQUIPO, default='NO_CUENTA', verbose_name="Gato, palanca, cruceta, refacción, triángulo")
+    documentacion = models.CharField(max_length=20, choices=ESTADO_EQUIPO, default='NO_CUENTA', verbose_name="Circulación, Póliza, Licencia")
     
     frenos = models.BooleanField(default=False, verbose_name="Freno pie y mano OK")
     liquido_frenos = models.BooleanField(default=False, verbose_name="Líquido de Frenos OK")
@@ -1505,8 +1505,8 @@ class ChecklistUnidad(models.Model):
         ('NO_REALIZADO', 'No Realizado'),
         ('REALIZADO', 'Realizado'),
     ]
-    limpieza_interiores = models.CharField(max_length=20, choices=ESTADO_REALIZADO, default='REALIZADO', verbose_name="Limpieza de Interiores")
-    limpieza_exteriores = models.CharField(max_length=20, choices=ESTADO_REALIZADO, default='REALIZADO', verbose_name="Limpieza de Exteriores")
+    limpieza_interiores = models.CharField(max_length=20, choices=ESTADO_REALIZADO, default='NO_REALIZADO', verbose_name="Limpieza de Interiores")
+    limpieza_exteriores = models.CharField(max_length=20, choices=ESTADO_REALIZADO, default='NO_REALIZADO', verbose_name="Limpieza de Exteriores")
 
     # Nuevos puntos solicitados
     alerta_reversa = models.BooleanField(default=False, verbose_name="Alerta de Reversa OK")

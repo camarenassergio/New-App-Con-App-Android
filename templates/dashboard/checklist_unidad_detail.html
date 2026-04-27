@@ -43,7 +43,7 @@
                             <p class="text-muted small">Resumen ejecutivo del cumplimiento SDC 2.0</p>
                         </div>
                         <div class="text-end">
-                            {% if checklist.aceite_motor and checklist.anticongelante and checklist.llantas_birlos and checklist.carroceria_golpes and checklist.luces and checklist.cinturon and checklist.equipo_seguridad == 'COMPLETO' and checklist.documentacion == 'COMPLETO' and checklist.frenos and checklist.bateria_arranque and checklist.limpiaparabrisas and checklist.claxon %}
+                            {% if checklist.aceite_motor and checklist.anticongelante and checklist.llantas_presion and checklist.birlos_ajuste and checklist.carroceria_golpes and checklist.luces and checklist.cinturon and checklist.equipo_seguridad == 'COMPLETO' and checklist.documentacion == 'COMPLETO' and checklist.frenos and checklist.clutch and checklist.bateria_arranque and checklist.limpiaparabrisas and checklist.claxon and checklist.urea != 'BAJO' %}
                                 <span class="badge bg-success-subtle text-success p-3 rounded-4 border-0 shadow-xs">
                                     <i class="fas fa-check-circle fa-2x d-block mb-2"></i>
                                     <span class="fw-800 text-uppercase">100% OPERATIVA</span>
@@ -94,12 +94,10 @@
                         <div class="card-body px-4 pb-4">
                             <div class="detail-list">
                                 {% include 'dashboard/components/audit_item.html' with label="Aceite Motor" val=checklist.aceite_motor type="bool" %}
-                                {% include 'dashboard/components/audit_item.html' with label="Aceite Caja" val=checklist.aceite_caja type="bool" %}
-                                {% include 'dashboard/components/audit_item.html' with label="Aceite Diferencial" val=checklist.aceite_diferencial type="bool" %}
-                                {% include 'dashboard/components/audit_item.html' with label="Aceite Dirección" val=checklist.aceite_direccion type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Nivel Urea" val=checklist.urea type="choice" %}
                                 {% include 'dashboard/components/audit_item.html' with label="Anticongelante" val=checklist.anticongelante type="bool" %}
                                 {% include 'dashboard/components/audit_item.html' with label="Líquido de Frenos" val=checklist.liquido_frenos type="bool" %}
-                                {% include 'dashboard/components/audit_item.html' with label="Agua Batería" val=checklist.agua_bateria type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Aceite Dirección" val=checklist.aceite_direccion type="bool" %}
                                 {% include 'dashboard/components/audit_item.html' with label="Frenos (Pie/Mano)" val=checklist.frenos type="bool" %}
                                 {% include 'dashboard/components/audit_item.html' with label="Clutch / Embrague" val=checklist.clutch type="bool" %}
                                 {% include 'dashboard/components/audit_item.html' with label="Batería y Arranque" val=checklist.bateria_arranque type="bool" %}
@@ -118,7 +116,8 @@
                             <div class="detail-list">
                                 {% include 'dashboard/components/audit_item.html' with label="Equipo de Seguridad" val=checklist.equipo_seguridad type="choice" %}
                                 {% include 'dashboard/components/audit_item.html' with label="Documentación" val=checklist.documentacion type="choice" %}
-                                {% include 'dashboard/components/audit_item.html' with label="Llantas y Birlos" val=checklist.llantas_birlos type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Presión Llantas" val=checklist.llantas_presion type="bool" %}
+                                {% include 'dashboard/components/audit_item.html' with label="Ajuste Birlos" val=checklist.birlos_ajuste type="bool" %}
                                 {% include 'dashboard/components/audit_item.html' with label="Carrocería" val=checklist.carroceria_golpes type="bool" %}
                                 {% include 'dashboard/components/audit_item.html' with label="Luces (Gral)" val=checklist.luces type="bool" %}
                                 {% include 'dashboard/components/audit_item.html' with label="Cinturón Seg." val=checklist.cinturon type="bool" %}

@@ -18,7 +18,7 @@
                 {% if val %}
                     <div class="segment {% if field.value == val %}active{% endif %}" 
                          data-val="{{ val }}" 
-                         data-color="{{ val|lower }}">
+                         data-color="{% if val == 'NA' %}warning{% elif val == 'BAJO' %}danger{% elif val == 'ALTO' %}success{% elif val == 'REALIZADO' %}success{% elif val == 'NO_REALIZADO' %}danger{% else %}{{ val|lower }}{% endif %}">
                         {{ label }}
                     </div>
                 {% endif %}
