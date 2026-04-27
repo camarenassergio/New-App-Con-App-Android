@@ -1,85 +1,89 @@
-<div class="notif-dropdown-header d-flex justify-content-between align-items-center p-3 border-bottom">
-    <h6 class="mb-0 fw-bold">Notificaciones</h6>
+<div class="notif-dropdown-header d-flex justify-content-between align-items-center p-3 border-bottom grad-primary text-white">
+    <h6 class="mb-0 fw-bold"><i class="fas fa-bell me-2"></i>Notificaciones</h6>
     {% if notificaciones %}
-    <button class="btn btn-sm btn-link text-decoration-none p-0" 
+    <button class="btn btn-sm btn-glass-white rounded-pill px-3 py-0 text-decoration-none x-small fw-bold" 
             hx-post="{% url 'dashboard:notificaciones_marcar_todas_leidas' %}"
             hx-target="#notif-dropdown-content"
             hx-swap="innerHTML">
-        Marcar todas como leídas
+        Leídos
     </button>
     {% endif %}
 </div>
 
-<div class="notif-list" style="max-height: 350px; overflow-y: auto;">
+<div class="notif-list-dropdown" style="max-height: 400px; overflow-y: auto;">
     {% for n in notificaciones %}
-    <div class="notif-item p-3 border-bottom {% if not n.leido %}unread{% endif %}" 
-         style="transition: background 0.2s; position: relative;"
-         {% if not n.leido %}
-         hx-post="{% url 'dashboard:notificacion_marcar_leida' n.pk %}"
-         hx-trigger="click"
-         hx-swap="none"
-         {% endif %}>
+    <div class="notif-item-dropdown p-3 border-bottom {% if not n.leido %}unread{% endif %}" 
+         onclick="window.location.href='{% url 'dashboard:notificaciones_list' %}?id={{ n.pk }}'"
+         style="transition: background 0.2s; position: relative; cursor: pointer;">
         
-        <div class="d-flex gap-3">
-            <div class="notif-icon-wrapper d-flex align-items-center justify-content-center rounded-circle" 
-                 style="width: 40px; height: 40px; min-width: 40px; background: rgba(var(--primary-rgb), 0.1); color: var(--primary-blue);">
-                <i class="{{ n.icono }}"></i>
-            </div>
-            <div class="notif-content flex-grow-1">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                    <span class="notif-title fw-semibold small text-dark d-block">{{ n.titulo }}</span>
-                    <span class="notif-time text-muted smaller" style="font-size: 0.75rem;">{{ n.fecha_creacion|timesince }}</span>
+        <div class="notif-content-sm min-width-0">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="{{ n.icono|default:'fas fa-bell' }} {% if n.tipo == 'ALERTA' %}text-danger{% elif n.tipo == 'PEDIDO' %}text-warning{% else %}text-primary{% endif %} smaller opacity-75"></i>
+                    <span class="notif-title-sm fw-bold small text-dark d-block text-truncate">{{ n.titulo }}</span>
                 </div>
-                <p class="notif-desc mb-1 text-muted small" style="line-height: 1.3;">{{ n.descripcion }}</p>
-                {% if n.link %}
-                <a href="{{ n.link }}" class="btn btn-sm btn-outline-primary py-0 px-2 mt-1" style="font-size: 0.7rem;">Ver detalle</a>
-                {% endif %}
+                <span class="notif-time-sm text-muted" style="font-size: 0.7rem;">{{ n.fecha_creacion|timesince }}</span>
             </div>
+            <p class="notif-desc-sm mb-0 text-muted small" style="line-height: 1.3; font-size: 0.8rem; white-space: pre-wrap;">{{ n.descripcion }}</p>
         </div>
         
         {% if not n.leido %}
-        <span class="unread-dot" style="position: absolute; top: 15px; right: 10px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+        <span class="unread-dot-sm"></span>
         {% endif %}
     </div>
     {% empty %}
     <div class="p-5 text-center text-muted">
         <div class="mb-3">
-            <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 60px; height: 60px; background: rgba(var(--primary-rgb), 0.05); color: var(--primary-blue); opacity: 0.6;">
-                <i class="fas fa-bell-slash" style="font-size: 1.5rem;"></i>
+            <span class="empty-notif-icon-sm">
+                <i class="fas fa-check-double"></i>
             </span>
         </div>
-        <p class="small fw-semibold mb-1" style="color: var(--text-main);">Todo al día</p>
-        <p class="smaller mb-0 opacity-75">No tienes notificaciones pendientes.</p>
+        <p class="small fw-bold mb-1">¡Todo al día!</p>
+        <p class="x-small mb-0 opacity-75">No hay mensajes pendientes.</p>
     </div>
     {% endfor %}
 </div>
 
-<div class="p-2 text-center border-top">
-    <a href="{% url 'dashboard:notificaciones_list' %}" class="small text-decoration-none fw-medium">
-        <i class="fas fa-history me-1" style="font-size: 0.8rem;"></i> Ver historial completo
+<div class="p-2 text-center border-top bg-light">
+    <a href="{% url 'dashboard:notificaciones_list' %}" class="x-small text-decoration-none fw-bold text-primary text-uppercase tracking-wider">
+        Ver historial completo <i class="fas fa-arrow-right ms-1"></i>
     </a>
 </div>
 
 <style>
-    .notif-item {
-        cursor: pointer;
+    .grad-primary { background: linear-gradient(135deg, var(--primary-blue), #1e3c72) !important; }
+    .btn-glass-white { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; }
+    
+    .notif-item-dropdown:hover {
+        background: rgba(var(--primary-rgb), 0.03);
     }
-    .notif-item:hover {
-        background: rgba(0, 0, 0, 0.02);
+    .notif-item-dropdown.unread {
+        background: rgba(var(--primary-rgb), 0.06);
     }
-    .dark-theme .notif-item:hover {
-        background: rgba(255, 255, 255, 0.05);
+
+    .unread-dot-sm {
+        position: absolute; 
+        top: 18px; 
+        right: 12px; 
+        width: 8px; 
+        height: 8px; 
+        background: var(--primary-blue); 
+        border-radius: 50%;
+        box-shadow: 0 0 5px rgba(0, 59, 112, 0.4);
     }
-    .notif-item.unread {
-        background: rgba(59, 130, 246, 0.05);
+
+    .empty-notif-icon-sm {
+        font-size: 2rem;
+        color: var(--success);
+        opacity: 0.2;
     }
-    .dark-theme .notif-item.unread {
-        background: rgba(59, 130, 246, 0.1);
-    }
-    .notif-title {
-        color: var(--text-main) !important;
-    }
-    .smaller {
-        font-size: 0.75rem;
-    }
+
+    .x-small { font-size: 0.72rem; }
+    .smaller { font-size: 0.8rem; }
+    .tracking-wider { letter-spacing: 0.05em; }
+
+    body.dark-theme .notif-title-sm { color: #f8fafc !important; }
+    body.dark-theme .notif-item-dropdown:hover { background: rgba(255,255,255, 0.04); }
+    body.dark-theme .notif-item-dropdown.unread { background: rgba(var(--primary-blue-rgb), 0.15); }
+    body.dark-theme .bg-light { background: rgba(0,0,0,0.2) !important; }
 </style>

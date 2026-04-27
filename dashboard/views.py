@@ -512,7 +512,13 @@ class CombustibleCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
     form_class = RegistroCombustibleForm
     template_name = "dashboard/combustible_form.html"
     success_url = reverse_lazy('dashboard:combustible_general') 
-    ajax_success_message = "¡Registro de combustible guardado!"
+    ajax_success_message = "¡Registro de combustible guardado con éxito!"
+
+    def get_success_url(self):
+        # Si el usuario es Chofer, redirigir a su dashboard específico
+        if hasattr(self.request.user, 'personal') and self.request.user.personal.puesto == 'CHOFER':
+            return reverse('dashboard:chofer_home')
+        return super().get_success_url()
 
     def form_valid(self, form):
         unidad = form.cleaned_data['unidad']
@@ -672,7 +678,7 @@ class DirectMessageView(LoginRequiredMixin, View):
                     usuario=u,
                     tipo='SISTEMA',
                     titulo=f"📢 AVISO GLOBAL de {request.user.first_name or request.user.username}",
-                    descripcion=contenido[:120] + ('...' if len(contenido) > 120 else ''),
+                    descripcion=contenido,
                     link="#"
                 ) for u in users
             ]
@@ -699,7 +705,7 @@ class DirectMessageView(LoginRequiredMixin, View):
             usuario=destinatario,
             tipo='SISTEMA',
             titulo=f"💬 Nuevo mensaje de {request.user.first_name or request.user.username}",
-            descripcion=contenido[:120] + ('...' if len(contenido) > 120 else ''),
+            descripcion=contenido,
             link="#"
         )
 

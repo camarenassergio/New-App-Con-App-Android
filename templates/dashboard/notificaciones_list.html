@@ -1,33 +1,33 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Historial de Notificaciones — Casa Lupita{% endblock %}
-{% block page_title %}Historial de Notificaciones{% endblock %}
+{% block title %}Notificaciones — Casa Lupita{% endblock %}
+{% block page_title %}Centro de Mensajes{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 px-md-5">
+<div class="container-fluid py-3 px-md-4">
     
     <!-- HEADER PREMIUM -->
-    <div class="card border-0 shadow-lg mb-5 overflow-hidden" style="border-radius: 24px;">
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden" style="border-radius: 20px;">
         <div class="card-body p-0">
             <div class="bg-primary p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center text-white grad-primary">
                 <div class="d-flex align-items-center mb-3 mb-md-0">
-                    <div class="header-icon-box me-3">
-                        <i class="fas fa-bell fs-3"></i>
+                    <div class="header-icon-box-sm me-3">
+                        <i class="fas fa-comment-dots fs-4"></i>
                     </div>
                     <div>
-                        <h4 class="fw-bold mb-0">Centro de Notificaciones</h4>
-                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Actividad Reciente & Historial de Alertas</p>
+                        <h4 class="fw-bold mb-0">Mensajes y Alertas</h4>
+                        <p class="x-small mb-0 opacity-75 text-uppercase tracking-wider fw-bold">Bandeja de Entrada Operativa</p>
                     </div>
                 </div>
-                <div class="d-flex gap-2 flex-wrap justify-content-md-end">
+                <div class="d-flex gap-2">
                     {% if notificaciones %}
-                    <button class="btn btn-glass-white rounded-pill px-4 fw-bold shadow-sm"
+                    <button class="btn btn-glass-white rounded-pill px-4 btn-sm fw-bold shadow-sm"
                             hx-post="{% url 'dashboard:notificaciones_marcar_todas_leidas' %}"
                             hx-confirm="¿Marcar todas como leídas?"
                             hx-on::after-request="if(event.detail.successful) window.location.reload()"
                             hx-swap="none">
-                        <i class="fas fa-check-double me-2"></i>Marcar todas como leídas
+                        <i class="fas fa-check-double me-2"></i>Leídos
                     </button>
                     {% endif %}
                 </div>
@@ -35,85 +35,88 @@
         </div>
     </div>
 
-    <!-- MAIN NOTIFICATIONS CARD -->
-    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 28px;">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table  align-middle mb-0 premium-table">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4" style="width: 80px;">Tipo</th>
-                            <th>Mensaje & Detalles</th>
-                            <th class="text-center">Cronología</th>
-                            <th class="text-center pe-4">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for n in notificaciones %}
-                        <tr class="animate__animated animate__fadeIn {% if not n.leido %}notif-unread{% endif %}" id="notif-row-{{ n.pk }}">
-                            <td class="ps-4">
-                                <div class="avatar-sm d-flex align-items-center justify-content-center rounded-circle shadow-xs 
-                                    {% if n.tipo == 'ALERTA' %}bg-danger-subtle text-danger{% else %}bg-primary-subtle text-primary{% endif %}" 
-                                     style="width: 44px; height: 44px; font-size: 1.1rem;">
+    <!-- WHATSAPP STYLE LIST -->
+    <div class="notification-container mb-5">
+        <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 24px;">
+            <div class="card-body p-0">
+                <div class="notif-list">
+                    {% for n in notificaciones %}
+                    <div class="notif-item-wrapper animate__animated animate__fadeIn" id="notif-item-{{ n.pk }}">
+                        <div class="notif-item {% if not n.leido %}unread{% endif %}" 
+                             onclick="leerNotificacion('{{ n.pk }}', '{{ n.titulo|escapejs }}', '{{ n.descripcion|escapejs }}', '{{ n.link|default:'' }}', {{ n.leido|yesno:'true,false' }})">
+                            
+                            <!-- Avatar (Solo Desktop) -->
+                            <div class="notif-avatar d-none d-md-flex">
+                                <div class="avatar-circle {% if n.tipo == 'ALERTA' %}bg-danger{% elif n.tipo == 'PEDIDO' %}bg-warning{% elif n.tipo == 'MANTENIMIENTO' %}bg-info{% else %}bg-primary{% endif %} shadow-sm">
                                     <i class="{{ n.icono|default:'fas fa-bell' }}"></i>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="d-flex flex-column">
-                                    <span class="fw-bold text-dark fs-6">{{ n.titulo }}</span>
-                                    <p class="text-muted small mb-0 opacity-75">{{ n.descripcion }}</p>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="notif-content">
+                                <div class="notif-header">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <!-- Icono compacto (Solo Mobile) -->
+                                        <i class="{{ n.icono|default:'fas fa-bell' }} {% if n.tipo == 'ALERTA' %}text-danger{% elif n.tipo == 'PEDIDO' %}text-warning{% else %}text-primary{% endif %} fs-6 opacity-75 d-md-none"></i>
+                                        <span class="notif-title">{{ n.titulo }}</span>
+                                    </div>
+                                    <span class="notif-time">{{ n.fecha_creacion|date:"H:i" }}</span>
                                 </div>
-                            </td>
-                            <td class="text-center">
-                                <div class="d-flex flex-column align-items-center">
-                                    <span class="x-small fw-800 text-dark text-uppercase">{{ n.fecha_creacion|date:"d M Y" }}</span>
-                                    <span class="x-small text-muted fw-bold opacity-75"><i class="far fa-clock me-1"></i>{{ n.fecha_creacion|time:"H:i" }} HRS</span>
-                                </div>
-                            </td>
-                            <td class="text-center pe-4">
-                                <div class="d-flex justify-content-center gap-2">
-                                    {% if n.link %}
-                                    <a href="{{ n.link }}" class="btn btn-outline-light border shadow-xs rounded-circle p-2 text-primary hover-scale" title="Ver Detalle">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </a>
-                                    {% endif %}
-                                    
+                                <div class="notif-body">
+                                    <p class="notif-desc">{{ n.descripcion|truncatechars:120 }}</p>
                                     {% if not n.leido %}
-                                    <button class="btn btn-white btn-sm border shadow-xs rounded-pill px-3 fw-bold text-success hover-scale" 
-                                            hx-post="{% url 'dashboard:notificacion_marcar_leida' n.pk %}"
-                                            hx-swap="none"
-                                            hx-on::after-request="if(event.detail.successful) { let row = this.closest('tr'); row.classList.remove('notif-unread'); this.outerHTML = '<span class=\'badge bg-success-subtle text-success rounded-pill px-3 py-2 x-small fw-bold shadow-xs anim-pop\'><i class=\'fas fa-check-circle me-1\'></i> LEÍDA</span>' }"
-                                            title="Marcar como leída">
-                                        <i class="fas fa-check me-1"></i>LEER
-                                    </button>
-                                    {% else %}
-                                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 x-small fw-bold shadow-xs">
-                                        <i class="fas fa-check-circle me-1"></i>LEÍDA
-                                    </span>
+                                    <span class="unread-dot"></span>
                                     {% endif %}
                                 </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center py-5">
-                                <div class="py-5">
-                                    <i class="fas fa-bell-slash fa-4x text-muted opacity-25 mb-4"></i>
-                                    <h5 class="fw-bold text-muted">Historial Limpio</h5>
-                                    <p class="text-muted small">No tienes notificaciones pendientes ni registros previos.</p>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </div>
+
+                            <!-- Acciones rápidas -->
+                            <div class="notif-actions">
+                                {% if not n.leido %}
+                                <button class="btn-action mark-read" 
+                                        hx-post="{% url 'dashboard:notificacion_marcar_leida' n.pk %}"
+                                        hx-swap="none"
+                                        hx-on::after-request="if(event.detail.successful) { document.getElementById('notif-item-{{ n.pk }}').querySelector('.notif-item').classList.remove('unread'); this.remove(); }"
+                                        onclick="event.stopPropagation()"
+                                        title="Marcar como leído">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <button class="btn-action view" title="Leer mensaje">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+
+                                {% if n.link %}
+                                <a href="{{ n.link }}" class="btn-action reply" onclick="event.stopPropagation()" title="Ir a la acción">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="notif-divider"></div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <div class="py-5">
+                            <div class="mb-4">
+                                <span class="empty-notif-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                            </div>
+                            <h5 class="fw-bold text-muted">Bandeja Vacía</h5>
+                            <p class="text-muted small">No tienes mensajes ni notificaciones nuevas.</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
 
     <!-- PAGINATION -->
     {% if is_paginated %}
-    <div class="d-flex justify-content-center mt-5">
+    <div class="d-flex justify-content-center mt-4">
         <nav aria-label="Page navigation">
             <ul class="pagination pagination-modern shadow-sm rounded-pill p-1 bg-white">
                 {% if page_obj.has_previous %}
@@ -125,7 +128,7 @@
                 {% endif %}
 
                 <li class="page-item active px-3 d-flex align-items-center">
-                    <span class="x-small fw-bold text-muted text-uppercase tracking-wider">PÁGINA {{ page_obj.number }} DE {{ page_obj.paginator.num_pages }}</span>
+                    <span class="x-small fw-bold text-muted text-uppercase tracking-wider">Pág. {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
                 </li>
 
                 {% if page_obj.has_next %}
@@ -141,43 +144,335 @@
     {% endif %}
 </div>
 
+<!-- MODAL DE LECTURA -->
+<div class="modal fade" id="modalLeerNotif" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 28px;">
+            <div class="modal-header border-0 grad-primary text-white p-4" style="border-radius: 28px 28px 0 0;">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-envelope-open-text fs-5"></i>
+                    </div>
+                    <h5 class="modal-title fw-bold" id="modalTitle">Mensaje</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="modalBody" class="fs-6 text-dark opacity-90 mb-4" style="line-height: 1.6; white-space: pre-wrap;">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div id="modalLinkContainer" class="text-center mt-3 d-none">
+                    <hr class="opacity-10 mb-4">
+                    <a href="" id="modalLink" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm hover-scale">
+                        <i class="fas fa-rocket me-2"></i>Realizar Acción
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
+    /* VARIABLES LOCALES & GRADIENTES */
     .grad-primary { background: linear-gradient(135deg, var(--primary-blue), #1e3c72) !important; }
     .btn-glass-white { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; }
     .btn-glass-white:hover { background: rgba(255,255,255,0.25); color: white; }
-    .btn-white { background: white; color: var(--primary-blue); }
-
-    .premium-table thead th { 
-        font-weight: 700; font-size: 0.75rem; color: #7c8db5; text-transform: uppercase; 
-        letter-spacing: 1px; padding: 1.25rem 1rem; border: 0;
+    
+    .header-icon-box-sm {
+        background: rgba(255,255,255,0.15);
+        border-radius: 12px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    .premium-table tbody td { padding: 1.25rem 1rem; border-color: #f8f9fa; font-size: 0.9rem; }
-    
-    .notif-unread { background-color: rgba(var(--primary-rgb), 0.04); }
-    .notif-unread td:first-child { border-left: 4px solid var(--primary-blue); }
-    
-    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .hover-scale { transition: transform 0.2s; }
-    .hover-scale:hover { transform: scale(1.15); }
-    
+
+    /* WHATSAPP STYLE SYSTEM */
+    .notif-list {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-card);
+    }
+
+    .notif-item {
+        display: flex;
+        padding: 16px 20px;
+        gap: 16px;
+        transition: all 0.2s;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .notif-item:hover {
+        background-color: rgba(var(--primary-rgb), 0.03);
+    }
+
+    .notif-item.unread {
+        background-color: rgba(var(--primary-rgb), 0.05);
+    }
+
+    /* Avatar System (Solo Desktop) */
+    .notif-avatar {
+        flex-shrink: 0;
+    }
+
+    .avatar-circle {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    /* Content System */
+    .notif-content {
+        flex-grow: 1;
+        min-width: 0; 
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .notif-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .notif-title {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .unread .notif-title {
+        color: var(--primary-blue);
+    }
+
+    .notif-time {
+        font-size: 0.75rem;
+        color: #888;
+        font-weight: 500;
+    }
+
+    .unread .notif-time {
+        color: var(--primary-blue);
+    }
+
+    .notif-body {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .notif-desc {
+        font-size: 0.92rem;
+        color: var(--text-muted);
+        margin-bottom: 0;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+    }
+
+    .unread .notif-desc {
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    /* Unread Indicator */
+    .unread-dot {
+        width: 10px;
+        height: 10px;
+        background-color: var(--primary-blue);
+        border-radius: 50%;
+        margin-top: 5px;
+        flex-shrink: 0;
+        box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.5);
+    }
+
+    /* Actions */
+    .notif-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+        width: 0;
+        overflow: hidden;
+    }
+
+    .notif-item:hover .notif-actions {
+        opacity: 1;
+        width: auto;
+        padding-left: 15px;
+    }
+
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    .btn-action:hover {
+        background: var(--primary-blue);
+        color: white;
+        border-color: var(--primary-blue);
+        transform: scale(1.1);
+    }
+
+    .btn-action.reply:hover {
+        background: var(--primary-orange);
+        border-color: var(--primary-orange);
+    }
+
+    .notif-divider {
+        height: 1px;
+        background-color: var(--border-color);
+        margin-left: 20px;
+        opacity: 0.5;
+    }
+
+    @media (min-width: 768px) {
+        .notif-divider { margin-left: 88px; }
+    }
+
+    .notif-item-wrapper:last-child .notif-divider {
+        display: none;
+    }
+
+    /* Empty State */
+    .empty-notif-icon {
+        font-size: 4rem;
+        color: var(--success);
+        opacity: 0.2;
+    }
+
+    /* Dark Theme Fixes */
+    body.dark-theme .notif-item:hover {
+        background-color: rgba(255,255,255, 0.03);
+    }
+    body.dark-theme .unread {
+        background-color: rgba(var(--primary-blue-rgb), 0.1);
+    }
+    body.dark-theme .btn-action {
+        background: var(--bg-card);
+    }
+    body.dark-theme .modal-content {
+        background-color: var(--bg-card);
+        color: white;
+    }
+    body.dark-theme .text-dark { color: #f8fafc !important; }
+
+    #modalBody {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding-right: 8px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-blue) transparent;
+    }
+
+    #modalBody::-webkit-scrollbar {
+        width: 6px;
+    }
+    #modalBody::-webkit-scrollbar-thumb {
+        background-color: var(--primary-blue);
+        border-radius: 10px;
+    }
+
+    /* Mobile Responsive Optimizations */
+    @media (max-width: 576px) {
+        .notif-item { padding: 14px; }
+        .notif-divider { margin-left: 14px; }
+        .notif-actions { 
+            opacity: 1; 
+            width: auto; 
+            padding-left: 8px;
+        }
+        .notif-desc { -webkit-line-clamp: 2; }
+        .btn-action { width: 32px; height: 32px; }
+    }
+
     .x-small { font-size: 0.72rem; }
-    .fw-800 { font-weight: 800; }
     .tracking-wider { letter-spacing: 0.1em; }
-    
     .pagination-modern .page-link { 
         width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
         transition: all 0.2s;
     }
-    .anim-pop { animation: anim-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    @keyframes anim-pop {
-        0% { transform: scale(0.5); opacity: 0; }
-        100% { transform: scale(1); opacity: 1; }
-    }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.05); }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const notifId = urlParams.get('id');
+        if (notifId) {
+            const item = document.getElementById(`notif-item-${notifId}`);
+            if (item) {
+                // Simular click para disparar la función leerNotificacion
+                item.querySelector('.notif-item').click();
+            }
+        }
+    });
+
+    const modalLeer = new bootstrap.Modal(document.getElementById('modalLeerNotif'));
+
+    function leerNotificacion(id, titulo, desc, link, yaLeido) {
+        // 1. Llenar Modal
+        document.getElementById('modalTitle').textContent = titulo;
+        document.getElementById('modalBody').textContent = desc;
+        
+        const linkBtnContainer = document.getElementById('modalLinkContainer');
+        const linkBtn = document.getElementById('modalLink');
+        
+        if (link) {
+            linkBtnContainer.classList.remove('d-none');
+            linkBtn.href = link;
+        } else {
+            linkBtnContainer.classList.add('d-none');
+        }
+
+        // 2. Mostrar Modal
+        modalLeer.show();
+
+        // 3. Marcar como leído si es necesario (HTMX silente)
+        if (!yaLeido) {
+            htmx.ajax('POST', `/dashboard/notificaciones/${id}/marcar-leida/`, {
+                swap: 'none'
+            }).then(() => {
+                // Quitar estilo de "no leído" visualmente
+                const item = document.getElementById(`notif-item-${id}`).querySelector('.notif-item');
+                item.classList.remove('unread');
+                const dot = item.querySelector('.unread-dot');
+                if (dot) dot.remove();
+                const btnMark = item.querySelector('.mark-read');
+                if (btnMark) btnMark.remove();
+            });
+        }
+    }
+
     document.body.addEventListener('notifActualizada', function() {
         const badgeContainer = document.getElementById('notif-badge-container');
         if (badgeContainer) {
