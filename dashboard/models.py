@@ -86,7 +86,10 @@ class Unidad(models.Model):
     observaciones = models.TextField(verbose_name="Observaciones", null=True, blank=True)
 
     def __str__(self):
-        return f"{self.nUnidad} - {self.marca} {self.submarca} ({self.modelo_anio})"
+        res = f"{self.nUnidad}"
+        if self.nombre_corto:
+            res += f" [{self.nombre_corto}]"
+        return f"{res} - {self.marca} {self.submarca} ({self.modelo_anio})"
 
     def clean(self):
         super().clean()

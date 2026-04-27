@@ -62,6 +62,8 @@
 | Antigravity | Kanban Logístico: Transición a Flujo Granular (Despacho > Ruta) | Verificado [AUTO-HEALED] |
 | Antigravity | Almacén: Panel de Surtido Personalizado (Filtro por Surtidor) | Verificado y Pulido |
 | Antigravity | UX Móvil: Ajuste de layout de Sesión Segura en formulario de combustible | Verificado y Pulido |
+| Antigravity | Model: Inclusión de Nombre Corto en la representación de Unidad (__str__) | Verificado y Pulido |
+| Antigravity | UX Móvil: Balance de tamaño de botones de acción en formulario de combustible | Verificado y Pulido |
 | Antigravity | UX Modales: Centralización de lupita-modal-container y Stándar Global | Verificado [AUTO-HEALED] |
 | Antigravity | Catálogo de Proveedores e Integración de Fletes Externos | Verificado [AUTO-HEALED] |
 
