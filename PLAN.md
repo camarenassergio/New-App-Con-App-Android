@@ -69,6 +69,7 @@
 | Antigravity | UX Modales: Centralización de lupita-modal-container y Stándar Global | Verificado [AUTO-HEALED] |
 | Antigravity | Catálogo de Proveedores e Integración de Fletes Externos | Verificado [AUTO-HEALED] |
 | Antigravity | Messaging Center: Rediseño estilo WhatsApp, Lectura en Modal y Fix Truncado | Verificado [AUTO-HEALED] |
+| Antigravity | Fix: Error 1054 epp_casco en ChecklistUnidad por falta de migraciones | Verificado [AUTO-HEALED] |
 
 ## Reglas del Proyecto
 
