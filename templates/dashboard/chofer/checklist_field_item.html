@@ -12,23 +12,24 @@
             {% endfor %}
         </select>
         
-        <!-- Segmented Control for Choices -->
         <div class="segmented-control" data-target="{{ field.id_for_label }}" data-type="select">
             {% for val, label in field.field.choices %}
                 {% if val %}
                     <div class="segment {% if field.value == val %}active{% endif %}" 
                          data-val="{{ val }}" 
-                         data-color="{% if val == 'NA' %}warning{% elif val == 'BAJO' %}danger{% elif val == 'ALTO' %}success{% elif val == 'REALIZADO' %}success{% elif val == 'NO_REALIZADO' %}danger{% else %}{{ val|lower }}{% endif %}">
+                         data-color="{% if val == 'NA' %}warning{% elif val == 'BAJO' %}danger{% elif val == 'ALTO' %}success{% elif val == 'REALIZADO' %}success{% elif val == 'NO_REALIZADO' %}danger{% elif val == 'NO_CUENTA' %}danger{% elif val == 'INCOMPLETO' %}warning{% elif val == 'COMPLETO' %}success{% elif val == 'GOLPE' %}danger{% elif val == 'RASPADURA' %}warning{% elif val == 'OTROS' %}danger{% elif val == 'OK' %}success{% else %}{{ val|lower }}{% endif %}">
                         {{ label }}
                     </div>
                 {% endif %}
             {% endfor %}
         </div>
+        <div class="observacion-falla-container mt-2 w-100" style="display: none;">
+            <input type="text" class="form-control form-control-sm obs-falla-input" data-field-name="{{ field.label|replace_ok }}" placeholder="Describe el detalle...">
+        </div>
     {% else %}
         <!-- Hidden Checkbox for Django -->
         <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}" style="display:none;" {% if field.value %}checked{% endif %}>
         
-        <!-- Segmented Control for Booleans -->
         <div class="segmented-control" data-target="{{ field.id_for_label }}" data-type="checkbox">
             {% if field.name == 'birlos_ajuste' %}
                 <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
@@ -36,6 +37,76 @@
                 </div>
                 <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
                     <i class="fas fa-check"></i> Realizado
+                </div>
+            {% elif field.name == 'aceite_motor' or field.name == 'anticongelante' or field.name == 'liquido_frenos' or field.name == 'agua_limpiabrisas' or field.name == 'aceite_direccion' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-arrow-down"></i> Nivel Bajo
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check"></i> Nivel Correcto
+                </div>
+            {% elif field.name == 'llantas_presion' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-exclamation-triangle"></i> Baja / Ponchada
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check"></i> Presión Correcta
+                </div>
+            {% elif field.name == 'lona' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-times"></i> Rota / Ausente
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check"></i> Buen Estado
+                </div>
+            {% elif field.name == 'bandas_sujecion' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-times"></i> Mal Estado / Faltan
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check"></i> Completas / OK
+                </div>
+            {% elif field.name == 'luces' or field.name == 'claxon' or field.name == 'alerta_reversa' or field.name == 'limpiaparabrisas' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-times-circle"></i> Falla / No Funciona
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check-circle"></i> Funciona Correctamente
+                </div>
+            {% elif field.name == 'retrovisores' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-times-circle"></i> Rotos / Faltan
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check-circle"></i> Buen Estado
+                </div>
+            {% elif field.name == 'cinturon' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-exclamation-triangle"></i> Roto / No Traba
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check"></i> Funciona
+                </div>
+            {% elif field.name == 'frenos' or field.name == 'clutch' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-exclamation-triangle"></i> Falla / Largo
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-check"></i> Responde Bien
+                </div>
+            {% elif field.name == 'bateria_arranque' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-battery-empty"></i> Falla / Lento
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-battery-full"></i> Arranca Bien
+                </div>
+            {% elif field.name == 'epp_casco' or field.name == 'epp_chaleco' or field.name == 'epp_botas' %}
+                <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
+                    <i class="fas fa-user-times"></i> Falta / Dañado
+                </div>
+                <div class="segment {% if field.value %}active{% endif %}" data-val="true" data-color="success">
+                    <i class="fas fa-user-check"></i> Disponible y OK
                 </div>
             {% else %}
                 <div class="segment {% if not field.value %}active{% endif %}" data-val="false" data-color="danger">
@@ -45,6 +116,9 @@
                     <i class="fas fa-check"></i> OK
                 </div>
             {% endif %}
+        </div>
+        <div class="observacion-falla-container mt-2 w-100" style="display: none;">
+            <input type="text" class="form-control form-control-sm obs-falla-input" data-field-name="{{ field.label|replace_ok }}" placeholder="Describe la falla...">
         </div>
     {% endif %}
 </div>

@@ -27,18 +27,21 @@
     /* Gas Level Buttons */
     .gas-level-container {
         display: flex;
-        gap: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
         margin-bottom: 20px;
-        justify-content: space-between;
+        justify-content: center;
     }
     .gas-btn {
-        flex: 1;
-        padding: 15px 5px;
+        flex: 1 1 calc(20% - 8px);
+        min-width: 75px;
+        padding: 10px 4px;
         border: 2px solid var(--border-color);
         border-radius: 8px;
         background: var(--bg-body);
         font-weight: bold;
         color: var(--text-main);
+        font-size: 0.85rem;
         cursor: pointer;
         transition: all 0.2s;
         display: flex;
@@ -215,17 +218,90 @@
     <div class="checklist-section">
         <h4><i class="fas fa-gas-pump"></i> Nivel de Combustible al Iniciar</h4>
         <div class="gas-level-container">
+            <!-- Definición compartida del fondo del medidor para no repetir código -->
+            <svg width="0" height="0" class="position-absolute">
+                <defs>
+                    <g id="gauge-bg">
+                        <g stroke="currentColor" stroke-linecap="round">
+                            <line x1="12" y1="50" x2="22" y2="50" stroke-width="3"/>
+                            <line x1="12" y1="50" x2="22" y2="50" transform="rotate(45 50 50)" stroke-width="3"/>
+                            <line x1="12" y1="50" x2="22" y2="50" transform="rotate(90 50 50)" stroke-width="3"/>
+                            <line x1="12" y1="50" x2="22" y2="50" transform="rotate(135 50 50)" stroke-width="3"/>
+                            <line x1="12" y1="50" x2="22" y2="50" transform="rotate(180 50 50)" stroke-width="3"/>
+                            <line x1="12" y1="50" x2="18" y2="50" transform="rotate(22.5 50 50)" stroke-width="2"/>
+                            <line x1="12" y1="50" x2="18" y2="50" transform="rotate(67.5 50 50)" stroke-width="2"/>
+                            <line x1="12" y1="50" x2="18" y2="50" transform="rotate(112.5 50 50)" stroke-width="2"/>
+                            <line x1="12" y1="50" x2="18" y2="50" transform="rotate(157.5 50 50)" stroke-width="2"/>
+                            <line x1="12" y1="50" x2="16" y2="50" transform="rotate(11.25 50 50)" stroke-width="1.5"/>
+                            <line x1="12" y1="50" x2="16" y2="50" transform="rotate(33.75 50 50)" stroke-width="1.5"/>
+                            <line x1="12" y1="50" x2="16" y2="50" transform="rotate(56.25 50 50)" stroke-width="1.5"/>
+                            <line x1="12" y1="50" x2="16" y2="50" transform="rotate(78.75 50 50)" stroke-width="1.5"/>
+                            <line x1="12" y1="50" x2="16" y2="50" transform="rotate(101.25 50 50)" stroke-width="1.5"/>
+                            <line x1="12" y1="50" x2="16" y2="50" transform="rotate(123.75 50 50)" stroke-width="1.5"/>
+                            <line x1="12" y1="50" x2="16" y2="50" transform="rotate(146.25 50 50)" stroke-width="1.5"/>
+                            <line x1="12" y1="50" x2="16" y2="50" transform="rotate(168.75 50 50)" stroke-width="1.5"/>
+                        </g>
+                        <text x="15" y="65" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="currentColor" text-anchor="middle">E</text>
+                        <text x="85" y="65" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="currentColor" text-anchor="middle">F</text>
+                        <g transform="translate(62, 53) scale(0.65)" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+                            <rect x="2" y="2" width="10" height="14" rx="2" />
+                            <rect x="4" y="4" width="6" height="4" />
+                            <path d="M 12 6 h 3 v 7 a 2 2 0 0 1 -2 2 h -1" />
+                            <path d="M 15 10 v 2" />
+                        </g>
+                    </g>
+                </defs>
+            </svg>
+
+            <button type="button" class="gas-btn" data-level="0">
+                <svg width="60" height="42" viewBox="0 0 100 70" class="mb-1">
+                    <use href="#gauge-bg" />
+                    <g transform="rotate(0 50 50)">
+                        <line x1="56" y1="50" x2="14" y2="50" class="text-danger" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                    <circle cx="50" cy="50" r="4" class="text-danger" fill="currentColor" />
+                    <circle cx="50" cy="50" r="1.5" fill="var(--bg-body, #fff)" />
+                </svg> Reserva
+            </button>
             <button type="button" class="gas-btn" data-level="25">
-                <i class="fas fa-battery-quarter text-danger"></i> 25%
+                <svg width="60" height="42" viewBox="0 0 100 70" class="mb-1">
+                    <use href="#gauge-bg" />
+                    <g transform="rotate(45 50 50)">
+                        <line x1="56" y1="50" x2="14" y2="50" class="text-warning" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                    <circle cx="50" cy="50" r="4" class="text-warning" fill="currentColor" />
+                    <circle cx="50" cy="50" r="1.5" fill="var(--bg-body, #fff)" />
+                </svg> 25%
             </button>
             <button type="button" class="gas-btn" data-level="50">
-                <i class="fas fa-battery-half text-warning"></i> 50%
+                <svg width="60" height="42" viewBox="0 0 100 70" class="mb-1">
+                    <use href="#gauge-bg" />
+                    <g transform="rotate(90 50 50)">
+                        <line x1="56" y1="50" x2="14" y2="50" class="text-warning" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                    <circle cx="50" cy="50" r="4" class="text-warning" fill="currentColor" />
+                    <circle cx="50" cy="50" r="1.5" fill="var(--bg-body, #fff)" />
+                </svg> 50%
             </button>
             <button type="button" class="gas-btn" data-level="75">
-                <i class="fas fa-battery-three-quarters text-info"></i> 75%
+                <svg width="60" height="42" viewBox="0 0 100 70" class="mb-1">
+                    <use href="#gauge-bg" />
+                    <g transform="rotate(135 50 50)">
+                        <line x1="56" y1="50" x2="14" y2="50" class="text-info" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                    <circle cx="50" cy="50" r="4" class="text-info" fill="currentColor" />
+                    <circle cx="50" cy="50" r="1.5" fill="var(--bg-body, #fff)" />
+                </svg> 75%
             </button>
             <button type="button" class="gas-btn" data-level="100">
-                <i class="fas fa-battery-full text-success"></i> 100%
+                <svg width="60" height="42" viewBox="0 0 100 70" class="mb-1">
+                    <use href="#gauge-bg" />
+                    <g transform="rotate(180 50 50)">
+                        <line x1="56" y1="50" x2="14" y2="50" class="text-success" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                    <circle cx="50" cy="50" r="4" class="text-success" fill="currentColor" />
+                    <circle cx="50" cy="50" r="1.5" fill="var(--bg-body, #fff)" />
+                </svg> 100%
             </button>
         </div>
         <!-- Django Form Error for Fuel -->
@@ -240,9 +316,9 @@
         <p class="text-muted small mb-3">Seguridad inmediata para la ruta del día. Revisión visual y táctil.</p>
 
         <!-- Fluidos -->
-        <div class="sub-section-title mt-3">Fluidos (Cofre abierto)</div>
+        <div class="sub-section-title mt-3">Líquidos (Cofre abierto)</div>
         {% for field in form %}
-            {% if field.name in "aceite_motor,urea,anticongelante,liquido_frenos,agua_limpiabrisas" %}
+            {% if field.name == "aceite_motor" or field.name == "urea" or field.name == "anticongelante" or field.name == "liquido_frenos" or field.name == "agua_limpiabrisas" or field.name == "aceite_direccion" %}
                 {% include "dashboard/chofer/checklist_field_item.html" %}
             {% endif %}
         {% endfor %}
@@ -250,7 +326,15 @@
         <!-- Seguridad Activa -->
         <div class="sub-section-title mt-3">Seguridad Activa (Visibilidad)</div>
         {% for field in form %}
-            {% if field.name in "luces,claxon,alerta_reversa,limpiaparabrisas" %}
+            {% if field.name == "luces" or field.name == "claxon" or field.name == "alerta_reversa" or field.name == "retrovisores" or field.name == "limpiaparabrisas" %}
+                {% include "dashboard/chofer/checklist_field_item.html" %}
+            {% endif %}
+        {% endfor %}
+
+        <!-- Seguridad Pasiva -->
+        <div class="sub-section-title mt-3">Seguridad Pasiva (Cabina)</div>
+        {% for field in form %}
+            {% if field.name == "cinturon" %}
                 {% include "dashboard/chofer/checklist_field_item.html" %}
             {% endif %}
         {% endfor %}
@@ -258,7 +342,7 @@
         <!-- Controles Base -->
         <div class="sub-section-title mt-3">Controles Base (Pedales y Encendido)</div>
         {% for field in form %}
-            {% if field.name in "frenos,clutch,bateria_arranque" %}
+            {% if field.name == "frenos" or field.name == "clutch" or field.name == "bateria_arranque" %}
                 {% include "dashboard/chofer/checklist_field_item.html" %}
             {% endif %}
         {% endfor %}
@@ -266,27 +350,35 @@
         <!-- Exterior y Carga -->
         <div class="sub-section-title mt-3">Exterior y Carga</div>
         {% for field in form %}
-            {% if field.name in "llantas_presion,carroceria_golpes,lona,bandas_sujecion" %}
+            {% if field.name == "llantas_presion" or field.name == "birlos_ajuste" or field.name == "carroceria_golpes" or field.name == "lona" or field.name == "bandas_sujecion" %}
                 {% include "dashboard/chofer/checklist_field_item.html" %}
             {% endif %}
         {% endfor %}
 
         <!-- Documentación -->
-        <div class="sub-section-title mt-3">Documentación y Otros</div>
+        <div class="sub-section-title mt-3">Documentación</div>
         {% for field in form %}
-            {% if field.name in "equipo_seguridad,documentacion,cinturon" %}
+            {% if field.name == "documentacion" %}
+                {% include "dashboard/chofer/checklist_field_item.html" %}
+            {% endif %}
+        {% endfor %}
+
+        <!-- EPP y Herramientas -->
+        <div class="sub-section-title mt-3">Equipo de Protección y Herramientas (EPP)</div>
+        {% for field in form %}
+            {% if field.name == "equipo_seguridad" or field.name == "epp_casco" or field.name == "epp_chaleco" or field.name == "epp_botas" %}
                 {% include "dashboard/chofer/checklist_field_item.html" %}
             {% endif %}
         {% endfor %}
     </div>
 
-    <!-- 4. Puntos de Revisión Quincenal -->
-    <div class="checklist-section biweekly-section" id="biweekly-section">
-        <h4 class="text-warning"><i class="fas fa-tools"></i> 2. Revisión Quincenal (Mantenimiento)</h4>
-        <p class="text-muted small mb-3">Mantenimiento preventivo básico. Requerido cada 15 días o 5,000 km.</p>
+    <!-- 5. Limpieza (Sábados) -->
+    <div class="checklist-section saturday-section" id="saturday-section" style="display: none;">
+        <h4 class="text-info"><i class="fas fa-soap"></i> 3. Limpieza de Unidad (Sábados)</h4>
+        <p class="text-muted small mb-3">Limpieza general requerida al finalizar la semana.</p>
 
         {% for field in form %}
-            {% if field.name in "birlos_ajuste,limpieza_interiores,limpieza_exteriores,aceite_direccion,agua_bateria" %}
+            {% if field.name == "limpieza_interiores" or field.name == "limpieza_exteriores" %}
                 {% include "dashboard/chofer/checklist_field_item.html" %}
             {% endif %}
         {% endfor %}
@@ -389,9 +481,46 @@ document.addEventListener("DOMContentLoaded", function() {
                 } else {
                     targetInput.value = val;
                 }
+
+                // Lógica de mostrar/ocultar input box de falla
+                const color = this.getAttribute('data-color');
+                const valAttr = this.getAttribute('data-val');
+                const obsContainer = container.nextElementSibling;
+                if(obsContainer && obsContainer.classList.contains('observacion-falla-container')) {
+                    if (color === 'danger' || valAttr === 'INCOMPLETO' || valAttr === 'RASPADURA') {
+                        obsContainer.style.display = 'block';
+                    } else {
+                        obsContainer.style.display = 'none';
+                        const obsInput = obsContainer.querySelector('.obs-falla-input');
+                        if(obsInput) obsInput.value = ''; // Limpiar si se cambia a OK
+                    }
+                }
             });
         });
+
+        // Trigger initial state para mostrar cajas si ya había errores al recargar
+        const activeSeg = container.querySelector('.segment.active');
+        if (activeSeg) {
+            const color = activeSeg.getAttribute('data-color');
+            const valAttr = activeSeg.getAttribute('data-val');
+            const obsContainer = container.nextElementSibling;
+            if(obsContainer && obsContainer.classList.contains('observacion-falla-container')) {
+                if (color === 'danger' || valAttr === 'INCOMPLETO' || valAttr === 'RASPADURA') {
+                    obsContainer.style.display = 'block';
+                }
+            }
+        }
     });
+
+    // --- Lógica de Revisión Sabatina (Limpieza) ---
+    const saturdaySection = document.getElementById('saturday-section');
+    if (saturdaySection) {
+        const today = new Date();
+        // 6 es Sábado en getDay()
+        if (today.getDay() === 6) {
+            saturdaySection.style.display = 'block';
+        }
+    }
 
     // --- Lógica de Inspección de Llantas (Condición A y B) ---
     const datosMedicionesStr = '{{ datos_mediciones_json|escapejs }}';
@@ -572,6 +701,26 @@ document.addEventListener("DOMContentLoaded", function() {
                alert("Debes llenar obligatoriamente el reporte de llantas para continuar.");
                mostrarModalLlantas(datosMediciones[unidadSelect.value]?.llantas || []);
                return;
+            }
+        }
+
+        // Concatenar observaciones de fallas individuales
+        const fallasInputs = document.querySelectorAll('.obs-falla-input');
+        let listaFallas = [];
+        fallasInputs.forEach(inp => {
+            if(inp.closest('.observacion-falla-container').style.display !== 'none' && inp.value.trim() !== '') {
+                listaFallas.push(`- ${inp.getAttribute('data-field-name')}: ${inp.value.trim()}`);
+            }
+        });
+
+        if (listaFallas.length > 0) {
+            const obsGeneral = document.getElementById('id_observaciones');
+            let textoPrevio = obsGeneral.value.trim();
+            let textoFallas = "FALLAS REPORTADAS:\n" + listaFallas.join('\n');
+            if (textoPrevio) {
+                obsGeneral.value = textoPrevio + "\n\n" + textoFallas;
+            } else {
+                obsGeneral.value = textoFallas;
             }
         }
 

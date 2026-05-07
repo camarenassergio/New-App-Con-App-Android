@@ -55,12 +55,11 @@
                             <!-- Contenido -->
                             <div class="notif-content">
                                 <div class="notif-header">
-                                    <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center gap-2 flex-grow-1 min-width-0">
                                         <!-- Icono compacto (Solo Mobile) -->
                                         <i class="{{ n.icono|default:'fas fa-bell' }} {% if n.tipo == 'ALERTA' %}text-danger{% elif n.tipo == 'PEDIDO' %}text-warning{% else %}text-primary{% endif %} fs-6 opacity-75 d-md-none"></i>
                                         <span class="notif-title">{{ n.titulo }}</span>
                                     </div>
-                                    <span class="notif-time">{{ n.fecha_creacion|date:"H:i" }}</span>
                                 </div>
                                 <div class="notif-body">
                                     <p class="notif-desc">{{ n.descripcion|truncatechars:120 }}</p>
@@ -70,8 +69,10 @@
                                 </div>
                             </div>
 
-                            <!-- Acciones rápidas -->
+                            <!-- Acciones rápidas & Hora -->
                             <div class="notif-actions">
+                                <span class="notif-time">{{ n.fecha_creacion|date:"H:i" }}</span>
+                                
                                 {% if not n.leido %}
                                 <button class="btn-action mark-read" 
                                         hx-post="{% url 'dashboard:notificacion_marcar_leida' n.pk %}"
@@ -81,16 +82,6 @@
                                         title="Marcar como leído">
                                     <i class="fas fa-check"></i>
                                 </button>
-                                {% endif %}
-                                
-                                <button class="btn-action view" title="Leer mensaje">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-
-                                {% if n.link %}
-                                <a href="{{ n.link }}" class="btn-action reply" onclick="event.stopPropagation()" title="Ir a la acción">
-                                    <i class="fas fa-external-link-alt"></i>
-                                </a>
                                 {% endif %}
                             </div>
                         </div>
@@ -240,27 +231,29 @@
     .notif-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 6px;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 4px;
+        flex-wrap: wrap;
     }
 
     .notif-title {
         font-weight: 700;
         font-size: 1.05rem;
         color: var(--text-main);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .unread .notif-title {
-        color: var(--primary-blue);
+        display: block;
+        line-height: 1.3;
+        flex: 1;
+        min-width: 0;
     }
 
     .notif-time {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         color: #888;
-        font-weight: 500;
+        font-weight: 600;
+        white-space: nowrap;
+        margin-bottom: 2px;
+        display: block;
     }
 
     .unread .notif-time {
@@ -305,10 +298,11 @@
     .notif-actions {
         display: flex;
         flex-direction: column;
+        align-items: center;
         gap: 8px;
-        justify-content: center;
+        justify-content: flex-start;
         opacity: 0;
-        transition: opacity 0.2s;
+        transition: all 0.2s;
         width: 0;
         overflow: hidden;
     }
@@ -317,6 +311,7 @@
         opacity: 1;
         width: auto;
         padding-left: 15px;
+        min-width: 60px;
     }
 
     .btn-action {
@@ -401,15 +396,40 @@
 
     /* Mobile Responsive Optimizations */
     @media (max-width: 576px) {
-        .notif-item { padding: 14px; }
-        .notif-divider { margin-left: 14px; }
+        .notif-item { 
+            padding: 16px 12px 16px 16px; 
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .notif-content {
+            margin-right: 8px;
+            flex: 1;
+        }
+
         .notif-actions { 
             opacity: 1; 
             width: auto; 
-            padding-left: 8px;
+            padding-left: 12px;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 60px;
+            align-items: center;
+            border-left: 1px solid rgba(0,0,0,0.05);
+            justify-content: flex-start;
         }
-        .notif-desc { -webkit-line-clamp: 2; }
-        .btn-action { width: 32px; height: 32px; }
+
+        .btn-action { 
+            width: 42px; 
+            height: 42px; 
+            border-radius: 12px;
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--primary-blue);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .notif-divider { margin-left: 16px; }
     }
 
     .x-small { font-size: 0.72rem; }

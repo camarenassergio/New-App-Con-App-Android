@@ -1189,6 +1189,9 @@ class CheckListDiario(models.Model):
     
     nivel_aceite = models.BooleanField(default=True, verbose_name="Aceite OK")
     nivel_anticongelante = models.BooleanField(default=True, verbose_name="Anticongelante OK")
+    nivel_liquido_frenos = models.BooleanField(default=True, verbose_name="Liquido de Frenos OK")
+    nivel_liquido_direccion = models.BooleanField(default=True, verbose_name="Liquido de Dirección OK")
+    nivel_agua_limpiabrisas = models.BooleanField(default=True, verbose_name="Agua Limpiabrisas OK")
     presion_llantas = models.BooleanField(default=True, verbose_name="Llantas OK")
     luces_funcionan = models.BooleanField(default=True, verbose_name="Luces OK")
     limpieza_vidrios = models.BooleanField(default=True, verbose_name="Limpiaparabrisas OK")
@@ -1468,11 +1471,11 @@ class ChecklistUnidad(models.Model):
     km_actual = models.PositiveIntegerField(default=0, verbose_name="Kilometraje Actual")
 
     # Módulo 3.5.1.3 - Aspectos a revisar
-    nivel_combustible = models.IntegerField(choices=[(25, '25%'), (50, '50%'), (75, '75%'), (100, '100%')], verbose_name="Nivel Combustible")
+    nivel_combustible = models.IntegerField(choices=[(0, 'Reserva (0%)'), (25, '25%'), (50, '50%'), (75, '75%'), (100, '100%')], verbose_name="Nivel Combustible")
     
     # Toggles binarios de verificación (True = OK, False = Requiere atención / No verificado)
-    aceite_motor = models.BooleanField(default=False, verbose_name="Nivel Aceite Motor OK")
-    aceite_direccion = models.BooleanField(default=False, verbose_name="Aceite de Dirección OK")
+    aceite_motor = models.BooleanField(default=False, verbose_name="Nivel de Aceite de Motor")
+    aceite_direccion = models.BooleanField(default=False, verbose_name="Nivel de Líquido de Dirección")
     
     NIVEL_UREA = [
         ('NA', 'No aplica'),
@@ -1480,12 +1483,21 @@ class ChecklistUnidad(models.Model):
         ('ALTO', 'Alto'),
     ]
     urea = models.CharField(max_length=10, choices=NIVEL_UREA, default='NA', verbose_name="Nivel de Urea (AdBlue)")
-    anticongelante = models.BooleanField(default=False, verbose_name="Nivel Anticongelante/Agua OK")
+    anticongelante = models.BooleanField(default=False, verbose_name="Nivel de Anticongelante/Agua")
     llantas_presion = models.BooleanField(default=False, verbose_name="Presión de Llantas (Visual)")
     birlos_ajuste = models.BooleanField(default=False, verbose_name="Ajuste Físico de Birlos")
-    carroceria_golpes = models.BooleanField(default=False, verbose_name="Carrocería sin golpes evidentes")
+    ESTADO_CARROCERIA = [
+        ('OK', 'OK (Sin daños)'),
+        ('GOLPE', 'Golpe'),
+        ('RASPADURA', 'Raspadura'),
+        ('OTROS', 'Otros'),
+    ]
+    carroceria_golpes = models.CharField(max_length=20, choices=ESTADO_CARROCERIA, default='OK', verbose_name="Estado de Carrocería")
     luces = models.BooleanField(default=False, verbose_name="Luces (altas, bajas, cuartos, dir.) OK")
     cinturon = models.BooleanField(default=False, verbose_name="Cinturón de seguridad OK")
+    epp_casco = models.BooleanField(default=False, verbose_name="Casco de seguridad OK")
+    epp_chaleco = models.BooleanField(default=False, verbose_name="Chaleco reflectivo OK")
+    epp_botas = models.BooleanField(default=False, verbose_name="Botas de seguridad OK")
     
     ESTADO_EQUIPO = [
         ('NO_CUENTA', 'No se cuenta'),
@@ -1493,14 +1505,14 @@ class ChecklistUnidad(models.Model):
         ('COMPLETO', 'Completo'),
     ]
     equipo_seguridad = models.CharField(max_length=20, choices=ESTADO_EQUIPO, default='NO_CUENTA', verbose_name="Gato, palanca, cruceta, refacción, triángulo")
-    documentacion = models.CharField(max_length=20, choices=ESTADO_EQUIPO, default='NO_CUENTA', verbose_name="Circulación, Póliza, Licencia")
+    documentacion = models.CharField(max_length=20, choices=ESTADO_EQUIPO, default='NO_CUENTA', verbose_name="Tarjeta de circulación, Póliza, Licencia")
     
     frenos = models.BooleanField(default=False, verbose_name="Freno pie y mano OK")
-    liquido_frenos = models.BooleanField(default=False, verbose_name="Líquido de Frenos OK")
+    liquido_frenos = models.BooleanField(default=False, verbose_name="Nivel de Líquido de Frenos")
     clutch = models.BooleanField(default=False, verbose_name="Clutch / Embrague OK")
     bateria_arranque = models.BooleanField(default=False, verbose_name="Batería y Arranque OK")
-    limpiaparabrisas = models.BooleanField(default=False, verbose_name="Limpiaparabrisas (Wipers) OK")
-    agua_limpiabrisas = models.BooleanField(default=False, verbose_name="Agua de Limpiaparabrisas OK")
+    limpiaparabrisas = models.BooleanField(default=False, verbose_name="Limpiaparabrisas OK")
+    agua_limpiabrisas = models.BooleanField(default=False, verbose_name="Nivel de Líquido Limpiaparabrisas")
     claxon = models.BooleanField(default=False, verbose_name="Claxon OK")
     
     # Limpieza

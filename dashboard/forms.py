@@ -457,20 +457,21 @@ class ChecklistUnidadForm(forms.ModelForm):
         
         self.daily_fields = [
             # Fluidos
-            'aceite_motor', 'urea', 'anticongelante', 'liquido_frenos', 'agua_limpiabrisas',
+            'aceite_motor', 'urea', 'anticongelante', 'liquido_frenos', 'agua_limpiabrisas', 'aceite_direccion',
             # Seguridad Activa
-            'luces', 'claxon', 'alerta_reversa', 'limpiaparabrisas',
+            'luces', 'claxon', 'alerta_reversa', 'retrovisores', 'limpiaparabrisas',
+            # Seguridad Pasiva
+            'cinturon',
             # Controles Base
             'frenos', 'clutch', 'bateria_arranque',
             # Estado Exterior y Carga
-            'llantas_presion', 'carroceria_golpes', 'lona', 'bandas_sujecion',
-            # Otros obligatorios (Documentación y Seguridad básica)
-            'equipo_seguridad', 'documentacion', 'cinturon'
+            'llantas_presion', 'birlos_ajuste', 'carroceria_golpes', 'lona', 'bandas_sujecion',
+            # Documentación y EPP
+            'documentacion', 'equipo_seguridad', 'epp_casco', 'epp_chaleco', 'epp_botas'
         ]
         
-        self.biweekly_fields = [
-            'birlos_ajuste', 'limpieza_interiores', 'limpieza_exteriores',
-            'aceite_direccion'
+        self.weekly_fields = [
+            'limpieza_interiores', 'limpieza_exteriores'
         ]
 
         # Todos los campos booleanos deben ser required=False para permitir el valor False (Falla)
