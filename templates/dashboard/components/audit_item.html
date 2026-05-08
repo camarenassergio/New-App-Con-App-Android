@@ -11,15 +11,15 @@
             </span>
         {% endif %}
     {% elif type == 'choice' %}
-        {% if val == 'COMPLETO' or val == 'BUENA' or val == 'ALTO' or val == 'REALIZADO' %}
+        {% if val == 'COMPLETO' or val == 'BUENA' or val == 'ALTO' or val == 'REALIZADO' or val == 'OK' %}
             <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1 fw-bold x-small">
                 {{ val }}
             </span>
-        {% elif val == 'NA' or val == 'No aplica' or val == 'INCOMPLETO' or val == 'REGULAR' %}
+        {% elif val == 'NA' or val == 'No aplica' or val == 'INCOMPLETO' or val == 'REGULAR' or val == 'RASPADURA' %}
             <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1 fw-bold x-small">
                 {{ val }}
             </span>
-        {% elif val == 'NO_REALIZADO' %}
+        {% elif val == 'NO_REALIZADO' or val == 'GOLPE' or val == 'OTROS' or val == 'NO_CUENTA' %}
             <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-1 fw-bold x-small">
                 {{ val }}
             </span>

@@ -489,6 +489,8 @@ class ChecklistUnidadForm(forms.ModelForm):
                 field.label = "Carrocería sin golpes nuevos"
             elif name == 'birlos_ajuste':
                 field.label = "Ajuste de Birlos"
+            elif name == 'equipo_seguridad':
+                field.label = "Herramientas y Refacción (Gato, palanca, cruceta, refacción, triángulo)"
 
     def clean(self):
         cleaned_data = super().clean()

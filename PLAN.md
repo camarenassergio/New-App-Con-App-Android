@@ -70,6 +70,8 @@
 | Antigravity | Catálogo de Proveedores e Integración de Fletes Externos | Verificado [AUTO-HEALED] |
 | Antigravity | Messaging Center: Rediseño estilo WhatsApp, Lectura en Modal y Fix Truncado | Verificado [AUTO-HEALED] |
 | Antigravity | Fix: Error 1054 epp_casco en ChecklistUnidad por falta de migraciones | Verificado [AUTO-HEALED] |
+| Antigravity | UI/UX: Inclusión completa de todos los campos del checklist en la vista de detalle (eliminando ambigüedad en Equipo de Seguridad) | Verificado [AUTO-HEALED] |
+| Antigravity | Fix: Corrección de envío de mediciones de neumáticos (por modal Bootstrap), kilometraje y feedback de guardado | Verificado [AUTO-HEALED] |
 
 ## Reglas del Proyecto
 

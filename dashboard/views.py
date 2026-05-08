@@ -1248,22 +1248,22 @@ class ChecklistUnidadListView(LoginRequiredMixin, ListView):
         context['unidades'] = Unidad.objects.all()
         # Verificar si el usuario actual (chofer) ya llenó su checklist hoy
         # Sólo es relevante si es chofer, pero lo mandamos general
-        if hasattr(self.request.user, 'personal') and self.request.user.personal.puesto == 'CHOFER':
+        if hasattr(self.request.user, 'personal') and self.request.user.personal and self.request.user.personal.puesto == 'CHOFER':
             hoy = timezone.now().date()
             context['ya_lleno_hoy'] = ChecklistUnidad.objects.filter(chofer=self.request.user, fecha=hoy).exists()
         return context
 
-class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView):
+class ChecklistUnidadCreateView(LoginRequiredMixin, CreateView):
     model = ChecklistUnidad
     form_class = ChecklistUnidadForm
     template_name = "dashboard/checklist_unidad_form.html"
-    ajax_success_message = "¡Checklist diario guardado correctamente. Buen viaje!"
-
     def get_success_url(self):
-        if self.request.user.personal.puesto == 'CHOFER':
-            return reverse('dashboard:chofer_home')
-        return super().get_success_url()
-
+        try:
+            if hasattr(self.request.user, 'personal') and self.request.user.personal and self.request.user.personal.puesto == 'CHOFER':
+                return reverse('dashboard:chofer_home')
+        except Exception:
+            pass
+        return reverse('dashboard:checklist_unidad_list')
     def get_context_data(self, **kwargs):
          context = super().get_context_data(**kwargs)
          unidades = Unidad.objects.filter(en_servicio=True)
@@ -1301,31 +1301,31 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
             
         # Asignar objeto Unidad explícitamente para evitar problemas de relación
         try:
-            form.instance.unidad = Unidad.objects.get(id=unidad_id)
+            unidad_obj = Unidad.objects.get(id=unidad_id)
+            form.instance.unidad = unidad_obj
         except Unidad.DoesNotExist:
             form.add_error(None, "La unidad seleccionada no es válida.")
             return self.form_invalid(form)
         
-        # Validar si ya hizo un checklist HOY para ESA unidad (Opcional, pero buena práctica)
-        # SDC pide revisión diaria antes del inicio. Si hace 2 viajes, quizás sólo se requiere 1 al día.
+        # Validar si ya hizo un checklist HOY para ESA unidad
         if ChecklistUnidad.objects.filter(chofer=self.request.user, unidad_id=unidad_id, fecha=form.instance.fecha).exists():
             messages.warning(self.request, "Ya registraste un checklist para esta unidad el día de hoy.")
-            # Podemos permitirlo (sobreescribir/duplicar) o bloquearlo. Lo permitimos como registro extra.
             
-        response = super().form_valid(form)
+        # 1. Guardar el checklist en la BD para obtener su ID
+        self.object = form.save()
         
-        # Guardar mediciones de neumáticos si fueron obligadas o provistas e inyectadas al form
+        # 2. Guardar mediciones de neumáticos y actualizar kilometraje
         from .models import MedicionNeumatico, InventarioLlanta
         from decimal import Decimal
         
         llantas_activas = InventarioLlanta.objects.filter(unidad_id=unidad_id, activa=True)
         hubo_medicion = False
-        km_actual = form.instance.km_actual
+        km_actual = form.cleaned_data.get('km_actual') or 0
         
-        # Actualizar kilometraje general de la unidad de paso
-        if km_actual > form.instance.unidad.kilometraje_actual:
-            form.instance.unidad.kilometraje_actual = km_actual
-            form.instance.unidad.save()
+        # Actualizar kilometraje general de la unidad directamente en la base de datos
+        if km_actual > unidad_obj.kilometraje_actual:
+            unidad_obj.kilometraje_actual = km_actual
+            unidad_obj.save()
             
         from .models import ConfiguracionGeneral
         config = ConfiguracionGeneral.get_solo()
@@ -1360,8 +1360,8 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
                             else:
                                 observacion_auto = "Desgaste Alta + Uniforme. Causa: Presión de aire baja / Estilo de manejo. Acción: Revisar presión en cada carga de combustible."
                                 
-                medicion = MedicionNeumatico.objects.create(
-                    unidad_id=unidad_id,
+                MedicionNeumatico.objects.create(
+                    unidad=unidad_obj,
                     llanta=llanta,
                     km_medicion=km_actual,
                     presion_psi=Decimal(psi_val),
@@ -1374,7 +1374,7 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
                     llanta.observaciones = observacion_auto
                 llanta.save()
                 
-        # 4. Validar disparidad en Medidas (Alineación / Doble Rodado)
+        # 3. Validar disparidad en Medidas (Alineación / Doble Rodado)
         if hubo_medicion:
             posiciones = {l.posicion: l for l in llantas_activas}
             
@@ -1397,7 +1397,6 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
                         alerta_txt = f"Desgaste Disparejo (>1.5mm entre lados/gemelas). Causa: {causa}. Acción: {accion}."
                         for l_obj in (l1, l2):
                             if alerta_txt not in (l_obj.observaciones or ""):
-                                # Prefijo para que salga en dashboard
                                 new_obs = f"Disparidad Detectada: {alerta_txt}"
                                 l_obj.observaciones = (l_obj.observaciones + " | " + new_obs) if l_obj.observaciones else new_obs
                                 l_obj.save()
@@ -1410,26 +1409,29 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
         tiene_falla = False
         campos_bool = [
             'aceite_motor', 'aceite_direccion', 
-            'anticongelante', 'llantas_presion', 'birlos_ajuste', 'carroceria_golpes', 'luces', 'cinturon', 
+            'anticongelante', 'llantas_presion', 'birlos_ajuste', 'luces', 'cinturon', 
             'frenos', 'liquido_frenos', 'clutch', 'bateria_arranque', 
             'limpiaparabrisas', 'agua_limpiabrisas', 'claxon', 'alerta_reversa', 
             'retrovisores', 'lona', 'bandas_sujecion'
         ]
         
         for campo in campos_bool:
-            if not getattr(form.instance, campo):
+            if not getattr(self.object, campo):
                 tiene_falla = True
                 break
         
-        if form.instance.urea == 'BAJO':
+        if self.object.carroceria_golpes != 'OK':
+            tiene_falla = True
+            
+        if self.object.urea == 'BAJO':
             tiene_falla = True
         
         if not tiene_falla:
-            if form.instance.equipo_seguridad != 'COMPLETO' or form.instance.documentacion != 'COMPLETO':
+            if self.object.equipo_seguridad != 'COMPLETO' or self.object.documentacion != 'COMPLETO':
                 tiene_falla = True
-            elif form.instance.limpieza_interiores == 'MALA' or form.instance.limpieza_exteriores == 'MALA':
+            elif self.object.limpieza_interiores == 'MALA' or self.object.limpieza_exteriores == 'MALA':
                 tiene_falla = True
-            elif form.instance.observaciones:
+            elif self.object.observaciones:
                 tiene_falla = True
 
         if tiene_falla:
@@ -1437,15 +1439,14 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
             from django.contrib.auth import get_user_model
             User = get_user_model()
             
-            # Obtener usuarios a notificar (Administradores y personal de Rutas/Logística)
             usuarios_notificar = User.objects.filter(
                 personal__puesto__in=['ADMIN', 'RUTAS'],
                 personal__esta_activo=True
             ).distinct()
             
-            titulo_notif = f"⚠️ Alerta Checklist: {form.instance.unidad.nUnidad}"
-            desc_notif = f"El chofer {self.request.user.get_full_name() or self.request.user.username} ha reportado fallas u observaciones en la unidad {form.instance.unidad.nUnidad}."
-            link_notif = reverse('dashboard:checklist_unidad_detail', kwargs={'pk': form.instance.pk})
+            titulo_notif = f"⚠️ Alerta Checklist: {self.object.unidad.nUnidad}"
+            desc_notif = f"El chofer {self.request.user.get_full_name() or self.request.user.username} ha reportado fallas u observaciones en la unidad {self.object.unidad.nUnidad}."
+            link_notif = reverse('dashboard:checklist_unidad_detail', kwargs={'pk': self.object.pk})
             
             for user_notif in usuarios_notificar:
                 Notificacion.objects.create(
@@ -1456,7 +1457,16 @@ class ChecklistUnidadCreateView(LoginRequiredMixin, AjaxSuccessMixin, CreateView
                     link=link_notif
                 )
         
-        return response
+        # --- Respuesta HTTP / HTMX ---
+        if "HX-Request" in self.request.headers:
+            from django.http import HttpResponse
+            redirect_url = self.get_success_url()
+            r = HttpResponse(status=204)       # 204 = No Content
+            r["HX-Redirect"] = redirect_url   # Redireccionar en HTMX
+            return r
+            
+        from django.http import HttpResponseRedirect
+        return HttpResponseRedirect(self.get_success_url())
 
 class ChecklistUnidadDetailView(LoginRequiredMixin, DetailView):
     model = ChecklistUnidad
