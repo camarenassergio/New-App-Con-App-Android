@@ -3,7 +3,7 @@ import django
 import sys
 
 # Add project root to path
-sys.path.append('/home/sscamarenas/Proyectos/Logistica Casa Lupita/New App Con App Android')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()

@@ -217,19 +217,29 @@ AWS_S3_REGION_NAME = 'us-east-1'  # Región genérica para Cloudflare R2
 AWS_S3_ADDRESSING_STYLE = 'path'    # Obligatorio para R2 (Endpoint/Bucket)
 
 # 3. ¡La Magia! Le decimos a Django que ya no guarde los 'media' en el disco duro
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        "OPTIONS": {
-            "endpoint_url": os.environ.get('R2_ENDPOINT_URL'),
-            "addressing_style": "path",
-            "region_name": "us-east-1",
+if ENVIRONMENT == 'DEV' and not os.environ.get('R2_ACCESS_KEY_ID'):
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
         },
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "endpoint_url": os.environ.get('R2_ENDPOINT_URL'),
+                "addressing_style": "path",
+                "region_name": "us-east-1",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 # Configuración de URLs Públicas (R2)
 # Si tenemos un dominio personalizado (R2 Public), lo usamos para generar los links

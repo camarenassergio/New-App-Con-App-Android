@@ -126,8 +126,8 @@ EQUIPO = [
 # ------------------------------------------------------------------------------
 CONFIG_NEGOCIO = {
     "sueldo_semanal_chofer": 3200.00,
-    "sueldo_semanal_chalan": 1800.00,
-    "tiempo_descarga_promedio_min": 40,
+    "sueldo_semanal_chalan": 2600.00,
+    "tiempo_descarga_promedio_min": 20,
     "limite_mm_llanta_seguridad": 3.0,
     "vida_util_estimada_llanta_km": 120000,
 }
