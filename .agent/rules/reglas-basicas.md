@@ -130,4 +130,20 @@ La memoria documentada en Git es tan importante como el código Python.
     Documentar es parte del trabajo
     Si algo no está escrito en un .md, no existe
 
+8. Estándar Obligatorio de Vistas con KPIs y Registros HTMX ("De Fábrica")
+
+Toda nueva vista o módulo que incluya tarjetas KPI (`erp-kpi-grid`) y/o formularios de registro/edición/eliminación/cambio de estado en modal HTMX debe implementar obligatoriamente desde su creación:
+
+1. **Fragmento KPI Independiente con OOB**:
+   - Extraer siempre el grid de tarjetas KPI a `templates/<app>/fragments/<entidad>_kpis.html` con `id="<entidad>-kpis-container"` y `{% if oob %}hx-swap-oob="true"{% endif %}`.
+   - La plantilla principal de listado debe incluir ese fragmento (`{% include ... %}`) en lugar de duplicar el HTML de los KPIs.
+2. **Actualización Automática en Vivo (Sin Recargar Página)**:
+   - Toda mutación HTMX (crear, editar, eliminar, importar, cambiar estado o recalcular) debe devolver el fragmento de tabla/lista **concatenado** con el fragmento de KPIs renderizado con `oob=True`, de modo que los indicadores se actualicen automáticamente sin recargar con F5.
+3. **Cierre Seguro del Modal (`HX-Trigger-After-Swap`)**:
+   - Cuando una respuesta HTMX con cuerpo HTML cierre un modal, el trigger `closeModal` debe enviarse en `HX-Trigger-After-Swap` (nunca en `HX-Trigger`), conservando `showToast` en `HX-Trigger`. Así HTMX completa primero el swap de la tabla y los KPIs OOB antes de limpiar `#erp-modal-container`.
+4. **Feedback Explícito en Errores de Validación (`422`)**:
+   - Todo error de validación en modal (duplicados, campos obligatorios, reglas de negocio) debe devolver estado `422` con `HX-Retarget: #erp-modal-container`, `HX-Reswap: innerHTML` y `HX-Trigger: showToast` mostrando un mensaje claro en español con el motivo exacto.
+5. **Confirmación de Discrepancias en Modal**:
+   - Si un formulario requiere confirmación interactiva antes de enviar (por ejemplo nomenclatura o advertencias), desacoplar el envío HTMX con `hx-trigger="confirmed-submit"` + `@submit.prevent` y disparar `htmx.trigger(form, 'confirmed-submit')` únicamente tras la confirmación del usuario.
+
 Estas reglas no son sugerencias. Son el sistema operativo de Antigravity.
